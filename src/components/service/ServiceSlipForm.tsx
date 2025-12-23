@@ -360,7 +360,7 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Package className="h-5 w-5" />
-                  Kullanılan Parçalar
+                  Kullanılan Ürünler
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -387,16 +387,16 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
             <CardContent>
               {formData.parts_used.length === 0 ? (
                 <p className="text-muted-foreground text-center py-4">
-                  Henüz parça eklenmemiş
+                  Henüz ürün eklenmemiş
                 </p>
               ) : (
                 <div className="space-y-3">
                   {formData.parts_used.map((part, index) => (
                     <div key={index} className="flex gap-3 items-end">
                       <div className="flex-1">
-                        <Label>Parça Adı</Label>
+                        <Label>Ürün Adı</Label>
                         <Input
-                          placeholder="Parça adı"
+                          placeholder="Ürün adı"
                           value={part.name}
                           onChange={(e) => updatePart(index, 'name', e.target.value)}
                         />

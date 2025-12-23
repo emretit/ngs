@@ -751,6 +751,115 @@ class ServiceRequestService {
     }
   }
 
+  // YENİ: Koordinat ve sayfa numarası ile imza kaydetme
+  Future<void> saveSignatureWithMetadata({
+    required String serviceRequestId,
+    required String signatureType, // 'technician' or 'customer'
+    required String signatureBase64,
+    required String userName,
+    required Map<String, dynamic> coordinates,
+    required int pageNumber,
+  }) async {
+    try {
+      // service_signatures tablosuna kaydet (upsert - eğer varsa güncelle, yoksa ekle)
+      await _supabase
+        .from('service_signatures')
+        .upsert({
+          'service_request_id': serviceRequestId,
+          'signature_type': signatureType,
+          'signature_data': signatureBase64,
+          'user_name': userName,
+          'coordinates': coordinates, // JSONB
+          'page_number': pageNumber,
+          'signed_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'service_request_id,signature_type');
+
+      // service_requests tablosuna da kaydet (PDF oluşturulurken kullanılacak)
+      final updateData = <String, dynamic>{
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+      
+      if (signatureType == 'technician') {
+        updateData['technician_signature'] = signatureBase64;
+        // Eğer müşteri imzası da varsa slip_status'u güncelle
+        final serviceRequest = await _supabase
+          .from('service_requests')
+          .select('customer_signature')
+          .eq('id', serviceRequestId)
+          .single();
+        
+        if (serviceRequest['customer_signature'] != null && 
+            (serviceRequest['customer_signature'] as String).isNotEmpty) {
+          updateData['slip_status'] = 'signed';
+          updateData['completion_date'] = DateTime.now().toIso8601String();
+        }
+      } else if (signatureType == 'customer') {
+        updateData['customer_signature'] = signatureBase64;
+        // Eğer teknisyen imzası da varsa slip_status'u güncelle
+        final serviceRequest = await _supabase
+          .from('service_requests')
+          .select('technician_signature')
+          .eq('id', serviceRequestId)
+          .single();
+        
+        if (serviceRequest['technician_signature'] != null && 
+            (serviceRequest['technician_signature'] as String).isNotEmpty) {
+          updateData['slip_status'] = 'signed';
+          updateData['completion_date'] = DateTime.now().toIso8601String();
+        }
+      }
+
+      await _supabase
+        .from('service_requests')
+        .update(updateData)
+        .eq('id', serviceRequestId);
+
+      print('✅ $signatureType imzası kaydedildi (sayfa $pageNumber) - hem service_signatures hem service_requests tablosuna');
+    } catch (e) {
+      print('❌ İmza kaydedilemedi: $e');
+      rethrow;
+    }
+  }
+
+  // İmzaları service_signatures tablosundan getir
+  Future<Map<String, dynamic>> getSignatures(String serviceRequestId) async {
+    try {
+      final response = await _supabase
+        .from('service_signatures')
+        .select('*')
+        .eq('service_request_id', serviceRequestId);
+
+      final signatures = (response as List).cast<Map<String, dynamic>>();
+      
+      // technician ve customer imzalarını ayır
+      String? technicianSignature;
+      String? customerSignature;
+      
+      for (var sig in signatures) {
+        if (sig['signature_type'] == 'technician') {
+          technicianSignature = sig['signature_data']?.toString();
+        } else if (sig['signature_type'] == 'customer') {
+          customerSignature = sig['signature_data']?.toString();
+        }
+      }
+
+      return {
+        'technician': technicianSignature,
+        'customer': customerSignature,
+        'hasTechnician': technicianSignature != null && technicianSignature.isNotEmpty,
+        'hasCustomer': customerSignature != null && customerSignature.isNotEmpty,
+      };
+    } catch (e) {
+      print('❌ İmzalar getirilemedi: $e');
+      return {
+        'technician': null,
+        'customer': null,
+        'hasTechnician': false,
+        'hasCustomer': false,
+      };
+    }
+  }
+
   // Servis numarası oluştur  
   Future<ServiceRequest> generateServiceNumber(String serviceRequestId) async {
     try {

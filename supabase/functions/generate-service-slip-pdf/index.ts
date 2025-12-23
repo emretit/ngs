@@ -306,12 +306,12 @@ serve(async (req) => {
     
     // Parts Table
     if (pdfData.parts && pdfData.parts.length > 0) {
-      yPosition = addText('Kullanılan Parçalar', margin, yPosition, 14, true);
+      yPosition = addText('Kullanılan Ürünler', margin, yPosition, 14, true);
       yPosition -= lineHeight;
       
       // Table header
       const tableY = yPosition;
-      addText('Parça Adı', margin, tableY, 10, true);
+      addText('Ürün Adı', margin, tableY, 10, true);
       addText('Miktar', margin + 200, tableY, 10, true);
       addText('Birim', margin + 250, tableY, 10, true);
       addText('Birim Fiyat', margin + 300, tableY, 10, true);

@@ -1231,24 +1231,33 @@ export class PdfExportService {
   static async getServiceTemplates(): Promise<ServicePdfTemplate[]> {
     const companyId = await this.getCurrentCompanyId();
     
+    console.log('[PdfExportService.getServiceTemplates] companyId:', companyId);
+    
     if (!companyId) {
+      console.warn('[PdfExportService.getServiceTemplates] companyId bulunamadı');
       return [];
     }
 
     // Get templates from service_templates table
+    // NOT: is_active filtresi kaldırıldı - tüm şablonları göster (aktif ve pasif)
     let query = supabase
       .from('service_templates')
       .select('*')
       .eq('company_id', companyId)
-      .eq('is_active', true)
       .order('usage_count', { ascending: false })
       .order('created_at', { ascending: false });
 
     let { data, error } = await query;
 
+    console.log('[PdfExportService.getServiceTemplates] Query sonucu:', { 
+      dataCount: data?.length || 0, 
+      error: error?.message,
+      templateNames: data?.map((t: any) => t.name) || []
+    });
+
     // If service_templates doesn't exist or error, return empty array
     if (error) {
-      console.error('Error fetching service PDF templates:', error);
+      console.error('[PdfExportService.getServiceTemplates] Error fetching service PDF templates:', error);
       // Return empty array instead of throwing error - user can create templates later
       return [];
     }

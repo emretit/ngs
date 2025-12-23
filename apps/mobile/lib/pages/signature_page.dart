@@ -7,11 +7,13 @@ import 'package:signature/signature.dart';
 class SignaturePage extends StatefulWidget {
   final String title;
   final String? existingSignature;
+  final int pageNumber; // YENİ: Sayfa numarası
 
   const SignaturePage({
     super.key,
     required this.title,
     this.existingSignature,
+    this.pageNumber = 1, // Varsayılan 1
   });
 
   @override
@@ -25,6 +27,10 @@ class _SignaturePageState extends State<SignaturePage> {
     exportBackgroundColor: Colors.white,
     exportPenColor: Colors.black,
   );
+
+  // Canvas boyutları (render sonrası alınacak)
+  double? _canvasWidth;
+  double? _canvasHeight;
 
   @override
   void initState() {
@@ -61,6 +67,60 @@ class _SignaturePageState extends State<SignaturePage> {
     }
   }
 
+  // YENİ: Koordinat bilgileri ile imza export
+  Future<Map<String, dynamic>?> _exportSignatureWithCoordinates() async {
+    if (_controller.isEmpty) {
+      return null;
+    }
+
+    try {
+      // Canvas boyutları
+      final canvasWidth = _canvasWidth ?? 400.0;
+      final canvasHeight = _canvasHeight ?? 200.0;
+
+      // İmza PNG bytes
+      final Uint8List? signatureBytes = await _controller.toPngBytes(
+        height: canvasHeight.toInt(),
+        width: canvasWidth.toInt(),
+      );
+
+      if (signatureBytes == null) {
+        return null;
+      }
+
+      // Base64 encode
+      final base64Signature = base64Encode(signatureBytes);
+
+      // Bounding box hesapla (basit yaklaşım: tüm canvas)
+      // Not: SignatureController'da direkt bounding box API'si yok
+      // Gerçek bounding box için imza path'lerini analiz etmek gerekir
+      final boundingBox = {
+        'x': 0.0,
+        'y': 0.0,
+        'width': canvasWidth,
+        'height': canvasHeight,
+      };
+
+      // Koordinat bilgileri
+      final coordinates = {
+        'canvas': {
+          'width': canvasWidth,
+          'height': canvasHeight,
+        },
+        'boundingBox': boundingBox,
+      };
+
+      return {
+        'signature': base64Signature,
+        'coordinates': coordinates,
+        'pageNumber': widget.pageNumber,
+      };
+    } catch (e) {
+      debugPrint('İmza export hatası: $e');
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,7 +144,13 @@ class _SignaturePageState extends State<SignaturePage> {
         ),
       ),
       body: SafeArea(
-        child: Column(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Canvas boyutlarını kaydet
+            _canvasWidth = constraints.maxWidth - 32; // margin çıkar
+            _canvasHeight = constraints.maxHeight * 0.7; // yaklaşık yükseklik
+            
+            return Column(
           children: [
             // İmza alanı
             Expanded(
@@ -179,10 +245,10 @@ class _SignaturePageState extends State<SignaturePage> {
                             return;
                           }
 
-                          final signature = await _exportSignature();
+                          final result = await _exportSignatureWithCoordinates();
                           if (!mounted) return;
-                          if (signature != null) {
-                            Navigator.pop(context, signature);
+                          if (result != null) {
+                            Navigator.pop(context, result);
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -220,6 +286,8 @@ class _SignaturePageState extends State<SignaturePage> {
               ),
             ),
           ],
+            );
+          },
         ),
       ),
     );

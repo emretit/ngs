@@ -25,6 +25,7 @@ import 'service_request_edit/service_request_edit_products_section.dart';
 import 'service_request_edit/service_request_edit_details_section.dart';
 import 'service_request_edit/service_request_edit_selectors.dart';
 import 'service_slip_signature_flow_page.dart';
+import 'service_slip_pdf_preview_page.dart';
 
 class ServiceRequestEditPage extends ConsumerStatefulWidget {
   final String id;
@@ -454,52 +455,31 @@ class _ServiceRequestEditPageState extends ConsumerState<ServiceRequestEditPage>
         throw Exception('Servis talebi bulunamadı');
       }
 
-      // İmzaları kontrol et
-      final hasTechnicianSignature = serviceRequest.technicianSignature != null && 
-                                     serviceRequest.technicianSignature!.isNotEmpty;
-      final hasCustomerSignature = serviceRequest.customerSignature != null && 
-                                   serviceRequest.customerSignature!.isNotEmpty;
+      // İmzaları service_signatures tablosundan kontrol et
+      final service = ref.read(serviceRequestServiceProvider);
+      final signatures = await service.getSignatures(widget.id);
+      final hasTechnicianSignature = signatures['hasTechnician'] as bool;
+      final hasCustomerSignature = signatures['hasCustomer'] as bool;
 
-      // Eğer imzalar eksikse, imza alma akışına yönlendir
-      if (!hasTechnicianSignature || !hasCustomerSignature) {
-        if (mounted) {
-          setState(() {
-            _isGeneratingPdf = false;
-          });
-          
-          // İmza alma sayfasına yönlendir
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ServiceSlipSignatureFlowPage(
-                serviceRequestId: widget.id,
-                templateId: templateId,
-              ),
+      // Yeni akış: PDF önizleme sayfasına yönlendir
+      if (mounted) {
+        setState(() {
+          _isGeneratingPdf = false;
+        });
+        
+        // PDF önizleme sayfasına yönlendir
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ServiceSlipPdfPreviewPage(
+              serviceRequestId: widget.id,
+              templateId: templateId,
             ),
-          );
-          
-          // İmza alma tamamlandıktan sonra PDF oluştur
-          // (ServiceSlipSignatureFlowPage zaten PDF oluşturuyor, burada tekrar oluşturmaya gerek yok)
-          return;
-        }
-      }
-
-      // İmzalar varsa direkt PDF oluştur
-      final pdfService = ServiceSlipPdfService();
-      Uint8List pdfBytes;
-      
-      try {
-        pdfBytes = await pdfService.generateServiceSlipPdfFromWeb(
-          serviceRequest,
-          templateId: templateId,
+          ),
         );
-      } catch (webError) {
-        print('Web PDF renderer failed, using local: $webError');
-        pdfBytes = await pdfService.generateServiceSlipPdf(serviceRequest);
+        
+        return;
       }
-
-      final fileName = 'Servis_Fisi_${serviceRequest.serviceNumber ?? serviceRequest.id}.pdf';
-      await pdfService.previewAndShare(pdfBytes, fileName);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

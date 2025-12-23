@@ -22,7 +22,7 @@ const ProposalTemplateSelect: React.FC = () => {
       name: "Servis Teklifi",
       description: "Teknik servis hizmetleri için özelleştirilmiş teklif şablonu",
       templateType: "service",
-      templateFeatures: ["Servis detayları", "İşçilik", "Parçalar", "Garanti bilgileri"],
+      templateFeatures: ["Servis detayları", "İşçilik", "Ürünler", "Garanti bilgileri"],
       items: []
     },
     {

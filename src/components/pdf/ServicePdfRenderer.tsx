@@ -721,7 +721,7 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
         {/* Parts Table */}
         {safeSchema.partsTable.show && data.parts && data.parts.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: 10 }]}>Kullanılan Parçalar</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 10 }]}>Kullanılan Ürünler</Text>
             <View style={styles.table}>
               {/* Table Header */}
               <View style={styles.tableHeader}>

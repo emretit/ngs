@@ -99,9 +99,16 @@ class ServiceRequestEditAppBar extends ConsumerWidget implements PreferredSizeWi
           builder: (context, ref, child) {
             final templatesAsync = ref.watch(serviceSlipPdfTemplatesProvider);
             return templatesAsync.when(
-              data: (templates) => _buildPrintButton(templates),
+              data: (templates) {
+                print('[ServiceRequestEditAppBar] Şablonlar yüklendi: ${templates.length} adet');
+                return _buildPrintButton(templates);
+              },
               loading: () => const SizedBox.shrink(),
-              error: (error, stackTrace) => _buildPrintButton([]),
+              error: (error, stackTrace) {
+                print('[ServiceRequestEditAppBar] ❌ Şablon yükleme hatası: $error');
+                print('[ServiceRequestEditAppBar] Stack trace: $stackTrace');
+                return _buildPrintButton([]);
+              },
             );
           },
         ),

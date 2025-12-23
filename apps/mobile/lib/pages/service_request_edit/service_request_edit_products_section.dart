@@ -70,19 +70,199 @@ class ServiceRequestEditProductsSection extends StatelessWidget {
               ],
             ),
           )
-        else
-          ...(usedProducts.asMap().entries.map((entry) {
+        else ...[
+          // Tablo başlığı
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: ServiceFormStyles.inputBackground,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+              border: Border.all(
+                color: Colors.grey.withOpacity(0.15),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 30,
+                  child: Text(
+                    '#',
+                    style: TextStyle(
+                      fontSize: ServiceFormStyles.captionSize,
+                      fontWeight: FontWeight.w600,
+                      color: ServiceFormStyles.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'Parça Adı',
+                    style: TextStyle(
+                      fontSize: ServiceFormStyles.captionSize,
+                      fontWeight: FontWeight.w600,
+                      color: ServiceFormStyles.textSecondary,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 50,
+                  child: Text(
+                    'Miktar',
+                    style: TextStyle(
+                      fontSize: ServiceFormStyles.captionSize,
+                      fontWeight: FontWeight.w600,
+                      color: ServiceFormStyles.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                SizedBox(
+                  width: 60,
+                  child: Text(
+                    'Birim Fiyat',
+                    style: TextStyle(
+                      fontSize: ServiceFormStyles.captionSize,
+                      fontWeight: FontWeight.w600,
+                      color: ServiceFormStyles.textSecondary,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+                const SizedBox(width: 40), // Sil butonu için alan
+              ],
+            ),
+          ),
+          // Tablo satırları
+          ...usedProducts.asMap().entries.map((entry) {
             final index = entry.key;
             final product = entry.value;
-            return ServiceProductItem(
-              name: product['name'] ?? 'Bilinmeyen Ürün',
-              description: product['description'],
-              quantity: (product['quantity'] ?? 1).toDouble(),
-              unit: product['unit'] ?? 'adet',
-              price: (product['price'] ?? 0).toDouble(),
-              onDelete: () => onRemoveProduct(index),
+            final quantity = (product['quantity'] ?? 1).toDouble();
+            final price = (product['price'] ?? 0).toDouble();
+            final total = quantity * price;
+
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  left: BorderSide(color: Colors.grey.withOpacity(0.15)),
+                  right: BorderSide(color: Colors.grey.withOpacity(0.15)),
+                  bottom: BorderSide(
+                    color: Colors.grey.withOpacity(0.15),
+                    width: index == usedProducts.length - 1 ? 1 : 0.5,
+                  ),
+                ),
+                borderRadius: index == usedProducts.length - 1
+                    ? const BorderRadius.only(
+                        bottomLeft: Radius.circular(8),
+                        bottomRight: Radius.circular(8),
+                      )
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 30,
+                    child: Text(
+                      '${index + 1}',
+                      style: const TextStyle(
+                        fontSize: ServiceFormStyles.bodySize,
+                        fontWeight: FontWeight.w500,
+                        color: ServiceFormStyles.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product['name'] ?? 'Bilinmeyen Ürün',
+                          style: const TextStyle(
+                            fontSize: ServiceFormStyles.bodySize,
+                            fontWeight: FontWeight.w600,
+                            color: ServiceFormStyles.textPrimary,
+                          ),
+                        ),
+                        if (product['description'] != null && product['description'].toString().isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            product['description'],
+                            style: TextStyle(
+                              fontSize: ServiceFormStyles.captionSize,
+                              color: ServiceFormStyles.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    width: 50,
+                    child: Text(
+                      '${quantity.toInt()} ${product['unit'] ?? 'adet'}',
+                      style: const TextStyle(
+                        fontSize: ServiceFormStyles.labelSize,
+                        color: ServiceFormStyles.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 60,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${price.toStringAsFixed(2)} ₺',
+                          style: const TextStyle(
+                            fontSize: ServiceFormStyles.labelSize,
+                            fontWeight: FontWeight.w500,
+                            color: ServiceFormStyles.textPrimary,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${total.toStringAsFixed(2)} ₺',
+                          style: const TextStyle(
+                            fontSize: ServiceFormStyles.captionSize,
+                            fontWeight: FontWeight.w600,
+                            color: ServiceFormStyles.successColor,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    width: 40,
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      minSize: 0,
+                      onPressed: () => onRemoveProduct(index),
+                      child: const Icon(
+                        CupertinoIcons.delete,
+                        color: ServiceFormStyles.errorColor,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             );
-          }).toList()),
+          }).toList(),
+        ],
       ],
     );
   }

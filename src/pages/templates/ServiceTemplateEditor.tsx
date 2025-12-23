@@ -883,14 +883,14 @@ export default function ServiceTemplateEditor() {
                   <AccordionTrigger className="bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
                     <div className="flex items-center gap-2">
                       <span className="text-xs">📦</span>
-                      <span>Parça Tablosu</span>
+                      <span>Ürün Tablosu</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-2 pb-2 pt-1.5">
                     <div className="text-xs text-muted-foreground bg-orange-50 p-2 rounded-md mb-2">
-                      <div className="font-medium text-orange-800 mb-1">Parça Tablosu</div>
+                      <div className="font-medium text-orange-800 mb-1">Ürün Tablosu</div>
                       <div className="space-y-0.5 text-orange-700 text-xs">
-                        <div>• Parça tablosu kolonları otomatik gösterilir</div>
+                        <div>• Ürün tablosu kolonları otomatik gösterilir</div>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -910,13 +910,13 @@ export default function ServiceTemplateEditor() {
                         </div>
                       </div>
 
-                      {/* Parça Adı */}
+                      {/* Ürün Adı */}
                       {pdfSchema.partsTable?.columns?.find(col => col.key === 'name') && (
                         <div className="border rounded-md p-1.5 bg-orange-50">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs">2</span>
-                              <Label className="text-xs font-medium text-gray-700">Parça Adı</Label>
+                              <Label className="text-xs font-medium text-gray-700">Ürün Adı</Label>
                             </div>
                             <Switch
                               id="show-column-name"

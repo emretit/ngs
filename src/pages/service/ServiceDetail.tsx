@@ -237,7 +237,7 @@ export default function ServiceDetail() {
           <TabsTrigger value="overview">Genel Bakış</TabsTrigger>
           <TabsTrigger value="details">Detaylar</TabsTrigger>
           <TabsTrigger value="costs">Maliyet</TabsTrigger>
-          <TabsTrigger value="parts">Parçalar</TabsTrigger>
+          <TabsTrigger value="parts">Ürünler</TabsTrigger>
           <TabsTrigger value="history">Geçmiş</TabsTrigger>
           <TabsTrigger value="notes">Şirket İçi Notlar</TabsTrigger>
         </TabsList>
@@ -428,7 +428,7 @@ export default function ServiceDetail() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Parça Maliyeti</CardTitle>
+                <CardTitle className="text-sm">Ürün Maliyeti</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">
@@ -459,7 +459,7 @@ export default function ServiceDetail() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
-                <span>Kullanılan Parçalar</span>
+                <span>Kullanılan Ürünler</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -470,7 +470,7 @@ export default function ServiceDetail() {
                   {serviceSlip.service_details.parts_used.map((part: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <p className="font-medium">{part.name || 'Parça'}</p>
+                        <p className="font-medium">{part.name || 'Ürün'}</p>
                         <p className="text-sm text-muted-foreground">
                           Miktar: {part.quantity} {part.unit || 'adet'}
                         </p>
@@ -484,7 +484,7 @@ export default function ServiceDetail() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Henüz parça kullanılmamış</p>
+                <p className="text-sm text-muted-foreground">Henüz ürün kullanılmamış</p>
               )}
             </CardContent>
           </Card>

@@ -39,26 +39,69 @@ serve(async (req) => {
     }
 
     const requestBody = await req.json();
-    const { serviceRequestId } = requestBody;
+    const { 
+      serviceRequestId, 
+      templateId, 
+      preview = false,
+      technicianSignature,
+      customerSignature 
+    } = requestBody;
 
     if (!serviceRequestId) {
       throw new Error('serviceRequestId is required');
     }
 
     // Get service request data
+    console.log('🔍 Fetching service request:', serviceRequestId);
+    
     const { data: serviceRequest, error: serviceError } = await supabase
       .from('service_requests')
       .select(`
         *,
-        customer:customers(*),
-        technician:employees(id, first_name, last_name, email, mobile_phone)
+        customers (
+          id,
+          name,
+          company,
+          email,
+          mobile_phone,
+          office_phone,
+          address
+        )
       `)
       .eq('id', serviceRequestId)
       .single();
 
-    if (serviceError || !serviceRequest) {
-      throw new Error('Service request not found');
+    if (serviceError) {
+      console.error('❌ Service request query error:', serviceError);
+      throw new Error(`Service request query failed: ${serviceError.message}`);
     }
+
+    if (!serviceRequest) {
+      console.error('❌ Service request not found:', serviceRequestId);
+      throw new Error(`Service request not found: ${serviceRequestId}`);
+    }
+
+    // Get technician data separately if assigned_technician exists
+    let technician = null;
+    if (serviceRequest.assigned_technician) {
+      const { data: technicianData, error: techError } = await supabase
+        .from('employees')
+        .select('id, first_name, last_name, email, mobile_phone')
+        .eq('id', serviceRequest.assigned_technician)
+        .single();
+      
+      if (!techError && technicianData) {
+        technician = technicianData;
+      }
+    }
+
+    console.log('✅ Service request found:', {
+      id: serviceRequest.id,
+      title: serviceRequest.service_title,
+      hasCustomer: !!serviceRequest.customers,
+      hasTechnician: !!technician,
+      assignedTechnicianId: serviceRequest.assigned_technician,
+    });
 
     // Get company settings
     const { data: profile } = await supabase
@@ -81,34 +124,34 @@ serve(async (req) => {
     const pdfData = {
       id: serviceRequest.id,
       serviceNumber: serviceRequest.service_number || serviceRequest.slip_number || `SR-${serviceRequest.id.slice(-6).toUpperCase()}`,
-      serviceTitle: serviceRequest.title || serviceRequest.service_title || '',
-      serviceDescription: serviceRequest.description || serviceRequest.service_request_description || '',
+      serviceTitle: serviceRequest.service_title || '',
+      serviceDescription: serviceRequest.service_request_description || '',
       serviceType: serviceRequest.service_type || '',
-      priority: serviceRequest.priority || 'medium',
-      status: serviceRequest.status || '',
-      location: serviceRequest.location || serviceRequest.service_location || '',
+      priority: serviceRequest.service_priority || 'medium',
+      status: serviceRequest.service_status || '',
+      location: serviceRequest.service_location || '',
       reportedDate: serviceRequest.created_at || serviceRequest.issue_date || new Date().toISOString(),
-      dueDate: serviceRequest.due_date || serviceRequest.service_due_date || null,
+      dueDate: serviceRequest.service_due_date || null,
       completedDate: serviceRequest.completion_date || null,
-      customer: serviceRequest.customer ? {
-        name: serviceRequest.customer.name || '',
-        company: serviceRequest.customer.company || undefined,
-        email: serviceRequest.customer.email || undefined,
-        phone: serviceRequest.customer.mobile_phone || serviceRequest.customer.phone || undefined,
-        address: serviceRequest.customer.address || undefined,
+      customer: serviceRequest.customers ? {
+        name: serviceRequest.customers.name || '',
+        company: serviceRequest.customers.company || undefined,
+        email: serviceRequest.customers.email || undefined,
+        phone: serviceRequest.customers.mobile_phone || serviceRequest.customers.office_phone || undefined,
+        address: serviceRequest.customers.address || undefined,
       } : {
         name: serviceRequest.customer_name || 'Müşteri',
         company: undefined,
         email: undefined,
         phone: serviceRequest.contact_phone || undefined,
-        address: serviceRequest.location || undefined,
+        address: serviceRequest.service_location || serviceRequest.location || undefined,
       },
-      technician: serviceRequest.technician ? {
-        name: `${serviceRequest.technician.first_name || ''} ${serviceRequest.technician.last_name || ''}`.trim(),
-        email: serviceRequest.technician.email || undefined,
-        phone: serviceRequest.technician.mobile_phone || undefined,
-      } : serviceRequest.assigned_technician ? {
-        name: serviceRequest.assigned_technician,
+      technician: technician ? {
+        name: `${technician.first_name || ''} ${technician.last_name || ''}`.trim(),
+        email: technician.email || undefined,
+        phone: technician.mobile_phone || undefined,
+      } : serviceRequest.technician_name ? {
+        name: serviceRequest.technician_name,
       } : undefined,
       company: company ? {
         name: company.name || '',
@@ -136,7 +179,12 @@ serve(async (req) => {
     // Note: You'll need to set WEB_APP_URL environment variable
     const WEB_APP_URL = Deno.env.get('WEB_APP_URL') || 'https://your-web-app-url.com';
     
-    console.log('📄 Calling web app PDF generation endpoint...');
+    console.log('📄 Calling web app PDF generation endpoint...', {
+      preview,
+      templateId,
+      hasTechnicianSignature: !!technicianSignature,
+      hasCustomerSignature: !!customerSignature,
+    });
     
     const pdfResponse = await fetch(`${WEB_APP_URL}/api/generate-service-slip-pdf`, {
       method: 'POST',
@@ -146,6 +194,12 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         serviceData: pdfData,
+        templateId: templateId || undefined,
+        preview: preview,
+        signatures: {
+          technician: technicianSignature || undefined,
+          customer: customerSignature || undefined,
+        },
       }),
     });
 

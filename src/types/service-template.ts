@@ -146,7 +146,7 @@ export const defaultServiceTemplateSchema: ServiceTemplateSchema = {
   partsTable: {
     show: true,
     columns: [
-      { key: 'name', label: 'Parça Adı', show: true, align: 'left' },
+      { key: 'name', label: 'Ürün Adı', show: true, align: 'left' },
       { key: 'quantity', label: 'Miktar', show: true, align: 'center' },
       { key: 'unit', label: 'Birim', show: true, align: 'center' },
       { key: 'unitPrice', label: 'Birim Fiyat', show: true, align: 'right' },

@@ -129,7 +129,7 @@ export const ServiceCostAnalysis: React.FC = () => {
         <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-orange-900">
-              Parça Maliyeti
+              Ürün Maliyeti
             </CardTitle>
             <Package className="h-4 w-4 text-orange-600" />
           </CardHeader>
@@ -207,7 +207,7 @@ export const ServiceCostAnalysis: React.FC = () => {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Package className="h-4 w-4 text-orange-600" />
-                      <span className="text-sm font-medium">Parça</span>
+                      <span className="text-sm font-medium">Ürün</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold">{breakdown.partsPercentage.toFixed(1)}%</span>
@@ -245,7 +245,7 @@ export const ServiceCostAnalysis: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                  <span className="text-sm font-medium">Ortalama Parça</span>
+                  <span className="text-sm font-medium">Ortalama Ürün</span>
                   <span className="text-lg font-bold text-orange-700">
                     {formatCurrency(costMetrics.averagePartsCost)}
                   </span>
@@ -296,7 +296,7 @@ export const ServiceCostAnalysis: React.FC = () => {
                       </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Parça:</span>
+                      <span className="text-muted-foreground">Ürün:</span>
                       <span className="ml-2 font-medium text-orange-600">
                         {formatCurrency(trend.partsCost)}
                       </span>

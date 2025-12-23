@@ -1,20 +1,11 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Loader2, Check } from 'lucide-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-
-interface PdfTemplate {
-  id: string;
-  name: string;
-  description?: string;
-  is_default: boolean;
-  schema?: any;
-}
+import { PdfExportService } from '@/services/pdf/pdfExportService';
+import type { ServicePdfTemplate } from '@/types/service-template';
 
 interface ServiceSlipTemplateSelectorProps {
   isOpen: boolean;
@@ -29,25 +20,35 @@ export const ServiceSlipTemplateSelector: React.FC<ServiceSlipTemplateSelectorPr
 }) => {
   const { userData } = useCurrentUser();
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<ServicePdfTemplate[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  const { data: templates, isLoading } = useQuery({
-    queryKey: ['service-slip-templates', userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
+  // Servis şablonlarını yükle - ServicesTable'daki gibi
+  useEffect(() => {
+    const loadTemplates = async () => {
+      if (!userData?.company_id || !isOpen) return;
+      
+      setIsLoadingTemplates(true);
+      setError(null);
+      try {
+        console.log('[ServiceSlipTemplateSelector] Şablonlar yükleniyor...', {
+          companyId: userData?.company_id,
+          isOpen
+        });
+        const loadedTemplates = await PdfExportService.getServiceTemplates();
+        console.log('[ServiceSlipTemplateSelector] Şablonlar yüklendi:', loadedTemplates);
+        setTemplates(loadedTemplates);
+      } catch (err) {
+        console.error('[ServiceSlipTemplateSelector] Şablon yükleme hatası:', err);
+        setError(err instanceof Error ? err : new Error('Bilinmeyen hata'));
+      } finally {
+        setIsLoadingTemplates(false);
+      }
+    };
 
-      const { data, error } = await supabase
-        .from('pdf_templates')
-        .select('*')
-        .eq('type', 'service_slip')
-        .eq('company_id', userData.company_id)
-        .order('is_default', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return (data || []) as PdfTemplate[];
-    },
-    enabled: isOpen && !!userData?.company_id,
-  });
+    loadTemplates();
+  }, [userData?.company_id, isOpen]);
 
   const handleSelect = () => {
     if (selectedTemplateId) {
@@ -56,7 +57,22 @@ export const ServiceSlipTemplateSelector: React.FC<ServiceSlipTemplateSelectorPr
     }
   };
 
-  const defaultTemplate = templates?.find(t => t.is_default);
+  // Varsayılan şablon varsa otomatik seç
+  useEffect(() => {
+    if (templates && templates.length > 0 && !selectedTemplateId) {
+      // İlk şablonu seç
+      setSelectedTemplateId(templates[0].id);
+    }
+  }, [templates, selectedTemplateId]);
+
+  // Dialog kapandığında state'i temizle
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedTemplateId(null);
+      setTemplates([]);
+      setError(null);
+    }
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -65,9 +81,16 @@ export const ServiceSlipTemplateSelector: React.FC<ServiceSlipTemplateSelectorPr
           <DialogTitle>PDF Şablonu Seç</DialogTitle>
         </DialogHeader>
 
-        {isLoading ? (
+        {isLoadingTemplates ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-8 text-destructive">
+            <p className="font-medium">Şablonlar yüklenirken hata oluştu</p>
+            <p className="text-sm mt-2 text-muted-foreground">
+              {error instanceof Error ? error.message : 'Bilinmeyen hata'}
+            </p>
           </div>
         ) : !templates || templates.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
@@ -90,9 +113,6 @@ export const ServiceSlipTemplateSelector: React.FC<ServiceSlipTemplateSelectorPr
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">{template.name}</CardTitle>
                     <div className="flex items-center gap-2">
-                      {template.is_default && (
-                        <Badge variant="secondary">Varsayılan</Badge>
-                      )}
                       {selectedTemplateId === template.id && (
                         <Check className="h-5 w-5 text-primary" />
                       )}

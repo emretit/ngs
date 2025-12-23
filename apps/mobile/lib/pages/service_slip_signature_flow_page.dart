@@ -33,21 +33,21 @@ class _ServiceSlipSignatureFlowPageState extends ConsumerState<ServiceSlipSignat
 
   Future<void> _checkExistingSignatures() async {
     try {
-      final serviceRequest = await ref.read(serviceRequestByIdProvider(widget.serviceRequestId).future);
-      if (serviceRequest == null) {
-        throw Exception('Servis bulunamadı');
-      }
-
-      final hasTechnicianSignature = serviceRequest.technicianSignature != null && 
-                                     serviceRequest.technicianSignature!.isNotEmpty;
-      final hasCustomerSignature = serviceRequest.customerSignature != null && 
-                                   serviceRequest.customerSignature!.isNotEmpty;
+      final service = ref.read(serviceRequestServiceProvider);
+      
+      // service_signatures tablosundan imzaları kontrol et
+      final signatures = await service.getSignatures(widget.serviceRequestId);
+      
+      final hasTechnicianSignature = signatures['hasTechnician'] as bool;
+      final hasCustomerSignature = signatures['hasCustomer'] as bool;
+      final technicianSignature = signatures['technician'] as String?;
+      final customerSignature = signatures['customer'] as String?;
 
       setState(() {
         _needsTechnicianSignature = !hasTechnicianSignature;
         _needsCustomerSignature = !hasCustomerSignature;
-        _technicianSignature = serviceRequest.technicianSignature;
-        _customerSignature = serviceRequest.customerSignature;
+        _technicianSignature = technicianSignature;
+        _customerSignature = customerSignature;
       });
 
       // Eğer her iki imza da varsa, direkt PDF oluştur
@@ -76,27 +76,36 @@ class _ServiceSlipSignatureFlowPageState extends ConsumerState<ServiceSlipSignat
   }
 
   Future<void> _collectTechnicianSignature() async {
-    final signature = await Navigator.push<String>(
+    final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
         builder: (context) => const SignaturePage(
           title: 'Teknisyen İmzası',
+          pageNumber: 1,
         ),
       ),
     );
 
-    if (signature != null && mounted) {
+    if (result != null && mounted) {
+      final signature = result['signature'] as String?;
+      if (signature != null) {
       setState(() {
         _technicianSignature = signature;
         _needsTechnicianSignature = false;
       });
-      // İmzayı kaydet
-      await _saveTechnicianSignature(signature);
+        // İmzayı metadata ile kaydet
+        await _saveSignatureWithMetadata(
+          signatureBase64: signature,
+          coordinates: result['coordinates'] as Map<String, dynamic>,
+          pageNumber: result['pageNumber'] as int,
+          type: 'technician',
+        );
       // Müşteri imzasına geç veya PDF oluştur
       if (_needsCustomerSignature) {
         _collectCustomerSignature();
       } else {
         await _generatePdf();
+        }
       }
     } else if (mounted) {
       // İmza alınmadıysa geri dön
@@ -105,57 +114,81 @@ class _ServiceSlipSignatureFlowPageState extends ConsumerState<ServiceSlipSignat
   }
 
   Future<void> _collectCustomerSignature() async {
-    final signature = await Navigator.push<String>(
+    final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
         builder: (context) => const SignaturePage(
           title: 'Müşteri İmzası',
+          pageNumber: 1,
         ),
       ),
     );
 
-    if (signature != null && mounted) {
+    if (result != null && mounted) {
+      final signature = result['signature'] as String?;
+      if (signature != null) {
       setState(() {
         _customerSignature = signature;
         _needsCustomerSignature = false;
       });
-      // İmzayı kaydet
-      await _saveCustomerSignature(signature);
+        // İmzayı metadata ile kaydet
+        await _saveSignatureWithMetadata(
+          signatureBase64: signature,
+          coordinates: result['coordinates'] as Map<String, dynamic>,
+          pageNumber: result['pageNumber'] as int,
+          type: 'customer',
+        );
       // PDF oluştur
       await _generatePdf();
+      }
     } else if (mounted) {
       // İmza alınmadıysa geri dön
       context.pop();
     }
   }
 
-  Future<void> _saveTechnicianSignature(String signature) async {
-    try {
-      final service = ref.read(serviceRequestServiceProvider);
-      await service.signServiceSlip(widget.serviceRequestId, signature);
-      ref.invalidate(serviceRequestByIdProvider(widget.serviceRequestId));
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Teknisyen imzası kaydedilemedi: $e'),
-            backgroundColor: const Color(0xFFEF4444),
-          ),
-        );
-      }
-    }
-  }
+  // NOT: Eski imza kaydetme fonksiyonları kaldırıldı
+  // Artık tüm imzalar _saveSignatureWithMetadata ile service_signatures tablosuna kaydediliyor
 
-  Future<void> _saveCustomerSignature(String signature) async {
+  // YENİ: Metadata ile imza kaydetme
+  Future<void> _saveSignatureWithMetadata({
+    required String signatureBase64,
+    required Map<String, dynamic> coordinates,
+    required int pageNumber,
+    required String type,
+  }) async {
     try {
       final service = ref.read(serviceRequestServiceProvider);
-      await service.signServiceSlipByCustomer(widget.serviceRequestId, signature);
+      
+      // Servis talebini al (user name için)
+      final serviceRequest = await ref.read(serviceRequestByIdProvider(widget.serviceRequestId).future);
+      if (serviceRequest == null) {
+        throw Exception('Servis bulunamadı');
+      }
+
+      final userName = type == 'technician'
+        ? serviceRequest.technicianName ?? 'Teknisyen'
+        : serviceRequest.customerName ?? 'Müşteri';
+
+      await service.saveSignatureWithMetadata(
+        serviceRequestId: widget.serviceRequestId,
+        signatureType: type,
+        signatureBase64: signatureBase64,
+        userName: userName,
+        coordinates: coordinates,
+        pageNumber: pageNumber,
+      );
+
+      // Provider'ı yenile
       ref.invalidate(serviceRequestByIdProvider(widget.serviceRequestId));
+
+      print('✅ $type imzası kaydedildi');
     } catch (e) {
+      print('❌ İmza kaydetme hatası: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Müşteri imzası kaydedilemedi: $e'),
+            content: Text('İmza kaydedilemedi: $e'),
             backgroundColor: const Color(0xFFEF4444),
           ),
         );
@@ -178,7 +211,7 @@ class _ServiceSlipSignatureFlowPageState extends ConsumerState<ServiceSlipSignat
         throw Exception('Servis bulunamadı');
       }
 
-      // PDF oluştur
+      // Edge Function ile imzalı PDF oluştur
       final pdfService = ServiceSlipPdfService();
       Uint8List pdfBytes;
       
@@ -188,8 +221,16 @@ class _ServiceSlipSignatureFlowPageState extends ConsumerState<ServiceSlipSignat
           templateId: widget.templateId,
         );
       } catch (webError) {
-        print('Web PDF renderer failed, using local: $webError');
-        pdfBytes = await pdfService.generateServiceSlipPdf(serviceRequest);
+        print('❌ Edge Function PDF oluşturma hatası: $webError');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('PDF oluşturma hatası: $webError'),
+              backgroundColor: const Color(0xFFEF4444),
+            ),
+          );
+        }
+        return;
       }
 
       // PDF'i paylaş

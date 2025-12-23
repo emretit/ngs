@@ -220,31 +220,55 @@ class ServiceSlipPdfService {
     pw.Font? fontBold;
     
     try {
-      // Google Fonts API'den font dosyalarını direkt indir
+      // Google Fonts API'den font dosyalarını direkt indir (Türkçe karakter desteği ile)
       if (fontFamilyName.toLowerCase() == 'roboto') {
-        // Roboto Regular
+        // Roboto Regular - Latin Extended karakter seti ile (Türkçe karakterler için)
         try {
-          final regularResponse = await http.get(
-            Uri.parse('https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxP.ttf'),
+          // Google Fonts CSS API'den font URL'ini al (Latin Extended subset ile)
+          final cssResponse = await http.get(
+            Uri.parse('https://fonts.googleapis.com/css2?family=Roboto:wght@400&subset=latin,latin-ext&display=swap'),
           );
-          if (regularResponse.statusCode == 200) {
-            final regularBytes = regularResponse.bodyBytes;
-            fontRegular = pw.Font.ttf(regularBytes.buffer.asByteData());
-            print('✅ Roboto Regular font yüklendi');
+          if (cssResponse.statusCode == 200) {
+            final cssContent = cssResponse.body;
+            // CSS'den font URL'ini parse et
+            final urlMatch = RegExp(r'url\(([^)]+)\)').firstMatch(cssContent);
+            if (urlMatch != null) {
+              final fontUrl = urlMatch.group(1)?.replaceAll("'", '').replaceAll('"', '');
+              if (fontUrl != null) {
+                final regularResponse = await http.get(Uri.parse(fontUrl));
+                if (regularResponse.statusCode == 200) {
+                  final regularBytes = regularResponse.bodyBytes;
+                  fontRegular = pw.Font.ttf(regularBytes.buffer.asByteData());
+                  print('✅ Roboto Regular font yüklendi (Türkçe karakter desteği ile)');
+                }
+              }
+            }
           }
         } catch (e) {
           print('⚠️ Roboto Regular yüklenemedi: $e');
         }
         
-        // Roboto Bold
+        // Roboto Bold - Latin Extended karakter seti ile (Türkçe karakterler için)
         try {
-          final boldResponse = await http.get(
-            Uri.parse('https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlfBBc4.ttf'),
+          // Google Fonts CSS API'den font URL'ini al (Latin Extended subset ile)
+          final cssResponse = await http.get(
+            Uri.parse('https://fonts.googleapis.com/css2?family=Roboto:wght@700&subset=latin,latin-ext&display=swap'),
           );
-          if (boldResponse.statusCode == 200) {
-            final boldBytes = boldResponse.bodyBytes;
-            fontBold = pw.Font.ttf(boldBytes.buffer.asByteData());
-            print('✅ Roboto Bold font yüklendi');
+          if (cssResponse.statusCode == 200) {
+            final cssContent = cssResponse.body;
+            // CSS'den font URL'ini parse et
+            final urlMatch = RegExp(r'url\(([^)]+)\)').firstMatch(cssContent);
+            if (urlMatch != null) {
+              final fontUrl = urlMatch.group(1)?.replaceAll("'", '').replaceAll('"', '');
+              if (fontUrl != null) {
+                final boldResponse = await http.get(Uri.parse(fontUrl));
+                if (boldResponse.statusCode == 200) {
+                  final boldBytes = boldResponse.bodyBytes;
+                  fontBold = pw.Font.ttf(boldBytes.buffer.asByteData());
+                  print('✅ Roboto Bold font yüklendi (Türkçe karakter desteği ile)');
+                }
+              }
+            }
           }
         } catch (e) {
           print('⚠️ Roboto Bold yüklenemedi: $e');

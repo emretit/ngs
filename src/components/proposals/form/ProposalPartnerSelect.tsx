@@ -23,9 +23,10 @@ interface ProposalPartnerSelectProps {
   placeholder?: string;
   hideLabel?: boolean;
   required?: boolean;
+  disabled?: boolean;
 }
 
-const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, required }: ProposalPartnerSelectProps) => {
+const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, required, disabled = false }: ProposalPartnerSelectProps) => {
   const navigate = useNavigate();
   const { setValue, watch } = useFormContext();
   const [isOpen, setIsOpen] = useState(false);
@@ -200,8 +201,8 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
           {required && <span className="text-red-500 ml-1">*</span>}
         </Label>
       )}
-      <Popover 
-          open={isOpen} 
+      <Popover
+          open={isOpen}
           onOpenChange={(open) => {
             setIsOpen(open);
             if (!open) {
@@ -214,21 +215,22 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
               variant="outline"
               role="combobox"
               aria-expanded={isOpen}
+              disabled={disabled}
               className="w-full justify-between mt-0.5 h-8 text-xs"
             >
-              <div className="flex items-center">
+              <div className="flex items-center min-w-0 flex-1">
                 {partnerType === "customer" ? (
                   <User className="mr-1.5 h-3 w-3 shrink-0 opacity-50" />
                 ) : (
                   <Building2 className="mr-1.5 h-3 w-3 shrink-0 opacity-50" />
                 )}
-                <span className="truncate">{getDisplayName()}</span>
+                <span className="truncate min-w-0">{getDisplayName()}</span>
               </div>
               <Search className="ml-1.5 h-3 w-3 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent 
-            className="w-[400px] max-w-[90vw] p-0 z-[9999] pointer-events-auto" 
+            className="w-[400px] max-w-[90vw] p-0 z-[9999] pointer-events-auto overflow-hidden" 
             align="start"
             onOpenAutoFocus={(e) => e.preventDefault()}
             onCloseAutoFocus={(e) => e.preventDefault()}
@@ -270,19 +272,19 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
                       {filteredCustomers?.map((customer) => (
                         <div
                           key={customer.id}
-                          className={`flex items-start py-1 px-1.5 cursor-pointer rounded-md hover:bg-muted/50 ${
+                          className={`flex items-start py-1 px-1.5 cursor-pointer rounded-md hover:bg-muted/50 min-w-0 ${
                             customer.id === customerId ? "bg-muted" : ""
                           }`}
                           onClick={() => handleSelectPartner(customer.id, "customer")}
                         >
-                          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-1.5 mt-0.5 text-[10px] font-medium">
+                          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-1.5 mt-0.5 text-[10px] font-medium shrink-0">
                             {(customer.company || customer.name || 'M').charAt(0).toUpperCase()}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-center">
-                              <p className="font-medium truncate text-xs">{customer.company || customer.name || 'İsimsiz Müşteri'}</p>
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <div className="flex justify-between items-center gap-2 min-w-0">
+                              <p className="font-medium truncate text-xs min-w-0 flex-1">{customer.company || customer.name || 'İsimsiz Müşteri'}</p>
                               {customer.status && (
-                                <span className={`text-[9px] px-1 py-0.5 rounded ${
+                                <span className={`text-[9px] px-1 py-0.5 rounded shrink-0 ${
                                   customer.status === "aktif" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
                                 }`}>
                                   {customer.status === "aktif" ? "Aktif" : "Pasif"}
@@ -293,15 +295,15 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
                               <p className="text-[11px] text-muted-foreground truncate">{customer.name}</p>
                             )}
                             {customer.email && (
-                              <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
-                                <Mail className="h-2 w-2 mr-0.5" />
-                                <span className="truncate">{customer.email}</span>
+                              <div className="flex items-center text-[10px] text-muted-foreground mt-0.5 min-w-0">
+                                <Mail className="h-2 w-2 mr-0.5 shrink-0" />
+                                <span className="truncate min-w-0">{customer.email}</span>
                               </div>
                             )}
                             {customer.mobile_phone && (
                               <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
-                                <Phone className="h-2 w-2 mr-0.5" />
-                                <span>{customer.mobile_phone}</span>
+                                <Phone className="h-2 w-2 mr-0.5 shrink-0" />
+                                <span className="truncate">{customer.mobile_phone}</span>
                               </div>
                             )}
                           </div>
@@ -348,19 +350,19 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
                       {filteredSuppliers?.map((supplier) => (
                         <div
                           key={supplier.id}
-                          className={`flex items-start py-1 px-1.5 cursor-pointer rounded-md hover:bg-muted/50 ${
+                          className={`flex items-start py-1 px-1.5 cursor-pointer rounded-md hover:bg-muted/50 min-w-0 ${
                             supplier.id === supplierId ? "bg-muted" : ""
                           }`}
                           onClick={() => handleSelectPartner(supplier.id, "supplier")}
                         >
-                          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-1.5 mt-0.5">
+                          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-1.5 mt-0.5 shrink-0">
                             <Building2 className="h-2.5 w-2.5" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-center">
-                              <p className="font-medium truncate text-xs">{supplier.name}</p>
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <div className="flex justify-between items-center gap-2 min-w-0">
+                              <p className="font-medium truncate text-xs min-w-0 flex-1">{supplier.name}</p>
                               {supplier.status && (
-                                <span className={`text-[9px] px-1 py-0.5 rounded ${
+                                <span className={`text-[9px] px-1 py-0.5 rounded shrink-0 ${
                                   supplier.status === "aktif" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
                                 }`}>
                                   {supplier.status === "aktif" ? "Aktif" : "Pasif"}
@@ -371,15 +373,15 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
                               <p className="text-[11px] text-muted-foreground truncate">{supplier.company}</p>
                             )}
                             {supplier.email && (
-                              <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
-                                <Mail className="h-2 w-2 mr-0.5" />
-                                <span className="truncate">{supplier.email}</span>
+                              <div className="flex items-center text-[10px] text-muted-foreground mt-0.5 min-w-0">
+                                <Mail className="h-2 w-2 mr-0.5 shrink-0" />
+                                <span className="truncate min-w-0">{supplier.email}</span>
                               </div>
                             )}
                             {supplier.mobile_phone && (
                               <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
-                                <Phone className="h-2 w-2 mr-0.5" />
-                                <span>{supplier.mobile_phone}</span>
+                                <Phone className="h-2 w-2 mr-0.5 shrink-0" />
+                                <span className="truncate">{supplier.mobile_phone}</span>
                               </div>
                             )}
                           </div>

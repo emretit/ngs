@@ -11,7 +11,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
-import { Card, CardContent } from "@/components/ui/card";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
 import { useForm, FormProvider } from "react-hook-form";
@@ -55,6 +54,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
   const [editingType, setEditingType] = useState<{id: number, name: string, display_name: string} | null>(null);
   const [newTypeName, setNewTypeName] = useState("");
   const [isAddingType, setIsAddingType] = useState(false);
+  const [isAddTypeDialogOpen, setIsAddTypeDialogOpen] = useState(false);
 
   // Fırsat tiplerini yükle
   useEffect(() => {
@@ -104,7 +104,10 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
 
   // Fırsat tipi yönetimi
   const handleAddType = async () => {
-    if (!newTypeName.trim()) return;
+    if (!newTypeName.trim()) {
+      toast.error("Fırsat tipi adı boş olamaz");
+      return;
+    }
     
     setIsAddingType(true);
     try {
@@ -120,6 +123,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
       if (data) {
         setOpportunityTypes(prev => [...prev, data]);
         setNewTypeName("");
+        setIsAddTypeDialogOpen(false);
         // Yeni eklenen tipi otomatik olarak seç
         setFormData(prev => ({ ...prev, opportunity_type: data.name }));
         toast.success("Fırsat tipi eklendi ve seçildi");
@@ -223,8 +227,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
           currency: formData.currency,
           expected_close_date: formData.expected_close_date || null,
           customer_id: formData.customer_id || null,
-          employee_id: formData.employee_id || null,
-          project_id: '00000000-0000-0000-0000-0000-000000000001'
+          employee_id: formData.employee_id || null
         });
 
       if (error) throw error;
@@ -387,6 +390,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                 onValueChange={(value) => {
                   if (value === "add_custom") {
                     setNewTypeName("");
+                    setIsAddTypeDialogOpen(true);
                   } else {
                     setFormData(prev => ({ ...prev, opportunity_type: value }));
                   }
@@ -501,52 +505,6 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                   </SelectItem>
                 </SelectContent>
               </Select>
-              
-              {/* Custom type input card - rendered outside dropdown */}
-              {newTypeName !== "" && (
-                <Card className="p-4 border-2 border-dashed border-primary/50 bg-primary/5 mt-2">
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-medium text-foreground">Yeni Fırsat Tipi</h4>
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="Fırsat tipi adı giriniz..."
-                        value={newTypeName}
-                        onChange={(e) => setNewTypeName(e.target.value)}
-                        className="text-sm"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddType();
-                          } else if (e.key === 'Escape') {
-                            e.preventDefault();
-                            setNewTypeName("");
-                          }
-                        }}
-                      />
-                    </div>
-                    <div className="flex gap-1.5 justify-end">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => setNewTypeName("")}
-                        className="h-8 px-3 text-xs"
-                      >
-                        İptal
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        onClick={handleAddType}
-                        disabled={isAddingType || !newTypeName.trim()}
-                        className="h-8 px-3 text-xs"
-                      >
-                        <Plus size={14} className="mr-1" />
-                        {isAddingType ? "Ekleniyor..." : "Ekle"}
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              )}
 
             </div>
           </div>
@@ -599,6 +557,62 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
       onCancel={handleDeleteTypeCancel}
       isLoading={isDeleting}
     />
+
+    {/* Add Opportunity Type Dialog */}
+    <UnifiedDialog
+      isOpen={isAddTypeDialogOpen}
+      onClose={() => {
+        setIsAddTypeDialogOpen(false);
+        setNewTypeName("");
+      }}
+      title="Yeni Fırsat Tipi Ekle"
+      maxWidth="sm"
+      headerColor="blue"
+      zIndex={60}
+    >
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="new_type_name" className="text-sm font-medium text-gray-700">
+            Fırsat Tipi Adı
+          </Label>
+          <Input
+            id="new_type_name"
+            placeholder="Fırsat tipi adı giriniz..."
+            value={newTypeName}
+            onChange={(e) => setNewTypeName(e.target.value)}
+            className="h-8"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && newTypeName.trim()) {
+                e.preventDefault();
+                handleAddType();
+              } else if (e.key === 'Escape') {
+                e.preventDefault();
+                setIsAddTypeDialogOpen(false);
+                setNewTypeName("");
+              }
+            }}
+          />
+        </div>
+      </div>
+      <UnifiedDialogFooter>
+        <UnifiedDialogCancelButton 
+          onClick={() => {
+            setIsAddTypeDialogOpen(false);
+            setNewTypeName("");
+          }} 
+          disabled={isAddingType} 
+        />
+        <UnifiedDialogActionButton
+          onClick={handleAddType}
+          variant="primary"
+          disabled={isAddingType || !newTypeName.trim()}
+          loading={isAddingType}
+        >
+          Ekle
+        </UnifiedDialogActionButton>
+      </UnifiedDialogFooter>
+    </UnifiedDialog>
   </> );
 };
 

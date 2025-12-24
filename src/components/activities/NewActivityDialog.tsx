@@ -26,6 +26,7 @@ interface NewActivityDialogProps {
   relatedItemTitle?: string;
   relatedItemType?: string;
   opportunityId?: string;
+  disabledOpportunity?: boolean;
 }
 
 
@@ -43,7 +44,8 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
   relatedItemId,
   relatedItemTitle,
   relatedItemType,
-  opportunityId
+  opportunityId,
+  disabledOpportunity = false
 }) => {
   const { user } = useAuth();
   const [title, setTitle] = useState("");
@@ -100,6 +102,23 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
         selectedOpportunity = opportunityData;
       }
 
+      // İlişkili öğe bilgilerini belirle
+      let finalRelatedItemId = relatedItemId || null;
+      let finalRelatedItemType = relatedItemType || null;
+      let finalRelatedItemTitle = relatedItemTitle || null;
+      
+      // Eğer props'ta related item yoksa ve fırsat seçildiyse, fırsat bilgilerini kullan
+      if (!finalRelatedItemId && selectedOpportunity) {
+        finalRelatedItemId = selectedOpportunity.id;
+        finalRelatedItemType = 'opportunity';
+        finalRelatedItemTitle = selectedOpportunity.title;
+      } else if (!finalRelatedItemId && selectedCustomerId) {
+        // Müşteri seçildiyse müşteri bilgilerini kullan
+        finalRelatedItemId = selectedCustomerId;
+        finalRelatedItemType = 'customer';
+        finalRelatedItemTitle = selectedCustomerName || selectedCompanyName || null;
+      }
+
       const { data, error } = await supabase
         .from('activities')
         .insert({
@@ -107,14 +126,15 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           description: description.trim() || null,
           status,
           priority: isImportant ? 'high' : 'medium',
+          is_important: isImportant,
           type: 'general',
           due_date: dueDate ? new Date(dueDate).toISOString() : null,
           assignee_id: selectedAssigneeId || null,
           company_id: user?.company_id || null,
-          // Fırsat seçildiyse related_item kolonlarını doldur
-          related_item_id: selectedOpportunity ? selectedOpportunity.id : null,
-          related_item_type: selectedOpportunity ? 'opportunity' : null,
-          related_item_title: selectedOpportunity ? selectedOpportunity.title : null,
+          // İlişkili öğe bilgileri
+          related_item_id: finalRelatedItemId,
+          related_item_type: finalRelatedItemType,
+          related_item_title: finalRelatedItemTitle,
           opportunity_id: selectedOpportunityId || null
         })
         .select()
@@ -275,6 +295,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
               searchPlaceholder="Fırsat ara..."
               noResultsText="Fırsat bulunamadı"
               showLabel={true}
+              disabled={disabledOpportunity}
             />
 
             <EmployeeSelector
@@ -321,65 +342,63 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
 
           {/* Durum ve Önem */}
           <div className="p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-100">
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-gray-600">Durum</Label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="h-9 bg-white border-gray-200 hover:border-primary/50 transition-colors w-full">
-                      <SelectValue placeholder="Durum seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todo">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-red-500" />
-                          <span>Yapılacak</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="in_progress">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                          <span>Devam Ediyor</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="completed">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-green-500" />
-                          <span>Tamamlandı</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="cancelled">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-gray-400" />
-                          <span>İptal Edildi</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div></div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-gray-600">Durum</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="h-9 bg-white border-gray-200 hover:border-primary/50 transition-colors w-full">
+                    <SelectValue placeholder="Durum seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todo">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-red-500" />
+                        <span>Yapılacak</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="in_progress">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                        <span>Devam Ediyor</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="completed">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                        <span>Tamamlandı</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="cancelled">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-gray-400" />
+                        <span>İptal Edildi</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="flex items-center">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-gray-600">Önem</Label>
                 <div className={cn(
-                  "flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-colors cursor-pointer",
+                  "flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-colors cursor-pointer h-9",
                   isImportant 
                     ? "bg-yellow-50 border-yellow-200" 
                     : "bg-white border-gray-200 hover:border-yellow-300"
                 )}>
-                  <Switch
-                    id="is_important"
-                    checked={isImportant}
-                    onCheckedChange={setIsImportant}
-                    className="scale-90"
-                  />
-                  <Label htmlFor="is_important" className="flex items-center gap-1.5 cursor-pointer text-sm font-medium">
+                  <Label htmlFor="is_important" className="flex items-center gap-1.5 cursor-pointer text-sm font-medium flex-1">
                     <Star className={cn(
                       "h-4 w-4 transition-all duration-200",
                       isImportant ? "text-yellow-500 fill-yellow-500 scale-110" : "text-gray-400"
                     )} />
                     <span className={isImportant ? "text-yellow-700" : "text-gray-600"}>Önemli</span>
                   </Label>
+                  <Switch
+                    id="is_important"
+                    checked={isImportant}
+                    onCheckedChange={setIsImportant}
+                    className="scale-90"
+                  />
                 </div>
               </div>
             </div>

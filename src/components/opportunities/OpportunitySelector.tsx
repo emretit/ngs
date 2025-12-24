@@ -37,12 +37,13 @@ interface OpportunitySelectorProps {
   noResultsText?: string;
   showLabel?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
-const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({ 
-  value, 
-  onChange, 
-  error, 
+const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
+  value,
+  onChange,
+  error,
   companyId,
   label = "Fırsat Seçin",
   placeholder = "Fırsat seçin...",
@@ -50,7 +51,8 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
   loadingText = "Fırsatlar yükleniyor...",
   noResultsText = "Fırsat bulunamadı",
   showLabel = true,
-  className = ""
+  className = "",
+  disabled = false
 }) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -147,6 +149,7 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
             variant="outline"
             role="combobox"
             aria-expanded={open}
+            disabled={disabled}
             className={cn(
               "w-full justify-between mt-0.5 h-8 text-xs",
               !value && "text-muted-foreground",

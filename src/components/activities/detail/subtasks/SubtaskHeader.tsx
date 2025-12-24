@@ -10,16 +10,16 @@ interface SubtaskHeaderProps {
 
 const SubtaskHeader = ({ isAddingSubtask, onAddClick, isUpdating }: SubtaskHeaderProps) => {
   return (
-    <div className="flex justify-between items-center">
-      <h3 className="text-md font-semibold">Alt Görevler</h3>
+    <div className="flex justify-end items-center">
       {!isAddingSubtask && (
-        <Button 
-          size="sm" 
-          variant="outline" 
+        <Button
+          size="sm"
+          variant="outline"
           onClick={onAddClick}
           disabled={isUpdating}
+          className="text-xs h-8"
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-3 w-3 mr-1" />
           Alt Görev Ekle
         </Button>
       )}

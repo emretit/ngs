@@ -90,7 +90,7 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
           {opportunity.priority === 'high' && (
             <Star className="h-3 w-3 text-red-500 fill-red-500" />
           )}
-          <span className="text-xs" title={opportunity.title}>
+          <span className="text-xs font-medium" title={opportunity.title}>
             {shortenText(opportunity.title, 35)}
           </span>
         </div>

@@ -350,6 +350,7 @@ export function EnhancedDatePicker({
           "bg-popover/95 backdrop-blur-xl",
           "border-border/50",
           "shadow-2xl shadow-black/20",
+          "z-[9999] pointer-events-auto",
           "rounded-xl",
           "z-[9999] pointer-events-auto"
         )} 

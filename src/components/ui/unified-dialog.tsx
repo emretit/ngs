@@ -14,6 +14,7 @@ interface UnifiedDialogProps {
   headerColor?: "blue" | "green" | "red" | "yellow" | "purple" | "gray";
   showCloseButton?: boolean;
   className?: string;
+  zIndex?: number;
 }
 
 const maxWidthClasses = {
@@ -46,10 +47,10 @@ const dotColorClasses = {
 // Custom overlay component that works with modal={false}
 const UnifiedDialogOverlay = React.forwardRef<
   HTMLDivElement,
-  { isOpen: boolean; onOverlayClick?: () => void }
->(({ isOpen, onOverlayClick }, ref) => {
+  { isOpen: boolean; onOverlayClick?: () => void; style?: React.CSSProperties }
+>(({ isOpen, onOverlayClick, style }, ref) => {
   const [canClose, setCanClose] = React.useState(false);
-  
+
   // Dialog açıldıktan kısa bir süre sonra kapatmaya izin ver
   // Bu, popover kapanırken oluşan click event'lerini engeller
   React.useEffect(() => {
@@ -59,22 +60,22 @@ const UnifiedDialogOverlay = React.forwardRef<
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
-  
+
   if (!isOpen) return null;
-  
+
   const handleClick = (e: React.MouseEvent) => {
     // Sadece doğrudan overlay'e tıklandığında ve canClose true ise kapat
     if (e.target === e.currentTarget && canClose && onOverlayClick) {
       onOverlayClick();
     }
   };
-  
+
   return (
     <div
       ref={ref}
       className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-in fade-in-0"
       onClick={handleClick}
-      style={{ pointerEvents: 'auto' }}
+      style={{ pointerEvents: 'auto', ...style }}
     />
   );
 });
@@ -88,7 +89,8 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
   maxWidth = "md",
   headerColor = "blue",
   showCloseButton = true,
-  className
+  className,
+  zIndex = 50
 }) => {
   const handleOpenChange = (open: boolean) => {
     if (onClose.length === 0) {
@@ -103,17 +105,19 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
   return (
     <DialogPrimitive.Root open={isOpen} onOpenChange={handleOpenChange} modal={false}>
       <DialogPrimitive.Portal>
-        <UnifiedDialogOverlay 
+        <UnifiedDialogOverlay
           isOpen={isOpen}
-          onOverlayClick={() => handleOpenChange(false)} 
+          onOverlayClick={() => handleOpenChange(false)}
+          style={{ zIndex: zIndex - 10 }}
         />
         <DialogPrimitive.Content
           aria-describedby={undefined}
           className={cn(
-            "fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] bg-white rounded-xl shadow-2xl max-h-[95vh] flex flex-col overflow-hidden p-0 pointer-events-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+            "fixed left-[50%] top-[50%] w-full translate-x-[-50%] translate-y-[-50%] bg-white rounded-xl shadow-2xl max-h-[95vh] flex flex-col overflow-hidden p-0 pointer-events-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
             maxWidthClasses[maxWidth],
             className
           )}
+          style={{ zIndex }}
           onOpenAutoFocus={(e) => e.preventDefault()}
           onEscapeKeyDown={() => handleOpenChange(false)}
           onPointerDownOutside={(e) => {
@@ -272,7 +276,7 @@ export const UnifiedDatePicker: React.FC<UnifiedDatePickerProps> = ({
 }) => {
   return (
     <div className={cn("space-y-1", className)}>
-      <Label className="text-sm font-medium text-gray-700">
+      <Label className="text-xs font-medium text-gray-700">
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>

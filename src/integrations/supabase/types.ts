@@ -5922,6 +5922,356 @@ export type Database = {
           },
         ]
       }
+      payroll_items: {
+        Row: {
+          accident_insurance: number | null
+          advances: number | null
+          allowances_cash: number | null
+          allowances_in_kind: number | null
+          base_salary: number | null
+          bonus_premium: number | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          garnishments: number | null
+          gross_salary: number | null
+          has_manual_override: boolean | null
+          id: string
+          income_tax_amount: number | null
+          income_tax_base: number | null
+          manual_override_reason: string | null
+          net_salary: number | null
+          overtime_pay: number | null
+          payroll_run_id: string
+          sgk_base: number | null
+          sgk_base_max: number | null
+          sgk_base_min: number | null
+          sgk_employee_share: number | null
+          sgk_employer_share: number | null
+          stamp_tax_amount: number | null
+          total_deductions: number | null
+          total_employer_cost: number | null
+          unemployment_employee: number | null
+          unemployment_employer: number | null
+          updated_at: string | null
+          updated_by: string | null
+          warnings: Json | null
+        }
+        Insert: {
+          accident_insurance?: number | null
+          advances?: number | null
+          allowances_cash?: number | null
+          allowances_in_kind?: number | null
+          base_salary?: number | null
+          bonus_premium?: number | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          garnishments?: number | null
+          gross_salary?: number | null
+          has_manual_override?: boolean | null
+          id?: string
+          income_tax_amount?: number | null
+          income_tax_base?: number | null
+          manual_override_reason?: string | null
+          net_salary?: number | null
+          overtime_pay?: number | null
+          payroll_run_id: string
+          sgk_base?: number | null
+          sgk_base_max?: number | null
+          sgk_base_min?: number | null
+          sgk_employee_share?: number | null
+          sgk_employer_share?: number | null
+          stamp_tax_amount?: number | null
+          total_deductions?: number | null
+          total_employer_cost?: number | null
+          unemployment_employee?: number | null
+          unemployment_employer?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+          warnings?: Json | null
+        }
+        Update: {
+          accident_insurance?: number | null
+          advances?: number | null
+          allowances_cash?: number | null
+          allowances_in_kind?: number | null
+          base_salary?: number | null
+          bonus_premium?: number | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          garnishments?: number | null
+          gross_salary?: number | null
+          has_manual_override?: boolean | null
+          id?: string
+          income_tax_amount?: number | null
+          income_tax_base?: number | null
+          manual_override_reason?: string | null
+          net_salary?: number | null
+          overtime_pay?: number | null
+          payroll_run_id?: string
+          sgk_base?: number | null
+          sgk_base_max?: number | null
+          sgk_base_min?: number | null
+          sgk_employee_share?: number | null
+          sgk_employer_share?: number | null
+          stamp_tax_amount?: number | null
+          total_deductions?: number | null
+          total_employer_cost?: number | null
+          unemployment_employee?: number | null
+          unemployment_employer?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+          warnings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_items_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_items_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_runs: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          calculated_at: string | null
+          calculated_by: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          locked_at: string | null
+          locked_by: string | null
+          payroll_period_month: number
+          payroll_period_year: number
+          status: string | null
+          unlock_reason: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          calculated_at?: string | null
+          calculated_by?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          payroll_period_month: number
+          payroll_period_year: number
+          status?: string | null
+          unlock_reason?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          calculated_at?: string | null
+          calculated_by?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          payroll_period_month?: number
+          payroll_period_year?: number
+          status?: string | null
+          unlock_reason?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_runs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_totals: {
+        Row: {
+          company_id: string
+          created_at: string
+          employee_count: number | null
+          id: string
+          payroll_run_id: string
+          total_accident_insurance: number | null
+          total_allowances: number | null
+          total_bonus_premium: number | null
+          total_deductions: number | null
+          total_employer_cost: number | null
+          total_gross_salary: number | null
+          total_income_tax: number | null
+          total_net_salary: number | null
+          total_overtime_pay: number | null
+          total_sgk_employee: number | null
+          total_sgk_employer: number | null
+          total_stamp_tax: number | null
+          total_unemployment_employee: number | null
+          total_unemployment_employer: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          employee_count?: number | null
+          id?: string
+          payroll_run_id: string
+          total_accident_insurance?: number | null
+          total_allowances?: number | null
+          total_bonus_premium?: number | null
+          total_deductions?: number | null
+          total_employer_cost?: number | null
+          total_gross_salary?: number | null
+          total_income_tax?: number | null
+          total_net_salary?: number | null
+          total_overtime_pay?: number | null
+          total_sgk_employee?: number | null
+          total_sgk_employer?: number | null
+          total_stamp_tax?: number | null
+          total_unemployment_employee?: number | null
+          total_unemployment_employer?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          employee_count?: number | null
+          id?: string
+          payroll_run_id?: string
+          total_accident_insurance?: number | null
+          total_allowances?: number | null
+          total_bonus_premium?: number | null
+          total_deductions?: number | null
+          total_employer_cost?: number | null
+          total_gross_salary?: number | null
+          total_income_tax?: number | null
+          total_net_salary?: number | null
+          total_overtime_pay?: number | null
+          total_sgk_employee?: number | null
+          total_sgk_employer?: number | null
+          total_stamp_tax?: number | null
+          total_unemployment_employee?: number | null
+          total_unemployment_employer?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_totals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_totals_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_year_parameters: {
+        Row: {
+          accident_insurance_rate: number
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          income_tax_brackets: Json
+          is_active: boolean | null
+          sgk_employee_rate: number
+          sgk_employer_rate: number
+          sgk_max_base: number
+          sgk_min_base: number
+          stamp_tax_rate: number
+          unemployment_employee_rate: number
+          unemployment_employer_rate: number
+          updated_at: string | null
+          updated_by: string | null
+          version: number | null
+          year: number
+        }
+        Insert: {
+          accident_insurance_rate?: number
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          income_tax_brackets?: Json
+          is_active?: boolean | null
+          sgk_employee_rate?: number
+          sgk_employer_rate?: number
+          sgk_max_base: number
+          sgk_min_base: number
+          stamp_tax_rate?: number
+          unemployment_employee_rate?: number
+          unemployment_employer_rate?: number
+          updated_at?: string | null
+          updated_by?: string | null
+          version?: number | null
+          year: number
+        }
+        Update: {
+          accident_insurance_rate?: number
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          income_tax_brackets?: Json
+          is_active?: boolean | null
+          sgk_employee_rate?: number
+          sgk_employer_rate?: number
+          sgk_max_base?: number
+          sgk_min_base?: number
+          stamp_tax_rate?: number
+          unemployment_employee_rate?: number
+          unemployment_employer_rate?: number
+          updated_at?: string | null
+          updated_by?: string | null
+          version?: number | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_year_parameters_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pdf_templates: {
         Row: {
           company_id: string | null
@@ -5968,6 +6318,66 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdks_logs: {
+        Row: {
+          auth_type: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          device_id: string | null
+          direction: string
+          employee_id: string
+          id: string
+          location: string | null
+          log_timestamp: string
+          metadata: Json | null
+          terminal_id: string | null
+        }
+        Insert: {
+          auth_type?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          direction: string
+          employee_id: string
+          id?: string
+          location?: string | null
+          log_timestamp: string
+          metadata?: Json | null
+          terminal_id?: string | null
+        }
+        Update: {
+          auth_type?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          direction?: string
+          employee_id?: string
+          id?: string
+          location?: string | null
+          log_timestamp?: string
+          metadata?: Json | null
+          terminal_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdks_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdks_logs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
@@ -8785,6 +9195,150 @@ export type Database = {
           },
         ]
       }
+      shift_assignments: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          effective_date: string
+          employee_id: string
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          shift_id: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          effective_date: string
+          employee_id: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          shift_id: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          employee_id?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          shift_id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_assignments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_assignments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_assignments_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shifts: {
+        Row: {
+          break_duration_minutes: number | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          daily_overtime_threshold_hours: number | null
+          early_leave_tolerance_minutes: number | null
+          end_time: string
+          holiday_multiplier: number | null
+          id: string
+          is_active: boolean | null
+          late_tolerance_minutes: number | null
+          name: string
+          night_shift_end: string | null
+          night_shift_premium_rate: number | null
+          night_shift_start: string | null
+          rounding_method: string | null
+          shift_type: string
+          start_time: string
+          updated_at: string | null
+          updated_by: string | null
+          weekly_overtime_threshold_hours: number | null
+        }
+        Insert: {
+          break_duration_minutes?: number | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          daily_overtime_threshold_hours?: number | null
+          early_leave_tolerance_minutes?: number | null
+          end_time: string
+          holiday_multiplier?: number | null
+          id?: string
+          is_active?: boolean | null
+          late_tolerance_minutes?: number | null
+          name: string
+          night_shift_end?: string | null
+          night_shift_premium_rate?: number | null
+          night_shift_start?: string | null
+          rounding_method?: string | null
+          shift_type: string
+          start_time: string
+          updated_at?: string | null
+          updated_by?: string | null
+          weekly_overtime_threshold_hours?: number | null
+        }
+        Update: {
+          break_duration_minutes?: number | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          daily_overtime_threshold_hours?: number | null
+          early_leave_tolerance_minutes?: number | null
+          end_time?: string
+          holiday_multiplier?: number | null
+          id?: string
+          is_active?: boolean | null
+          late_tolerance_minutes?: number | null
+          name?: string
+          night_shift_end?: string | null
+          night_shift_premium_rate?: number | null
+          night_shift_start?: string | null
+          rounding_method?: string | null
+          shift_type?: string
+          start_time?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          weekly_overtime_threshold_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spatial_ref_sys: {
         Row: {
           auth_name: string | null
@@ -9635,6 +10189,163 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timesheet_adjustments: {
+        Row: {
+          adjustment_type: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          reason: string
+          timesheet_day_id: string
+        }
+        Insert: {
+          adjustment_type: string
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          reason: string
+          timesheet_day_id: string
+        }
+        Update: {
+          adjustment_type?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string
+          timesheet_day_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timesheet_adjustments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheet_adjustments_timesheet_day_id_fkey"
+            columns: ["timesheet_day_id"]
+            isOneToOne: false
+            referencedRelation: "timesheet_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timesheet_days: {
+        Row: {
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
+          break_duration_minutes: number | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          first_in_time: string | null
+          gross_duration_minutes: number | null
+          id: string
+          is_holiday: boolean | null
+          is_night_shift: boolean | null
+          is_weekend: boolean | null
+          last_out_time: string | null
+          locked_at: string | null
+          locked_by: string | null
+          missing_reason_code: string | null
+          net_working_minutes: number | null
+          overtime_minutes: number | null
+          shift_id: string | null
+          status: string | null
+          updated_at: string | null
+          updated_by: string | null
+          work_date: string
+        }
+        Insert: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          break_duration_minutes?: number | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          first_in_time?: string | null
+          gross_duration_minutes?: number | null
+          id?: string
+          is_holiday?: boolean | null
+          is_night_shift?: boolean | null
+          is_weekend?: boolean | null
+          last_out_time?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          missing_reason_code?: string | null
+          net_working_minutes?: number | null
+          overtime_minutes?: number | null
+          shift_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          work_date: string
+        }
+        Update: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          break_duration_minutes?: number | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          first_in_time?: string | null
+          gross_duration_minutes?: number | null
+          id?: string
+          is_holiday?: boolean | null
+          is_night_shift?: boolean | null
+          is_weekend?: boolean | null
+          last_out_time?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          missing_reason_code?: string | null
+          net_working_minutes?: number | null
+          overtime_minutes?: number | null
+          shift_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timesheet_days_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheet_days_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheet_days_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
             referencedColumns: ["id"]
           },
         ]

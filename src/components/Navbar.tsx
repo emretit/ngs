@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, startTransition } from "react";
 import { prefetchRoute, prefetchRoutes } from "@/utils/routePrefetch";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import {
   Building2,
   Briefcase,
@@ -49,6 +49,8 @@ import {
   Shield,
   ChevronDown,
   ChevronRight,
+  LogOut,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import NavHeader from "./navbar/NavHeader";
@@ -57,6 +59,8 @@ import { navItems } from "./navbar/nav-config";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useSuperAdmin } from "@/hooks/useSuperAdmin";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NavbarProps {
   isCollapsed: boolean;
@@ -72,6 +76,13 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
   const { hasModuleAccess, isLoading: permissionsLoading } = usePermissions();
   const { isSuperAdmin, isLoading: superAdminLoading } = useSuperAdmin();
   const { t } = useTranslation();
+  const { user } = useAuth();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsMobileOpen?.(false);
+    navigate('/');
+  };
   
   // Optimistic UI: pendingPath for instant active state
   const [pendingPath, setPendingPath] = useState<string | null>(null);
@@ -321,7 +332,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
       // Mobile'da state'e göre açılır/kapanır, desktop'ta her zaman görünür
       isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
       // Desktop'ta genişlik, mobile'da her zaman tam genişlik
-      isCollapsed ? "w-[60px] lg:w-[60px]" : "w-72 lg:w-56",
+      isCollapsed ? "w-[60px] lg:w-[60px]" : "w-80 lg:w-56",
       // Mobile: white/glass theme, Desktop: dark theme
       isMobileOpen 
         ? "bg-white/95 backdrop-blur-xl shadow-2xl border-r border-gray-200/30 lg:bg-gradient-to-b lg:from-gray-900 lg:to-gray-950 lg:border-gray-800 lg:shadow-none" 
@@ -339,7 +350,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
         ref={navRef}
         onScroll={handleScroll}
         className={cn(
-          "flex-1 overflow-y-auto px-3 py-4 space-y-1 scrollbar-hide",
+          "flex-1 overflow-y-auto px-4 py-4 space-y-1 scrollbar-hide",
           isMobileOpen && "lg:px-2"
         )}
       >
@@ -362,6 +373,58 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
           </div>
         )}
       </nav>
+
+      {/* Mobile Footer - User info and actions */}
+      {isMobileOpen && !isCollapsed && (
+        <div className="lg:hidden border-t border-gray-200/30 p-4 space-y-3">
+          {/* User Info */}
+          {user && (
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-white font-semibold text-sm">
+                {user.email?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user.email}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {t('nav.loggedIn')}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Quick Actions */}
+          <div className="space-y-2">
+            <Link
+              to="/settings"
+              onClick={() => setIsMobileOpen?.(false)}
+              className="flex items-center gap-3 p-3 text-gray-700 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 font-medium group"
+            >
+              <Settings className="w-5 h-5" />
+              <span>{t('nav.settings')}</span>
+            </Link>
+            
+            <Link
+              to="/help"
+              onClick={() => setIsMobileOpen?.(false)}
+              className="flex items-center gap-3 p-3 text-gray-700 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 font-medium group"
+            >
+              <HelpCircle className="w-5 h-5" />
+              <span>{t('nav.help')}</span>
+            </Link>
+          </div>
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>{t('nav.logout')}</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -6,7 +6,7 @@ const Employees = React.lazy(() => import("@/pages/Employees"));
 const AddEmployee = React.lazy(() => import("@/pages/AddEmployee"));
 const EmployeeDetails = React.lazy(() => import("@/pages/EmployeeDetails"));
 const EmployeeForm = React.lazy(() => import("@/pages/EmployeeForm"));
-const EmployeePayroll = React.lazy(() => import("@/pages/EmployeePayroll"));
+const TimePayrollPage = React.lazy(() => import("@/pages/hr/TimePayrollPage"));
 const EmployeeLeaves = React.lazy(() => import("@/pages/EmployeeLeaves"));
 const EmployeeDocuments = React.lazy(() => import("@/pages/EmployeeDocuments"));
 
@@ -16,7 +16,7 @@ export const employeeRoutes: RouteConfig[] = [
   { path: "/add-employee", component: AddEmployee, protected: true },
   { path: "/employees/:id", component: EmployeeDetails, protected: true },
   { path: "/employees/:id/edit", component: EmployeeForm, protected: true },
-  { path: "/employees/payroll", component: EmployeePayroll, protected: true },
+  { path: "/employees/payroll", component: TimePayrollPage, protected: true },
   { path: "/employees/leaves", component: EmployeeLeaves, protected: true },
   { path: "/employees/documents", component: EmployeeDocuments, protected: true },
 ];

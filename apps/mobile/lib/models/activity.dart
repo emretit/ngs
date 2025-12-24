@@ -14,6 +14,13 @@ class Activity {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? companyId;
+  final bool? isImportant;
+  final bool? isRecurring;
+  final String? recurrenceType;
+  final int? recurrenceInterval;
+  final DateTime? recurrenceEndDate;
+  final List<String>? recurrenceDays;
+  final int? recurrenceDayOfMonth;
 
   Activity({
     required this.id,
@@ -31,6 +38,13 @@ class Activity {
     required this.createdAt,
     required this.updatedAt,
     this.companyId,
+    this.isImportant,
+    this.isRecurring,
+    this.recurrenceType,
+    this.recurrenceInterval,
+    this.recurrenceEndDate,
+    this.recurrenceDays,
+    this.recurrenceDayOfMonth,
   });
 
   factory Activity.fromJson(Map<String, dynamic> json) {
@@ -50,6 +64,13 @@ class Activity {
       createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
       updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toIso8601String()),
       companyId: json['company_id'],
+      isImportant: json['is_important'] as bool?,
+      isRecurring: json['is_recurring'] as bool?,
+      recurrenceType: json['recurrence_type'],
+      recurrenceInterval: json['recurrence_interval'] as int?,
+      recurrenceEndDate: json['recurrence_end_date'] != null ? DateTime.parse(json['recurrence_end_date']) : null,
+      recurrenceDays: json['recurrence_days'] != null ? List<String>.from(json['recurrence_days']) : null,
+      recurrenceDayOfMonth: json['recurrence_day_of_month'] as int?,
     );
   }
 
@@ -70,6 +91,13 @@ class Activity {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'company_id': companyId,
+      'is_important': isImportant,
+      'is_recurring': isRecurring,
+      'recurrence_type': recurrenceType,
+      'recurrence_interval': recurrenceInterval,
+      'recurrence_end_date': recurrenceEndDate?.toIso8601String(),
+      'recurrence_days': recurrenceDays,
+      'recurrence_day_of_month': recurrenceDayOfMonth,
     };
   }
 

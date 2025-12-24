@@ -601,7 +601,12 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return Column(
       children: [
-        ...todaysTasks.map((task) => _buildTaskCard(context, task)).toList(),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: todaysTasks.length,
+          itemBuilder: (context, index) => _buildTaskCard(context, todaysTasks[index]),
+        ),
         if (todaysTasks.length >= 3)
           Padding(
             padding: const EdgeInsets.only(top: 12),

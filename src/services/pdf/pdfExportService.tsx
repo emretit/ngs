@@ -1188,6 +1188,61 @@ export class PdfExportService {
       const serviceDetails = service.service_details as any;
       const instructions = serviceDetails?.instructions || [];
 
+      // Get signatures from service_signatures table
+      let technicianSignature: string | undefined;
+      let customerSignature: string | undefined;
+      
+      try {
+        const { data: signatures } = await supabase
+          .from('service_signatures')
+          .select('signature_type, signature_data')
+          .eq('service_request_id', service.id);
+
+        if (signatures && signatures.length > 0) {
+          for (const sig of signatures) {
+            if (sig.signature_type === 'technician' && sig.signature_data) {
+              const base64Data = sig.signature_data as string;
+              // Convert base64 string to data URL format for @react-pdf/renderer
+              technicianSignature = base64Data.startsWith('data:') 
+                ? base64Data 
+                : `data:image/png;base64,${base64Data}`;
+            } else if (sig.signature_type === 'customer' && sig.signature_data) {
+              const base64Data = sig.signature_data as string;
+              // Convert base64 string to data URL format for @react-pdf/renderer
+              customerSignature = base64Data.startsWith('data:') 
+                ? base64Data 
+                : `data:image/png;base64,${base64Data}`;
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Service signatures fetch error, using fallback:', error);
+        // Fallback to service object if service_signatures table query fails
+        const techSig = (service as any).technician_signature;
+        const custSig = (service as any).customer_signature;
+        
+        technicianSignature = techSig 
+          ? (techSig.startsWith('data:') ? techSig : `data:image/png;base64,${techSig}`)
+          : undefined;
+        customerSignature = custSig 
+          ? (custSig.startsWith('data:') ? custSig : `data:image/png;base64,${custSig}`)
+          : undefined;
+      }
+
+      // If signatures not found in service_signatures table, try service object as fallback
+      if (!technicianSignature && (service as any).technician_signature) {
+        const techSig = (service as any).technician_signature;
+        technicianSignature = techSig.startsWith('data:') 
+          ? techSig 
+          : `data:image/png;base64,${techSig}`;
+      }
+      if (!customerSignature && (service as any).customer_signature) {
+        const custSig = (service as any).customer_signature;
+        customerSignature = custSig.startsWith('data:') 
+          ? custSig 
+          : `data:image/png;base64,${custSig}`;
+      }
+
       return {
         id: service.id,
         serviceNumber: service.service_number || `SR-${service.id.slice(-6).toUpperCase()}`,
@@ -1215,8 +1270,8 @@ export class PdfExportService {
         })),
         instructions: Array.isArray(instructions) ? instructions : [],
         notes: serviceDetails?.notes || service.notes || undefined,
-        technicianSignature: (service as any).technician_signature || undefined,
-        customerSignature: (service as any).customer_signature || undefined,
+        technicianSignature,
+        customerSignature,
         createdAt: service.created_at || new Date().toISOString(),
       };
     } catch (error) {

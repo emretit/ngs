@@ -36,8 +36,8 @@ const NavLink = ({
       onMouseEnter={handleMouseEnter}
       className={cn(
         "flex items-center transition-all duration-200 rounded-xl group relative",
-        isCollapsed ? "justify-center px-2 h-8" : "px-3 space-x-3",
-        isSubItem ? "h-7 text-xs" : "h-10",
+        isCollapsed ? "justify-center px-2 h-8" : "px-2 space-x-2",
+        isSubItem ? "h-6 text-[11px]" : "h-8",
         // Active/Pending states - different styles for mobile vs desktop
         (isActive || isPending) && (
           isMobile 
@@ -62,16 +62,16 @@ const NavLink = ({
     >
       {/* Active indicator dot for mobile */}
       {isMobile && (isActive || isPending) && !isSubItem && (
-        <div className="absolute left-0 w-1 h-6 bg-red-500 rounded-r-full lg:hidden" />
+        <div className="absolute left-0 w-1 h-5 bg-red-500 rounded-r-full lg:hidden" />
       )}
       <Icon className={cn(
         "flex-shrink-0 transition-colors",
-        isSubItem ? "h-3.5 w-3.5" : "h-4 w-4"
+        isSubItem ? "h-3 w-3" : "h-3.5 w-3.5"
       )} />
       {!isCollapsed && (
         <span className={cn(
           "font-medium",
-          isSubItem ? "text-xs" : "text-sm"
+          isSubItem ? "text-[11px]" : "text-xs"
         )}>
           {label}
         </span>

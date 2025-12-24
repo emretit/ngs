@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/customer.dart';
 import '../services/customer_service.dart';
+import '../services/cache_service.dart';
 import 'auth_provider.dart';
 
 /// Customer Service Provider
@@ -8,11 +9,57 @@ final customerServiceProvider = Provider<CustomerService>((ref) {
   return CustomerService();
 });
 
-/// Tüm Müşteriler Provider
-final customersProvider = FutureProvider<List<Customer>>((ref) async {
-  final service = ref.read(customerServiceProvider);
-  return await service.getCustomers();
-});
+/// Tüm Müşteriler Provider (cache ile optimize edilmiş)
+final customersProvider = AsyncNotifierProvider<CustomersNotifier, List<Customer>>(
+  () => CustomersNotifier(),
+);
+
+class CustomersNotifier extends AsyncNotifier<List<Customer>> {
+  @override
+  Future<List<Customer>> build() async {
+    final service = ref.read(customerServiceProvider);
+    final authState = ref.watch(authStateProvider);
+    final companyId = authState.user?.companyId;
+
+    if (companyId == null) {
+      return [];
+    }
+
+    // Cache key oluştur
+    final cacheKey = 'customers_$companyId';
+
+    // Cache kontrolü
+    final cached = CacheService.get<List<Customer>>(cacheKey);
+    if (cached != null) {
+      return cached;
+    }
+
+    // API çağrısı
+    final customers = await service.getCustomers();
+
+    // Cache'e kaydet (5 dakika TTL)
+    CacheService.set(cacheKey, customers, ttl: const Duration(minutes: 5));
+
+    return customers;
+  }
+
+  /// Cache'i temizle ve yeniden yükle
+  Future<void> refresh() async {
+    final authState = ref.read(authStateProvider);
+    final companyId = authState.user?.companyId;
+
+    if (companyId != null) {
+      final cacheKey = 'customers_$companyId';
+      CacheService.remove(cacheKey);
+    }
+
+    // Tüm customer cache'lerini temizle
+    CacheService.invalidate('customers_');
+
+    // Provider'ı yeniden yükle
+    ref.invalidateSelf();
+  }
+}
 
 /// Aktif Müşteriler Provider
 final activeCustomersProvider = FutureProvider<List<Customer>>((ref) async {

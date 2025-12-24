@@ -10,6 +10,7 @@ import 'firebase_options.dart';
 import 'router/app_router.dart';
 import 'services/firebase_messaging_service.dart';
 import 'services/session_activity_service.dart';
+import 'services/logger_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,10 +18,10 @@ void main() async {
   // Load environment variables
   try {
     await dotenv.load(fileName: '.env');
-    print('Environment variables loaded successfully');
+    AppLogger.info('Environment variables loaded successfully');
   } catch (e) {
-    print('Error loading .env file: $e');
-    print('Make sure .env file exists and is properly configured');
+    AppLogger.error('Error loading .env file', e);
+    AppLogger.warning('Make sure .env file exists and is properly configured');
   }
   
   try {
@@ -29,12 +30,12 @@ void main() async {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
-      print('Firebase başarıyla başlatıldı');
+      AppLogger.info('Firebase başarıyla başlatıldı');
     } else {
-      print('Firebase henüz başlatılmamış, Firebase Messaging atlanıyor');
+      AppLogger.info('Firebase henüz başlatılmamış, Firebase Messaging atlanıyor');
     }
   } catch (e) {
-    print('Firebase başlatma hatası: $e');
+    AppLogger.error('Firebase başlatma hatası', e);
     // Firebase başlatılamadıysa uygulamayı durdurma, sadece log yaz
   }
   
@@ -64,12 +65,12 @@ void main() async {
         retryAttempts: 5,
       ),
     );
-    print('Supabase başarıyla başlatıldı');
+    AppLogger.info('Supabase başarıyla başlatıldı');
     
     // Session expired kontrolü (web app'teki gibi)
     final isExpired = await SessionActivityService.isSessionExpired();
     if (isExpired) {
-      print('Session expired due to inactivity');
+      AppLogger.warning('Session expired due to inactivity');
       await Supabase.instance.client.auth.signOut();
       await SessionActivityService.clearActivity();
     } else {
@@ -80,17 +81,17 @@ void main() async {
       }
     }
   } catch (e) {
-    print('Supabase başlatma hatası: $e');
+    AppLogger.error('Supabase başlatma hatası', e);
   }
   
   try {
     // Firebase Messaging'i başlat (Web'de atla)
     if (!kIsWeb) {
       await FirebaseMessagingService.initialize();
-      print('Firebase Messaging başarıyla başlatıldı');
+      AppLogger.info('Firebase Messaging başarıyla başlatıldı');
     }
   } catch (e) {
-    print('Firebase Messaging başlatma hatası: $e');
+    AppLogger.error('Firebase Messaging başlatma hatası', e);
   }
   
   runApp(const ProviderScope(child: MyApp()));

@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../pages/dashboard_page.dart';
 import '../pages/customers_page.dart';
+import '../pages/suppliers_page.dart';
 import '../pages/profile_page.dart';
 import '../pages/notifications_page.dart';
 import '../pages/notification_settings_page.dart';
 import '../pages/modules_page.dart';
-import '../pages/activities_list_page.dart';
 import '../pages/activity_form_page.dart';
 import '../shared/layouts/main_layout.dart';
 // Modüler route'lar - Web app'teki gibi yapı
@@ -74,11 +74,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const CustomersPage(),
           ),
           
-          // Aktiviteler
+          // Tedarikçiler
           GoRoute(
-            path: '/activities',
-            builder: (context, state) => const ActivitiesListPage(),
+            path: '/suppliers',
+            builder: (context, state) => const SuppliersPage(),
           ),
+          
+          // Aktiviteler (form sayfaları)
           GoRoute(
             path: '/activities/new',
             builder: (context, state) => const ActivityFormPage(),

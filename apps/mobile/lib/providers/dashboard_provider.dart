@@ -1,44 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/dashboard_service.dart';
-import '../models/activity.dart';
+import '../services/cache_service.dart';
 import '../models/approval.dart';
 import '../models/notification.dart' as notification_model;
 import 'auth_provider.dart';
 
 final dashboardServiceProvider = Provider<DashboardService>((ref) {
   return DashboardService();
-});
-
-// Kişisel aktiviteler provider
-final personalActivitiesProvider = FutureProvider<List<Activity>>((ref) async {
-  final service = ref.read(dashboardServiceProvider);
-  final authState = ref.read(authStateProvider);
-  final user = authState.user;
-
-  if (user == null) {
-    throw Exception('Kullanıcı giriş yapmamış');
-  }
-
-  return await service.getPersonalActivities(
-    companyId: user.companyId,
-    userId: user.id,
-  );
-});
-
-// Bugünkü aktiviteler provider
-final todayActivitiesProvider = FutureProvider<List<Activity>>((ref) async {
-  final service = ref.read(dashboardServiceProvider);
-  final authState = ref.read(authStateProvider);
-  final user = authState.user;
-
-  if (user == null) {
-    throw Exception('Kullanıcı giriş yapmamış');
-  }
-
-  return await service.getTodayActivities(
-    companyId: user.companyId,
-    userId: user.id,
-  );
 });
 
 // Bekleyen onaylar provider
@@ -74,19 +42,58 @@ final recentNotificationsProvider = FutureProvider<List<notification_model.Notif
   );
 });
 
-// Dashboard istatistikleri provider
-final dashboardStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  final service = ref.read(dashboardServiceProvider);
-  final authState = ref.read(authStateProvider);
-  final user = authState.user;
+// Dashboard istatistikleri provider (cache ile optimize edilmiş)
+final dashboardStatsProvider = AsyncNotifierProvider<DashboardStatsNotifier, Map<String, dynamic>>(
+  () => DashboardStatsNotifier(),
+);
 
-  if (user == null) {
-    throw Exception('Kullanıcı giriş yapmamış');
+class DashboardStatsNotifier extends AsyncNotifier<Map<String, dynamic>> {
+  @override
+  Future<Map<String, dynamic>> build() async {
+    final service = ref.read(dashboardServiceProvider);
+    final authState = ref.watch(authStateProvider);
+    final user = authState.user;
+
+    if (user == null) {
+      throw Exception('Kullanıcı giriş yapmamış');
+    }
+
+    // Cache key oluştur
+    final cacheKey = 'dashboard_stats_${user.companyId}_${user.id}';
+
+    // Cache kontrolü
+    final cached = CacheService.get<Map<String, dynamic>>(cacheKey);
+    if (cached != null) {
+      return cached;
+    }
+
+    // API çağrısı
+    final stats = await service.getDashboardStats(
+      companyId: user.companyId,
+      userId: user.id,
+    );
+
+    // Cache'e kaydet (2 dakika TTL - dashboard stats daha sık değişebilir)
+    CacheService.set(cacheKey, stats, ttl: const Duration(minutes: 2));
+
+    return stats;
   }
 
-  return await service.getDashboardStats(
-    companyId: user.companyId,
-    userId: user.id,
-  );
-});
+  /// Cache'i temizle ve yeniden yükle
+  Future<void> refresh() async {
+    final authState = ref.read(authStateProvider);
+    final user = authState.user;
+
+    if (user != null) {
+      final cacheKey = 'dashboard_stats_${user.companyId}_${user.id}';
+      CacheService.remove(cacheKey);
+    }
+
+    // Tüm dashboard stats cache'lerini temizle
+    CacheService.invalidate('dashboard_stats_');
+
+    // Provider'ı yeniden yükle
+    ref.invalidateSelf();
+  }
+}
 

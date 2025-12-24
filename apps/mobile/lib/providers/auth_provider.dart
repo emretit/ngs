@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_messaging_service.dart';
 import '../services/session_activity_service.dart';
+import '../services/activity_service.dart';
 import '../models/user.dart' as app_models;
 
 final authServiceProvider = Provider<AuthService>((ref) {
@@ -96,6 +97,15 @@ class AuthNotifier extends Notifier<AuthState> {
     await _authService.signOut();
     // Session activity'yi temizle (web app'teki gibi)
     await SessionActivityService.clearActivity();
+    // Employee ID cache'ini temizle
+    ActivityService.clearCache();
     state = AuthState();
+  }
+
+  Future<void> refreshUser() async {
+    if (state.isAuthenticated) {
+      final user = await _authService.getCurrentUserWithCompany();
+      state = state.copyWith(user: user);
+    }
   }
 }

@@ -1,6 +1,7 @@
-import { Receipt, FileText, CreditCard, FileStack, Clock, TrendingUp, User, DollarSign, Calendar, BarChart2 } from "lucide-react";
+import { Receipt, FileText, CreditCard, FileStack, Clock, TrendingUp, User, DollarSign, Calendar, BarChart2, Calculator } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   CustomTabs, 
   CustomTabsContent, 
@@ -11,6 +12,7 @@ import { EmployeeSalaryTab } from "./tabs/EmployeeSalaryTab";
 import { Employee } from "@/types/employee";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface EmployeeTabsProps {
   employee: Employee;
@@ -20,11 +22,13 @@ interface EmployeeTabsProps {
 }
 
 export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: EmployeeTabsProps) => {
+  const navigate = useNavigate();
+  
   // Fetch counts for each tab
   const { data: tabCounts } = useQuery({
     queryKey: ['employee-tab-counts', employee.id],
     queryFn: async () => {
-      const [salaryRes, leaveRes, performanceRes] = await Promise.all([
+      const [salaryRes, leaveRes, performanceRes, payrollRes] = await Promise.all([
         supabase
           .from('employees')
           .select('net_salary')
@@ -38,6 +42,10 @@ export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: Emp
           .from('employee_performance')
           .select('id', { count: 'exact' })
           .eq('employee_id', employee.id),
+        supabase
+          .from('timesheet_days')
+          .select('id', { count: 'exact' })
+          .eq('employee_id', employee.id),
       ]);
 
       return {
@@ -45,9 +53,15 @@ export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: Emp
         leave: leaveRes.count || 0,
         performance: performanceRes.count || 0,
         documents: 0, // TODO: Implement documents count
+        payroll: payrollRes.count || 0,
       };
     },
   });
+
+  const handlePayrollTabClick = () => {
+    // Navigate to payroll page with employee filter
+    navigate(`/employees/payroll?employeeId=${employee.id}`);
+  };
 
   const TabTrigger = ({ value, icon, label, count }: { 
     value: string; 
@@ -114,6 +128,12 @@ export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: Emp
           label="Belgeler" 
           count={tabCounts?.documents}
         />
+        <TabTrigger 
+          value="payroll" 
+          icon={<Calculator className="h-4 w-4" />} 
+          label="Puantaj ve Bordro" 
+          count={tabCounts?.payroll}
+        />
       </CustomTabsList>
 
       <CustomTabsContent value="salary">
@@ -143,6 +163,29 @@ export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: Emp
           title="Belgeler"
           description="Çalışanın sözleşmeleri, sertifikaları ve diğer belgeleri burada görüntülenecek."
         />
+      </CustomTabsContent>
+
+      <CustomTabsContent value="payroll">
+        <Card className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Calculator className="w-5 h-5" />
+                Puantaj ve Bordro
+              </h3>
+              <Button
+                onClick={handlePayrollTabClick}
+                variant="outline"
+                size="sm"
+              >
+                Tam Sayfayı Aç →
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Çalışanın puantaj ve bordro bilgilerini görüntülemek için tam sayfayı açın.
+            </p>
+          </div>
+        </Card>
       </CustomTabsContent>
     </CustomTabs>
   );

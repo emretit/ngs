@@ -19,57 +19,77 @@ class ServiceSlipPdfService {
   }) async {
     final pdf = pw.Document();
 
-    // Şirket bilgilerini Supabase'den çek
+    // Tüm bağımsız data fetch'leri paralel olarak yap (optimize edilmiş)
     final supabase = Supabase.instance.client;
     final userId = supabase.auth.currentUser?.id;
 
-    Map<String, dynamic>? companyData;
-    if (userId != null) {
-      try {
-        // Kullanıcının company_id'sini al
-        final profileResponse = await supabase
-            .from('profiles')
-            .select('company_id')
-            .eq('id', userId)
-            .maybeSingle();
-
-        final companyId = profileResponse?['company_id'];
-
-        if (companyId != null) {
-          // Şirket bilgilerini çek
-          final companyResponse = await supabase
-              .from('companies')
+    // Paralel data fetch'ler
+    final results = await Future.wait([
+      // 1. Profile'dan company_id çek
+      userId != null
+          ? supabase
+              .from('profiles')
+              .select('company_id')
+              .eq('id', userId)
+              .maybeSingle()
+              .catchError((e) {
+                print('Profile çekilirken hata: $e');
+                return null;
+              })
+          : Future.value(null),
+      // 2. Template çek (eğer templateId verilmişse)
+      templateId != null
+          ? supabase
+              .from('service_templates')
               .select('*')
-              .eq('id', companyId)
-              .eq('is_active', true)
-              .maybeSingle();
+              .eq('id', templateId)
+              .single()
+              .catchError((e) {
+                print('❌ Şablon yüklenirken hata: $e');
+                return null;
+              })
+          : Future.value(null),
+      // 3. Service items çek
+      ServiceRequestService()
+          .getServiceItems(serviceRequest.id)
+          .catchError((e) {
+            print('Ürünler çekilirken hata: $e');
+            return <Map<String, dynamic>>[];
+          }),
+    ]);
 
-          companyData = companyResponse;
-        }
+    final profileResponse = results[0] as Map<String, dynamic>?;
+    final templateResponse = results[1] as Map<String, dynamic>?;
+    var usedProducts = results[2] as List<Map<String, dynamic>>;
+
+    // Company bilgilerini çek (profile'dan sonra)
+    Map<String, dynamic>? companyData;
+    final companyId = profileResponse?['company_id'];
+    if (companyId != null) {
+      try {
+        companyData = await supabase
+            .from('companies')
+            .select('*')
+            .eq('id', companyId)
+            .eq('is_active', true)
+            .maybeSingle();
       } catch (e) {
         print('Şirket bilgileri çekilirken hata: $e');
       }
     }
 
-    // 1. Şablonu çek (eğer templateId verilmişse)
+    // Template'den pdf_schema'yı parse et
     Map<String, dynamic>? pdfSchema;
-    if (templateId != null) {
+    if (templateResponse != null) {
       try {
-        print('📋 Şablon çekiliyor: $templateId');
-        final response = await supabase
-            .from('service_templates')
-            .select('*')
-            .eq('id', templateId)
-            .single();
-        
-        // 2. pdf_schema'yı parse et
-        if (response != null && response['service_details'] != null) {
-          final serviceDetails = response['service_details'] as Map<String, dynamic>?;
+        print('📋 Şablon çekildi: ${templateResponse['name']}');
+        if (templateResponse['service_details'] != null) {
+          final serviceDetails = templateResponse['service_details'] as Map<String, dynamic>?;
           print('📦 service_details keys: ${serviceDetails?.keys.toList()}');
           
           if (serviceDetails != null && serviceDetails['pdf_schema'] != null) {
             pdfSchema = Map<String, dynamic>.from(serviceDetails['pdf_schema']);
-            print('✅ Şablon yüklendi: ${response['name']}');
+            print('✅ Şablon yüklendi: ${templateResponse['name']}');
             print('📄 pdf_schema keys: ${pdfSchema.keys.toList()}');
             
             // Header ayarlarını logla
@@ -98,11 +118,10 @@ class ServiceSlipPdfService {
           }
         } else {
           print('⚠️ Şablon bulundu ama service_details yok');
-          print('   response keys: ${response?.keys.toList()}');
+          print('   response keys: ${templateResponse.keys.toList()}');
         }
       } catch (e) {
-        print('❌ Şablon yüklenirken hata: $e');
-        // Hata durumunda şablon olmadan devam et
+        print('❌ Şablon parse edilirken hata: $e');
       }
     }
 
@@ -148,14 +167,10 @@ class ServiceSlipPdfService {
     final problemDescription = serviceDetails['problem_description'] ?? serviceRequest.description ?? '';
     final servicePerformed = serviceDetails['service_performed'] ?? serviceRequest.serviceResult ?? '';
 
-    // Kullanılan ürünleri service_items tablosundan çek
-    List<Map<String, dynamic>> usedProducts = [];
-    try {
-      final serviceRequestService = ServiceRequestService();
-      usedProducts = await serviceRequestService.getServiceItems(serviceRequest.id);
-    } catch (e) {
-      print('Ürünler çekilirken hata: $e');
+    // Kullanılan ürünler zaten paralel fetch'te alındı, fallback kontrolü
+    if (usedProducts.isEmpty) {
       // Hata durumunda serviceDetails içinden deneyebiliriz (eski veriler için)
+      final serviceDetails = serviceRequest.serviceDetails ?? {};
       if (serviceDetails['used_products'] != null) {
         usedProducts = List<Map<String, dynamic>>.from(serviceDetails['used_products']);
       }
@@ -181,7 +196,7 @@ class ServiceSlipPdfService {
       }
     }
 
-    // Logo yükle (eğer varsa)
+    // Logo yükle (eğer varsa) - company bilgileri alındıktan sonra paralel yapılabilir
     pw.ImageProvider? logoImage;
     if (companyLogoUrl != null && companyLogoUrl.isNotEmpty) {
       try {
@@ -206,6 +221,7 @@ class ServiceSlipPdfService {
     final padding = pageSettings['padding'] ?? {'top': 40, 'right': 40, 'bottom': 40, 'left': 40};
     final fontSize = (pageSettings['fontSize'] ?? 12).toDouble();
     final fontFamilyName = pageSettings['fontFamily']?.toString() ?? 'Roboto';
+    final fontWeight = pageSettings['fontWeight']?.toString() ?? 'normal';
     final fontColor = _parseColor(pageSettings['fontColor'] ?? '#000000');
     final backgroundColor = _parseColor(pageSettings['backgroundColor'] ?? '#FFFFFF');
     
@@ -328,8 +344,13 @@ class ServiceSlipPdfService {
     }
     
     // Font yüklenemediyse standart fontları kullan
+    // fontWeight ayarına göre font seçimi yapılabilir ama şu an için
+    // hem regular hem bold yükleniyor ve ThemeData'da kullanılıyor
     fontRegular ??= pw.Font.helvetica();
     fontBold ??= pw.Font.helveticaBold();
+    
+    // Font ayarlarını logla
+    print('🔤 Font Weight ayarı: $fontWeight');
 
     // Sayfa formatını oluştur
     PdfPageFormat pageFormat;
@@ -395,6 +416,7 @@ class ServiceSlipPdfService {
     final notesSettings = pdfSchema?['notes'] ?? {};
     final footer = notesSettings['footer'] ?? 'Servis hizmeti için teşekkür ederiz.';
     final footerFontSize = (notesSettings['footerFontSize'] ?? 10).toDouble();
+    final showFooterLogo = notesSettings['showFooterLogo'] ?? false;
 
     pdf.addPage(
       pw.MultiPage(
@@ -408,7 +430,7 @@ class ServiceSlipPdfService {
             pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-            // HEADER - Logo ve Şirket Bilgileri (Sol) + Başlık (Sağ)
+            // HEADER - LogoPosition'a göre dinamik layout
             if (showLogo || showCompanyInfo || showTitle)
               pw.Container(
                 padding: const pw.EdgeInsets.only(bottom: 4),
@@ -416,93 +438,23 @@ class ServiceSlipPdfService {
                 decoration: const pw.BoxDecoration(
                   border: pw.Border(bottom: pw.BorderSide(width: 1.5, color: PdfColors.grey300)),
                 ),
-                child: pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    // Sol taraf - Logo + Şirket Bilgileri
-                    pw.Expanded(
-                      flex: 2,
-                      child: pw.Row(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          // Logo
-                          if (showLogo && logoImage != null)
-                            pw.Container(
-                              width: logoSize,
-                              height: logoSize,
-                              margin: const pw.EdgeInsets.only(right: 6),
-                              child: pw.Image(logoImage, fit: pw.BoxFit.contain),
-                            ),
-                          // Şirket Bilgileri
-                          if (showCompanyInfo)
-                            pw.Expanded(
-                              child: pw.Column(
-                                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                                children: [
-                                  pw.Text(
-                                    companyName,
-                                    style: pw.TextStyle(
-                                      fontSize: companyInfoFontSize,
-                                      fontWeight: pw.FontWeight.bold,
-                                      color: fontColor,
-                                    ),
-                                  ),
-                                  if (companyAddress.isNotEmpty) ...[
-                                    pw.SizedBox(height: 1),
-                                    pw.Text(
-                                      companyAddress,
-                                      style: pw.TextStyle(fontSize: companyInfoFontSize - 2, color: fontColor),
-                                    ),
-                                  ],
-                                  if (companyPhone.isNotEmpty) ...[
-                                    pw.SizedBox(height: 1),
-                                    pw.Text(
-                                      'Tel: $companyPhone',
-                                      style: pw.TextStyle(fontSize: companyInfoFontSize - 2, color: fontColor),
-                                    ),
-                                  ],
-                                  if (companyEmail.isNotEmpty) ...[
-                                    pw.SizedBox(height: 1),
-                                    pw.Text(
-                                      'E-posta: $companyEmail',
-                                      style: pw.TextStyle(fontSize: companyInfoFontSize - 2, color: fontColor),
-                                    ),
-                                  ],
-                                  if (companyWebsite.isNotEmpty) ...[
-                                    pw.SizedBox(height: 1),
-                                    pw.Text(
-                                      'Web: $companyWebsite',
-                                      style: pw.TextStyle(fontSize: companyInfoFontSize - 2, color: fontColor),
-                                    ),
-                                  ],
-                                  if (companyTaxNumber.isNotEmpty) ...[
-                                    pw.SizedBox(height: 1),
-                                    pw.Text(
-                                      companyTaxNumber,
-                                      style: pw.TextStyle(fontSize: companyInfoFontSize - 2, color: fontColor),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    // Sağ taraf - Başlık
-                    if (showTitle)
-                      pw.Container(
-                        alignment: pw.Alignment.centerRight,
-                        child: pw.Text(
-                          title,
-                          style: pw.TextStyle(
-                            fontSize: titleFontSize,
-                            fontWeight: pw.FontWeight.bold,
-                            color: fontColor,
-                          ),
-                        ),
-                      ),
-                  ],
+                child: _buildHeader(
+                  logoPosition: logoPosition,
+                  showLogo: showLogo,
+                  logoImage: logoImage,
+                  logoSize: logoSize,
+                  showCompanyInfo: showCompanyInfo,
+                  companyName: companyName,
+                  companyAddress: companyAddress,
+                  companyPhone: companyPhone,
+                  companyEmail: companyEmail,
+                  companyWebsite: companyWebsite,
+                  companyTaxNumber: companyTaxNumber,
+                  companyInfoFontSize: companyInfoFontSize,
+                  showTitle: showTitle,
+                  title: title,
+                  titleFontSize: titleFontSize,
+                  fontColor: fontColor,
                 ),
               ),
 
@@ -734,10 +686,24 @@ class ServiceSlipPdfService {
             // Footer Notu
             if (footer.isNotEmpty) ...[
               pw.SizedBox(height: 8),
-              pw.Text(
-                footer,
-                style: pw.TextStyle(fontSize: footerFontSize, color: fontColor),
-                textAlign: pw.TextAlign.center,
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.center,
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  // Footer Logo (eğer gösterilecekse)
+                  if (showFooterLogo && logoImage != null) ...[
+                    pw.Image(logoImage, width: 30, height: 30, fit: pw.BoxFit.contain),
+                    pw.SizedBox(width: 8),
+                  ],
+                  // Footer Text
+                  pw.Flexible(
+                    child: pw.Text(
+                      footer,
+                      style: pw.TextStyle(fontSize: footerFontSize, color: fontColor),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  ),
+                ],
               ),
             ],
           ],
@@ -748,6 +714,179 @@ class ServiceSlipPdfService {
     );
 
     return pdf.save();
+  }
+
+  // Header oluşturucu - logoPosition'a göre dinamik layout
+  pw.Widget _buildHeader({
+    required String logoPosition,
+    required bool showLogo,
+    pw.ImageProvider? logoImage,
+    required double logoSize,
+    required bool showCompanyInfo,
+    required String companyName,
+    required String companyAddress,
+    required String companyPhone,
+    required String companyEmail,
+    required String companyWebsite,
+    required String companyTaxNumber,
+    required double companyInfoFontSize,
+    required bool showTitle,
+    required String title,
+    required double titleFontSize,
+    required PdfColor fontColor,
+  }) {
+    // Şirket bilgileri widget'ı
+    pw.Widget buildCompanyInfo() {
+      if (!showCompanyInfo) return pw.SizedBox.shrink();
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            companyName,
+            style: pw.TextStyle(
+              fontSize: companyInfoFontSize,
+              fontWeight: pw.FontWeight.bold,
+              color: fontColor,
+            ),
+          ),
+          if (companyAddress.isNotEmpty) ...[
+            pw.SizedBox(height: 1),
+            pw.Text(
+              companyAddress,
+              style: pw.TextStyle(fontSize: companyInfoFontSize - 2, color: fontColor),
+            ),
+          ],
+          if (companyPhone.isNotEmpty) ...[
+            pw.SizedBox(height: 1),
+            pw.Text(
+              'Tel: $companyPhone',
+              style: pw.TextStyle(fontSize: companyInfoFontSize - 2, color: fontColor),
+            ),
+          ],
+          if (companyEmail.isNotEmpty) ...[
+            pw.SizedBox(height: 1),
+            pw.Text(
+              'E-posta: $companyEmail',
+              style: pw.TextStyle(fontSize: companyInfoFontSize - 2, color: fontColor),
+            ),
+          ],
+          if (companyWebsite.isNotEmpty) ...[
+            pw.SizedBox(height: 1),
+            pw.Text(
+              'Web: $companyWebsite',
+              style: pw.TextStyle(fontSize: companyInfoFontSize - 2, color: fontColor),
+            ),
+          ],
+          if (companyTaxNumber.isNotEmpty) ...[
+            pw.SizedBox(height: 1),
+            pw.Text(
+              companyTaxNumber,
+              style: pw.TextStyle(fontSize: companyInfoFontSize - 2, color: fontColor),
+            ),
+          ],
+        ],
+      );
+    }
+
+    // Logo widget'ı
+    pw.Widget? buildLogo() {
+      if (!showLogo || logoImage == null) return null;
+      return pw.Container(
+        width: logoSize,
+        height: logoSize,
+        margin: const pw.EdgeInsets.only(right: 6),
+        child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+      );
+    }
+
+    // Başlık widget'ı
+    pw.Widget? buildTitle() {
+      if (!showTitle) return null;
+      return pw.Text(
+        title,
+        style: pw.TextStyle(
+          fontSize: titleFontSize,
+          fontWeight: pw.FontWeight.bold,
+          color: fontColor,
+        ),
+      );
+    }
+
+    // LogoPosition'a göre layout oluştur
+    if (logoPosition == 'center') {
+      // Center: Logo ortada, altında şirket bilgileri ve başlık
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          if (buildLogo() != null) buildLogo()!,
+          if (buildLogo() != null && (showCompanyInfo || showTitle)) pw.SizedBox(height: 8),
+          buildCompanyInfo(),
+          if (showCompanyInfo && showTitle) pw.SizedBox(height: 4),
+          if (buildTitle() != null) buildTitle()!,
+        ],
+      );
+    } else if (logoPosition == 'right') {
+      // Right: Başlık sol tarafta, logo ve şirket bilgileri sağ tarafta
+      return pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          // Sol taraf - Başlık
+          if (buildTitle() != null)
+            pw.Expanded(
+              flex: 1,
+              child: buildTitle()!,
+            )
+          else
+            pw.SizedBox.shrink(),
+          // Sağ taraf - Şirket Bilgileri + Logo
+          pw.Expanded(
+            flex: 2,
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.end,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Expanded(
+                  child: pw.Container(
+                    alignment: pw.Alignment.centerRight,
+                    child: buildCompanyInfo(),
+                  ),
+                ),
+                if (buildLogo() != null) ...[
+                  pw.SizedBox(width: 6),
+                  buildLogo()!,
+                ],
+              ],
+            ),
+          ),
+        ],
+      );
+    } else {
+      // Left (default): Logo sol tarafta, şirket bilgileri yanında, başlık sağ tarafta
+      return pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          // Sol taraf - Logo + Şirket Bilgileri
+          pw.Expanded(
+            flex: 2,
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                if (buildLogo() != null) buildLogo()!,
+                pw.Expanded(child: buildCompanyInfo()),
+              ],
+            ),
+          ),
+          // Sağ taraf - Başlık
+          if (buildTitle() != null)
+            pw.Container(
+              alignment: pw.Alignment.centerRight,
+              child: buildTitle()!,
+            ),
+        ],
+      );
+    }
   }
 
   // Kompakt info satırı oluşturucu

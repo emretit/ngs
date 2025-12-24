@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../providers/dashboard_provider.dart';
+import '../providers/activity_provider.dart';
 import '../models/activity.dart';
 import '../services/firebase_messaging_service.dart';
 
@@ -27,7 +28,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final statsAsync = ref.watch(dashboardStatsProvider);
-    final todayActivitiesAsync = ref.watch(todayActivitiesProvider);
+    final personalActivitiesAsync = ref.watch(personalActivitiesProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F7),
@@ -69,7 +70,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(dashboardStatsProvider);
-          ref.invalidate(todayActivitiesProvider);
+          ref.invalidate(personalActivitiesProvider);
         },
         color: const Color(0xFFB73D3D),
         child: SingleChildScrollView(
@@ -95,10 +96,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.25),
+                              color: Colors.white.withValues(alpha: 0.25),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
+                                color: Colors.white.withValues(alpha: 0.3),
                                 width: 1.5,
                               ),
                             ),
@@ -116,7 +117,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                                 Text(
                                   'Hoş geldiniz,',
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -158,18 +159,48 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Quick Actions Grid - Kompakt
-                    _buildQuickActionsGrid(),
-                    const SizedBox(height: 20),
-                    
-                    // Today's Activities - Kompakt
-                    _buildSectionHeader('Bugünkü Aktiviteler', () => context.go('/activities')),
-                    const SizedBox(height: 12),
-                    todayActivitiesAsync.when(
-                      data: (activities) => _buildActivitiesCompact(activities),
-                      loading: () => _buildLoadingActivities(),
-                      error: (_, __) => _buildEmptyState('Aktiviteler yüklenemedi', CupertinoIcons.exclamationmark_triangle),
+                    // Bugünkü Görevlerim
+                    _buildPersonalSection(
+                      'Bugünkü Görevlerim',
+                      CupertinoIcons.check_mark_circled,
+                      const Color(0xFF3B82F6),
+                      () => context.go('/crm'),
                     ),
+                    const SizedBox(height: 12),
+                    personalActivitiesAsync.when(
+                      data: (activities) {
+                        final today = DateTime.now();
+                        final todayActivities = activities.where((a) {
+                          if (a.dueDate == null) return false;
+                          return a.dueDate!.day == today.day &&
+                              a.dueDate!.month == today.month &&
+                              a.dueDate!.year == today.year &&
+                              a.status != 'completed';
+                        }).toList();
+                        return _buildMyTasks(todayActivities);
+                      },
+                      loading: () => _buildLoadingTasks(),
+                      error: (_, __) => _buildEmptyTasksState(),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Bekleyen Onaylarım
+                    _buildPersonalSection(
+                      'Bekleyen Onaylarım',
+                      CupertinoIcons.checkmark_seal,
+                      const Color(0xFFFF9500),
+                      null,
+                    ),
+                    const SizedBox(height: 12),
+                    statsAsync.when(
+                      data: (stats) => _buildPendingApprovals(stats),
+                      loading: () => _buildLoadingApprovals(),
+                      error: (_, __) => const SizedBox.shrink(),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Hızlı İşlemler
+                    _buildQuickActions(),
                   ],
                 ),
               ),
@@ -225,10 +256,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Container(
         padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
@@ -250,7 +281,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           Text(
             label,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
                 fontSize: 9,
               fontWeight: FontWeight.w500,
             ),
@@ -261,130 +292,55 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
-  // Hızlı Aksiyonlar Grid - Daha Kompakt
-  Widget _buildQuickActionsGrid() {
-    final actions = [
-      _QuickAction('CRM', CupertinoIcons.chart_bar_alt_fill, const Color(0xFF3B82F6), '/crm'),
-      _QuickAction('Müşteriler', CupertinoIcons.person_2_fill, const Color(0xFF10B981), '/customers'),
-      _QuickAction('Servis', CupertinoIcons.wrench_fill, const Color(0xFFB73D3D), '/service/management'),
-      _QuickAction('Fırsatlar', CupertinoIcons.star_fill, const Color(0xFFF59E0B), '/sales/opportunities'),
-      _QuickAction('Teklifler', CupertinoIcons.doc_fill, const Color(0xFF8B5CF6), '/sales/proposals'),
-      _QuickAction('Finans', CupertinoIcons.money_dollar_circle_fill, const Color(0xFF06B6D4), '/finance'),
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.0,
-      ),
-      itemCount: actions.length,
-      itemBuilder: (context, index) {
-        final action = actions[index];
-        return _buildQuickActionCard(action);
-      },
-    );
-  }
-
-  Widget _buildQuickActionCard(_QuickAction action) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => context.go(action.route),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: action.color.withOpacity(0.15),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: action.color.withOpacity(0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      action.color.withOpacity(0.15),
-                      action.color.withOpacity(0.08),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(action.icon, color: action.color, size: 22),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                action.label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF000000),
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Bölüm Başlığı
-  Widget _buildSectionHeader(String title, VoidCallback? onViewAll) {
+  // Kişisel Bölüm Başlığı
+  Widget _buildPersonalSection(String title, IconData icon, Color color, VoidCallback? onViewAll) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF000000),
-            letterSpacing: -0.5,
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color, color.withValues(alpha: 0.7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: Colors.white, size: 16),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF000000),
+              letterSpacing: -0.5,
+            ),
           ),
         ),
         if (onViewAll != null)
-          TextButton(
+          CupertinoButton(
             onPressed: onViewAll,
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
+            padding: EdgeInsets.zero,
+            minSize: 0,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Tümünü Gör',
+                  'Tümü',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFFB73D3D),
+                    color: color,
                   ),
                 ),
                 const SizedBox(width: 2),
                 Icon(
                   CupertinoIcons.chevron_right,
                   size: 14,
-                  color: const Color(0xFFB73D3D),
+                  color: color,
                 ),
               ],
             ),
@@ -393,29 +349,37 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
-  // Kompakt Aktiviteler
-  Widget _buildActivitiesCompact(List<Activity> activities) {
+  // Bugünkü Görevlerim
+  Widget _buildMyTasks(List<Activity> activities) {
     if (activities.isEmpty) {
-      return _buildEmptyState('Bugün için aktivite yok', CupertinoIcons.checkmark_alt_circle);
+      return _buildEmptyTasksState();
     }
 
-    return Column(
-      children: activities.take(4).map((activity) => _buildActivityItemCompact(activity)).toList(),
+    final displayActivities = activities.take(3).toList();
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: displayActivities.length,
+      itemBuilder: (context, index) => _buildTaskCard(displayActivities[index]),
     );
   }
 
-  Widget _buildActivityItemCompact(Activity activity) {
+  Widget _buildTaskCard(Activity activity) {
     Color priorityColor;
+    String priorityLabel;
     switch (activity.priority) {
       case 'high':
       case 'urgent':
         priorityColor = const Color(0xFFEF4444);
+        priorityLabel = 'Acil';
         break;
       case 'medium':
-        priorityColor = const Color(0xFFF59E0B);
+        priorityColor = const Color(0xFFFF9500);
+        priorityLabel = 'Orta';
         break;
       default:
         priorityColor = const Color(0xFF10B981);
+        priorityLabel = 'Normal';
     }
 
     return Container(
@@ -424,7 +388,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.grey.withOpacity(0.1),
+          color: Colors.grey.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -434,16 +398,32 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           onTap: () => context.go('/activities/${activity.id}/edit'),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             child: Row(
               children: [
+                // Checkbox
                 Container(
-                  width: 6,
-                  height: 40,
+                  width: 24,
+                  height: 24,
                   decoration: BoxDecoration(
-                    color: priorityColor,
-                    borderRadius: BorderRadius.circular(3),
+                    border: Border.all(
+                      color: activity.status == 'completed'
+                          ? const Color(0xFF10B981)
+                          : priorityColor.withValues(alpha:0.3),
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                    color: activity.status == 'completed'
+                        ? const Color(0xFF10B981)
+                        : Colors.transparent,
                   ),
+                  child: activity.status == 'completed'
+                      ? const Icon(
+                          CupertinoIcons.checkmark,
+                          size: 16,
+                          color: Colors.white,
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -452,62 +432,387 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     children: [
                       Text(
                         activity.title,
-                        style: const TextStyle(
-                          fontSize: 14,
+                        style: TextStyle(
+                          fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF000000),
+                          color: activity.status == 'completed'
+                              ? Colors.grey[400]
+                              : const Color(0xFF000000),
+                          decoration: activity.status == 'completed'
+                              ? TextDecoration.lineThrough
+                              : null,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (activity.description != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          activity.description!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      if (activity.dueDate != null) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              CupertinoIcons.clock,
+                              size: 12,
+                              color: activity.isOverdue
+                                  ? const Color(0xFFEF4444)
+                                  : Colors.grey[500],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatTime(activity.dueDate!),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: activity.isOverdue
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFF8E8E93),
+                                fontWeight: activity.isOverdue
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ],
                   ),
                 ),
-                if (activity.dueDate != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: activity.isOverdue 
-                          ? const Color(0xFFEF4444).withOpacity(0.1)
-                          : Colors.grey.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          CupertinoIcons.clock,
-                          size: 12,
-                          color: activity.isOverdue ? const Color(0xFFEF4444) : const Color(0xFF8E8E93),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatTime(activity.dueDate!),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: activity.isOverdue ? const Color(0xFFEF4444) : const Color(0xFF8E8E93),
-                          ),
-                        ),
-                      ],
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: priorityColor.withValues(alpha:0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    priorityLabel,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: priorityColor,
                     ),
                   ),
+                ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // Bekleyen Onaylarım
+  Widget _buildPendingApprovals(Map<String, dynamic> stats) {
+    final pendingCount = stats['pendingApprovalsCount'] ?? 0;
+
+    if (pendingCount == 0) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF10B981).withValues(alpha:0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFF10B981).withValues(alpha:0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha:0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                CupertinoIcons.checkmark_circle_fill,
+                color: Color(0xFF10B981),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Harika! Bekleyen onayınız yok',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF10B981),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFFF9500).withValues(alpha:0.1),
+            const Color(0xFFFF9500).withValues(alpha:0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFFF9500).withValues(alpha:0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF9500).withValues(alpha:0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              CupertinoIcons.exclamationmark_circle_fill,
+              color: Color(0xFFFF9500),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$pendingCount Bekleyen Onay',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF000000),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'İşlemlerinizi tamamlayın',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF8E8E93),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            CupertinoIcons.chevron_right,
+            color: Color(0xFFFF9500),
+            size: 18,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Hızlı İşlemler - Küçük Butonlar
+  Widget _buildQuickActions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFB73D3D), Color(0xFF8B2F2F)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                CupertinoIcons.add_circled_solid,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'Hızlı İşlemler',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF000000),
+                letterSpacing: -0.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildQuickActionButton(
+                'Yeni Servis',
+                CupertinoIcons.wrench,
+                const Color(0xFFB73D3D),
+                () => context.go('/service/new'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildQuickActionButton(
+                'Yeni Aktivite',
+                CupertinoIcons.calendar_badge_plus,
+                const Color(0xFF3B82F6),
+                () => context.go('/activities/new'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _buildQuickActionButton(
+                'Yeni Fırsat',
+                CupertinoIcons.star,
+                const Color(0xFF9333EA),
+                () => context.go('/sales/opportunities/new'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildQuickActionButton(
+                'Tüm Modüller',
+                CupertinoIcons.square_grid_2x2,
+                const Color(0xFF8E8E93),
+                () => context.go('/modules'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActionButton(String label, IconData icon, Color color, VoidCallback onTap) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: color.withValues(alpha:0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha:0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(icon, color: color, size: 16),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Loading ve Empty States
+  Widget _buildEmptyTasksState() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10B981).withValues(alpha:0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF10B981).withValues(alpha:0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withValues(alpha:0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              CupertinoIcons.checkmark_circle_fill,
+              color: Color(0xFF10B981),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'Tebrikler, göreviniz yok',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF10B981),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingTasks() {
+    return Column(
+      children: List.generate(
+        3,
+        (index) => Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          height: 70,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+          ),
+          child: const Center(
+            child: CupertinoActivityIndicator(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingApprovals() {
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+      ),
+      child: const Center(
+        child: CupertinoActivityIndicator(),
       ),
     );
   }
@@ -549,10 +854,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           child: Container(
             margin: EdgeInsets.only(left: index > 0 ? 10 : 0),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
                 width: 1.5,
               ),
             ),
@@ -576,7 +881,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.withOpacity(0.1)),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
           ),
           child: const Center(
             child: CupertinoActivityIndicator(),
@@ -601,13 +906,4 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       return '${date.day}/${date.month}';
     }
   }
-}
-
-class _QuickAction {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final String route;
-
-  _QuickAction(this.label, this.icon, this.color, this.route);
 }

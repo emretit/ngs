@@ -6,13 +6,20 @@ import '../models/customer.dart';
 class CustomerService {
   final _supabase = Supabase.instance.client;
 
-  /// Tüm müşterileri getir
-  Future<List<Customer>> getCustomers() async {
+  /// Tüm müşterileri getir (pagination ile optimize edilmiş)
+  Future<List<Customer>> getCustomers({
+    int page = 0,
+    int pageSize = 50,
+  }) async {
     try {
+      final start = page * pageSize;
+      final end = start + pageSize - 1;
+
       final response = await _supabase
           .from('customers')
           .select('*')
-          .order('created_at', ascending: false);
+          .order('created_at', ascending: false)
+          .range(start, end); // Supabase pagination
       
       return (response as List)
           .map((json) => Customer.fromJson(json))

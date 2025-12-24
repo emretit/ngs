@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/notification_provider.dart';
 import '../../providers/auth_provider.dart';
 
 class MainLayout extends ConsumerWidget {
@@ -17,15 +16,12 @@ class MainLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notificationState = ref.watch(notificationProvider);
-
     return Scaffold(
       body: child,
       drawer: _buildDrawer(context, ref),
       bottomNavigationBar: _buildBottomNavigationBar(
         context,
         ref,
-        notificationState,
       ),
     );
   }
@@ -94,39 +90,35 @@ class MainLayout extends ConsumerWidget {
                   CupertinoIcons.person_2_fill,
                   '/customers',
                 ),
-              ],
-            ),
-            
-            const Divider(),
-            
-            // Satış
-            _buildDrawerSection(
-              context,
-              'Satış',
-              [
                 _buildDrawerItem(
                   context,
-                  'Fırsatlar',
-                  CupertinoIcons.star_fill,
-                  '/sales/opportunities',
-                ),
-                _buildDrawerItem(
-                  context,
-                  'Teklifler',
-                  CupertinoIcons.doc_fill,
-                  '/sales/proposals',
-                ),
-                _buildDrawerItem(
-                  context,
-                  'Siparişler',
-                  CupertinoIcons.cart_fill,
-                  '/sales/orders',
+                  'Tedarikçiler',
+                  CupertinoIcons.building_2_fill,
+                  '/suppliers',
                 ),
                 _buildDrawerItem(
                   context,
                   'Faturalar',
                   CupertinoIcons.doc_text_fill,
                   '/sales/invoices',
+                ),
+                _buildDrawerItem(
+                  context,
+                  'Ürünler',
+                  CupertinoIcons.cube_box_fill,
+                  '/inventory/products',
+                ),
+                _buildDrawerItem(
+                  context,
+                  'Hesaplar',
+                  CupertinoIcons.building_2_fill,
+                  '/accounting/accounts',
+                ),
+                _buildDrawerItem(
+                  context,
+                  'Masraflar',
+                  CupertinoIcons.arrow_down_circle_fill,
+                  '/accounting/expenses',
                 ),
               ],
             ),
@@ -149,68 +141,6 @@ class MainLayout extends ConsumerWidget {
                   'Yeni Servis Talebi',
                   CupertinoIcons.add_circled_solid,
                   '/service/new',
-                ),
-              ],
-            ),
-            
-            const Divider(),
-            
-            // Finans
-            _buildDrawerSection(
-              context,
-              'Finans',
-              [
-                _buildDrawerItem(
-                  context,
-                  'Finans Dashboard',
-                  CupertinoIcons.chart_bar_alt_fill,
-                  '/finance',
-                ),
-                _buildDrawerItem(
-                  context,
-                  'Giderler',
-                  CupertinoIcons.arrow_down_circle_fill,
-                  '/accounting/expenses',
-                ),
-                _buildDrawerItem(
-                  context,
-                  'Ödemeler',
-                  CupertinoIcons.creditcard_fill,
-                  '/accounting/payments',
-                ),
-                _buildDrawerItem(
-                  context,
-                  'Banka Hesapları',
-                  CupertinoIcons.building_2_fill,
-                  '/accounting/accounts',
-                ),
-              ],
-            ),
-            
-            const Divider(),
-            
-            // Diğer Modüller
-            _buildDrawerSection(
-              context,
-              'Diğer Modüller',
-              [
-                _buildDrawerItem(
-                  context,
-                  'Satın Alma',
-                  CupertinoIcons.bag_fill,
-                  '/purchasing',
-                ),
-                _buildDrawerItem(
-                  context,
-                  'Stok',
-                  CupertinoIcons.cube_box_fill,
-                  '/inventory',
-                ),
-                _buildDrawerItem(
-                  context,
-                  'İnsan Kaynakları',
-                  CupertinoIcons.person_3_fill,
-                  '/hr',
                 ),
               ],
             ),
@@ -300,9 +230,8 @@ class MainLayout extends ConsumerWidget {
   Widget _buildBottomNavigationBar(
     BuildContext context,
     WidgetRef ref,
-    dynamic notificationState,
   ) {
-    final items = _getBottomNavItems(notificationState);
+    final items = _getBottomNavItems();
     final currentIndex = _getCurrentIndex();
     
     return Container(
@@ -336,9 +265,7 @@ class MainLayout extends ConsumerWidget {
     );
   }
 
-  List<BottomNavigationBarItem> _getBottomNavItems(
-    dynamic notificationState,
-  ) {
+  List<BottomNavigationBarItem> _getBottomNavItems() {
     // Alt navigasyon çubuğu - 5 buton (Modüller ortada - index 2)
     return [
       const BottomNavigationBarItem(
@@ -380,9 +307,7 @@ class MainLayout extends ConsumerWidget {
     if (currentRoute.startsWith('/sales') ||
         currentRoute.startsWith('/finance') ||
         currentRoute.startsWith('/accounting') ||
-        currentRoute.startsWith('/purchasing') ||
         currentRoute.startsWith('/inventory') ||
-        currentRoute.startsWith('/hr') ||
         currentRoute.startsWith('/activities')) {
       return 2; // Modüller sayfası aktif (ortada)
     }

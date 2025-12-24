@@ -237,7 +237,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
             }}
             className={cn(
               "flex items-center justify-between transition-all duration-200 rounded-xl group cursor-pointer relative",
-              isCollapsed ? "justify-center px-2 h-8" : "px-3 h-10",
+              isCollapsed ? "justify-center px-2 h-8" : "px-2 h-8",
               // Active/Pending states - different styles for mobile vs desktop
               (isActive || hasActiveChild) && (
                 isMobile 
@@ -254,11 +254,11 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
           >
             {/* Active indicator for mobile */}
             {isMobile && (isActive || hasActiveChild) && (
-              <div className="absolute left-0 w-1 h-6 bg-red-500 rounded-r-full lg:hidden" />
+              <div className="absolute left-0 w-1 h-5 bg-red-500 rounded-r-full lg:hidden" />
             )}
-            <div className="flex items-center space-x-3">
-              <item.icon className="h-4 w-4 flex-shrink-0" />
-              {!isCollapsed && <span className="text-sm font-medium">{item.translationKey ? t(item.translationKey) : item.label}</span>}
+            <div className="flex items-center space-x-2">
+              <item.icon className="h-3.5 w-3.5 flex-shrink-0" />
+              {!isCollapsed && <span className="text-xs font-medium">{item.translationKey ? t(item.translationKey) : item.label}</span>}
             </div>
             {!isCollapsed && (
               <div
@@ -282,7 +282,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
           {/* Sub-items */}
           {!isCollapsed && isExpanded && (
             <div className={cn(
-              "ml-4 space-y-0.5 pl-3",
+              "ml-3 space-y-0.5 pl-2",
               isMobile 
                 ? "border-l-2 border-red-200/50 lg:border-gray-700" 
                 : "border-l border-gray-700"
@@ -350,7 +350,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
         ref={navRef}
         onScroll={handleScroll}
         className={cn(
-          "flex-1 overflow-y-auto px-4 py-4 space-y-1 scrollbar-hide",
+          "flex-1 overflow-y-auto px-2 py-2 space-y-0.5 scrollbar-hide",
           isMobileOpen && "lg:px-2"
         )}
       >

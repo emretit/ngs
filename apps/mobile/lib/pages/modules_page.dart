@@ -30,222 +30,70 @@ class ModulesPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // CRM Modülü
-            _buildModuleSection(
+            _buildModuleCard(
               context,
-              'CRM',
-              [
-                _ModuleItem(
-                  title: 'Müşteriler',
-                  subtitle: 'Müşteri listesi ve yönetimi',
-                  icon: CupertinoIcons.person_2_fill,
-                  color: const Color(0xFF34C759),
-                  route: '/customers',
-                ),
-              ],
+              _ModuleItem(
+                title: 'Müşteriler',
+                subtitle: 'Müşteri listesi ve yönetimi',
+                icon: CupertinoIcons.person_2_fill,
+                color: const Color(0xFF34C759),
+                route: '/customers',
+              ),
             ),
-            const SizedBox(height: 24),
-            
-            // Servis Modülü
-            _buildModuleSection(
+            const SizedBox(height: 12),
+            _buildModuleCard(
               context,
-              'Servis',
-              [
-                _ModuleItem(
-                  title: 'Servis Yönetimi',
-                  subtitle: 'Servis talepleri ve yönetimi',
-                  icon: CupertinoIcons.wrench_fill,
-                  color: const Color(0xFFB73D3D),
-                  route: '/service/management',
-                ),
-                _ModuleItem(
-                  title: 'Yeni Servis Talebi',
-                  subtitle: 'Yeni servis talebi oluştur',
-                  icon: CupertinoIcons.add_circled_solid,
-                  color: const Color(0xFFE74C3C),
-                  route: '/service/new',
-                ),
-              ],
+              _ModuleItem(
+                title: 'Tedarikçiler',
+                subtitle: 'Tedarikçi listesi ve yönetimi',
+                icon: CupertinoIcons.building_2_fill,
+                color: const Color(0xFF9333EA),
+                route: '/suppliers',
+              ),
             ),
-            const SizedBox(height: 24),
-            
-            // Satış Modülü
-            _buildModuleSection(
+            const SizedBox(height: 12),
+            _buildModuleCard(
               context,
-              'Satış',
-              [
-                _ModuleItem(
-                  title: 'Teklifler',
-                  subtitle: 'Satış teklifleri',
-                  icon: CupertinoIcons.doc_fill,
-                  color: const Color(0xFF9333EA),
-                  route: '/sales/proposals',
-                ),
-                _ModuleItem(
-                  title: 'Siparişler',
-                  subtitle: 'Satış siparişleri',
-                  icon: CupertinoIcons.cart_fill,
-                  color: const Color(0xFF3B82F6),
-                  route: '/sales/orders',
-                ),
-                _ModuleItem(
-                  title: 'Faturalar',
-                  subtitle: 'Satış faturaları',
-                  icon: CupertinoIcons.doc_text_fill,
-                  color: const Color(0xFF22C55E),
-                  route: '/sales/invoices',
-                ),
-              ],
+              _ModuleItem(
+                title: 'Faturalar',
+                subtitle: 'Satış faturaları',
+                icon: CupertinoIcons.doc_text_fill,
+                color: const Color(0xFF22C55E),
+                route: '/sales/invoices',
+              ),
             ),
-            const SizedBox(height: 24),
-            
-            // Finans Modülü
-            _buildModuleSection(
+            const SizedBox(height: 12),
+            _buildModuleCard(
               context,
-              'Finans',
-              [
-                _ModuleItem(
-                  title: 'Finans Dashboard',
-                  subtitle: 'Finansal özet ve hesaplar',
-                  icon: CupertinoIcons.chart_bar_alt_fill,
-                  color: const Color(0xFF3B82F6),
-                  route: '/finance',
-                ),
-                _ModuleItem(
-                  title: 'Giderler',
-                  subtitle: 'Gider yönetimi',
-                  icon: CupertinoIcons.arrow_down_circle_fill,
-                  color: const Color(0xFFEF4444),
-                  route: '/accounting/expenses',
-                ),
-                _ModuleItem(
-                  title: 'Ödemeler',
-                  subtitle: 'Tahsilat ve ödemeler',
-                  icon: CupertinoIcons.creditcard_fill,
-                  color: const Color(0xFF22C55E),
-                  route: '/accounting/payments',
-                ),
-                _ModuleItem(
-                  title: 'Banka Hesapları',
-                  subtitle: 'Banka hesapları ve bakiyeler',
-                  icon: CupertinoIcons.building_2_fill,
-                  color: const Color(0xFF9333EA),
-                  route: '/accounting/accounts',
-                ),
-              ],
+              _ModuleItem(
+                title: 'Ürünler',
+                subtitle: 'Ürün listesi ve yönetimi',
+                icon: CupertinoIcons.cube_box_fill,
+                color: const Color(0xFF3B82F6),
+                route: '/inventory/products',
+              ),
             ),
-            const SizedBox(height: 24),
-            
-            // Satın Alma Modülü
-            _buildModuleSection(
+            const SizedBox(height: 12),
+            _buildModuleCard(
               context,
-              'Satın Alma',
-              [
-                _ModuleItem(
-                  title: 'Satın Alma Talepleri',
-                  subtitle: 'Satın alma talepleri',
-                  icon: CupertinoIcons.doc_on_doc_fill,
-                  color: const Color(0xFF3B82F6),
-                  route: '/purchasing/requests',
-                ),
-                _ModuleItem(
-                  title: 'Satın Alma Siparişleri',
-                  subtitle: 'Satın alma siparişleri',
-                  icon: CupertinoIcons.bag_fill,
-                  color: const Color(0xFF22C55E),
-                  route: '/purchasing/orders',
-                ),
-                _ModuleItem(
-                  title: 'Tedarikçiler',
-                  subtitle: 'Tedarikçi listesi',
-                  icon: CupertinoIcons.building_2_fill,
-                  color: const Color(0xFF9333EA),
-                  route: '/purchasing/suppliers',
-                ),
-              ],
+              _ModuleItem(
+                title: 'Hesaplar',
+                subtitle: 'Banka hesapları ve bakiyeler',
+                icon: CupertinoIcons.building_2_fill,
+                color: const Color(0xFF9333EA),
+                route: '/accounting/accounts',
+              ),
             ),
-            const SizedBox(height: 24),
-            
-            // Stok Modülü
-            _buildModuleSection(
+            const SizedBox(height: 12),
+            _buildModuleCard(
               context,
-              'Stok',
-              [
-                _ModuleItem(
-                  title: 'Ürünler',
-                  subtitle: 'Ürün listesi ve yönetimi',
-                  icon: CupertinoIcons.cube_box_fill,
-                  color: const Color(0xFF3B82F6),
-                  route: '/inventory/products',
-                ),
-                _ModuleItem(
-                  title: 'Depolar',
-                  subtitle: 'Depo yönetimi',
-                  icon: CupertinoIcons.building_2_fill,
-                  color: const Color(0xFF22C55E),
-                  route: '/inventory/warehouses',
-                ),
-                _ModuleItem(
-                  title: 'Stok Hareketleri',
-                  subtitle: 'Stok işlemleri',
-                  icon: CupertinoIcons.arrow_left_right,
-                  color: const Color(0xFFFF9500),
-                  route: '/inventory/transactions',
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            
-            // İK Modülü
-            _buildModuleSection(
-              context,
-              'İnsan Kaynakları',
-              [
-                _ModuleItem(
-                  title: 'Çalışanlar',
-                  subtitle: 'Çalışan listesi',
-                  icon: CupertinoIcons.person_2_fill,
-                  color: const Color(0xFF3B82F6),
-                  route: '/hr/employees',
-                ),
-                _ModuleItem(
-                  title: 'İzinler',
-                  subtitle: 'İzin yönetimi',
-                  icon: CupertinoIcons.calendar,
-                  color: const Color(0xFF22C55E),
-                  route: '/hr/leaves',
-                ),
-                _ModuleItem(
-                  title: 'Performans',
-                  subtitle: 'Performans değerlendirme',
-                  icon: CupertinoIcons.chart_bar_fill,
-                  color: const Color(0xFFFF9500),
-                  route: '/hr/performance',
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            
-            // Ayarlar
-            _buildModuleSection(
-              context,
-              'Ayarlar',
-              [
-                _ModuleItem(
-                  title: 'Profil',
-                  subtitle: 'Hesap ayarları ve profil',
-                  icon: CupertinoIcons.person_fill,
-                  color: const Color(0xFFAF52DE),
-                  route: '/profile',
-                ),
-                _ModuleItem(
-                  title: 'Bildirim Ayarları',
-                  subtitle: 'Bildirim tercihleri',
-                  icon: CupertinoIcons.bell_slash_fill,
-                  color: const Color(0xFF8E8E93),
-                  route: '/notification-settings',
-                ),
-              ],
+              _ModuleItem(
+                title: 'Masraflar',
+                subtitle: 'Gider yönetimi',
+                icon: CupertinoIcons.arrow_down_circle_fill,
+                color: const Color(0xFFEF4444),
+                route: '/accounting/expenses',
+              ),
             ),
           ],
         ),

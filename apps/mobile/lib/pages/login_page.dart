@@ -40,48 +40,59 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Ana içerik
-            SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 60), // Home butonu için boşluk
-                      
-                      // Logo
-                      _buildLogo(context),
-                      const SizedBox(height: 32),
-                      
-                      // Başlık ve Açıklama (kartın dışında)
-                      Text(
-                        'Hesabınıza Giriş Yapın',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF000000),
-                          letterSpacing: -0.5,
+      // Gradient arka plan - Web'deki gibi (from-gray-50 to-gray-100)
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFF9FAFB), // gray-50
+              Color(0xFFF3F4F6), // gray-100
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              // Ana içerik
+              SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 60), // Home butonu için boşluk
+                        
+                        // Logo
+                        _buildLogo(context),
+                        const SizedBox(height: 32),
+                        
+                        // Başlık ve Açıklama (kartın dışında)
+                        Text(
+                          'Hesabınıza Giriş Yapın',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF000000),
+                            letterSpacing: -0.5,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      
-                      Text(
-                        'PAFTA platformuna hoş geldiniz',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: const Color(0xFF8E8E93),
-                          fontSize: 15,
+                        const SizedBox(height: 8),
+                        
+                        Text(
+                          'PAFTA platformuna hoş geldiniz',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: const Color(0xFF8E8E93),
+                            fontSize: 15,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 32),
+                        const SizedBox(height: 32),
                       
                       // Form Kartı - Sadece input alanları ve buton
                       Container(
@@ -105,21 +116,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             _buildPasswordField(context),
                             const SizedBox(height: 24),
                             
-                            // Login Button
+                            // Login Button - Web'deki gibi (h-12 = 48px)
                             SizedBox(
                               width: double.infinity,
-                              height: 52,
+                              height: 48, // Web'deki h-12
                               child: ElevatedButton(
                                 onPressed: authState.isLoading ? null : _signIn,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF8B2F2F), // Giriş butonu rengi
+                                  backgroundColor: const Color(0xFF8B2F2F), // Primary renk
                                   foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shadowColor: Colors.transparent,
+                                  elevation: 4, // shadow-lg
+                                  shadowColor: const Color(0xFF8B2F2F).withOpacity(0.3),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
                                 ),
                                 child: authState.isLoading
                                     ? const SizedBox(
@@ -234,34 +245,47 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
             ),
             
-            // Üst sol köşe home butonu
+            // Üst sol köşe home butonu - Web'deki gibi shadow-lg ile
             Positioned(
               top: 16,
               left: 16,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFFE5E5EA),
-                    width: 1,
-                  ),
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    CupertinoIcons.house,
-                    color: Color(0xFF8E8E93),
-                    size: 20,
-                  ),
-                  onPressed: () {
-                    // TODO: Ana sayfaya yönlendir veya geri git
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    // Ana sayfaya yönlendir
+                    context.go('/');
                   },
+                  borderRadius: BorderRadius.circular(22),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFFE5E5EA),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.house,
+                      color: Color(0xFF8E8E93),
+                      size: 20,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -306,7 +330,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  // Email Field - Görüntüdeki gibi beyaz kutu, açık gri border
+  // Email Field - Web'deki gibi (h-12 = 48px)
   Widget _buildEmailField(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -321,16 +345,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         controller: _emailController,
         keyboardType: TextInputType.emailAddress,
         textInputAction: TextInputAction.next,
+        style: const TextStyle(
+          fontSize: 16,
+          color: Color(0xFF000000),
+        ),
         decoration: InputDecoration(
           hintText: 'E-posta',
           hintStyle: const TextStyle(
             color: Color(0xFF8E8E93),
-            fontSize: 15,
+            fontSize: 16,
           ),
           prefixIcon: const Icon(
             CupertinoIcons.mail,
             color: Color(0xFF8E8E93),
-            size: 22,
+            size: 20,
           ),
           filled: true,
           fillColor: Colors.transparent,
@@ -340,8 +368,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           errorBorder: InputBorder.none,
           focusedErrorBorder: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 18,
+            horizontal: 12,
+            vertical: 12, // h-12 için 48px yükseklik
           ),
         ),
         validator: (value) {
@@ -357,7 +385,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  // Password Field - Görüntüdeki gibi beyaz kutu, açık gri border
+  // Password Field - Web'deki gibi (h-12 = 48px)
   Widget _buildPasswordField(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -373,16 +401,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         obscureText: _obscurePassword,
         textInputAction: TextInputAction.done,
         onFieldSubmitted: (_) => _signIn(),
+        style: const TextStyle(
+          fontSize: 16,
+          color: Color(0xFF000000),
+        ),
         decoration: InputDecoration(
           hintText: 'Şifreniz (en az 8 karakter)',
           hintStyle: const TextStyle(
             color: Color(0xFF8E8E93),
-            fontSize: 15,
+            fontSize: 16,
           ),
           prefixIcon: const Icon(
             CupertinoIcons.lock,
             color: Color(0xFF8E8E93),
-            size: 22,
+            size: 20,
           ),
           suffixIcon: IconButton(
             icon: Icon(
@@ -406,8 +438,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           errorBorder: InputBorder.none,
           focusedErrorBorder: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 18,
+            horizontal: 12,
+            vertical: 12, // h-12 için 48px yükseklik
           ),
         ),
         validator: (value) {

@@ -290,15 +290,9 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
 
   const visibleColumns = safeSchema.partsTable.columns.filter(col => col.show);
 
-  // Convert page size to react-pdf compatible format
-  const getPageSize = (size: 'A4' | 'A3' | 'Letter'): 'A4' | 'A3' | 'LETTER' => {
-    if (size === 'Letter') return 'LETTER';
-    return size;
-  };
-
   return (
     <Document>
-      <Page size={getPageSize(safeSchema.page.size)} style={styles.page}>
+      <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={[
           styles.header,

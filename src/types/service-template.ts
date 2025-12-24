@@ -15,6 +15,7 @@ export interface ServiceTemplateSchema {
     };
     fontSize: number;
     fontFamily?: string;
+    fontWeight?: 'normal' | 'bold';
     fontColor?: string;
     backgroundColor?: string;
   };
@@ -141,6 +142,7 @@ export const defaultServiceTemplateSchema: ServiceTemplateSchema = {
     padding: { top: 40, right: 40, bottom: 40, left: 40 },
     fontSize: 12,
     fontFamily: 'Roboto',
+    fontWeight: 'normal',
     fontColor: '#000000',
     backgroundColor: '#FFFFFF',
   },

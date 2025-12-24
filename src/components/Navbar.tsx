@@ -191,7 +191,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
     return false;
   }, [location.pathname]);
 
-  const renderNavItem = useCallback((item: any) => {
+  const renderNavItem = useCallback((item: any, isMobile: boolean = false) => {
     // Modül bazlı erişim kontrolü - path'ten modül adını çıkar
     const moduleKey = item.path.replace(/^\//, '').split('/')[0] || 'dashboard';
     
@@ -213,7 +213,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
       );
       
       return (
-        <div key={item.path} className="space-y-0.5">
+        <div key={item.path} className="space-y-1">
           {/* Parent item */}
           <div
             onClick={() => handleParentClick(item)}
@@ -225,26 +225,44 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
               }
             }}
             className={cn(
-              "flex items-center justify-between transition-all duration-200 rounded-lg group cursor-pointer",
-              isCollapsed ? "justify-center px-2 h-8" : "px-2 h-8",
-              isActive || hasActiveChild
-                ? "bg-primary/15 text-primary font-semibold shadow-sm"
-                : "text-gray-300 hover:bg-gray-800/70 hover:text-white"
+              "flex items-center justify-between transition-all duration-200 rounded-xl group cursor-pointer relative",
+              isCollapsed ? "justify-center px-2 h-8" : "px-3 h-10",
+              // Active/Pending states - different styles for mobile vs desktop
+              (isActive || hasActiveChild) && (
+                isMobile 
+                  ? "bg-gradient-to-r from-red-50 to-red-100/50 text-red-700 font-semibold lg:bg-primary/15 lg:text-primary lg:from-transparent lg:to-transparent"
+                  : "bg-primary/15 text-primary font-semibold shadow-sm"
+              ),
+              // Hover states - different styles for mobile vs desktop
+              !(isActive || hasActiveChild) && (
+                isMobile
+                  ? "text-gray-700 hover:text-red-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100/50 lg:text-gray-300 lg:hover:bg-gray-800/70 lg:hover:text-white lg:hover:from-transparent lg:hover:to-transparent"
+                  : "text-gray-300 hover:bg-gray-800/70 hover:text-white"
+              )
             )}
           >
-            <div className="flex items-center space-x-2">
-              <item.icon className="h-3.5 w-3.5 flex-shrink-0" />
-              {!isCollapsed && <span className="text-xs font-medium">{item.translationKey ? t(item.translationKey) : item.label}</span>}
+            {/* Active indicator for mobile */}
+            {isMobile && (isActive || hasActiveChild) && (
+              <div className="absolute left-0 w-1 h-6 bg-red-500 rounded-r-full lg:hidden" />
+            )}
+            <div className="flex items-center space-x-3">
+              <item.icon className="h-4 w-4 flex-shrink-0" />
+              {!isCollapsed && <span className="text-sm font-medium">{item.translationKey ? t(item.translationKey) : item.label}</span>}
             </div>
             {!isCollapsed && (
               <div
                 onClick={(e) => handleToggleClick(item, e)}
-                className="p-1 hover:bg-gray-700/50 rounded"
+                className={cn(
+                  "p-1 rounded transition-colors",
+                  isMobile 
+                    ? "hover:bg-red-100/50 lg:hover:bg-gray-700/50" 
+                    : "hover:bg-gray-700/50"
+                )}
               >
                 {isExpanded ? (
-                  <ChevronDown className="h-3 w-3" />
+                  <ChevronDown className="h-3.5 w-3.5" />
                 ) : (
-                  <ChevronRight className="h-3 w-3" />
+                  <ChevronRight className="h-3.5 w-3.5" />
                 )}
               </div>
             )}
@@ -252,7 +270,12 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
           
           {/* Sub-items */}
           {!isCollapsed && isExpanded && (
-            <div className="ml-3 space-y-0.5 border-l border-gray-700 pl-3">
+            <div className={cn(
+              "ml-4 space-y-0.5 pl-3",
+              isMobile 
+                ? "border-l-2 border-red-200/50 lg:border-gray-700" 
+                : "border-l border-gray-700"
+            )}>
               {item.items.map((subItem: any) => (
                 <NavLink
                   key={subItem.path}
@@ -262,6 +285,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
                   isActive={getSubItemActiveState(subItem, item)}
                   isCollapsed={false}
                   isSubItem={true}
+                  isMobile={isMobile}
                 />
               ))}
             </div>
@@ -285,42 +309,55 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
           isActive={isItemActive}
           isPending={isPending}
           isCollapsed={isCollapsed}
+          isMobile={isMobile}
         />
       );
     }
-  }, [expandedMenus, location.pathname, isCollapsed, handleParentClick, handleToggleClick, getSubItemActiveState, pendingPath, t]);
+  }, [expandedMenus, location.pathname, isCollapsed, handleParentClick, handleToggleClick, getSubItemActiveState, pendingPath, t, permissionsLoading, hasModuleAccess]);
 
   return (
     <div className={cn(
-      "fixed left-0 top-0 z-50 h-screen bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col",
+      "fixed left-0 top-0 z-50 h-screen transition-all duration-300 flex flex-col",
       // Mobile'da state'e göre açılır/kapanır, desktop'ta her zaman görünür
       isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
       // Desktop'ta genişlik, mobile'da her zaman tam genişlik
-      isCollapsed ? "w-[60px] lg:w-[60px]" : "w-56 lg:w-56"
+      isCollapsed ? "w-[60px] lg:w-[60px]" : "w-72 lg:w-56",
+      // Mobile: white/glass theme, Desktop: dark theme
+      isMobileOpen 
+        ? "bg-white/95 backdrop-blur-xl shadow-2xl border-r border-gray-200/30 lg:bg-gradient-to-b lg:from-gray-900 lg:to-gray-950 lg:border-gray-800 lg:shadow-none" 
+        : "bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800"
     )}>
       <NavHeader 
         isCollapsed={isCollapsed} 
         setIsCollapsed={setIsCollapsed}
         onCloseMobile={() => setIsMobileOpen?.(false)}
+        isMobile={isMobileOpen}
       />
       
       {/* Scrollable content area */}
       <nav 
         ref={navRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-2 py-4 space-y-1 scrollbar-hide"
+        className={cn(
+          "flex-1 overflow-y-auto px-3 py-4 space-y-1 scrollbar-hide",
+          isMobileOpen && "lg:px-2"
+        )}
       >
-        {navItems.map(renderNavItem)}
+        {navItems.map((item) => renderNavItem(item, isMobileOpen))}
         
         {/* Admin Panel Link - Only visible to super admins */}
         {!superAdminLoading && isSuperAdmin && (
-          <div className="pt-4 mt-4 border-t border-gray-700">
+          <div className={cn(
+            "pt-4 mt-4",
+            isMobileOpen ? "border-t border-gray-200/50 lg:border-gray-700" : "border-t border-gray-700"
+          )}>
             <NavLink
               to="/admin"
               icon={Shield}
               label={t("nav.adminPanel")}
               isActive={location.pathname.startsWith('/admin')}
               isCollapsed={isCollapsed}
+              isMobile={isMobileOpen}
             />
           </div>
         )}

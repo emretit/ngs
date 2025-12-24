@@ -6,7 +6,7 @@ import { PageSettings, HeaderSettings, NotesSettings } from './pdf-template';
  */
 export interface ServiceTemplateSchema {
   page: {
-    size: 'A4' | 'A3' | 'Letter';
+    size: 'A4';
     padding: {
       top: number;
       right: number;

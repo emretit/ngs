@@ -406,7 +406,7 @@ const CashflowLoans = () => {
                     <SelectValue placeholder="Durum filtresi" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tümü</SelectItem>
+                    <SelectItem value="all">Hepsi</SelectItem>
                     <SelectItem value="odenecek">Ödenecek</SelectItem>
                     <SelectItem value="odendi">Ödendi</SelectItem>
                   </SelectContent>

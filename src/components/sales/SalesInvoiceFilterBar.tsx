@@ -46,7 +46,7 @@ const SalesInvoiceFilterBar = ({
           <SelectValue placeholder="Belge Tipi" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Tipler</SelectItem>
+          <SelectItem value="all">Tipler</SelectItem>
           <SelectItem value="e_fatura">📄 e-Fatura</SelectItem>
           <SelectItem value="e_arsiv">📋 e-Arşiv</SelectItem>
           <SelectItem value="fatura">📑 Fatura</SelectItem>

@@ -53,7 +53,7 @@ const OpportunityFilters = ({
             <SelectValue placeholder="Satış Temsilcisi" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm Temsilciler</SelectItem>
+            <SelectItem value="all">Temsilciler</SelectItem>
             {employees.map((employee) => (
               <SelectItem key={employee.id} value={employee.id}>
                 {employee.first_name} {employee.last_name}
@@ -72,7 +72,7 @@ const OpportunityFilters = ({
             <SelectValue placeholder="Müşteri" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm Müşteriler</SelectItem>
+            <SelectItem value="all">Müşteriler</SelectItem>
             {customers.map((customer) => (
               <SelectItem key={customer.id} value={customer.id}>
                 {customer.name}

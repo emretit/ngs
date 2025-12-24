@@ -62,7 +62,7 @@ const CashflowCategories = memo(() => {
             <SelectValue placeholder="Kategori Tipi" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm Kategoriler</SelectItem>
+            <SelectItem value="all">Kategoriler</SelectItem>
             <SelectItem value="income">💰 Gelir</SelectItem>
             <SelectItem value="expense">💸 Gider</SelectItem>
           </SelectContent>
@@ -74,7 +74,7 @@ const CashflowCategories = memo(() => {
             <SelectValue placeholder="Durum" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm Durumlar</SelectItem>
+            <SelectItem value="all">Durumlar</SelectItem>
             <SelectItem value="active">Aktif</SelectItem>
             <SelectItem value="inactive">Pasif</SelectItem>
           </SelectContent>

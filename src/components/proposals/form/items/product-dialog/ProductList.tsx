@@ -142,7 +142,7 @@ const ProductList: React.FC<ProductListProps> = ({
               <SelectValue placeholder="Kategori Filtresi" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tüm Kategoriler</SelectItem>
+              <SelectItem value="all">Kategoriler</SelectItem>
               {categories.map(category => (
                 <SelectItem key={category} value={category}>{category}</SelectItem>
               ))}
@@ -156,7 +156,7 @@ const ProductList: React.FC<ProductListProps> = ({
               <SelectValue placeholder="Stok Durumu" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tüm Stok Durumları</SelectItem>
+              <SelectItem value="all">Stok Durumları</SelectItem>
               <SelectItem value="in_stock">Stokta</SelectItem>
               <SelectItem value="low_stock">Düşük Stok</SelectItem>
               <SelectItem value="out_of_stock">Stokta Yok</SelectItem>

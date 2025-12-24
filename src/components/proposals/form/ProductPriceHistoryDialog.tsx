@@ -320,7 +320,7 @@ const ProductPriceHistoryDialog: React.FC<ProductPriceHistoryDialogProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tümü</SelectItem>
+              <SelectItem value="all">Hepsi</SelectItem>
               <SelectItem value="proposal">Teklif</SelectItem>
               <SelectItem value="purchase">Alış Faturası</SelectItem>
               <SelectItem value="sales">Satış Faturası</SelectItem>

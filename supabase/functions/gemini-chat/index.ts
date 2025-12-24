@@ -374,18 +374,66 @@ JSON formatında yanıt ver:
         break;
 
       case 'map-columns':
+        console.log('📋 map-columns request:', {
+          sourceColumnsCount: body.sourceColumns?.length || 0,
+          sourceColumns: body.sourceColumns,
+          targetFieldsCount: body.targetFields?.length || 0
+        });
+        
         systemInstruction = `Sen bir veri eşleştirme uzmanısın. Excel/CSV kolon isimlerini veritabanı alanlarıyla eşleştiriyorsun.
             
-Yanıtını JSON formatında ver:
+ÖNEMLİ KURALLAR:
+1. SADECE hedef alanlar listesinde bulunan alanlarla eşleştirme yap
+2. Eğer bir kolon hiçbir hedef alanla eşleşmiyorsa (örn: "Firma Kodu", "Kod", "ID" gibi sistem alanı olmayan kolonlar), O KOLONU MAPPINGS'E EKLEME
+3. Kolon isimlerindeki Türkçe karakterleri, büyük/küçük harf farklarını ve boşlukları dikkate al
+4. Benzer anlamlı kelimeleri eşleştir (örn: "ad" = "isim" = "name")
+5. Confidence değerini 0-1 arasında ver (yüksek eşleşme = yüksek confidence, örn: 0.95)
+6. Sadece kesin veya çok yüksek olasılıklı eşleştirmeleri yap (confidence >= 0.7)
+
+Yanıtını MUTLAKA JSON formatında ver:
 {
   "mappings": [
-    { "source": "kaynak_kolon", "target": "hedef_alan", "confidence": 0.95 }
+    { "source": "kaynak_kolon_ismi", "target": "hedef_alan_ismi", "confidence": 0.95 }
   ]
 }`;
-        userContent = `Kaynak kolonlar: ${JSON.stringify(body.sourceColumns)}
-Hedef alanlar: ${JSON.stringify(body.targetFields)}
+        
+        const targetFieldsDescription = body.targetFields?.map((field: any) => 
+          `- ${field.name}: ${field.description}`
+        ).join('\n') || '';
+        
+        const targetFieldNames = body.targetFields?.map((field: any) => field.name).join(', ') || '';
+        
+        userContent = `Aşağıdaki Excel/CSV kolonlarını veritabanı alanlarıyla eşleştir:
 
-Bu kolonları en uygun hedef alanlarla eşleştir.`;
+KAYNAK KOLONLAR (Excel'den gelen):
+${body.sourceColumns?.map((col: string) => `- "${col}"`).join('\n') || '[]'}
+
+HEDEF ALANLAR (SADECE BUNLARLA EŞLEŞTİR - Veritabanı alanları):
+${targetFieldsDescription}
+
+MEVCUT HEDEF ALAN İSİMLERİ: ${targetFieldNames}
+
+GÖREV:
+1. Her kaynak kolon için SADECE yukarıdaki hedef alanlar listesinden en uygun olanı bul
+2. Eğer bir kolon hiçbir hedef alanla eşleşmiyorsa (örn: "Firma Kodu", "Kod", "ID", "Sıra No" gibi), O KOLONU MAPPINGS'E EKLEME - Sadece eşleşen kolonları ekle
+3. Kolon isimlerindeki farklılıkları (Türkçe karakter, büyük/küçük harf, boşluk, tire, alt çizgi) dikkate al
+4. Anlamsal benzerlikleri değerlendir (örn: "müşteri adı" = "name", "e-posta" = "email")
+5. Her eşleştirme için confidence değeri ver (0-1 arası, örn: 0.95 = %95 güven)
+6. Sadece kesin veya yüksek olasılıklı eşleştirmeleri yap (confidence >= 0.7)
+
+ÖRNEK EŞLEŞTİRMELER:
+- "Ad", "İsim", "Müşteri Adı", "Name", "Firma Ünvanı" → name
+- "E-posta", "Email", "Mail" → email
+- "Telefon", "Cep", "GSM", "Cep Telefonu" → mobile_phone
+- "Vergi No", "VKN", "TC No", "Vergi No." → tax_number
+- "Şehir", "İl" → city
+- "İlçe" → district
+
+EŞLEŞTİRMEYECEK KOLONLAR (Bunları mappings'e ekleme):
+- "Firma Kodu", "Kod", "ID", "Sıra No", "No" gibi sistem alanı olmayan kolonlar
+- Hiçbir hedef alanla eşleşmeyen kolonlar
+
+Yanıtını sadece JSON formatında ver, başka açıklama ekleme.`;
         break;
 
       default:
@@ -409,8 +457,8 @@ Bu kolonları en uygun hedef alanlarla eşleştir.`;
         parts: [{ text: systemInstruction }]
       },
       generationConfig: {
-        temperature: type === 'sql' ? 0.1 : 0.7,
-        maxOutputTokens: type === 'sql' ? 500 : 2000,
+        temperature: type === 'sql' ? 0.1 : type === 'map-columns' ? 0.3 : 0.7,
+        maxOutputTokens: type === 'sql' ? 500 : type === 'map-columns' ? 3000 : 2000,
       }
     };
 
@@ -521,9 +569,39 @@ Bu kolonları en uygun hedef alanlarla eşleştir.`;
       result = { sql, raw: content };
     } else if (type === 'analyze' || type === 'map-columns' || type === 'report') {
       try {
-        result = JSON.parse(content);
-      } catch {
-        result = { content, parseError: true };
+        // Try to parse JSON - handle cases where AI wraps it in markdown code blocks
+        let jsonContent = content.trim();
+        
+        // Remove markdown code blocks if present
+        if (jsonContent.startsWith('```')) {
+          jsonContent = jsonContent.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
+        }
+        
+        result = JSON.parse(jsonContent);
+        
+        // For map-columns, validate the structure
+        if (type === 'map-columns') {
+          if (!result.mappings || !Array.isArray(result.mappings)) {
+            console.error('❌ Invalid map-columns response structure:', result);
+            console.error('Raw content:', content);
+            result = { 
+              error: 'Invalid response format - mappings array not found',
+              mappings: [],
+              raw: content 
+            };
+          } else {
+            console.log(`✅ map-columns: Found ${result.mappings.length} mappings`);
+            console.log('Mappings:', JSON.stringify(result.mappings, null, 2));
+          }
+        }
+      } catch (parseError) {
+        console.error(`JSON parse error for ${type}:`, parseError);
+        console.error('Raw content:', content);
+        result = { 
+          error: 'JSON parse error',
+          content, 
+          parseError: true 
+        };
       }
     }
 

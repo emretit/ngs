@@ -249,7 +249,7 @@ export default function SalesReportsGlobalFilters({
             <SelectValue placeholder="Satış Temsilcisi" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm Temsilciler</SelectItem>
+            <SelectItem value="all">Temsilciler</SelectItem>
             {salesReps.map((rep) => (
               <SelectItem key={rep.id} value={rep.id}>
                 {rep.first_name} {rep.last_name}
@@ -270,7 +270,7 @@ export default function SalesReportsGlobalFilters({
             <SelectValue placeholder="Müşteri" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm Müşteriler</SelectItem>
+            <SelectItem value="all">Müşteriler</SelectItem>
             {customers.map((customer) => (
               <SelectItem key={customer.id} value={customer.id}>
                 {customer.name}
@@ -290,7 +290,7 @@ export default function SalesReportsGlobalFilters({
           <SelectValue placeholder="Satış Aşaması" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Aşamalar</SelectItem>
+          <SelectItem value="all">Aşamalar</SelectItem>
           {salesStages.map((stage) => (
             <SelectItem key={stage.value} value={stage.value}>
               {stage.label}

@@ -46,7 +46,7 @@ const OrdersFilterBar = ({
           <SelectValue placeholder="Durum" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Durumlar</SelectItem>
+          <SelectItem value="all">Durumlar</SelectItem>
           <SelectItem value="pending">⏳ Beklemede</SelectItem>
           <SelectItem value="confirmed">✅ Onaylandı</SelectItem>
           <SelectItem value="processing">⚙️ İşlemde</SelectItem>
@@ -62,7 +62,7 @@ const OrdersFilterBar = ({
           <SelectValue placeholder="Müşteri" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Müşteriler</SelectItem>
+          <SelectItem value="all">Müşteriler</SelectItem>
           {/* TODO: Customer options will be populated from API */}
         </SelectContent>
       </Select>

@@ -415,7 +415,7 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
             <SelectValue placeholder="İşlem Tipi" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm İşlemler</SelectItem>
+            <SelectItem value="all">İşlemler</SelectItem>
             <SelectItem value="income">💰 Gelir</SelectItem>
             <SelectItem value="expense">💸 Gider</SelectItem>
           </SelectContent>
@@ -427,7 +427,7 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
             <SelectValue placeholder="Kategori" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm Kategoriler</SelectItem>
+            <SelectItem value="all">Kategoriler</SelectItem>
             <SelectItem value="proje_geliri">Proje Geliri</SelectItem>
             <SelectItem value="kar_dagitimi">Kar Dağıtımı</SelectItem>
             <SelectItem value="kira">Kira</SelectItem>
@@ -442,7 +442,7 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
             <SelectValue placeholder="Tarih Aralığı" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm Zamanlar</SelectItem>
+            <SelectItem value="all">Zamanlar</SelectItem>
             <SelectItem value="today">Bugün</SelectItem>
             <SelectItem value="week">Son 7 Gün</SelectItem>
             <SelectItem value="month">Son 30 Gün</SelectItem>

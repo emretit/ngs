@@ -255,7 +255,7 @@ const CashflowChecks = () => {
                     <SelectValue placeholder="Durum" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tüm Durumlar</SelectItem>
+                    <SelectItem value="all">Durumlar</SelectItem>
                     <SelectItem value="portfoyde">Portföyde</SelectItem>
                     <SelectItem value="bankaya_verildi">Bankaya Verildi</SelectItem>
                     <SelectItem value="tahsil_edildi">Tahsil Edildi</SelectItem>
@@ -471,7 +471,7 @@ const CashflowChecks = () => {
                     <SelectValue placeholder="Durum" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tüm Durumlar</SelectItem>
+                    <SelectItem value="all">Durumlar</SelectItem>
                     <SelectItem value="odenecek">Ödenecek</SelectItem>
                     <SelectItem value="odendi">Ödendi</SelectItem>
                     <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>

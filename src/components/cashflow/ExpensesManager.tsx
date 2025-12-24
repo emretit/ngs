@@ -116,6 +116,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
   const [filterType, setFilterType] = useState<'all' | 'company' | 'employee'>('all');
   const [filterEmployee, setFilterEmployee] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | 'paid' | 'pending' | 'overdue'>('all');
   const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
   
   // Selection states
@@ -682,6 +683,9 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
 
   // Filtered expenses
   const filteredExpenses = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     return expenses.filter(expense => {
       const matchesSearch = searchQuery === '' || 
         expense.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -690,9 +694,23 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       if (filterType !== 'all' && expense.expense_type !== filterType) return false;
       if (filterEmployee !== 'all' && expense.employee_id !== filterEmployee) return false;
       if (filterCategory !== 'all' && (expense.category as any)?.id !== filterCategory) return false;
+      
+      // Payment status filter
+      if (paymentStatusFilter !== 'all') {
+        if (paymentStatusFilter === 'paid') {
+          if (!expense.is_paid) return false;
+        } else {
+          if (expense.is_paid) return false;
+          const expenseDate = new Date(expense.date);
+          expenseDate.setHours(0, 0, 0, 0);
+          if (paymentStatusFilter === 'overdue' && expenseDate >= today) return false;
+          if (paymentStatusFilter === 'pending' && expenseDate < today) return false;
+        }
+      }
+      
       return matchesSearch;
     });
-  }, [expenses, searchQuery, filterType, filterEmployee, filterCategory]);
+  }, [expenses, searchQuery, filterType, filterEmployee, filterCategory, paymentStatusFilter]);
 
   const totalAmount = useMemo(() => filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0), [filteredExpenses]);
 
@@ -781,10 +799,12 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       {/* Bulk Actions & Summary */}
       <ExpensesBulkActions
         selectedExpenses={selectedExpenses}
-        allExpenses={filteredExpenses}
+        allExpenses={expenses}
         totalAmount={totalAmount}
         onClearSelection={handleClearSelection}
         onBulkAction={handleBulkAction}
+        activeTab={paymentStatusFilter}
+        onTabChange={setPaymentStatusFilter}
       />
 
       {/* Content View - Sadece Liste Görünümü */}

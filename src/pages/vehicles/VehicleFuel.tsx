@@ -216,7 +216,7 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
           onChange={(e) => setSelectedVehicle(e.target.value)}
           className="px-3 py-2 border rounded-md"
         >
-          <option value="all">Tüm Araçlar</option>
+          <option value="all">Araçlar</option>
           {vehicles?.map(vehicle => (
             <option key={vehicle.id} value={vehicle.id}>
               {vehicle.name} - {vehicle.manufacturer} {vehicle.model}

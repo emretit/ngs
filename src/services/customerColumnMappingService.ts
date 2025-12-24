@@ -98,10 +98,20 @@ export const mapCustomerColumnsWithAI = async (
   excelColumns: string[]
 ): Promise<MappingResult> => {
   try {
+    console.log('🔍 AI Mapping başlatılıyor...', { 
+      excelColumnsCount: excelColumns.length,
+      excelColumns: excelColumns 
+    });
+
     const targetFields = Object.entries(SYSTEM_FIELDS).map(([field, info]) => ({
       name: field,
       description: `${info.description} (Örnekler: ${info.examples.join(', ')}) ${info.required ? '[ZORUNLU]' : '[İSTEĞE BAĞLI]'}`
     }));
+
+    console.log('📤 Gemini API\'ye gönderiliyor...', { 
+      sourceColumns: excelColumns,
+      targetFieldsCount: targetFields.length 
+    });
 
     const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: {
@@ -112,40 +122,120 @@ export const mapCustomerColumnsWithAI = async (
       }
     });
 
-    if (error || data.error) {
-      console.error('AI mapping error:', error || data.error);
+    if (error) {
+      console.error('❌ Supabase function error:', error);
       return fallbackMapping(excelColumns);
     }
 
+    if (data?.error) {
+      console.error('❌ AI mapping error:', data.error);
+      console.error('📋 Raw response:', data);
+      return fallbackMapping(excelColumns);
+    }
+
+    console.log('✅ AI Response alındı:', data);
+
     const result = data;
 
-    const validatedMappings = (result.mappings || [])
-      .filter((m: any) => m.confidence >= 50)
-      .filter((m: any) => Object.keys(SYSTEM_FIELDS).includes(m.target || m.systemField))
-      .map((m: any) => ({
-        excelColumn: (m.source || m.excelColumn || '').trim(),
-        systemField: (m.target || m.systemField || '').trim(),
-        confidence: m.confidence || 80,
-        description: `"${m.source || m.excelColumn}" → ${m.target || m.systemField}`
-      }));
+    // Validate and parse mappings
+    if (!result || !result.mappings || !Array.isArray(result.mappings)) {
+      console.warn('⚠️ Invalid response structure, fallback kullanılıyor:', result);
+      return fallbackMapping(excelColumns);
+    }
 
-    const mappedExcelColumns = new Set(validatedMappings.map((m: any) => m.excelColumn.toLowerCase()));
+    console.log(`📊 AI'dan ${result.mappings.length} eşleştirme geldi`);
+
+    const validatedMappings = (result.mappings || [])
+      .filter((m: any) => {
+        // Confidence kontrolü - AI 0-1 arası gönderebilir, 0-100'e normalize et
+        let confidence = typeof m.confidence === 'number' ? m.confidence : 
+                         typeof m.confidence === 'string' ? parseFloat(m.confidence) : 0;
+        
+        // Eğer confidence 1'den küçükse (0-1 arası), 100 ile çarp (0.95 → 95)
+        if (confidence > 0 && confidence <= 1) {
+          confidence = confidence * 100;
+        }
+        
+        if (confidence < 50) {
+          console.log(`⏭️ Düşük confidence, atlanıyor:`, { ...m, normalizedConfidence: confidence });
+          return false;
+        }
+        return true;
+      })
+      .filter((m: any) => {
+        // Target field kontrolü
+        const targetField = (m.target || m.systemField || '').trim();
+        const isValid = Object.keys(SYSTEM_FIELDS).includes(targetField);
+        if (!isValid) {
+          console.log(`⏭️ Geçersiz target field, atlanıyor:`, m);
+        }
+        return isValid;
+      })
+      .map((m: any) => {
+        const excelColumn = (m.source || m.excelColumn || '').trim();
+        const systemField = (m.target || m.systemField || '').trim();
+        let confidence = typeof m.confidence === 'number' ? m.confidence : 
+                        typeof m.confidence === 'string' ? parseFloat(m.confidence) : 80;
+        
+        // Eğer confidence 1'den küçükse (0-1 arası), 100 ile çarp (0.95 → 95)
+        if (confidence > 0 && confidence <= 1) {
+          confidence = confidence * 100;
+        }
+        
+        console.log(`✅ Eşleştirme: "${excelColumn}" → ${systemField} (confidence: ${Math.round(confidence)})`);
+        
+        return {
+          excelColumn,
+          systemField,
+          confidence: Math.round(confidence),
+          description: `"${excelColumn}" → ${systemField}`
+        };
+      });
+
+    // Aynı sistem alanına birden fazla kolon eşleştirilmişse, sadece en yüksek confidence'lı olanı tut
+    const systemFieldMap = new Map<string, ColumnMapping>();
+    validatedMappings.forEach((mapping) => {
+      const existing = systemFieldMap.get(mapping.systemField);
+      if (!existing || mapping.confidence > existing.confidence) {
+        if (existing) {
+          console.log(`⚠️ Duplicate system field "${mapping.systemField}": "${existing.excelColumn}" (${existing.confidence}%) yerine "${mapping.excelColumn}" (${mapping.confidence}%) seçildi`);
+        }
+        systemFieldMap.set(mapping.systemField, mapping);
+      } else {
+        console.log(`⚠️ Duplicate system field "${mapping.systemField}": "${mapping.excelColumn}" (${mapping.confidence}%) atlandı, "${existing.excelColumn}" (${existing.confidence}%) tutuldu`);
+      }
+    });
+
+    const finalMappings = Array.from(systemFieldMap.values());
+
+    console.log(`✅ ${finalMappings.length} geçerli eşleştirme oluşturuldu (duplicate'ler temizlendi)`);
+
+    const mappedExcelColumns = new Set(finalMappings.map((m: any) => m.excelColumn.toLowerCase()));
     const unmappedColumns = excelColumns.filter(
       col => !mappedExcelColumns.has(col.toLowerCase())
     );
 
-    const avgConfidence = validatedMappings.length > 0
-      ? validatedMappings.reduce((sum: number, m: any) => sum + m.confidence, 0) / validatedMappings.length
+    if (unmappedColumns.length > 0) {
+      console.log(`⚠️ Eşleştirilemeyen kolonlar:`, unmappedColumns);
+    }
+
+    const avgConfidence = finalMappings.length > 0
+      ? finalMappings.reduce((sum: number, m: any) => sum + m.confidence, 0) / finalMappings.length
       : 0;
 
-    return {
-      mappings: validatedMappings,
+    const finalResult = {
+      mappings: finalMappings,
       unmappedColumns,
       confidence: Math.round(avgConfidence)
     };
 
+    console.log('📋 Final mapping result:', finalResult);
+
+    return finalResult;
+
   } catch (error: any) {
-    console.error('AI mapping error:', error);
+    console.error('❌ AI mapping exception:', error);
+    console.error('Stack:', error.stack);
     return fallbackMapping(excelColumns);
   }
 };

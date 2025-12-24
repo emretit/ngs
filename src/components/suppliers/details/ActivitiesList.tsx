@@ -231,7 +231,7 @@ export const ActivitiesList = ({ supplier }: ActivitiesListProps) => {
               <SelectValue placeholder="Tip" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tüm Tipler</SelectItem>
+              <SelectItem value="all">Tipler</SelectItem>
               <SelectItem value="general">Genel</SelectItem>
               <SelectItem value="call">Arama</SelectItem>
               <SelectItem value="meeting">Toplantı</SelectItem>
@@ -246,7 +246,7 @@ export const ActivitiesList = ({ supplier }: ActivitiesListProps) => {
               <SelectValue placeholder="Durum" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tüm Durumlar</SelectItem>
+              <SelectItem value="all">Durumlar</SelectItem>
               <SelectItem value="todo">Yapılacaklar</SelectItem>
               <SelectItem value="in_progress">Devam Ediyor</SelectItem>
               <SelectItem value="completed">Tamamlandı</SelectItem>

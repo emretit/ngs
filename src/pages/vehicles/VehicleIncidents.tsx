@@ -199,7 +199,7 @@ export default function VehicleIncidents() {
           onChange={(e) => setSelectedVehicle(e.target.value)}
           className="px-3 py-2 border rounded-md"
         >
-          <option value="all">Tüm Araçlar</option>
+          <option value="all">Araçlar</option>
           {vehicles?.map(vehicle => (
             <option key={vehicle.id} value={vehicle.id}>
               {vehicle.name} - {vehicle.manufacturer} {vehicle.model}
@@ -211,7 +211,7 @@ export default function VehicleIncidents() {
           onChange={(e) => setFilterType(e.target.value)}
           className="px-3 py-2 border rounded-md"
         >
-          <option value="all">Tüm Türler</option>
+          <option value="all">Türler</option>
           {incidentTypes.map(type => (
             <option key={type} value={type}>
               {getIncidentTypeLabel(type)}
@@ -223,7 +223,7 @@ export default function VehicleIncidents() {
           onChange={(e) => setFilterStatus(e.target.value)}
           className="px-3 py-2 border rounded-md"
         >
-          <option value="all">Tüm Durumlar</option>
+          <option value="all">Durumlar</option>
           <option value="pending">Beklemede</option>
           <option value="resolved">Çözümlendi</option>
           <option value="paid">Ödendi</option>

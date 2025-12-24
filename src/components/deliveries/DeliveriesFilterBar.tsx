@@ -51,7 +51,7 @@ const DeliveriesFilterBar = ({
           <SelectValue placeholder="Durum" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Durumlar</SelectItem>
+          <SelectItem value="all">Durumlar</SelectItem>
           <SelectItem value="pending">⏳ Bekleyen</SelectItem>
           <SelectItem value="prepared">📦 Hazırlanan</SelectItem>
           <SelectItem value="shipped">🚚 Kargoda</SelectItem>
@@ -66,7 +66,7 @@ const DeliveriesFilterBar = ({
           <SelectValue placeholder="Sevkiyat Yöntemi" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Yöntemler</SelectItem>
+          <SelectItem value="all">Yöntemler</SelectItem>
           <SelectItem value="kargo">🚚 Kargo</SelectItem>
           <SelectItem value="sirket_araci">🚗 Şirket Aracı</SelectItem>
           <SelectItem value="musteri_alacak">👤 Müşteri Alacak</SelectItem>
@@ -80,7 +80,7 @@ const DeliveriesFilterBar = ({
           <SelectValue placeholder="Müşteri" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Müşteriler</SelectItem>
+          <SelectItem value="all">Müşteriler</SelectItem>
           {/* TODO: Customer options will be populated from API */}
         </SelectContent>
       </Select>

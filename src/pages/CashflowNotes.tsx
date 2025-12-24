@@ -268,7 +268,7 @@ const CashflowNotes = () => {
               <SelectValue placeholder="Durum filtresi" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tümü</SelectItem>
+              <SelectItem value="all">Hepsi</SelectItem>
               <SelectItem value="pending">Beklemede</SelectItem>
               <SelectItem value="cleared">Tahsil Edildi</SelectItem>
               <SelectItem value="bounced">Karşılıksız</SelectItem>

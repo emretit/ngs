@@ -35,7 +35,7 @@ const SupplierListFilters = ({
         value={typeFilter}
         onChange={(e) => setTypeFilter(e.target.value)}
       >
-        <option value="">🏷️ Tüm Tipler</option>
+        <option value="">🏷️ Tipler</option>
         <option value="bireysel">👤 Bireysel</option>
         <option value="kurumsal">🏢 Kurumsal</option>
       </select>
@@ -44,7 +44,7 @@ const SupplierListFilters = ({
         value={statusFilter}
         onChange={(e) => setStatusFilter(e.target.value)}
       >
-        <option value="">📊 Tüm Durumlar</option>
+        <option value="">📊 Durumlar</option>
         <option value="aktif">✅ Aktif</option>
         <option value="pasif">⏸️ Pasif</option>
         <option value="potansiyel">🎯 Potansiyel</option>

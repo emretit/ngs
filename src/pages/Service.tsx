@@ -1086,7 +1086,7 @@ const ServicePage = ({ defaultView = "dashboard", hideHeader = false }: ServiceP
                   <SelectValue placeholder="Öncelik" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Öncelikler</SelectItem>
+                  <SelectItem value="all">Öncelikler</SelectItem>
                   <SelectItem value="urgent">Acil</SelectItem>
                   <SelectItem value="high">Yüksek</SelectItem>
                   <SelectItem value="medium">Orta</SelectItem>
@@ -1125,7 +1125,7 @@ const ServicePage = ({ defaultView = "dashboard", hideHeader = false }: ServiceP
                   <SelectValue placeholder="Durum" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Durumlar</SelectItem>
+                  <SelectItem value="all">Durumlar</SelectItem>
                   <SelectItem value="new">Yeni</SelectItem>
                   <SelectItem value="in_progress">Devam Ediyor</SelectItem>
                   <SelectItem value="completed">Tamamlandı</SelectItem>
@@ -1138,7 +1138,7 @@ const ServicePage = ({ defaultView = "dashboard", hideHeader = false }: ServiceP
                   <SelectValue placeholder="Öncelik" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Öncelikler</SelectItem>
+                  <SelectItem value="all">Öncelikler</SelectItem>
                   <SelectItem value="urgent">Acil</SelectItem>
                   <SelectItem value="high">Yüksek</SelectItem>
                   <SelectItem value="medium">Orta</SelectItem>

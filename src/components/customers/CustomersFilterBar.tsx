@@ -38,7 +38,7 @@ const CustomersFilterBar = ({
           <SelectValue placeholder="Durum" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Durumlar</SelectItem>
+          <SelectItem value="all">Durumlar</SelectItem>
           <SelectItem value="aktif">✅ Aktif</SelectItem>
           <SelectItem value="pasif">⏸️ Pasif</SelectItem>
           <SelectItem value="potansiyel">🎯 Potansiyel</SelectItem>
@@ -51,7 +51,7 @@ const CustomersFilterBar = ({
           <SelectValue placeholder="Tip" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Tipler</SelectItem>
+          <SelectItem value="all">Tipler</SelectItem>
           <SelectItem value="kurumsal">🏢 Kurumsal</SelectItem>
           <SelectItem value="bireysel">👤 Bireysel</SelectItem>
         </SelectContent>

@@ -180,7 +180,7 @@ export default function VehicleMaintenance({ isCollapsed, setIsCollapsed }: Vehi
           onChange={(e) => setSelectedVehicle(e.target.value)}
           className="px-3 py-2 border rounded-md"
         >
-          <option value="all">Tüm Araçlar</option>
+          <option value="all">Araçlar</option>
           {vehicles?.map(vehicle => (
             <option key={vehicle.id} value={vehicle.id}>
               {vehicle.plate_number} - {vehicle.brand} {vehicle.model}
@@ -193,7 +193,7 @@ export default function VehicleMaintenance({ isCollapsed, setIsCollapsed }: Vehi
           onChange={(e) => setFilterStatus(e.target.value)}
           className="px-3 py-2 border rounded-md"
         >
-          <option value="all">Tüm Durumlar</option>
+          <option value="all">Durumlar</option>
           <option value="new">Yeni</option>
           <option value="assigned">Atandı</option>
           <option value="in_progress">Devam Ediyor</option>

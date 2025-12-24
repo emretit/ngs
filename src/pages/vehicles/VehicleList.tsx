@@ -116,7 +116,7 @@ export default function VehicleList({ isCollapsed, setIsCollapsed }: VehicleList
           onChange={(e) => setFilterStatus(e.target.value)}
           className="px-3 py-2 border rounded-md"
         >
-          <option value="all">Tüm Durumlar</option>
+          <option value="all">Durumlar</option>
           <option value="aktif">Aktif</option>
           <option value="bakım">Bakımda</option>
           <option value="pasif">Pasif</option>

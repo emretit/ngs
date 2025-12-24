@@ -70,7 +70,7 @@ const TasksFilterBar = ({
           <SelectValue placeholder="Durum" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Durumlar</SelectItem>
+          <SelectItem value="all">Durumlar</SelectItem>
           <SelectItem value="todo">🔴 Yapılacak</SelectItem>
           <SelectItem value="in_progress">🟡 Devam Ediyor</SelectItem>
           <SelectItem value="completed">🟢 Tamamlandı</SelectItem>
@@ -87,7 +87,7 @@ const TasksFilterBar = ({
           <SelectValue placeholder="Görevli" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Görevliler</SelectItem>
+          <SelectItem value="all">Görevliler</SelectItem>
           {employees?.map((employee) => (
             <SelectItem key={employee.id} value={employee.id}>
               {employee.first_name} {employee.last_name}
@@ -104,7 +104,7 @@ const TasksFilterBar = ({
           <SelectValue placeholder="Aktivite Tipi" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Tipler</SelectItem>
+          <SelectItem value="all">Tipler</SelectItem>
           <SelectItem value="opportunity">Fırsat</SelectItem>
           <SelectItem value="proposal">Teklif</SelectItem>
           <SelectItem value="general">Genel</SelectItem>

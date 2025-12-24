@@ -50,7 +50,7 @@ const ProposalsFilterBar = ({
           <SelectValue placeholder="Durum" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Durumlar</SelectItem>
+          <SelectItem value="all">Durumlar</SelectItem>
           <SelectItem value="draft">📄 Taslak</SelectItem>
           <SelectItem value="pending_approval">⏳ Onay Bekliyor</SelectItem>
           <SelectItem value="sent">📤 Gönderildi</SelectItem>
@@ -67,7 +67,7 @@ const ProposalsFilterBar = ({
             <SelectValue placeholder="Satış Temsilcisi" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm Temsilciler</SelectItem>
+            <SelectItem value="all">Temsilciler</SelectItem>
             {employees.map((employee) => (
               <SelectItem key={employee.id} value={employee.id}>
                 {employee.first_name} {employee.last_name}

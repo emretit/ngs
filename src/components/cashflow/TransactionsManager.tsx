@@ -409,7 +409,7 @@ const TransactionsManager = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tüm Türler</SelectItem>
+                <SelectItem value="all">Türler</SelectItem>
                 <SelectItem value="income">Gelir</SelectItem>
                 <SelectItem value="expense">Masraf</SelectItem>
               </SelectContent>
@@ -418,10 +418,10 @@ const TransactionsManager = () => {
             {/* Category Filter */}
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Tüm Kategoriler" />
+                <SelectValue placeholder="Kategoriler" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tüm Kategoriler</SelectItem>
+                <SelectItem value="all">Kategoriler</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}

@@ -189,7 +189,7 @@ export default function VehicleContracts() {
                 <SelectValue placeholder="Tür" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tüm Türler</SelectItem>
+                <SelectItem value="all">Türler</SelectItem>
                 {Object.entries(contractTypeLabels).map(([value, label]) => (
                   <SelectItem key={value} value={value}>{label}</SelectItem>
                 ))}
@@ -200,7 +200,7 @@ export default function VehicleContracts() {
                 <SelectValue placeholder="Durum" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tüm Durumlar</SelectItem>
+                <SelectItem value="all">Durumlar</SelectItem>
                 <SelectItem value="aktif">Aktif</SelectItem>
                 <SelectItem value="süresi_doldu">Süresi Doldu</SelectItem>
                 <SelectItem value="iptal">İptal</SelectItem>

@@ -173,7 +173,7 @@ export default function VendorsPage() {
               <SelectValue placeholder="Durum" />
             </SelectTrigger>
             <SelectContent className="bg-background z-50">
-              <SelectItem value="all">Tümü</SelectItem>
+              <SelectItem value="all">Hepsi</SelectItem>
               <SelectItem value="true">Aktif</SelectItem>
               <SelectItem value="false">Pasif</SelectItem>
             </SelectContent>
@@ -189,7 +189,7 @@ export default function VendorsPage() {
               <SelectValue placeholder="Para Birimi" />
             </SelectTrigger>
             <SelectContent className="bg-background z-50">
-              <SelectItem value="all">Tümü</SelectItem>
+              <SelectItem value="all">Hepsi</SelectItem>
               {CURRENCIES.map(curr => (
                 <SelectItem key={curr} value={curr}>
                   {curr}

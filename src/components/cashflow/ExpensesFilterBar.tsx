@@ -55,7 +55,7 @@ const ExpensesFilterBar = ({
           <SelectValue placeholder="Tür" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Türler</SelectItem>
+          <SelectItem value="all">Türler</SelectItem>
           <SelectItem value="company">Şirket</SelectItem>
           <SelectItem value="employee">Çalışan</SelectItem>
         </SelectContent>
@@ -67,7 +67,7 @@ const ExpensesFilterBar = ({
           <SelectValue placeholder="Çalışan" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Çalışanlar</SelectItem>
+          <SelectItem value="all">Çalışanlar</SelectItem>
           {employees.map((employee) => (
             <SelectItem key={employee.id} value={employee.id}>
               {employee.first_name} {employee.last_name}
@@ -82,7 +82,7 @@ const ExpensesFilterBar = ({
           <SelectValue placeholder="Kategori" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Kategoriler</SelectItem>
+          <SelectItem value="all">Kategoriler</SelectItem>
           {categories.map((category) => (
             <SelectItem key={category.id} value={category.id}>
               {category.name}

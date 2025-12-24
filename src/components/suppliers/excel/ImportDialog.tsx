@@ -70,14 +70,39 @@ const SupplierImportDialog = ({ isOpen, setIsOpen, onImportSuccess }: SupplierIm
   
   const updateMapping = (excelColumn: string, systemField: string) => {
     const newMapping = { ...customMapping };
+    
     if (systemField === 'none') {
       // "Eşleştirme Yapma" seçildiğinde, AI mapping'i override etmek için özel bir değer kaydet
       newMapping[excelColumn] = 'none';
     } else if (systemField) {
+      // Aynı sistem alanına başka bir kolon eşleştirilmiş mi kontrol et
+      const existingColumn = Object.keys(newMapping).find(
+        col => col !== excelColumn && newMapping[col] === systemField && newMapping[col] !== 'none'
+      );
+      
+      // AI mapping'de de kontrol et
+      const existingAIMapping = columnMappings.find(
+        m => m.excelColumn !== excelColumn && m.systemField === systemField
+      );
+      
+      if (existingColumn || existingAIMapping) {
+        // Önceki eşleştirmeyi kaldır
+        if (existingColumn) {
+          delete newMapping[existingColumn];
+          console.log(`⚠️ "${existingColumn}" kolonunun "${systemField}" eşleştirmesi kaldırıldı, "${excelColumn}" ile değiştirildi`);
+        }
+        if (existingAIMapping && !newMapping[existingAIMapping.excelColumn]) {
+          // AI mapping'i override et
+          newMapping[existingAIMapping.excelColumn] = 'none';
+          console.log(`⚠️ AI eşleştirmesi "${existingAIMapping.excelColumn}" → "${systemField}" kaldırıldı, "${excelColumn}" ile değiştirildi`);
+        }
+      }
+      
       newMapping[excelColumn] = systemField;
     } else {
       delete newMapping[excelColumn];
     }
+    
     setCustomMapping(newMapping);
   };
   
@@ -275,7 +300,10 @@ const SupplierImportDialog = ({ isOpen, setIsOpen, onImportSuccess }: SupplierIm
                                   <SelectTrigger className="h-8 w-[200px]">
                                     <SelectValue placeholder="Sistem alanı seçin" />
                                   </SelectTrigger>
-                                  <SelectContent>
+                                  <SelectContent 
+                                    className="bg-background border border-border shadow-xl z-[9999] [&>button:first-child]:hidden [&>button:last-child]:hidden [&>div:nth-child(2)]:!h-[300px] [&>div:nth-child(2)]:!max-h-[300px] [&>div:nth-child(2)]:overflow-y-auto" 
+                                    position="popper"
+                                  >
                                     {systemFields.map((field) => (
                                       <SelectItem key={field.value} value={field.value}>
                                         {field.label}

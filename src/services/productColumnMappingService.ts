@@ -130,26 +130,65 @@ export const mapExcelColumnsWithAI = async (
     const result = data;
 
     const validatedMappings = (result.mappings || [])
-      .filter((m: any) => m.confidence >= 50)
+      .filter((m: any) => {
+        // Confidence kontrolü - AI 0-1 arası gönderebilir, 0-100'e normalize et
+        let confidence = typeof m.confidence === 'number' ? m.confidence : 
+                         typeof m.confidence === 'string' ? parseFloat(m.confidence) : 0;
+        
+        // Eğer confidence 1'den küçükse (0-1 arası), 100 ile çarp (0.95 → 95)
+        if (confidence > 0 && confidence <= 1) {
+          confidence = confidence * 100;
+        }
+        
+        return confidence >= 50;
+      })
       .filter((m: any) => Object.keys(SYSTEM_FIELDS).includes(m.target || m.systemField))
-      .map((m: any) => ({
-        excelColumn: (m.source || m.excelColumn || '').trim(),
-        systemField: (m.target || m.systemField || '').trim(),
-        confidence: m.confidence || 80,
-        description: `"${m.source || m.excelColumn}" → ${m.target || m.systemField}`
-      }));
+      .map((m: any) => {
+        const excelColumn = (m.source || m.excelColumn || '').trim();
+        const systemField = (m.target || m.systemField || '').trim();
+        let confidence = typeof m.confidence === 'number' ? m.confidence : 
+                        typeof m.confidence === 'string' ? parseFloat(m.confidence) : 80;
+        
+        // Eğer confidence 1'den küçükse (0-1 arası), 100 ile çarp (0.95 → 95)
+        if (confidence > 0 && confidence <= 1) {
+          confidence = confidence * 100;
+        }
+        
+        return {
+          excelColumn,
+          systemField,
+          confidence: Math.round(confidence),
+          description: `"${excelColumn}" → ${systemField}`
+        };
+      });
 
-    const mappedExcelColumns = new Set(validatedMappings.map((m: any) => m.excelColumn.toLowerCase()));
+    // Aynı sistem alanına birden fazla kolon eşleştirilmişse, sadece en yüksek confidence'lı olanı tut
+    const systemFieldMap = new Map<string, any>();
+    validatedMappings.forEach((mapping) => {
+      const existing = systemFieldMap.get(mapping.systemField);
+      if (!existing || mapping.confidence > existing.confidence) {
+        if (existing) {
+          console.log(`⚠️ Duplicate system field "${mapping.systemField}": "${existing.excelColumn}" (${existing.confidence}%) yerine "${mapping.excelColumn}" (${mapping.confidence}%) seçildi`);
+        }
+        systemFieldMap.set(mapping.systemField, mapping);
+      } else {
+        console.log(`⚠️ Duplicate system field "${mapping.systemField}": "${mapping.excelColumn}" (${mapping.confidence}%) atlandı, "${existing.excelColumn}" (${existing.confidence}%) tutuldu`);
+      }
+    });
+
+    const finalMappings = Array.from(systemFieldMap.values());
+
+    const mappedExcelColumns = new Set(finalMappings.map((m: any) => m.excelColumn.toLowerCase()));
     const unmappedColumns = excelColumns.filter(
       col => !mappedExcelColumns.has(col.toLowerCase())
     );
 
-    const avgConfidence = validatedMappings.length > 0
-      ? validatedMappings.reduce((sum: number, m: any) => sum + m.confidence, 0) / validatedMappings.length
+    const avgConfidence = finalMappings.length > 0
+      ? finalMappings.reduce((sum: number, m: any) => sum + m.confidence, 0) / finalMappings.length
       : 0;
 
     return {
-      mappings: validatedMappings,
+      mappings: finalMappings,
       unmappedColumns,
       confidence: Math.round(avgConfidence)
     };

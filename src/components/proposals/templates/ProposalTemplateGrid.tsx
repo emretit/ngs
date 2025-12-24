@@ -35,7 +35,7 @@ const ProposalTemplateGrid: React.FC<ProposalTemplateGridProps> = ({
 
   // Get unique categories
   const categories = [
-    { value: "all", label: "Tüm Şablonlar" },
+    { value: "all", label: "Şablonlar" },
     ...Array.from(new Set(templates.map(t => t.templateType))).map(type => ({
       value: type,
       label: getCategoryLabel(type)

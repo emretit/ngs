@@ -55,7 +55,7 @@ const OpportunityFilterBar = ({
           <SelectValue placeholder="Durum" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Durumlar</SelectItem>
+          <SelectItem value="all">Durumlar</SelectItem>
           <SelectItem value="new">🆕 Yeni</SelectItem>
           <SelectItem value="meeting_visit">👥 Görüşme/Ziyaret</SelectItem>
           <SelectItem value="proposal">📄 Teklif</SelectItem>
@@ -73,7 +73,7 @@ const OpportunityFilterBar = ({
           <SelectValue placeholder="Öncelik" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tüm Öncelikler</SelectItem>
+          <SelectItem value="all">Öncelikler</SelectItem>
           <SelectItem value="high">🔴 Yüksek</SelectItem>
           <SelectItem value="medium">🟡 Orta</SelectItem>
           <SelectItem value="low">🟢 Düşük</SelectItem>
@@ -87,7 +87,7 @@ const OpportunityFilterBar = ({
             <SelectValue placeholder="Satış Temsilcisi" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm Temsilciler</SelectItem>
+            <SelectItem value="all">Temsilciler</SelectItem>
             {employees.map((employee) => (
               <SelectItem key={employee.id} value={employee.id}>
                 {employee.first_name} {employee.last_name}

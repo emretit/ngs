@@ -236,7 +236,7 @@ const AuditLogs = () => {
             <SelectValue placeholder="İşlem Tipi" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm İşlemler</SelectItem>
+            <SelectItem value="all">İşlemler</SelectItem>
             <SelectItem value="created">✅ Oluşturuldu</SelectItem>
             <SelectItem value="updated">🔄 Güncellendi</SelectItem>
             <SelectItem value="deleted">❌ Silindi</SelectItem>
@@ -249,7 +249,7 @@ const AuditLogs = () => {
             <SelectValue placeholder="Tablo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tüm Tablolar</SelectItem>
+            <SelectItem value="all">Tablolar</SelectItem>
             <SelectItem value="customers">👥 Müşteriler</SelectItem>
             <SelectItem value="suppliers">🏭 Tedarikçiler</SelectItem>
             <SelectItem value="employees">👤 Çalışanlar</SelectItem>

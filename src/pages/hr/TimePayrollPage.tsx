@@ -328,10 +328,10 @@ const TimePayrollPage: React.FC = () => {
                 onValueChange={(val) => setFilters({ ...filters, departmentId: val === "all" ? null : val })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Tüm Departmanlar" />
+                  <SelectValue placeholder="Departmanlar" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Departmanlar</SelectItem>
+                  <SelectItem value="all">Departmanlar</SelectItem>
                   {departments.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id}>
                       {dept.name}
@@ -348,10 +348,10 @@ const TimePayrollPage: React.FC = () => {
                 onValueChange={(val) => setFilters({ ...filters, employeeId: val === "all" ? null : val })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Tüm Çalışanlar" />
+                  <SelectValue placeholder="Çalışanlar" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Çalışanlar</SelectItem>
+                  <SelectItem value="all">Çalışanlar</SelectItem>
                   {filteredEmployees.map((emp) => (
                     <SelectItem key={emp.id} value={emp.id}>
                       {emp.first_name} {emp.last_name}
@@ -401,7 +401,7 @@ const TimePayrollPage: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tümü</SelectItem>
+                  <SelectItem value="all">Hepsi</SelectItem>
                   <SelectItem value="draft">Taslak</SelectItem>
                   <SelectItem value="approved">Onaylandı</SelectItem>
                   <SelectItem value="locked">Kilitli</SelectItem>

@@ -9,6 +9,8 @@ const EmployeeForm = React.lazy(() => import("@/pages/EmployeeForm"));
 const TimePayrollPage = React.lazy(() => import("@/pages/hr/TimePayrollPage"));
 const EmployeeLeaves = React.lazy(() => import("@/pages/EmployeeLeaves"));
 const EmployeeDocuments = React.lazy(() => import("@/pages/EmployeeDocuments"));
+const LeaveCreate = React.lazy(() => import("@/pages/LeaveCreate"));
+const LeaveSettings = React.lazy(() => import("@/pages/LeaveSettings"));
 
 // Define employee routes
 export const employeeRoutes: RouteConfig[] = [
@@ -18,5 +20,7 @@ export const employeeRoutes: RouteConfig[] = [
   { path: "/employees/:id/edit", component: EmployeeForm, protected: true },
   { path: "/employees/payroll", component: TimePayrollPage, protected: true },
   { path: "/employees/leaves", component: EmployeeLeaves, protected: true },
+  { path: "/employees/leaves/new", component: LeaveCreate, protected: true },
+  { path: "/employees/leaves/settings", component: LeaveSettings, protected: true },
   { path: "/employees/documents", component: EmployeeDocuments, protected: true },
 ];

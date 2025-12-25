@@ -499,6 +499,82 @@ export const GEMINI_MODELS = [
   { id: 'gemini-2.0-flash-thinking-exp', name: 'Gemini 2.0 Thinking', description: 'Düşünme modeli - Karmaşık problemler için' },
 ] as const;
 
+/**
+ * Chat with AI using conversation history context
+ * This enables multi-turn conversations with context awareness
+ */
+export async function chatWithContext(
+  message: string,
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+  options: {
+    model?: string;
+    includeSystemPrompt?: boolean;
+  } = {}
+): Promise<GeminiChatResponse> {
+  try {
+    const companyId = await getCurrentCompanyId();
+
+    // Build messages array with context
+    const messages = [];
+
+    // Add system prompt if requested
+    if (options.includeSystemPrompt !== false) {
+      messages.push({
+        role: 'system',
+        content: `Sen PAFTA ERP sisteminin AI asistanısın. Türkçe konuşuyorsun.
+Kullanıcılara işletme yönetimi, finansal analiz, CRM ve operasyonel sorularında yardımcı oluyorsun.
+Database'de şu tablolar var: customers, suppliers, products, sales_invoices, einvoices, opportunities, activities, proposals, employees, tasks, service_requests.
+Her zaman company_id filtresi ile çalış: ${companyId}
+Yanıtlarını kısa, net ve Türkçe ver.`
+      });
+    }
+
+    // Add conversation history (last 10 messages for context)
+    const recentHistory = conversationHistory.slice(-10);
+    messages.push(...recentHistory.map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.content
+    })));
+
+    // Add current message
+    messages.push({
+      role: 'user',
+      content: message
+    });
+
+    // Call edge function with context
+    const { data, error } = await supabase.functions.invoke('gemini-chat', {
+      body: {
+        type: 'chat',
+        message: message,
+        history: recentHistory,
+        model: options.model || 'gemini-2.0-flash-exp',
+        companyId: companyId
+      }
+    });
+
+    if (error) {
+      console.error('Chat with context error:', error);
+      return {
+        error: error.message || 'Bir hata oluştu',
+        configured: false
+      };
+    }
+
+    return {
+      content: data.content || data.response || '',
+      raw: data.raw,
+      configured: true
+    };
+  } catch (err: any) {
+    console.error('Chat with context exception:', err);
+    return {
+      error: err.message || 'Beklenmeyen bir hata oluştu',
+      configured: false
+    };
+  }
+}
+
 // Backward compatibility exports
 export const checkGroqStatus = checkGeminiStatus;
 export const GROQ_MODELS = GEMINI_MODELS;

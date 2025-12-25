@@ -8,6 +8,7 @@ const SignUp = React.lazy(() => import("@/pages/SignUp"));
 const InviteSetup = React.lazy(() => import("@/pages/InviteSetup"));
 const ForgotPassword = React.lazy(() => import("@/pages/ForgotPassword"));
 const SetPassword = React.lazy(() => import("@/pages/SetPassword"));
+const PrivacyPolicy = React.lazy(() => import("@/pages/PrivacyPolicy"));
 
 // Define public routes
 export const publicRoutes: RouteConfig[] = [
@@ -18,4 +19,5 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/forgot-password", component: ForgotPassword, protected: false },
   { path: "/set-password", component: SetPassword, protected: false },
   { path: "/reset-password", component: SetPassword, protected: false },
+  { path: "/privacy-policy", component: PrivacyPolicy, protected: false },
 ];

@@ -139,7 +139,7 @@ const FooterSection = () => {
             {/* Copyright */}
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-xs text-white/40">
               <span>{t("landing.footer.rights")} • v0.4.0 Beta</span>
-              <a href="#" className="hover:text-red-400 transition-colors">{t("landing.footer.privacy")}</a>
+              <Link to="/privacy-policy" className="hover:text-red-400 transition-colors">{t("landing.footer.privacy")}</Link>
               <a href="#" className="hover:text-red-400 transition-colors">{t("landing.footer.terms")}</a>
               <a href="#" className="hover:text-red-400 transition-colors">{t("landing.footer.cookies")}</a>
             </div>

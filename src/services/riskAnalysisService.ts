@@ -449,7 +449,7 @@ Genel Risk Skoru: ${overallScore}/100
 
 En kritik risklere odaklan ve öncelikli aksiyonları belirt.`;
 
-      const response = await chatWithAI(prompt);
+      const response = await chatWithAI([{ role: 'user', content: prompt }]);
       if (response.content) {
         aiRecommendations = response.content;
       }

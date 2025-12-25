@@ -1,10 +1,22 @@
-import { useState, useMemo } from 'react';
-import GridLayout, { Layout } from 'react-grid-layout';
+import { useState } from 'react';
+import GridLayout from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+
+interface LayoutItem {
+  i: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  minW?: number;
+  minH?: number;
+}
 
 interface DashboardGridProps {
   children: React.ReactNode;
-  layout: Layout[];
-  onLayoutChange: (layout: Layout[]) => void;
+  layout: LayoutItem[];
+  onLayoutChange: (layout: LayoutItem[]) => void;
   isEditMode: boolean;
   cols?: number;
   rowHeight?: number;
@@ -15,37 +27,17 @@ export function DashboardGrid({
   layout,
   onLayoutChange,
   isEditMode,
-  cols = 12,
   rowHeight = 100,
 }: DashboardGridProps) {
-  const [containerWidth, setContainerWidth] = useState(1200);
-
-  // Responsive breakpoints
-  const breakpoints = useMemo(() => ({
-    lg: 1200,
-    md: 996,
-    sm: 768,
-    xs: 480,
-    xxs: 0,
-  }), []);
-
-  const responsiveCols = useMemo(() => ({
-    lg: 12,
-    md: 10,
-    sm: 6,
-    xs: 4,
-    xxs: 2,
-  }), []);
+  const [containerWidth] = useState(1200);
 
   return (
     <div className="w-full">
       <GridLayout
         className="layout"
         layout={layout}
-        cols={cols}
-        rowHeight={rowHeight}
         width={containerWidth}
-        onLayoutChange={onLayoutChange}
+        onLayoutChange={(newLayout: any) => onLayoutChange(newLayout)}
         isDraggable={isEditMode}
         isResizable={isEditMode}
         compactType="vertical"

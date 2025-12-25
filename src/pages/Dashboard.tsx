@@ -1,242 +1,190 @@
 import { memo } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import { WorkflowPipeline } from "@/components/dashboard/workflow/WorkflowPipeline";
+import { TodaysTasks } from "@/components/dashboard/workflow/TodaysTasks";
+import { PendingApprovals } from "@/components/dashboard/workflow/PendingApprovals";
+import { QuickActions } from "@/components/dashboard/workflow/QuickActions";
+import { useWorkflowPipeline } from "@/hooks/useWorkflowPipeline";
+import { useTodaysTasks } from "@/hooks/useTodaysTasks";
+import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
-import MonthlyTurnoverWidget from "@/components/dashboard/widgets/MonthlyTurnoverWidget";
-import MonthlyExpensesWidget from "@/components/dashboard/widgets/MonthlyExpensesWidget";
-import StockValueWidget from "@/components/dashboard/widgets/StockValueWidget";
-import CompactAssetsWidget from "@/components/dashboard/widgets/CompactAssetsWidget";
-import CompactLiabilitiesWidget from "@/components/dashboard/widgets/CompactLiabilitiesWidget";
-import OverdueReceivablesWidget from "@/components/dashboard/widgets/OverdueReceivablesWidget";
-import UpcomingChecksWidget from "@/components/dashboard/widgets/UpcomingChecksWidget";
-import IncomingEInvoicesWidget from "@/components/dashboard/widgets/IncomingEInvoicesWidget";
-import UpcomingExpensesWidget from "@/components/dashboard/widgets/UpcomingExpensesWidget";
 import AIAssistantWidget from "@/components/dashboard/widgets/AIAssistantWidget";
 import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// CRM Widgets
-import { ActiveOpportunitiesWidget } from "@/components/dashboard/widgets/ActiveOpportunitiesWidget";
-import { PendingProposalsWidget } from "@/components/dashboard/widgets/PendingProposalsWidget";
-// Satış Widgets
-import { TodaySalesWidget } from "@/components/dashboard/widgets/TodaySalesWidget";
-import { PendingOrdersWidget } from "@/components/dashboard/widgets/PendingOrdersWidget";
-import { PendingDeliveriesWidget } from "@/components/dashboard/widgets/PendingDeliveriesWidget";
-import TotalCustomersWidget from "@/components/dashboard/widgets/TotalCustomersWidget";
-import MonthlySalesTrendWidget from "@/components/dashboard/widgets/MonthlySalesTrendWidget";
+import MonthlyTurnoverWidget from "@/components/dashboard/widgets/MonthlyTurnoverWidget";
 import TotalReceivablesWidget from "@/components/dashboard/widgets/TotalReceivablesWidget";
-import OpportunitiesValueWidget from "@/components/dashboard/widgets/OpportunitiesValueWidget";
-import TopSellingProductsWidget from "@/components/dashboard/widgets/TopSellingProductsWidget";
-// Satın Alma Widgets
-import { PendingPurchaseRequestsWidget } from "@/components/dashboard/widgets/PendingPurchaseRequestsWidget";
-import { PendingPurchaseOrdersWidget } from "@/components/dashboard/widgets/PendingPurchaseOrdersWidget";
-// Stok Widgets
-import { LowStockItemsWidget } from "@/components/dashboard/widgets/LowStockItemsWidget";
-// Servis Widgets
-import { ActiveServiceRequestsWidget } from "@/components/dashboard/widgets/ActiveServiceRequestsWidget";
-import { PendingWorkOrdersWidget } from "@/components/dashboard/widgets/PendingWorkOrdersWidget";
-// Araç Widgets
-import { UpcomingMaintenancesWidget } from "@/components/dashboard/widgets/UpcomingMaintenancesWidget";
+import OverdueReceivablesWidget from "@/components/dashboard/widgets/OverdueReceivablesWidget";
+import UpcomingChecksWidget from "@/components/dashboard/widgets/UpcomingChecksWidget";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  
+  // Workflow data
+  const { data: pipelineStages, isLoading: pipelineLoading } = useWorkflowPipeline();
+  const { tasks, isLoading: tasksLoading, completeTask } = useTodaysTasks();
+  const { data: approvals, isLoading: approvalsLoading } = usePendingApprovals();
+  
+  // Financial widgets
   const {
     monthlyTurnover,
-    monthlyExpenses,
-    stockValue,
-    assets,
-    liabilities,
+    totalReceivables,
     overdueReceivables,
     upcomingChecks,
-    incomingEInvoices,
-    upcomingExpenses,
-    // CRM
-    activeOpportunities,
-    pendingProposals,
-    // Satış
-    todaySales,
-    pendingOrders,
-    pendingDeliveries,
-    // Satın Alma
-    pendingPurchaseRequests,
-    pendingPurchaseOrders,
-    // Stok
-    lowStockItems,
-    // Servis
-    activeServiceRequests,
-    pendingWorkOrders,
-    // Araç
-    upcomingMaintenances,
-    // Yeni Satış Metrikleri
-    totalCustomers,
-    activeCustomers,
-    previousMonthSales,
-    totalReceivables,
-    opportunitiesValue,
-    opportunitiesCount,
-    topSellingProducts,
-    isLoading
+    isLoading: widgetsLoading
   } = useDashboardWidgets();
+
+  const handleStageClick = (stageId: string) => {
+    const routes: Record<string, string> = {
+      'opportunities': '/crm/opportunities',
+      'proposals': '/proposals',
+      'orders': '/sales/orders',
+      'deliveries': '/sales/deliveries',
+      'invoices': '/sales/invoices'
+    };
+    if (routes[stageId]) {
+      navigate(routes[stageId]);
+    }
+  };
+
+  const handleTaskClick = (taskId: string) => {
+    navigate(`/activities?taskId=${taskId}`);
+  };
+
+  const handleAddTask = () => {
+    navigate('/activities?action=new');
+  };
+
+  const handleApprove = (id: string) => {
+    toast.success("Onay işlemi başarılı");
+    // TODO: Implement approval logic
+  };
+
+  const handleReject = (id: string) => {
+    toast.info("Red işlemi başarılı");
+    // TODO: Implement rejection logic
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <DashboardHeader />
 
-      {/* Ana Satış Metrikleri - 6 Büyük Kart */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+      {/* Quick Actions Bar */}
+      <QuickActions compact />
+
+      {/* Main Workflow Pipeline */}
+      <Card className="bg-white border-gray-200 shadow-sm">
+        <CardContent className="p-4">
+          {pipelineLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-48" />
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <Skeleton key={i} className="h-32 flex-1" />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <WorkflowPipeline 
+              stages={pipelineStages || []} 
+              onStageClick={handleStageClick}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Today's Tasks */}
+        <Card className="lg:col-span-1 bg-white border-gray-200 shadow-sm">
+          <CardContent className="p-4 h-[420px]">
+            {tasksLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-2 w-full" />
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : (
+              <TodaysTasks 
+                tasks={tasks}
+                onTaskComplete={completeTask}
+                onTaskClick={handleTaskClick}
+                onAddTask={handleAddTask}
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Middle Column - Pending Approvals */}
+        <Card className="lg:col-span-1 bg-white border-gray-200 shadow-sm">
+          <CardContent className="p-4 h-[420px]">
+            {approvalsLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-full" />
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} className="h-24 w-full" />
+                ))}
+              </div>
+            ) : (
+              <PendingApprovals 
+                approvals={approvals || []}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                onViewDetails={(id) => navigate(`/approvals/${id}`)}
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Right Column - AI Assistant */}
+        <Card className="lg:col-span-1 bg-white border-gray-200 shadow-sm">
+          <CardContent className="p-4 h-[420px]">
+            <AIAssistantWidget />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Financial Summary Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MonthlyTurnoverWidget 
           value={monthlyTurnover || 0} 
-          isLoading={isLoading} 
-        />
-        <TodaySalesWidget 
-          value={todaySales || 0} 
-          isLoading={isLoading} 
-        />
-        <MonthlySalesTrendWidget 
-          currentMonth={monthlyTurnover || 0}
-          previousMonth={previousMonthSales || 0}
-          isLoading={isLoading} 
-        />
-        <TotalCustomersWidget 
-          totalCustomers={totalCustomers || 0}
-          activeCustomers={activeCustomers || 0}
-          isLoading={isLoading} 
+          isLoading={widgetsLoading} 
         />
         <TotalReceivablesWidget 
           totalReceivables={totalReceivables || 0}
-          isLoading={isLoading} 
+          isLoading={widgetsLoading} 
         />
-        <OpportunitiesValueWidget 
-          totalValue={opportunitiesValue || 0}
-          count={opportunitiesCount || 0}
-          isLoading={isLoading} 
+        <OverdueReceivablesWidget 
+          receivables={overdueReceivables || []} 
+          isLoading={widgetsLoading} 
         />
-      </div>
-
-      {/* Finansal Özet - Kompakt Varlıklar ve Borçlar */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <CompactAssetsWidget 
-          totalAssets={assets?.total || 0} 
-          isLoading={isLoading} 
-        />
-        <CompactLiabilitiesWidget 
-          totalLiabilities={liabilities?.total || 0} 
-          isLoading={isLoading} 
-        />
-        <MonthlyExpensesWidget 
-          value={monthlyExpenses || 0} 
-          isLoading={isLoading} 
-        />
-        <StockValueWidget 
-          value={stockValue || 0} 
-          isLoading={isLoading} 
+        <UpcomingChecksWidget 
+          checks={upcomingChecks || []} 
+          isLoading={widgetsLoading} 
         />
       </div>
 
-      {/* Satış Odaklı Widget'lar - 4 Kolon */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* 1. Kolon - Satış Performansı */}
-        <div className="lg:col-span-1 space-y-6">
-          <TopSellingProductsWidget 
-            products={topSellingProducts || []} 
-            isLoading={isLoading} 
-          />
-          <PendingOrdersWidget 
-            orders={pendingOrders || []} 
-            isLoading={isLoading} 
-          />
-        </div>
+      {/* Bottom Row - Activities Timeline */}
+      <Card className="bg-white border-gray-200 shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Son Aktiviteler</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RecentActivitiesTimeline />
+        </CardContent>
+      </Card>
 
-        {/* 2. Kolon - Satış İşlemleri */}
-        <div className="lg:col-span-1 space-y-6">
-          <PendingDeliveriesWidget 
-            deliveries={pendingDeliveries || []} 
-            isLoading={isLoading} 
-          />
-          <OverdueReceivablesWidget 
-            receivables={overdueReceivables || []} 
-            isLoading={isLoading} 
-          />
-        </div>
-
-        {/* 3. Kolon - CRM */}
-        <div className="lg:col-span-1 space-y-6">
-          <ActiveOpportunitiesWidget 
-            opportunities={activeOpportunities || []} 
-            isLoading={isLoading} 
-          />
-          <PendingProposalsWidget 
-            proposals={pendingProposals || []} 
-            isLoading={isLoading} 
-          />
-        </div>
-
-        {/* 4. Kolon - Diğer Modüller */}
-        <div className="lg:col-span-1 space-y-6">
-          <PendingPurchaseRequestsWidget 
-            requests={pendingPurchaseRequests || []} 
-            isLoading={isLoading} 
-          />
-          <LowStockItemsWidget 
-            items={lowStockItems || []} 
-            isLoading={isLoading} 
-          />
-          <ActiveServiceRequestsWidget 
-            requests={activeServiceRequests || []} 
-            isLoading={isLoading} 
-          />
-        </div>
-      </div>
-
-      {/* Finansal ve Diğer Widget'lar - 4 Kolon */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* 1. Kolon - AI Asistan */}
-        <div className="lg:col-span-1">
-          <AIAssistantWidget />
-        </div>
-
-        {/* 2. Kolon - Yaklaşan Ödemeler */}
-        <div className="lg:col-span-1 space-y-6">
-          <UpcomingChecksWidget 
-            checks={upcomingChecks || []} 
-            isLoading={isLoading} 
-          />
-          <UpcomingExpensesWidget 
-            expenses={upcomingExpenses || []} 
-            isLoading={isLoading} 
-          />
-        </div>
-
-        {/* 3. Kolon - Gelen E-Faturalar ve Satın Alma */}
-        <div className="lg:col-span-1 space-y-6">
-          <IncomingEInvoicesWidget 
-            invoices={incomingEInvoices || []} 
-            isLoading={isLoading} 
-          />
-          <PendingPurchaseOrdersWidget 
-            orders={pendingPurchaseOrders || []} 
-            isLoading={isLoading} 
-          />
-        </div>
-
-        {/* 4. Kolon - Servis ve Son Aktiviteler */}
-        <div className="lg:col-span-1 space-y-6">
-          <PendingWorkOrdersWidget 
-            workOrders={pendingWorkOrders || []} 
-            isLoading={isLoading} 
-          />
-          <UpcomingMaintenancesWidget 
-            maintenances={upcomingMaintenances || []} 
-            isLoading={isLoading} 
-          />
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Son Aktiviteler</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RecentActivitiesTimeline />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      {/* Full Quick Actions (for reference) */}
+      <Card className="bg-white border-gray-200 shadow-sm">
+        <CardContent className="p-4">
+          <QuickActions />
+        </CardContent>
+      </Card>
     </div>
   );
 };

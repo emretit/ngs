@@ -74,13 +74,13 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
       }
       setSelectedAssigneeId(task.assignee_id || "");
       setSelectedOpportunityId(task.opportunity_id || "");
-      setSelectedCustomerId(task.customer_id || "");
+      setSelectedCustomerId(task.related_item_type === 'customer' ? task.related_item_id || "" : "");
       setSubtasks(task.subtasks || []);
       setEditingValues(task);
       
       // Form'u güncelle
       partnerForm.reset({
-        customer_id: task.customer_id || "",
+        customer_id: task.related_item_type === 'customer' ? task.related_item_id || "" : "",
         supplier_id: ""
       });
     }

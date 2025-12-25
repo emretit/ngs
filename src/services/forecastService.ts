@@ -237,7 +237,7 @@ Tahmin edilen gelecek 3 ay: ${forecast.map(f => '₺' + f.revenue.toLocaleString
 
 2-3 cümlelik Türkçe analiz ver.`;
 
-      const response = await chatWithAI(prompt);
+      const response = await chatWithAI([{ role: 'user', content: prompt }]);
       if (response.content) {
         aiInsight = response.content;
       }

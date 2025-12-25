@@ -1,15 +1,23 @@
-import { Layout } from 'react-grid-layout';
-
 const STORAGE_KEY = 'dashboard-layout';
 
+export interface LayoutItem {
+  i: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  minW?: number;
+  minH?: number;
+}
+
 export interface DashboardLayout {
-  layouts: Layout[];
+  layouts: LayoutItem[];
   version: number;
   lastUpdated: string;
 }
 
 // Default layout configuration
-export const DEFAULT_LAYOUT: Layout[] = [
+export const DEFAULT_LAYOUT: LayoutItem[] = [
   // Metrics KPI - Full width at top
   { i: 'metrics-kpi', x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 },
 
@@ -35,7 +43,7 @@ export const DEFAULT_LAYOUT: Layout[] = [
 /**
  * Save layout to localStorage
  */
-export function saveLayoutToLocalStorage(layouts: Layout[]): void {
+export function saveLayoutToLocalStorage(layouts: LayoutItem[]): void {
   try {
     const layoutData: DashboardLayout = {
       layouts,
@@ -51,7 +59,7 @@ export function saveLayoutToLocalStorage(layouts: Layout[]): void {
 /**
  * Load layout from localStorage
  */
-export function loadLayoutFromLocalStorage(): Layout[] | null {
+export function loadLayoutFromLocalStorage(): LayoutItem[] | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return null;
@@ -78,7 +86,7 @@ export function clearLayoutFromLocalStorage(): void {
 /**
  * Check if layouts are equal
  */
-export function areLayoutsEqual(layout1: Layout[], layout2: Layout[]): boolean {
+export function areLayoutsEqual(layout1: LayoutItem[], layout2: LayoutItem[]): boolean {
   if (layout1.length !== layout2.length) return false;
 
   return layout1.every((item1) => {
@@ -97,7 +105,7 @@ export function areLayoutsEqual(layout1: Layout[], layout2: Layout[]): boolean {
 /**
  * Merge layouts - add new widgets, keep positions for existing ones
  */
-export function mergeLayouts(currentLayout: Layout[], newWidgets: string[]): Layout[] {
+export function mergeLayouts(currentLayout: LayoutItem[], newWidgets: string[]): LayoutItem[] {
   const merged = [...currentLayout];
 
   newWidgets.forEach((widgetId) => {
@@ -122,14 +130,14 @@ export function mergeLayouts(currentLayout: Layout[], newWidgets: string[]): Lay
 /**
  * Remove widget from layout
  */
-export function removeWidgetFromLayout(layout: Layout[], widgetId: string): Layout[] {
+export function removeWidgetFromLayout(layout: LayoutItem[], widgetId: string): LayoutItem[] {
   return layout.filter((item) => item.i !== widgetId);
 }
 
 /**
  * Validate layout integrity
  */
-export function validateLayout(layout: Layout[]): boolean {
+export function validateLayout(layout: LayoutItem[]): boolean {
   // Check for duplicate widget IDs
   const ids = layout.map((item) => item.i);
   const uniqueIds = new Set(ids);

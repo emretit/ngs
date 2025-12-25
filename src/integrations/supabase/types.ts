@@ -203,6 +203,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          is_important: boolean | null
           is_recurring: boolean | null
           is_recurring_instance: boolean | null
           opportunity_id: string | null
@@ -229,6 +230,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_important?: boolean | null
           is_recurring?: boolean | null
           is_recurring_instance?: boolean | null
           opportunity_id?: string | null
@@ -255,6 +257,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_important?: boolean | null
           is_recurring?: boolean | null
           is_recurring_instance?: boolean | null
           opportunity_id?: string | null

@@ -2,10 +2,12 @@ import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import { CriticalAlertsBanner } from "@/components/dashboard/CriticalAlertsBanner";
 import { WorkflowPipeline } from "@/components/dashboard/workflow/WorkflowPipeline";
 import { TodaysTasks } from "@/components/dashboard/workflow/TodaysTasks";
 import { PendingApprovals } from "@/components/dashboard/workflow/PendingApprovals";
 import { QuickActions } from "@/components/dashboard/workflow/QuickActions";
+import { CashflowSummaryWidget } from "@/components/dashboard/workflow/CashflowSummaryWidget";
 import { useWorkflowPipeline } from "@/hooks/useWorkflowPipeline";
 import { useTodaysTasks } from "@/hooks/useTodaysTasks";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
@@ -68,15 +70,18 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Welcome + Daily Summary */}
       <DashboardHeader />
+
+      {/* Critical Alerts Banner */}
+      <CriticalAlertsBanner />
 
       {/* Quick Actions Bar */}
       <QuickActions compact />
 
       {/* Main Workflow Pipeline */}
-      <Card className="bg-white border-gray-200 shadow-sm">
+      <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
         <CardContent className="p-4">
           {pipelineLoading ? (
             <div className="space-y-4">
@@ -96,11 +101,11 @@ const Dashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Main Content Grid - 3 Columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left Column - Today's Tasks */}
-        <Card className="lg:col-span-1 bg-white border-gray-200 shadow-sm">
-          <CardContent className="p-4 h-[420px]">
+        <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-4 h-[400px]">
             {tasksLoading ? (
               <div className="space-y-3">
                 <Skeleton className="h-10 w-full" />
@@ -121,8 +126,8 @@ const Dashboard = () => {
         </Card>
 
         {/* Middle Column - Pending Approvals */}
-        <Card className="lg:col-span-1 bg-white border-gray-200 shadow-sm">
-          <CardContent className="p-4 h-[420px]">
+        <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-4 h-[400px]">
             {approvalsLoading ? (
               <div className="space-y-3">
                 <Skeleton className="h-10 w-full" />
@@ -141,16 +146,14 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Right Column - AI Assistant */}
-        <Card className="lg:col-span-1 bg-white border-gray-200 shadow-sm">
-          <CardContent className="p-4 h-[420px]">
-            <AIAssistantWidget />
-          </CardContent>
-        </Card>
+        {/* Right Column - Cashflow Summary (NEW) */}
+        <div className="lg:col-span-1 h-[400px]">
+          <CashflowSummaryWidget />
+        </div>
       </div>
 
       {/* Financial Summary Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <MonthlyTurnoverWidget 
           value={monthlyTurnover || 0} 
           isLoading={widgetsLoading} 
@@ -169,22 +172,25 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* Bottom Row - Activities Timeline */}
-      <Card className="bg-white border-gray-200 shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Son Aktiviteler</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RecentActivitiesTimeline />
-        </CardContent>
-      </Card>
+      {/* Bottom Row - Timeline & AI Assistant */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Activities Timeline - 2 Columns */}
+        <Card className="lg:col-span-2 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-semibold">Son Aktiviteler</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RecentActivitiesTimeline />
+          </CardContent>
+        </Card>
 
-      {/* Full Quick Actions (for reference) */}
-      <Card className="bg-white border-gray-200 shadow-sm">
-        <CardContent className="p-4">
-          <QuickActions />
-        </CardContent>
-      </Card>
+        {/* AI Assistant - 1 Column */}
+        <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-4 h-[350px]">
+            <AIAssistantWidget />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -18,6 +18,7 @@ import { tr } from "date-fns/locale";
 import { useTodaysTasks } from "@/hooks/useTodaysTasks";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { cn } from "@/lib/utils";
+import { HeaderAIButton } from "./HeaderAIButton";
 
 interface DashboardHeaderProps {
   onRefresh?: () => void;
@@ -75,61 +76,52 @@ const DashboardHeader = ({ onRefresh }: DashboardHeaderProps) => {
             </div>
           </div>
 
-          {/* Right - Quick Stats Cards */}
-          <div className="flex flex-wrap gap-2 sm:gap-3">
-            {/* Pending Tasks */}
-            <div className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors",
-              pendingTasks > 0 
-                ? "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800/50" 
-                : "bg-muted/50 border-border/50"
-            )}>
-              <Clock className={cn("h-4 w-4", pendingTasks > 0 ? "text-orange-500" : "text-muted-foreground")} />
-              <div>
-                <p className="text-xs text-muted-foreground">Bekleyen</p>
-                <p className={cn("text-sm font-semibold", pendingTasks > 0 ? "text-orange-600 dark:text-orange-400" : "text-foreground")}>
+          {/* Right - AI Button + Stats */}
+          <div className="flex items-center gap-3">
+            {/* AI Assistant Button - Prominent */}
+            <HeaderAIButton />
+
+            {/* Quick Stats - More Compact */}
+            <div className="hidden sm:flex flex-wrap gap-2">
+              {/* Pending Tasks */}
+              <div className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors",
+                pendingTasks > 0 
+                  ? "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800/50" 
+                  : "bg-muted/50 border-border/50"
+              )}>
+                <Clock className={cn("h-3.5 w-3.5", pendingTasks > 0 ? "text-orange-500" : "text-muted-foreground")} />
+                <span className={cn("text-xs font-semibold", pendingTasks > 0 ? "text-orange-600 dark:text-orange-400" : "text-foreground")}>
                   {pendingTasks} Görev
-                </p>
+                </span>
               </div>
-            </div>
 
-            {/* Important Tasks */}
-            {importantTasks > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-destructive/10 border-destructive/30">
-                <AlertCircle className="h-4 w-4 text-destructive" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Önemli</p>
-                  <p className="text-sm font-semibold text-destructive">{importantTasks} Görev</p>
+              {/* Important Tasks */}
+              {importantTasks > 0 && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-destructive/10 border-destructive/30">
+                  <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+                  <span className="text-xs font-semibold text-destructive">{importantTasks} Önemli</span>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Completed Today */}
-            <div className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors",
-              completedTasks > 0 
-                ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50" 
-                : "bg-muted/50 border-border/50"
-            )}>
-              <CheckCircle2 className={cn("h-4 w-4", completedTasks > 0 ? "text-emerald-500" : "text-muted-foreground")} />
-              <div>
-                <p className="text-xs text-muted-foreground">Tamamlanan</p>
-                <p className={cn("text-sm font-semibold", completedTasks > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-foreground")}>
-                  {completedTasks} Görev
-                </p>
-              </div>
-            </div>
-
-            {/* Pending Approvals */}
-            {pendingApprovals > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-primary/10 border-primary/30">
-                <Bell className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Onay</p>
-                  <p className="text-sm font-semibold text-primary">{pendingApprovals} Bekliyor</p>
+              {/* Completed Today */}
+              {completedTasks > 0 && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    {completedTasks} Tamamlandı
+                  </span>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Pending Approvals */}
+              {pendingApprovals > 0 && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-primary/10 border-primary/30">
+                  <Bell className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-semibold text-primary">{pendingApprovals} Onay</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

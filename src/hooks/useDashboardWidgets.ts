@@ -762,6 +762,9 @@ export const useDashboardWidgets = () => {
     opportunitiesValue: opportunitiesValue?.totalValue || 0,
     opportunitiesCount: opportunitiesValue?.count || 0,
     topSellingProducts: topSellingProducts || [],
+    // Individual loading states
+    isAssetsLoading,
+    isLiabilitiesLoading,
     isLoading: isMonthlyTurnoverLoading || isMonthlyExpensesLoading || isStockValueLoading || 
                 isAssetsLoading || isLiabilitiesLoading || isOverdueReceivablesLoading || 
                 isUpcomingChecksLoading || isIncomingEInvoicesLoading || isUpcomingExpensesLoading ||

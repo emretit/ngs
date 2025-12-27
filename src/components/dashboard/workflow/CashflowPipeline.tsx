@@ -84,7 +84,7 @@ export function CashflowPipeline() {
       color: 'bg-emerald-500',
       bgColor: 'from-emerald-50 to-emerald-100/50',
       trend: "up",
-      route: '/receivables'
+      route: '/sales-invoices'
     },
     {
       id: 'checks-receivable',
@@ -97,7 +97,7 @@ export function CashflowPipeline() {
       color: 'bg-teal-500',
       bgColor: 'from-teal-50 to-teal-100/50',
       trend: "up",
-      route: '/checks?type=received'
+      route: '/cashflow/checks'
     },
     {
       id: 'bank',
@@ -110,7 +110,7 @@ export function CashflowPipeline() {
       color: 'bg-blue-500',
       bgColor: 'from-blue-50 to-blue-100/50',
       trend: "neutral",
-      route: '/bank-accounts'
+      route: '/cashflow/bank-accounts'
     },
     {
       id: 'cash',
@@ -123,7 +123,7 @@ export function CashflowPipeline() {
       color: 'bg-violet-500',
       bgColor: 'from-violet-50 to-violet-100/50',
       trend: "neutral",
-      route: '/cash-accounts'
+      route: '/cashflow/bank-accounts'
     },
     {
       id: 'checks-payable',
@@ -136,7 +136,7 @@ export function CashflowPipeline() {
       color: 'bg-orange-500',
       bgColor: 'from-orange-50 to-orange-100/50',
       trend: "down",
-      route: '/checks?type=given'
+      route: '/cashflow/checks'
     },
     {
       id: 'payables',
@@ -149,7 +149,7 @@ export function CashflowPipeline() {
       color: 'bg-red-500',
       bgColor: 'from-red-50 to-red-100/50',
       trend: "down",
-      route: '/payables'
+      route: '/purchase-invoices'
     }
   ];
 

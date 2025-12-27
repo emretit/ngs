@@ -22,7 +22,9 @@ export const useRevenueTrend = () => {
         const monthNames = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
         const monthName = monthNames[date.getMonth()];
 
-        // Get income from sales invoices
+        // ============ GELİR KAYNAKLARI ============
+
+        // 1. Satış Faturaları (onaylanan faturalar)
         const { data: salesData } = await supabase
           .from('sales_invoices')
           .select('toplam_tutar')
@@ -31,9 +33,59 @@ export const useRevenueTrend = () => {
           .gte('fatura_tarihi', monthStart)
           .lte('fatura_tarihi', monthEnd);
 
-        const income = salesData?.reduce((sum, inv) => sum + (Number(inv.toplam_tutar) || 0), 0) || 0;
+        const salesIncome = salesData?.reduce((sum, inv) => sum + (Number(inv.toplam_tutar) || 0), 0) || 0;
 
-        // Get expenses
+        // 2. Diğer Gelirler (expenses tablosunda type='income' olanlar)
+        // Faiz gelirleri, kira gelirleri, vb.
+        const { data: incomeData } = await supabase
+          .from('expenses')
+          .select('amount')
+          .eq('company_id', userData.company_id)
+          .eq('type', 'income')
+          .gte('date', monthStart)
+          .lte('date', monthEnd);
+
+        const otherIncome = incomeData?.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0) || 0;
+
+        // 3. Banka Gelir İşlemleri
+        const { data: bankIncomeData } = await supabase
+          .from('bank_transactions')
+          .select('amount')
+          .eq('company_id', userData.company_id)
+          .eq('transaction_type', 'income')
+          .gte('transaction_date', monthStart)
+          .lte('transaction_date', monthEnd);
+
+        const bankIncome = bankIncomeData?.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0) || 0;
+
+        // 4. Nakit Gelir İşlemleri
+        const { data: cashIncomeData } = await supabase
+          .from('cash_transactions')
+          .select('amount')
+          .eq('company_id', userData.company_id)
+          .eq('transaction_type', 'income')
+          .gte('transaction_date', monthStart)
+          .lte('transaction_date', monthEnd);
+
+        const cashIncome = cashIncomeData?.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0) || 0;
+
+        // 5. Kredi Kartı Gelir İşlemleri (iadeler vb.)
+        const { data: cardIncomeData } = await supabase
+          .from('credit_card_transactions')
+          .select('amount')
+          .eq('company_id', userData.company_id)
+          .eq('transaction_type', 'income')
+          .gte('transaction_date', monthStart)
+          .lte('transaction_date', monthEnd);
+
+        const cardIncome = cardIncomeData?.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0) || 0;
+
+        // Toplam Gelir
+        const totalIncome = salesIncome + otherIncome + bankIncome + cashIncome + cardIncome;
+
+        // ============ GİDER KAYNAKLARI ============
+
+        // 1. Genel Giderler (expenses tablosunda type='expense' olanlar)
         const { data: expenseData } = await supabase
           .from('expenses')
           .select('amount')
@@ -42,8 +94,20 @@ export const useRevenueTrend = () => {
           .gte('date', monthStart)
           .lte('date', monthEnd);
 
-        // Also include purchase invoices as expenses
-        const { data: purchaseData } = await supabase
+        const generalExpenses = expenseData?.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0) || 0;
+
+        // 2. Alış Faturaları (purchase_invoices)
+        const { data: purchaseInvoicesData } = await supabase
+          .from('purchase_invoices')
+          .select('total_amount')
+          .eq('company_id', userData.company_id)
+          .gte('invoice_date', monthStart)
+          .lte('invoice_date', monthEnd);
+
+        const purchaseInvoices = purchaseInvoicesData?.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0) || 0;
+
+        // 3. E-Faturalar (einvoices - incoming yönlü)
+        const { data: einvoicesData } = await supabase
           .from('einvoices')
           .select('total_amount')
           .eq('company_id', userData.company_id)
@@ -51,15 +115,71 @@ export const useRevenueTrend = () => {
           .gte('invoice_date', monthStart)
           .lte('invoice_date', monthEnd);
 
-        const expenseAmount = expenseData?.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0) || 0;
-        const purchaseAmount = purchaseData?.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0) || 0;
-        const expense = expenseAmount + purchaseAmount;
+        const einvoicesExpense = einvoicesData?.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0) || 0;
+
+        // 4. Banka Gider İşlemleri
+        const { data: bankExpenseData } = await supabase
+          .from('bank_transactions')
+          .select('amount')
+          .eq('company_id', userData.company_id)
+          .eq('transaction_type', 'expense')
+          .gte('transaction_date', monthStart)
+          .lte('transaction_date', monthEnd);
+
+        const bankExpense = bankExpenseData?.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0) || 0;
+
+        // 5. Nakit Gider İşlemleri
+        const { data: cashExpenseData } = await supabase
+          .from('cash_transactions')
+          .select('amount')
+          .eq('company_id', userData.company_id)
+          .eq('transaction_type', 'expense')
+          .gte('transaction_date', monthStart)
+          .lte('transaction_date', monthEnd);
+
+        const cashExpense = cashExpenseData?.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0) || 0;
+
+        // 6. Kredi Kartı Gider İşlemleri
+        const { data: cardExpenseData } = await supabase
+          .from('credit_card_transactions')
+          .select('amount')
+          .eq('company_id', userData.company_id)
+          .eq('transaction_type', 'expense')
+          .gte('transaction_date', monthStart)
+          .lte('transaction_date', monthEnd);
+
+        const cardExpense = cardExpenseData?.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0) || 0;
+
+        // 7. Araç Yakıt Giderleri
+        const { data: fuelExpenseData } = await supabase
+          .from('vehicle_fuel')
+          .select('total_cost')
+          .eq('company_id', userData.company_id)
+          .gte('fuel_date', monthStart)
+          .lte('fuel_date', monthEnd);
+
+        const fuelExpense = fuelExpenseData?.reduce((sum, fuel) => sum + (Number(fuel.total_cost) || 0), 0) || 0;
+
+        // 8. Araç Bakım Giderleri
+        const { data: maintenanceExpenseData } = await supabase
+          .from('vehicle_maintenance')
+          .select('cost')
+          .eq('company_id', userData.company_id)
+          .gte('maintenance_date', monthStart)
+          .lte('maintenance_date', monthEnd);
+
+        const maintenanceExpense = maintenanceExpenseData?.reduce((sum, maint) => sum + (Number(maint.cost) || 0), 0) || 0;
+
+        // Toplam Gider
+        const totalExpense = generalExpenses + purchaseInvoices + einvoicesExpense +
+                            bankExpense + cashExpense + cardExpense +
+                            fuelExpense + maintenanceExpense;
 
         months.push({
           month: monthName,
-          income,
-          expense,
-          profit: income - expense
+          income: totalIncome,
+          expense: totalExpense,
+          profit: totalIncome - totalExpense
         });
       }
 

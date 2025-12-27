@@ -22,8 +22,8 @@ const Contacts = memo(() => {
   const [isDeleting, setIsDeleting] = useState(false);
   
   // Sıralama state'leri - veritabanı seviyesinde sıralama için
-  const [sortField, setSortField] = useState<string>("name");
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortField, setSortField] = useState<string>("balance");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   const handleSort = useCallback((field: string) => {
     if (field === sortField) {

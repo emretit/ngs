@@ -656,16 +656,16 @@ export const useDashboardWidgets = () => {
     queryKey: ['dashboard-total-receivables', userData?.company_id],
     queryFn: async () => {
       if (!userData?.company_id) return 0;
+      // Müşterilerin toplam alacağını hesapla (sadece pozitif bakiyeler)
       const { data, error } = await supabase
-        .from('sales_invoices')
-        .select('toplam_tutar, odenen_tutar')
-        .eq('company_id', userData.company_id)
-        .in('odeme_durumu', ['odenmedi', 'kismi_odendi']);
+        .from('customers')
+        .select('balance')
+        .eq('company_id', userData.company_id);
       if (error) throw error;
-      return data?.reduce((sum, inv) => {
-        const total = Number(inv.toplam_tutar) || 0;
-        const paid = Number(inv.odenen_tutar) || 0;
-        return sum + (total - paid);
+      return data?.reduce((sum, customer) => {
+        const balance = Number(customer.balance) || 0;
+        // Sadece pozitif bakiyeleri topla (alacak = pozitif bakiye)
+        return sum + (balance > 0 ? balance : 0);
       }, 0) || 0;
     },
     enabled: !!userData?.company_id,

@@ -37,24 +37,40 @@ const formatCurrency = (value: number) => {
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
+    const income = payload.find((p: any) => p.dataKey === 'income')?.value || 0;
+    const expense = payload.find((p: any) => p.dataKey === 'expense')?.value || 0;
+    const profit = payload.find((p: any) => p.dataKey === 'profit')?.value || 0;
+    const profitMargin = income > 0 ? ((profit / income) * 100).toFixed(1) : '0.0';
+
     return (
-      <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-xl p-3 min-w-[180px]">
-        <p className="font-semibold text-sm mb-2 text-foreground">{label}</p>
-        <div className="space-y-1.5">
+      <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-xl p-4 min-w-[220px]">
+        <p className="font-bold text-sm mb-3 text-foreground border-b border-border pb-2">{label}</p>
+        <div className="space-y-2">
           {payload.map((item: any, index: number) => (
-            <div key={index} className="flex items-center justify-between gap-4">
+            <div key={index} className="flex items-center justify-between gap-6">
               <div className="flex items-center gap-2">
-                <div 
-                  className="w-2.5 h-2.5 rounded-full" 
-                  style={{ backgroundColor: item.color }} 
+                <div
+                  className="w-3 h-3 rounded-full shadow-sm"
+                  style={{ backgroundColor: item.color }}
                 />
-                <span className="text-xs text-muted-foreground">{item.name}</span>
+                <span className="text-xs font-medium text-muted-foreground">{item.name}</span>
               </div>
-              <span className="text-xs font-semibold text-foreground">
+              <span className="text-sm font-bold text-foreground">
                 {formatCurrency(item.value)}
               </span>
             </div>
           ))}
+          <div className="pt-2 mt-2 border-t border-border">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Kar Marjı</span>
+              <span className={cn(
+                "text-sm font-bold",
+                profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+              )}>
+                {profitMargin}%
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -143,96 +159,122 @@ export const RevenueTrendChart = memo(({ data, isLoading }: RevenueTrendChartPro
         </div>
         
         {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-3 mt-3">
-          <div className="px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50">
-            <p className="text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400 font-medium">Gelir</p>
-            <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+        <div className="grid grid-cols-4 gap-2.5 mt-3">
+          <div className="px-3 py-2.5 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 shadow-sm">
+            <p className="text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400 font-semibold mb-0.5">Toplam Gelir</p>
+            <p className="text-base font-bold text-emerald-700 dark:text-emerald-300">
               {formatCurrency(displayStats.totalIncome)}
             </p>
+            <p className="text-[9px] text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">Son 6 ay</p>
           </div>
-          <div className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50">
-            <p className="text-[10px] uppercase tracking-wide text-red-600 dark:text-red-400 font-medium">Gider</p>
-            <p className="text-sm font-bold text-red-700 dark:text-red-300">
+          <div className="px-3 py-2.5 rounded-lg bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/40 dark:to-red-950/20 border border-red-200 dark:border-red-800/50 shadow-sm">
+            <p className="text-[10px] uppercase tracking-wide text-red-600 dark:text-red-400 font-semibold mb-0.5">Toplam Gider</p>
+            <p className="text-base font-bold text-red-700 dark:text-red-300">
               {formatCurrency(displayStats.totalExpense)}
             </p>
+            <p className="text-[9px] text-red-600/70 dark:text-red-400/70 mt-0.5">Son 6 ay</p>
           </div>
-          <div className="px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50">
-            <p className="text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-400 font-medium">Kar</p>
-            <p className="text-sm font-bold text-blue-700 dark:text-blue-300">
+          <div className="px-3 py-2.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/40 dark:to-blue-950/20 border border-blue-200 dark:border-blue-800/50 shadow-sm">
+            <p className="text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-400 font-semibold mb-0.5">Net Kar</p>
+            <p className={cn(
+              "text-base font-bold",
+              displayStats.totalProfit >= 0
+                ? "text-blue-700 dark:text-blue-300"
+                : "text-red-700 dark:text-red-300"
+            )}>
               {formatCurrency(displayStats.totalProfit)}
             </p>
+            <p className="text-[9px] text-blue-600/70 dark:text-blue-400/70 mt-0.5">Son 6 ay</p>
+          </div>
+          <div className="px-3 py-2.5 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/40 dark:to-purple-950/20 border border-purple-200 dark:border-purple-800/50 shadow-sm">
+            <p className="text-[10px] uppercase tracking-wide text-purple-600 dark:text-purple-400 font-semibold mb-0.5">Kar Marjı</p>
+            <p className={cn(
+              "text-base font-bold",
+              displayStats.profitMargin >= 0
+                ? "text-purple-700 dark:text-purple-300"
+                : "text-red-700 dark:text-red-300"
+            )}>
+              {displayStats.profitMargin.toFixed(1)}%
+            </p>
+            <p className="text-[9px] text-purple-600/70 dark:text-purple-400/70 mt-0.5">Ortalama</p>
           </div>
         </div>
       </CardHeader>
       
       <CardContent className="pt-2">
-        <div className="h-[220px]">
+        <div className="h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
               <defs>
                 <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                  <stop offset="50%" stopColor="#10b981" stopOpacity={0.15}/>
                   <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                 </linearGradient>
                 <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
+                  <stop offset="50%" stopColor="#ef4444" stopOpacity={0.15}/>
                   <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                 </linearGradient>
                 <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
+                  <stop offset="50%" stopColor="#8b5cf6" stopOpacity={0.15}/>
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-              <XAxis 
-                dataKey="month" 
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
+              <XAxis
+                dataKey="month"
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                dy={5}
               />
-              <YAxis 
+              <YAxis
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                 tickFormatter={formatCurrency}
+                width={65}
               />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend 
-                verticalAlign="bottom" 
-                height={30}
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1, strokeDasharray: '5 5' }} />
+              <Legend
+                verticalAlign="bottom"
+                height={32}
                 iconType="circle"
-                iconSize={8}
-                formatter={(value) => <span className="text-xs text-muted-foreground">{value}</span>}
+                iconSize={10}
+                wrapperStyle={{ paddingTop: '10px' }}
+                formatter={(value) => <span className="text-xs font-medium text-muted-foreground">{value}</span>}
               />
               <Area
                 type="monotone"
                 dataKey="income"
                 name="Gelir"
                 stroke="#10b981"
-                strokeWidth={2}
+                strokeWidth={2.5}
                 fill="url(#incomeGradient)"
-                dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }}
-                activeDot={{ r: 5, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }}
+                dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2.5 }}
               />
               <Area
                 type="monotone"
                 dataKey="expense"
                 name="Gider"
                 stroke="#ef4444"
-                strokeWidth={2}
+                strokeWidth={2.5}
                 fill="url(#expenseGradient)"
-                dot={{ r: 3, fill: '#ef4444', strokeWidth: 0 }}
-                activeDot={{ r: 5, fill: '#ef4444', stroke: '#fff', strokeWidth: 2 }}
+                dot={{ r: 4, fill: '#ef4444', strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{ r: 6, fill: '#ef4444', stroke: '#fff', strokeWidth: 2.5 }}
               />
               <Area
                 type="monotone"
                 dataKey="profit"
                 name="Kar"
-                stroke="#6366f1"
-                strokeWidth={2}
+                stroke="#8b5cf6"
+                strokeWidth={2.5}
                 fill="url(#profitGradient)"
-                dot={{ r: 3, fill: '#6366f1', strokeWidth: 0 }}
-                activeDot={{ r: 5, fill: '#6366f1', stroke: '#fff', strokeWidth: 2 }}
+                dot={{ r: 4, fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{ r: 6, fill: '#8b5cf6', stroke: '#fff', strokeWidth: 2.5 }}
               />
             </AreaChart>
           </ResponsiveContainer>

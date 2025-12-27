@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import PurchaseInvoicesHeader from "@/components/purchase/PurchaseInvoicesHeader";
@@ -36,9 +36,26 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
   const [filterKeyword, setFilterKeyword] = useState("");
   const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  // Son 30 gün için varsayılan tarih filtresi
+  const [startDate, setStartDate] = useState<Date | undefined>(() => {
+    const today = new Date();
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+    return oneMonthAgo;
+  });
+  const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
   const [selectedInvoices, setSelectedInvoices] = useState<any[]>([]);
+
+  // Tarih filtrelerini hook'a aktar
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      dateRange: {
+        from: startDate || null,
+        to: endDate || null
+      }
+    }));
+  }, [startDate, endDate, setFilters]);
 
   const handleInvoiceClick = (invoice: any) => {
     // Fatura detay sayfasına yönlendir

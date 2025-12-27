@@ -27,7 +27,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   
   // Sıralama state'leri - veritabanı seviyesinde sıralama için
-  const [sortField, setSortField] = useState<string>("name");
+  const [sortField, setSortField] = useState<string>("balance");
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const handleSort = useCallback((field: string) => {

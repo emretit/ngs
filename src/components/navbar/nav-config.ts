@@ -62,6 +62,13 @@ export const navItems = [
     label: "Gösterge Paneli",
     translationKey: "nav.dashboard",
   },
+  // 1.5. Gösterge Paneli 2
+  {
+    path: "/dashboard-v2",
+    icon: LayoutDashboard,
+    label: "Gösterge Paneli 2",
+    translationKey: "nav.dashboardV2",
+  },
   // 2. Müşteriler
   {
     path: "/customers",

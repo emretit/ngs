@@ -24,13 +24,11 @@ interface StatCardProps {
 }
 
 const formatCurrency = (value: number) => {
-  if (value >= 1000000) {
-    return `₺${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `₺${(value / 1000).toFixed(0)}K`;
-  }
-  return `₺${value.toLocaleString("tr-TR")}`;
+  // Her zaman tam değeri göster, virgülden sonra 2 basamak
+  return `₺${value.toLocaleString("tr-TR", { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  })}`;
 };
 
 const StatCard = memo(({ title, value, subtitle, trend, icon: Icon, gradient, iconBg, route }: StatCardProps) => {
@@ -54,11 +52,14 @@ const StatCard = memo(({ title, value, subtitle, trend, icon: Icon, gradient, ic
       </div>
       
       <div className="relative flex items-start justify-between">
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-xs font-medium text-white/80 uppercase tracking-wide mb-1">
             {title}
           </p>
-          <p className="text-2xl font-bold text-white mb-1">
+          <p className={cn(
+            "font-bold text-white mb-1 break-words",
+            value >= 1000000 ? "text-lg" : value >= 100000 ? "text-xl" : "text-2xl"
+          )}>
             {formatCurrency(value)}
           </p>
           {subtitle && (
@@ -125,7 +126,7 @@ export const GradientStatCards = memo(({
       icon: TrendingUp,
       gradient: "bg-gradient-to-br from-violet-500 via-purple-500 to-purple-600",
       iconBg: "bg-white/20",
-      route: "/sales/invoices"
+      route: "/invoices"
     },
     {
       title: "Toplam Alacak",
@@ -134,7 +135,7 @@ export const GradientStatCards = memo(({
       icon: Wallet,
       gradient: "bg-gradient-to-br from-cyan-500 via-blue-500 to-blue-600",
       iconBg: "bg-white/20",
-      route: "/receivables"
+      route: "/customers"
     },
     {
       title: "Aylık Gider",
@@ -143,7 +144,7 @@ export const GradientStatCards = memo(({
       icon: Receipt,
       gradient: "bg-gradient-to-br from-rose-500 via-pink-500 to-pink-600",
       iconBg: "bg-white/20",
-      route: "/accounting/expenses"
+      route: "/cashflow/expenses"
     },
     {
       title: "Stok Değeri",
@@ -152,7 +153,7 @@ export const GradientStatCards = memo(({
       icon: Package,
       gradient: "bg-gradient-to-br from-amber-500 via-orange-500 to-orange-600",
       iconBg: "bg-white/20",
-      route: "/inventory/products"
+      route: "/inventory"
     },
   ];
 

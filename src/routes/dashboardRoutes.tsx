@@ -3,6 +3,7 @@ import { RouteConfig } from "./types";
 
 // Lazy load all dashboard pages
 const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
+const DashboardV2 = React.lazy(() => import("@/pages/DashboardV2"));
 const CrmDashboard = React.lazy(() => import("@/pages/crm/CrmDashboard"));
 const ExpenseManagement = React.lazy(() => import("@/pages/ExpenseManagement"));
 const InvestmentManagement = React.lazy(() => import("@/pages/InvestmentManagement"));
@@ -15,6 +16,11 @@ export const dashboardRoutes: RouteConfig[] = [
   { 
     path: "/dashboard", 
     component: Dashboard, 
+    protected: true 
+  },
+  { 
+    path: "/dashboard-v2", 
+    component: DashboardV2, 
     protected: true 
   },
   {

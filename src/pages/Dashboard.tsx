@@ -7,7 +7,6 @@ import { WorkflowPipeline } from "@/components/dashboard/workflow/WorkflowPipeli
 import { CashflowPipeline } from "@/components/dashboard/workflow/CashflowPipeline";
 import { TodaysTasks } from "@/components/dashboard/workflow/TodaysTasks";
 import { PendingApprovals } from "@/components/dashboard/workflow/PendingApprovals";
-import { QuickActions } from "@/components/dashboard/workflow/QuickActions";
 import { GradientStatCards } from "@/components/dashboard/widgets/GradientStatCards";
 import { RevenueTrendChart } from "@/components/dashboard/charts/RevenueTrendChart";
 import { FinancialDistributionChart } from "@/components/dashboard/charts/FinancialDistributionChart";
@@ -52,11 +51,11 @@ const Dashboard = () => {
 
   const handleStageClick = (stageId: string) => {
     const routes: Record<string, string> = {
-      'opportunities': '/crm/opportunities',
+      'opportunities': '/opportunities',
       'proposals': '/proposals',
-      'orders': '/sales/orders',
-      'deliveries': '/sales/deliveries',
-      'invoices': '/sales/invoices'
+      'orders': '/orders/list',
+      'deliveries': '/deliveries',
+      'invoices': '/invoices'
     };
     if (routes[stageId]) {
       navigate(routes[stageId]);
@@ -87,6 +86,12 @@ const Dashboard = () => {
       {/* Critical Alerts Banner */}
       <CriticalAlertsBanner />
 
+      {/* Revenue Trend Chart - Above stat cards */}
+      <RevenueTrendChart 
+        data={revenueTrendData} 
+        isLoading={revenueTrendLoading} 
+      />
+
       {/* Gradient Stat Cards - Like reference images */}
       <GradientStatCards 
         monthlyTurnover={monthlyTurnover}
@@ -97,24 +102,12 @@ const Dashboard = () => {
         isLoading={widgetsLoading}
       />
 
-      {/* Quick Actions Bar */}
-      <QuickActions compact />
-
-      {/* Main Charts Row - 2 Critical Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Revenue Trend Chart */}
-        <RevenueTrendChart 
-          data={revenueTrendData} 
-          isLoading={revenueTrendLoading} 
-        />
-        
-        {/* Financial Distribution Chart */}
-        <FinancialDistributionChart 
-          assets={assets}
-          liabilities={liabilities}
-          isLoading={isAssetsLoading || isLiabilitiesLoading}
-        />
-      </div>
+      {/* Financial Distribution Chart */}
+      <FinancialDistributionChart 
+        assets={assets}
+        liabilities={liabilities}
+        isLoading={isAssetsLoading || isLiabilitiesLoading}
+      />
 
       {/* Workflow Pipelines */}
       <div className="grid grid-cols-1 gap-4">
@@ -183,7 +176,11 @@ const Dashboard = () => {
                 approvals={approvals || []}
                 onApprove={handleApprove}
                 onReject={handleReject}
-                onViewDetails={(id) => navigate(`/approvals/${id}`)}
+                onViewDetails={(id) => {
+                  // Approval type'a göre route yönlendirmesi yapılabilir
+                  // Şimdilik sadece toast gösteriyoruz
+                  toast.info("Detay sayfası yakında eklenecek");
+                }}
               />
             )}
           </CardContent>

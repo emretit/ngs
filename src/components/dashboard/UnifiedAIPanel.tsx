@@ -37,9 +37,13 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-export const UnifiedAIPanel = memo(() => {
+interface UnifiedAIPanelProps {
+  embedded?: boolean;
+}
+
+export const UnifiedAIPanel = memo(({ embedded = false }: UnifiedAIPanelProps) => {
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(embedded);
   const [activeTab, setActiveTab] = useState<'chat' | 'insights'>('chat');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -222,6 +226,191 @@ export const UnifiedAIPanel = memo(() => {
   const formatPeriod = (start: string, end: string) => {
     return `${formatDate(start)} - ${formatDate(end)}`;
   };
+
+  // For embedded mode, render content directly
+  if (embedded) {
+    return (
+      <div className="h-full flex flex-col">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'chat' | 'insights')} className="flex-1 flex flex-col">
+          <div className="border-b border-border/50 bg-muted/30 px-4 py-3">
+            <TabsList className="grid w-full max-w-md grid-cols-2 h-10 bg-background/50 backdrop-blur-sm">
+              <TabsTrigger value="chat" className="flex items-center gap-2 data-[state=active]:bg-indigo-500 data-[state=active]:text-white transition-all text-sm font-medium">
+                <MessageSquare className="h-4 w-4" />
+                <span>Chat</span>
+              </TabsTrigger>
+              <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-indigo-500 data-[state=active]:text-white transition-all text-sm font-medium">
+                <Lightbulb className="h-4 w-4" />
+                <span>İçgörüler</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="chat" className="m-0 p-0 flex-1 overflow-hidden">
+            <div className="flex h-full">
+              {isSidebarOpen && (
+                <div className="w-64 border-r border-slate-200 dark:border-slate-800 hidden md:block">
+                  <ConversationList
+                    conversations={conversations}
+                    activeConversationId={activeConversationId}
+                    onSelectConversation={setActiveConversationId}
+                    onNewConversation={handleNewConversation}
+                    onDeleteConversation={handleDeleteConversation}
+                    isLoading={conversationsLoading}
+                  />
+                </div>
+              )}
+
+              <div className="flex-1 flex flex-col bg-background">
+                <div className="flex items-center justify-between p-3 border-b border-border/50 bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                      className="h-8 w-8 p-0 hidden md:flex"
+                    >
+                      {isSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+                    </Button>
+                    <h3 className="font-semibold text-sm">
+                      {activeConversationId
+                        ? conversations.find(c => c.id === activeConversationId)?.title || 'Yeni Sohbet'
+                        : 'Yeni Sohbet Başlat'}
+                    </h3>
+                  </div>
+                  {activeConversationId && (
+                    <Badge variant="outline" className="text-xs">{messages.length} mesaj</Badge>
+                  )}
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {messagesLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                      <Bot className="h-12 w-12 text-muted-foreground/30 mb-3" />
+                      <h3 className="text-base font-semibold mb-1">AI Asistanınız Hazır</h3>
+                      <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                        Satış, finans, stok ve daha fazlası hakkında sorular sorun.
+                      </p>
+                      <div className="w-full max-w-lg">
+                        <PromptSuggestions onSelectPrompt={setInputMessage} filter="all" limit={4} />
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {messages.map((message) => (
+                        <MessageBubble key={message.id} message={message} />
+                      ))}
+                      {isTyping && (
+                        <div className="flex gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center">
+                            <Bot className="w-4 h-4 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="rounded-lg px-4 py-3 bg-muted inline-block">
+                              <div className="flex gap-1">
+                                <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div ref={messagesEndRef} />
+                    </>
+                  )}
+                </div>
+
+                <div className="p-3 border-t border-border/50 bg-muted/30">
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      placeholder="Bir şey sorun..."
+                      className="min-h-[50px] max-h-[120px] resize-none text-sm"
+                      disabled={isTyping}
+                    />
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={!inputMessage.trim() || isTyping}
+                      className="bg-indigo-500 hover:bg-indigo-600 px-4"
+                    >
+                      {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="insights" className="m-0 p-4 flex-1 overflow-auto">
+            <div className="space-y-4">
+              <div className="flex items-center justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => generateInsight({ periodDays: 30 })} disabled={insightsLoading || isGenerating} className="h-8 gap-1.5">
+                  <RefreshCw className={`h-3.5 w-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
+                  <span>Yenile</span>
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowHistory(true)} disabled={insightsLoading} className="h-8 gap-1.5">
+                  <History className="h-3.5 w-3.5" />
+                  <span>Geçmiş</span>
+                </Button>
+              </div>
+
+              {insightsLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-4/6" />
+                </div>
+              ) : isGenerating ? (
+                <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                  <Sparkles className="h-10 w-10 text-indigo-500 animate-pulse" />
+                  <p className="text-muted-foreground text-sm">Analiz ediliyor...</p>
+                </div>
+              ) : latestInsight ? (
+                <div className="rounded-xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 to-transparent p-4">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="p-2 bg-indigo-500/10 rounded-lg">
+                      <Sparkles className="h-4 w-4 text-indigo-500" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold mb-1">AI Analizi</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {formatPeriod(latestInsight.period_start, latestInsight.period_end)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-sm">
+                    {latestInsight.insight_text}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Sparkles className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">Henüz içgörü yok</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => generateInsight({ periodDays: 30 })}
+                    disabled={isGenerating}
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    İçgörü Oluştur
+                  </Button>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+        <InsightHistoryDialog open={showHistory} onOpenChange={setShowHistory} />
+      </div>
+    );
+  }
 
   return (
     <>

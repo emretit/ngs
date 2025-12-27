@@ -13,7 +13,7 @@ import { useWorkflowPipeline } from "@/hooks/useWorkflowPipeline";
 import { useTodaysTasks } from "@/hooks/useTodaysTasks";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
-import AIAssistantWidget from "@/components/dashboard/widgets/AIAssistantWidget";
+import BalanceSheetWidget from "@/components/dashboard/widgets/BalanceSheetWidget";
 import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
 import MonthlyTurnoverWidget from "@/components/dashboard/widgets/MonthlyTurnoverWidget";
 import TotalReceivablesWidget from "@/components/dashboard/widgets/TotalReceivablesWidget";
@@ -36,7 +36,11 @@ const Dashboard = () => {
     totalReceivables,
     overdueReceivables,
     upcomingChecks,
-    isLoading: widgetsLoading
+    assets,
+    liabilities,
+    isLoading: widgetsLoading,
+    isAssetsLoading,
+    isLiabilitiesLoading
   } = useDashboardWidgets();
 
   const handleStageClick = (stageId: string) => {
@@ -180,8 +184,17 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* Bottom Row - Timeline & AI Assistant */}
+      {/* Bottom Row - Balance Sheet & Timeline */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Balance Sheet Widget - 1 Column */}
+        <div className="lg:col-span-1">
+          <BalanceSheetWidget 
+            assets={assets}
+            liabilities={liabilities}
+            isLoading={isAssetsLoading || isLiabilitiesLoading}
+          />
+        </div>
+
         {/* Activities Timeline - 2 Columns */}
         <Card className="lg:col-span-2 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
@@ -189,13 +202,6 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <RecentActivitiesTimeline />
-          </CardContent>
-        </Card>
-
-        {/* AI Assistant - 1 Column */}
-        <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-4 h-[350px]">
-            <AIAssistantWidget />
           </CardContent>
         </Card>
       </div>

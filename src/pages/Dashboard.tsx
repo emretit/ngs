@@ -8,17 +8,15 @@ import { CashflowPipeline } from "@/components/dashboard/workflow/CashflowPipeli
 import { TodaysTasks } from "@/components/dashboard/workflow/TodaysTasks";
 import { PendingApprovals } from "@/components/dashboard/workflow/PendingApprovals";
 import { QuickActions } from "@/components/dashboard/workflow/QuickActions";
-import { CashflowSummaryWidget } from "@/components/dashboard/workflow/CashflowSummaryWidget";
+import { GradientStatCards } from "@/components/dashboard/widgets/GradientStatCards";
+import { RevenueTrendChart } from "@/components/dashboard/charts/RevenueTrendChart";
+import { FinancialDistributionChart } from "@/components/dashboard/charts/FinancialDistributionChart";
 import { useWorkflowPipeline } from "@/hooks/useWorkflowPipeline";
 import { useTodaysTasks } from "@/hooks/useTodaysTasks";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
-import BalanceSheetWidget from "@/components/dashboard/widgets/BalanceSheetWidget";
+import { useRevenueTrend } from "@/hooks/useRevenueTrend";
 import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
-import MonthlyTurnoverWidget from "@/components/dashboard/widgets/MonthlyTurnoverWidget";
-import TotalReceivablesWidget from "@/components/dashboard/widgets/TotalReceivablesWidget";
-import OverdueReceivablesWidget from "@/components/dashboard/widgets/OverdueReceivablesWidget";
-import UpcomingChecksWidget from "@/components/dashboard/widgets/UpcomingChecksWidget";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -33,15 +31,24 @@ const Dashboard = () => {
   // Financial widgets
   const {
     monthlyTurnover,
+    monthlyExpenses,
+    stockValue,
     totalReceivables,
-    overdueReceivables,
-    upcomingChecks,
     assets,
     liabilities,
+    previousMonthSales,
     isLoading: widgetsLoading,
     isAssetsLoading,
     isLiabilitiesLoading
   } = useDashboardWidgets();
+
+  // Revenue trend data
+  const { data: revenueTrendData, isLoading: revenueTrendLoading } = useRevenueTrend();
+
+  // Calculate turnover trend
+  const turnoverTrend = previousMonthSales > 0 
+    ? ((monthlyTurnover - previousMonthSales) / previousMonthSales) * 100 
+    : undefined;
 
   const handleStageClick = (stageId: string) => {
     const routes: Record<string, string> = {
@@ -66,62 +73,86 @@ const Dashboard = () => {
 
   const handleApprove = (id: string) => {
     toast.success("Onay işlemi başarılı");
-    // TODO: Implement approval logic
   };
 
   const handleReject = (id: string) => {
     toast.info("Red işlemi başarılı");
-    // TODO: Implement rejection logic
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header - Welcome + Daily Summary */}
+    <div className="space-y-5">
+      {/* Header - Welcome + AI Button + Stats */}
       <DashboardHeader />
 
       {/* Critical Alerts Banner */}
       <CriticalAlertsBanner />
 
+      {/* Gradient Stat Cards - Like reference images */}
+      <GradientStatCards 
+        monthlyTurnover={monthlyTurnover}
+        totalReceivables={totalReceivables}
+        monthlyExpenses={monthlyExpenses}
+        stockValue={stockValue}
+        turnoverTrend={turnoverTrend}
+        isLoading={widgetsLoading}
+      />
+
       {/* Quick Actions Bar */}
       <QuickActions compact />
 
-      {/* Main Workflow Pipeline */}
-      <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
-        <CardContent className="p-4">
-          {pipelineLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-8 w-48" />
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map(i => (
-                  <Skeleton key={i} className="h-32 flex-1" />
-                ))}
+      {/* Main Charts Row - 2 Critical Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Revenue Trend Chart */}
+        <RevenueTrendChart 
+          data={revenueTrendData} 
+          isLoading={revenueTrendLoading} 
+        />
+        
+        {/* Financial Distribution Chart */}
+        <FinancialDistributionChart 
+          assets={assets}
+          liabilities={liabilities}
+          isLoading={isAssetsLoading || isLiabilitiesLoading}
+        />
+      </div>
+
+      {/* Workflow Pipelines */}
+      <div className="grid grid-cols-1 gap-4">
+        <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            {pipelineLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-48" />
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <Skeleton key={i} className="h-24 flex-1" />
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : (
-            <WorkflowPipeline 
-              stages={pipelineStages || []} 
-              onStageClick={handleStageClick}
-            />
-          )}
-        </CardContent>
-      </Card>
+            ) : (
+              <WorkflowPipeline 
+                stages={pipelineStages || []} 
+                onStageClick={handleStageClick}
+              />
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Cashflow Pipeline - NEW */}
-      <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
-        <CardContent className="p-4">
-          <CashflowPipeline />
-        </CardContent>
-      </Card>
+        <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <CashflowPipeline />
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Main Content Grid - 3 Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Left Column - Today's Tasks */}
+      {/* Tasks & Approvals Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Today's Tasks */}
         <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-4 h-[400px]">
+          <CardContent className="p-4 h-[380px]">
             {tasksLoading ? (
               <div className="space-y-3">
                 <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-2 w-full" />
                 {[1, 2, 3].map(i => (
                   <Skeleton key={i} className="h-16 w-full" />
                 ))}
@@ -137,14 +168,14 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Middle Column - Pending Approvals */}
+        {/* Pending Approvals */}
         <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-4 h-[400px]">
+          <CardContent className="p-4 h-[380px]">
             {approvalsLoading ? (
               <div className="space-y-3">
                 <Skeleton className="h-10 w-full" />
                 {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-24 w-full" />
+                  <Skeleton key={i} className="h-20 w-full" />
                 ))}
               </div>
             ) : (
@@ -158,49 +189,12 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Right Column - Cashflow Summary (NEW) */}
-        <div className="lg:col-span-1 h-[400px]">
-          <CashflowSummaryWidget />
-        </div>
-      </div>
-
-      {/* Financial Summary Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <MonthlyTurnoverWidget 
-          value={monthlyTurnover || 0} 
-          isLoading={widgetsLoading} 
-        />
-        <TotalReceivablesWidget 
-          totalReceivables={totalReceivables || 0}
-          isLoading={widgetsLoading} 
-        />
-        <OverdueReceivablesWidget 
-          receivables={overdueReceivables || []} 
-          isLoading={widgetsLoading} 
-        />
-        <UpcomingChecksWidget 
-          checks={upcomingChecks || []} 
-          isLoading={widgetsLoading} 
-        />
-      </div>
-
-      {/* Bottom Row - Balance Sheet & Timeline */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Balance Sheet Widget - 1 Column */}
-        <div className="lg:col-span-1">
-          <BalanceSheetWidget 
-            assets={assets}
-            liabilities={liabilities}
-            isLoading={isAssetsLoading || isLiabilitiesLoading}
-          />
-        </div>
-
-        {/* Activities Timeline - 2 Columns */}
-        <Card className="lg:col-span-2 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+        {/* Recent Activities */}
+        <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold">Son Aktiviteler</CardTitle>
+            <CardTitle className="text-base font-semibold">Son Aktiviteler</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="h-[330px] overflow-auto">
             <RecentActivitiesTimeline />
           </CardContent>
         </Card>

@@ -63,18 +63,18 @@ export const useRevenueTrend = () => {
           .from('cash_transactions')
           .select('amount')
           .eq('company_id', userData.company_id)
-          .eq('transaction_type', 'income')
+          .eq('type', 'income')
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
 
         const cashIncome = cashIncomeData?.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0) || 0;
 
-        // 5. Kredi Kartı Gelir İşlemleri (iadeler vb.)
+        // 5. Kredi Kartı Gelir İşlemleri (iadeler vb.) - credit_card_transactions uses transaction_type column
         const { data: cardIncomeData } = await supabase
-          .from('credit_card_transactions')
+          .from('card_transactions')
           .select('amount')
           .eq('company_id', userData.company_id)
-          .eq('transaction_type', 'income')
+          .eq('transaction_type', 'refund')
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
 
@@ -133,18 +133,18 @@ export const useRevenueTrend = () => {
           .from('cash_transactions')
           .select('amount')
           .eq('company_id', userData.company_id)
-          .eq('transaction_type', 'expense')
+          .eq('type', 'expense')
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
 
         const cashExpense = cashExpenseData?.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0) || 0;
 
-        // 6. Kredi Kartı Gider İşlemleri
+        // 6. Kredi Kartı Gider İşlemleri - card_transactions table
         const { data: cardExpenseData } = await supabase
-          .from('credit_card_transactions')
+          .from('card_transactions')
           .select('amount')
           .eq('company_id', userData.company_id)
-          .eq('transaction_type', 'expense')
+          .eq('transaction_type', 'purchase')
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
 

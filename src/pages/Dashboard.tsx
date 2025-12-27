@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { CriticalAlertsBanner } from "@/components/dashboard/CriticalAlertsBanner";
 import { WorkflowPipeline } from "@/components/dashboard/workflow/WorkflowPipeline";
+import { CashflowPipeline } from "@/components/dashboard/workflow/CashflowPipeline";
 import { TodaysTasks } from "@/components/dashboard/workflow/TodaysTasks";
 import { PendingApprovals } from "@/components/dashboard/workflow/PendingApprovals";
 import { QuickActions } from "@/components/dashboard/workflow/QuickActions";
@@ -98,6 +99,13 @@ const Dashboard = () => {
               onStageClick={handleStageClick}
             />
           )}
+        </CardContent>
+      </Card>
+
+      {/* Cashflow Pipeline - NEW */}
+      <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+        <CardContent className="p-4">
+          <CashflowPipeline />
         </CardContent>
       </Card>
 

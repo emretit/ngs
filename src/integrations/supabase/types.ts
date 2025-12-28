@@ -356,42 +356,101 @@ export type Database = {
           },
         ]
       }
+      approval_workflows: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          max_hierarchy_levels: number | null
+          object_type: string
+          require_department_head: boolean | null
+          threshold_rules: Json | null
+          updated_at: string | null
+          workflow_type: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_hierarchy_levels?: number | null
+          object_type: string
+          require_department_head?: boolean | null
+          threshold_rules?: Json | null
+          updated_at?: string | null
+          workflow_type?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_hierarchy_levels?: number | null
+          object_type?: string
+          require_department_head?: boolean | null
+          threshold_rules?: Json | null
+          updated_at?: string | null
+          workflow_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_workflows_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       approvals: {
         Row: {
           approver_id: string | null
+          approver_role: string | null
+          auto_approved: boolean | null
           comment: string | null
           company_id: string | null
           created_at: string | null
           decided_at: string | null
+          hierarchy_level: number | null
           id: string
           object_id: string
           object_type: string
+          skipped_reason: string | null
           status: string | null
           step: number | null
           updated_at: string | null
         }
         Insert: {
           approver_id?: string | null
+          approver_role?: string | null
+          auto_approved?: boolean | null
           comment?: string | null
           company_id?: string | null
           created_at?: string | null
           decided_at?: string | null
+          hierarchy_level?: number | null
           id?: string
           object_id: string
           object_type: string
+          skipped_reason?: string | null
           status?: string | null
           step?: number | null
           updated_at?: string | null
         }
         Update: {
           approver_id?: string | null
+          approver_role?: string | null
+          auto_approved?: boolean | null
           comment?: string | null
           company_id?: string | null
           created_at?: string | null
           decided_at?: string | null
+          hierarchy_level?: number | null
           id?: string
           object_id?: string
           object_type?: string
+          skipped_reason?: string | null
           status?: string | null
           step?: number | null
           updated_at?: string | null
@@ -2176,10 +2235,12 @@ export type Database = {
           company_id: string | null
           created_at: string | null
           description: string | null
+          head_id: string | null
           id: string
           is_active: boolean | null
           is_default: boolean | null
           name: string
+          parent_id: string | null
           sort_order: number | null
           updated_at: string | null
         }
@@ -2187,10 +2248,12 @@ export type Database = {
           company_id?: string | null
           created_at?: string | null
           description?: string | null
+          head_id?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
           name: string
+          parent_id?: string | null
           sort_order?: number | null
           updated_at?: string | null
         }
@@ -2198,10 +2261,12 @@ export type Database = {
           company_id?: string | null
           created_at?: string | null
           description?: string | null
+          head_id?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
           name?: string
+          parent_id?: string | null
           sort_order?: number | null
           updated_at?: string | null
         }
@@ -2211,6 +2276,20 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "departments_head_id_fkey"
+            columns: ["head_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "departments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
             referencedColumns: ["id"]
           },
         ]
@@ -3214,6 +3293,7 @@ export type Database = {
           income_tax_amount: number | null
           is_technical: boolean | null
           last_name: string
+          manager_id: string | null
           manual_employer_sgk_cost: number | null
           marital_status:
             | Database["public"]["Enums"]["marital_status_type"]
@@ -3287,6 +3367,7 @@ export type Database = {
           income_tax_amount?: number | null
           is_technical?: boolean | null
           last_name: string
+          manager_id?: string | null
           manual_employer_sgk_cost?: number | null
           marital_status?:
             | Database["public"]["Enums"]["marital_status_type"]
@@ -3360,6 +3441,7 @@ export type Database = {
           income_tax_amount?: number | null
           is_technical?: boolean | null
           last_name?: string
+          manager_id?: string | null
           manual_employer_sgk_cost?: number | null
           marital_status?:
             | Database["public"]["Enums"]["marital_status_type"]
@@ -3418,6 +3500,13 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "turkey_districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
@@ -3696,6 +3785,98 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_requests: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          category: string
+          company_id: string
+          created_at: string
+          currency: string | null
+          department_id: string | null
+          description: string
+          employee_id: string | null
+          expense_date: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          receipt_url: string | null
+          request_number: string
+          requester_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          category: string
+          company_id: string
+          created_at?: string
+          currency?: string | null
+          department_id?: string | null
+          description: string
+          employee_id?: string | null
+          expense_date: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          receipt_url?: string | null
+          request_number: string
+          requester_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          category?: string
+          company_id?: string
+          created_at?: string
+          currency?: string | null
+          department_id?: string | null
+          description?: string
+          employee_id?: string | null
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          receipt_url?: string | null
+          request_number?: string
+          requester_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_requests_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -12559,6 +12740,16 @@ export type Database = {
         Args: { company_id_param: string }
         Returns: undefined
       }
+      create_hierarchical_approvals: {
+        Args: {
+          p_amount?: number
+          p_company_id: string
+          p_object_id: string
+          p_object_type: string
+          p_requester_id: string
+        }
+        Returns: number
+      }
       create_simple_jwt_token: {
         Args: { project_id: string; user_email: string; user_id: string }
         Returns: string
@@ -12780,6 +12971,18 @@ export type Database = {
         Returns: string
       }
       get_jwt_secret: { Args: never; Returns: string }
+      get_manager_chain: {
+        Args: { p_employee_id: string; p_max_levels?: number }
+        Returns: {
+          department: string
+          employee_email: string
+          employee_id: string
+          employee_name: string
+          employee_position: string
+          is_department_head: boolean
+          level: number
+        }[]
+      }
       get_neighborhoods_by_district: {
         Args: { district_id_param: number }
         Returns: {
@@ -12882,6 +13085,15 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      process_approval: {
+        Args: {
+          p_action: string
+          p_approval_id: string
+          p_approver_id: string
+          p_comment?: string
+        }
+        Returns: boolean
+      }
       record_audit_log: {
         Args: {
           action: string

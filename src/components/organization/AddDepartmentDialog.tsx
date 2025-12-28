@@ -160,8 +160,16 @@ export const AddDepartmentDialog: React.FC<AddDepartmentDialogProps> = ({
             </div>
             Yeni Departman Ekle
           </DialogTitle>
-          <DialogDescription>
-            Organizasyonunuza yeni bir departman ekleyin. Gerekli alanları doldurun.
+          <DialogDescription className="space-y-2">
+            <p>Organizasyonunuza yeni bir departman ekleyin. Gerekli alanları doldurun.</p>
+            <div className="text-xs bg-blue-50 p-3 rounded-md border border-blue-200">
+              <p className="font-medium text-blue-900 mb-1">ℹ️ Hiyerarşi Bilgisi:</p>
+              <ul className="list-disc list-inside space-y-1 text-blue-800">
+                <li>Üst departman seçilmezse: <strong>Ana departman</strong> (Seviye 1)</li>
+                <li>Üst departman seçilirse: <strong>Alt departman</strong> (Seviye 2+)</li>
+                <li>Seviyeler otomatik olarak organizasyon şemasında belirlenir</li>
+              </ul>
+            </div>
           </DialogDescription>
         </DialogHeader>
 
@@ -207,6 +215,11 @@ export const AddDepartmentDialog: React.FC<AddDepartmentDialogProps> = ({
             <Label htmlFor="parent_id" className="flex items-center gap-2">
               <FolderTree className="h-4 w-4" />
               Üst Departman
+              {formData.parent_id && (
+                <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
+                  Alt Departman
+                </span>
+              )}
             </Label>
             <Select
               value={formData.parent_id || "none"}
@@ -216,17 +229,56 @@ export const AddDepartmentDialog: React.FC<AddDepartmentDialogProps> = ({
                 <SelectValue placeholder="Üst departman seçin (opsiyonel)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Üst departman yok</SelectItem>
-                {departments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="none" className="font-medium">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Ana Departman (Seviye 1)
+                  </div>
+                </SelectItem>
+                <div className="border-t my-1" />
+                {departments
+                  .filter(dept => !dept.parent_id) // Önce ana departmanları göster
+                  .map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id}>
+                      <div className="flex items-center gap-2">
+                        <FolderTree className="h-3.5 w-3.5 text-blue-600" />
+                        {dept.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                {departments.filter(dept => dept.parent_id).length > 0 && (
+                  <>
+                    <div className="border-t my-1" />
+                    <div className="px-2 py-1 text-xs text-muted-foreground font-medium">
+                      Alt Departmanlar
+                    </div>
+                  </>
+                )}
+                {departments
+                  .filter(dept => dept.parent_id) // Sonra alt departmanları göster
+                  .map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id}>
+                      <div className="flex items-center gap-2 pl-4">
+                        <div className="w-2 h-2 border-l-2 border-b-2 border-muted-foreground/30 mr-1" />
+                        {dept.name}
+                      </div>
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              Bu departmanın bağlı olduğu üst departmanı seçin
-            </p>
+            <div className="text-xs space-y-1">
+              {!formData.parent_id ? (
+                <p className="text-blue-600 font-medium flex items-center gap-1">
+                  <Building2 className="h-3 w-3" />
+                  Bu departman organizasyon şemasında <strong>Seviye 1</strong> olarak görünecek
+                </p>
+              ) : (
+                <p className="text-blue-600 font-medium flex items-center gap-1">
+                  <FolderTree className="h-3 w-3" />
+                  Bu departman seçilen departmanın <strong>altında</strong> görünecek
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Departman Şefi */}
@@ -234,6 +286,12 @@ export const AddDepartmentDialog: React.FC<AddDepartmentDialogProps> = ({
             <Label htmlFor="head_id" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Departman Şefi
+              {formData.head_id && (
+                <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  Yönetici
+                </span>
+              )}
             </Label>
             <Select
               value={formData.head_id || "none"}
@@ -246,12 +304,20 @@ export const AddDepartmentDialog: React.FC<AddDepartmentDialogProps> = ({
                 <SelectItem value="none">Şef atanmadı</SelectItem>
                 {employees.map((emp) => (
                   <SelectItem key={emp.id} value={emp.id}>
-                    {emp.first_name} {emp.last_name}
-                    {emp.position && ` - ${emp.position}`}
+                    <div className="flex items-center gap-2">
+                      <User className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>
+                        {emp.first_name} {emp.last_name}
+                        {emp.position && <span className="text-muted-foreground text-xs ml-1">• {emp.position}</span>}
+                      </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">
+              Departman şefi organizasyon şemasında departmanın <strong>yöneticisi</strong> olarak görünür
+            </p>
           </div>
 
           {/* Sıralama */}
@@ -273,7 +339,7 @@ export const AddDepartmentDialog: React.FC<AddDepartmentDialogProps> = ({
               <p className="text-sm text-destructive">{errors.sort_order}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Departmanın görünüm sırasını belirler (küçük değer önce görünür)
+              Aynı seviyedeki departmanların <strong>soldan sağa</strong> görünüm sırasını belirler (küçük değer solda)
             </p>
           </div>
 

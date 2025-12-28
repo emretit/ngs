@@ -9,7 +9,6 @@ interface OrganizationPageHeaderProps {
   activeEmployees: number;
   departmentHeads: number;
   onCreateDepartment?: () => void;
-  onCreateEmployee?: () => void;
 }
 
 const OrganizationPageHeader = ({
@@ -17,8 +16,7 @@ const OrganizationPageHeader = ({
   totalEmployees,
   activeEmployees,
   departmentHeads,
-  onCreateDepartment,
-  onCreateEmployee
+  onCreateDepartment
 }: OrganizationPageHeaderProps) => {
   // Durum kartları
   const statusCards = [
@@ -111,16 +109,6 @@ const OrganizationPageHeader = ({
           >
             <Plus className="h-4 w-4" />
             <span>Departman Ekle</span>
-          </Button>
-        )}
-        {onCreateEmployee && (
-          <Button 
-            variant="outline"
-            className="flex items-center gap-2 border-blue-200 hover:bg-blue-50" 
-            onClick={onCreateEmployee}
-          >
-            <UserPlus className="h-4 w-4" />
-            <span>Çalışan Ekle</span>
           </Button>
         )}
       </div>

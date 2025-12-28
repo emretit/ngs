@@ -287,6 +287,7 @@
   },
   "nav": {
     "dashboard": "Gösterge Paneli",
+    "dashboardV2": "Gösterge Paneli 2",
     "customers": "Müşteriler",
     "suppliers": "Tedarikçiler",
     "salesManagement": "Satış Yönetimi",
@@ -329,6 +330,7 @@
     "budgetClassic": "Klasik Görünüm",
     "checksNotes": "Çekler ve Senetler",
     "loans": "Krediler",
+    "expenseRequests": "Harcama Talepleri",
     "inventory": "Stok Yönetimi",
     "products": "Ürünler",
     "inventoryTransactions": "Stok Hareketleri",
@@ -340,6 +342,7 @@
     "payroll": "Puantaj ve Bordro",
     "leaves": "İzinler ve Haklar",
     "documents": "Dökümanlar",
+    "organizationChart": "Organizasyon Şeması",
     "vehicleManagement": "Araç Yönetimi",
     "reports": "Raporlar",
     "reportsOverview": "Genel Bakış",
@@ -361,6 +364,7 @@
     "systemParameters": "Sistem Parametreleri",
     "pdfTemplates": "PDF Şablonları",
     "auditLogs": "Denetim Günlüğü",
+    "approvalWorkflows": "Onay Süreçleri",
     "adminPanel": "Admin Panel",
     "logout": "Çıkış"
   },
@@ -517,6 +521,8 @@
   "settings": {
     "title": "Ayarlar & Yönetim",
     "description": "Sistem ayarlarını yönetin ve kullanıcı izinlerini düzenleyin.",
+    "profile": "Profil",
+    "notifications": "Bildirimler",
     "systemStatus": "Sistem Durumu",
     "active": "Aktif",
     "users": "Kullanıcılar",

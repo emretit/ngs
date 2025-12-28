@@ -19,7 +19,7 @@ export default function OrganizationChart() {
   const [selectedPosition, setSelectedPosition] = useState("all");
   const [isAddDepartmentDialogOpen, setIsAddDepartmentDialogOpen] = useState(false);
 
-  // Fetch departments for stats and filter
+  // Fetch departments for stats and filter (with parent_id for hierarchy)
   const { data: departments = [], isLoading: departmentsLoading } = useQuery({
     queryKey: ["org-chart-departments", companyId],
     queryFn: async () => {
@@ -27,7 +27,7 @@ export default function OrganizationChart() {
 
       const { data, error } = await supabase
         .from("departments")
-        .select("id, name, description, head_id")
+        .select("id, name, description, head_id, parent_id")
         .eq("company_id", companyId)
         .eq("is_active", true)
         .order("sort_order", { ascending: true })
@@ -89,10 +89,6 @@ export default function OrganizationChart() {
     console.log("Dialog state true olarak ayarlandı");
   };
 
-  const handleCreateEmployee = () => {
-    navigate("/add-employee");
-  };
-
   return (
     <div className="w-full space-y-2">
       {/* Header */}
@@ -102,7 +98,6 @@ export default function OrganizationChart() {
         activeEmployees={stats.activeEmployees}
         departmentHeads={stats.departmentHeads}
         onCreateDepartment={handleCreateDepartment}
-        onCreateEmployee={handleCreateEmployee}
       />
 
       {/* Arama ve Filtreleme */}

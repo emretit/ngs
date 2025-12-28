@@ -94,6 +94,7 @@ function getTitleForPath(path: string, t: (key: string) => string): string {
     '/contracts/vehicle': 'nav.vehicleContracts',
     '/contracts/customer': 'nav.customerContracts',
     '/employees/': 'nav.employees', // Bu en son kontrol edilmeli, detay sayfaları önce kontrol edilsin
+    '/organization-chart': 'nav.organizationChart',
   };
   
   for (const [pattern, translationKey] of Object.entries(patterns)) {

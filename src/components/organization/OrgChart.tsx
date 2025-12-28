@@ -812,10 +812,10 @@ export const OrgChart: React.FC<OrgChartProps> = ({
 
   // Render hierarchy tree view (SVG-based) - yFiles style
   const renderHierarchyTree = () => {
-    const nodeWidth = 220;
-    const nodeHeight = 90;
-    const horizontalSpacing = 40;
-    const verticalSpacing = 120;
+    const nodeWidth = 160;
+    const nodeHeight = 70;
+    const horizontalSpacing = 20;
+    const verticalSpacing = 90;
 
     // Build level map: collect all nodes at each hierarchy level
     const buildLevelMap = (nodes: EmployeeNode[], level: number = 0, levelMap: Map<number, EmployeeNode[]> = new Map()): Map<number, EmployeeNode[]> => {
@@ -843,12 +843,12 @@ export const OrgChart: React.FC<OrgChartProps> = ({
       const maxNodesInLevel = Math.max(...Array.from(levelMap.values()).map(nodes => nodes.length));
       
       // Calculate canvas dimensions
-      const canvasPadding = 80;
+      const canvasPadding = 40;
       const maxLevelWidth = maxNodesInLevel * nodeWidth + (maxNodesInLevel - 1) * horizontalSpacing;
       const canvasWidth = maxLevelWidth + canvasPadding * 2;
       const centerX = canvasWidth / 2;
       
-      const startY = 60;
+      const startY = 30;
 
       // Position each level, centering all nodes horizontally
       levelMap.forEach((nodes, level) => {
@@ -881,10 +881,10 @@ export const OrgChart: React.FC<OrgChartProps> = ({
       positions.filter(p => p.level === level).length
     ));
     
-    const canvasPadding = 80;
+    const canvasPadding = 40;
     const maxLevelWidth = maxNodesInLevel * nodeWidth + (maxNodesInLevel - 1) * horizontalSpacing;
     const svgWidth = maxLevelWidth + canvasPadding * 2;
-    const svgHeight = (maxLevel + 1) * verticalSpacing + nodeHeight + canvasPadding + 40;
+    const svgHeight = (maxLevel + 1) * verticalSpacing + nodeHeight + canvasPadding + 20;
 
     return (
       <div className="relative">
@@ -900,7 +900,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({
         
         <div
           ref={containerRef}
-          className="relative w-full h-[700px] overflow-auto border border-border rounded-lg bg-gradient-to-br from-background via-muted/10 to-background"
+          className="relative w-full h-[600px] overflow-auto border border-border rounded-lg bg-gradient-to-br from-background via-muted/10 to-background"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -940,9 +940,10 @@ export const OrgChart: React.FC<OrgChartProps> = ({
                           y1={fromY}
                           x2={fromX}
                           y2={midY}
-                          stroke="hsl(var(--border))"
-                          strokeWidth="2"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth="3"
                           strokeLinecap="round"
+                          strokeOpacity="0.8"
                         />
                         {/* Horizontal line */}
                         <line
@@ -950,9 +951,10 @@ export const OrgChart: React.FC<OrgChartProps> = ({
                           y1={midY}
                           x2={toX}
                           y2={midY}
-                          stroke="hsl(var(--border))"
-                          strokeWidth="2"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth="3"
                           strokeLinecap="round"
+                          strokeOpacity="0.8"
                         />
                         {/* Vertical line to child */}
                         <line
@@ -960,16 +962,28 @@ export const OrgChart: React.FC<OrgChartProps> = ({
                           y1={midY}
                           x2={toX}
                           y2={toY}
-                          stroke="hsl(var(--border))"
-                          strokeWidth="2"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth="3"
                           strokeLinecap="round"
+                          strokeOpacity="0.8"
                         />
                         {/* Connection dot at bottom of manager */}
                         <circle
                           cx={fromX}
                           cy={fromY}
+                          r="4"
+                          fill="hsl(var(--primary))"
+                          stroke="hsl(var(--background))"
+                          strokeWidth="2"
+                        />
+                        {/* Connection dot at top of child */}
+                        <circle
+                          cx={toX}
+                          cy={toY}
                           r="3"
                           fill="hsl(var(--primary))"
+                          stroke="hsl(var(--background))"
+                          strokeWidth="1.5"
                         />
                       </g>
                     );

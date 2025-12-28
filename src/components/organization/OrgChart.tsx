@@ -266,31 +266,32 @@ export const OrgChart: React.FC<OrgChartProps> = ({
   }, [departments, employees, selectedDepartment, searchQuery]);
 
   // Build complete hierarchy tree (all employees regardless of department)
-  // Only includes employees from the current company and ensures managers are also from the same company
-  // Respects collapsed state for hierarchy view
+  // Seviyeler otomatik olarak belirlenir: Her çalışanın CEO'dan (root) kendisine kadar olan mesafesi = seviye
+  // Örnek: CEO = 0, COO/CFO/CTO = 1, onların altındakiler = 2, vs.
   const completeHierarchy = useMemo(() => {
     const employeeMap = new Map<string, EmployeeNode>();
     const roots: EmployeeNode[] = [];
 
-    // Create all nodes - employees are already filtered by company_id in the query
+    // 1. Tüm çalışanları map'e ekle
     employees.forEach((emp) => {
       employeeMap.set(emp.id, { ...emp, children: [] });
     });
 
-    // Build tree - only link if manager exists in the same company
+    // 2. Hiyerarşi ağacını oluştur (manager_id ilişkilerine göre)
     employees.forEach((emp) => {
       const node = employeeMap.get(emp.id)!;
       if (emp.manager_id && employeeMap.has(emp.manager_id)) {
-        // Manager exists in the same company (since employees are already filtered by company_id)
+        // Yöneticisi var ve aynı şirkette - bu node alt seviyede
         const manager = employeeMap.get(emp.manager_id)!;
         if (!manager.children) manager.children = [];
         manager.children.push(node);
       } else {
-        // No manager or manager not in same company - this is a root node
+        // Yöneticisi yok veya aynı şirkette değil - bu root node (en üst seviye = 0)
         roots.push(node);
       }
     });
 
+    // 3. Ağaç yapısı tamamlandı, seviyeler otomatik olarak derinliğe göre belirlenecek
     return roots;
   }, [employees]);
 
@@ -841,10 +842,11 @@ export const OrgChart: React.FC<OrgChartProps> = ({
 
   // Render hierarchy tree view (SVG-based) - yFiles style
   const renderHierarchyTree = () => {
-    const nodeWidth = 160;
-    const nodeHeight = 70;
-    const horizontalSpacing = 20;
-    const verticalSpacing = 90;
+    const nodeWidth = 200;
+    const nodeHeight = 85;
+    const horizontalSpacing = 30; // Yatay boşluk (aynı seviyedeki node'lar arası)
+    const verticalSpacing = 120; // Dikey boşluk (seviyeler arası)
+    const verticalChildSpacing = 20; // Dikey boşluk (aynı yöneticinin altındaki çalışanlar arası)
 
     // Build level map: collect all nodes at each hierarchy level
     const buildLevelMap = (nodes: EmployeeNode[], level: number = 0, levelMap: Map<number, EmployeeNode[]> = new Map()): Map<number, EmployeeNode[]> => {
@@ -861,37 +863,130 @@ export const OrgChart: React.FC<OrgChartProps> = ({
       return levelMap;
     };
 
-    // Calculate positions with proper centering for each level
+    // Klasik organizasyon şeması algoritması
+    // SEVİYE HESAPLAMA: Otomatik olarak manager zinciri uzunluğuna göre belirlenir
+    // - Root node'lar (CEO gibi manager_id=null): level = 0
+    // - Root'un direkt raporları (COO, CFO, CTO): level = 1
+    // - Onların direkt raporları: level = 2, vs.
+    // Her seviye aynı Y pozisyonunda (yatay hizada), X pozisyonu parent'ın ortasında
     const calculatePositions = (): Array<{node: EmployeeNode, x: number, y: number, level: number}> => {
       const positions: Array<{node: EmployeeNode, x: number, y: number, level: number}> = [];
-      const levelMap = buildLevelMap(getVisibleHierarchy);
-      
-      if (levelMap.size === 0) return positions;
-      
-      const maxLevel = Math.max(...Array.from(levelMap.keys()));
-      const maxNodesInLevel = Math.max(...Array.from(levelMap.values()).map(nodes => nodes.length));
-      
-      // Calculate canvas dimensions
-      const canvasPadding = 40;
-      const maxLevelWidth = maxNodesInLevel * nodeWidth + (maxNodesInLevel - 1) * horizontalSpacing;
-      const canvasWidth = maxLevelWidth + canvasPadding * 2;
-      const centerX = canvasWidth / 2;
-      
+      const nodePositions = new Map<string, {x: number, y: number, level: number}>();
+
+      if (getVisibleHierarchy.length === 0) return positions;
+
       const startY = 30;
 
-      // Position each level, centering all nodes horizontally
-      levelMap.forEach((nodes, level) => {
-        const totalWidth = nodes.length * nodeWidth + (nodes.length - 1) * horizontalSpacing;
-        const levelStartX = centerX - totalWidth / 2;
+      // Her subtree için genişlik hesapla (bottom-up)
+      const calculateSubtreeWidth = (node: EmployeeNode): number => {
+        if (!node.children || node.children.length === 0) {
+          return nodeWidth;
+        }
 
-        nodes.forEach((node, index) => {
-          const x = levelStartX + index * (nodeWidth + horizontalSpacing);
-          const y = startY + level * verticalSpacing;
-          positions.push({ node, x, y, level });
+        // Çocukların toplam genişliğini hesapla
+        const totalChildWidth = node.children.reduce((sum, child) => {
+          return sum + calculateSubtreeWidth(child);
+        }, 0);
+
+        // Çocuklar arası boşluklar
+        const spacingWidth = (node.children.length - 1) * horizontalSpacing;
+
+        return Math.max(nodeWidth, totalChildWidth + spacingWidth);
+      };
+
+      // Tüm node'ları recursive olarak yerleştir (bottom-up)
+      // level parametresi: Bu node'un hiyerarşi seviyesi (0 = root, 1 = root'un çocukları, vs.)
+      const positionSubtree = (node: EmployeeNode, level: number, leftX: number): number => {
+        // Y pozisyonu: Seviye * (kart yüksekliği + boşluk)
+        // Aynı seviyedeki TÜM çalışanlar aynı Y pozisyonunda olacak
+        const y = startY + level * (nodeHeight + verticalSpacing);
+
+        if (!node.children || node.children.length === 0) {
+          // Yaprak node (alt çalışanı yok)
+          nodePositions.set(node.id, { x: leftX, y, level });
+          return leftX + nodeWidth;
+        }
+
+        // İç node (alt çalışanları var) - önce çocukları yerleştir
+        let currentX = leftX;
+        const childXPositions: number[] = [];
+
+        node.children.forEach((child) => {
+          const childWidth = calculateSubtreeWidth(child);
+
+          // Çocuğu bir sonraki seviyeye yerleştir (level + 1)
+          positionSubtree(child, level + 1, currentX);
+
+          const childPos = nodePositions.get(child.id)!;
+          childXPositions.push(childPos.x + nodeWidth / 2); // Merkez pozisyonu
+
+          currentX += childWidth + horizontalSpacing;
         });
+
+        // Parent'ı çocukların ortasına yerleştir (yatay merkezleme)
+        const firstChildCenter = childXPositions[0];
+        const lastChildCenter = childXPositions[childXPositions.length - 1];
+        const parentCenterX = (firstChildCenter + lastChildCenter) / 2;
+        const parentX = parentCenterX - nodeWidth / 2;
+
+        nodePositions.set(node.id, { x: parentX, y, level });
+
+        // Toplam genişliği döndür
+        return currentX - horizontalSpacing;
+      };
+
+      // Root node'ları yerleştir (genellikle sadece CEO, ama birden fazla olabilir)
+      let totalWidth = 0;
+      const rootWidths: number[] = [];
+
+      getVisibleHierarchy.forEach((rootNode) => {
+        const width = calculateSubtreeWidth(rootNode);
+        rootWidths.push(width);
+        totalWidth += width;
       });
 
+      totalWidth += (getVisibleHierarchy.length - 1) * horizontalSpacing * 3;
+
+      // Root'ları level=0 ile yerleştir (en üst seviye)
+      let currentX = 0;
+      getVisibleHierarchy.forEach((rootNode, index) => {
+        const width = rootWidths[index];
+        const centerOffset = (width - nodeWidth) / 2;
+        positionSubtree(rootNode, 0, currentX + centerOffset); // level = 0 (root seviyesi)
+        currentX += width + horizontalSpacing * 3;
+      });
+
+      // Convert map to array
+      nodePositions.forEach((pos, nodeId) => {
+        const node = findNodeInHierarchy(getVisibleHierarchy, nodeId);
+        if (node) {
+          positions.push({ node, ...pos });
+        }
+      });
+
+      // Tüm şemayı ortala
+      if (positions.length > 0) {
+        const minX = Math.min(...positions.map(p => p.x));
+        const centerOffset = 100; // Sol taraftan minimum mesafe
+
+        positions.forEach(pos => {
+          pos.x = pos.x - minX + centerOffset;
+        });
+      }
+
       return positions;
+    };
+
+    // Helper function to find node by ID in hierarchy
+    const findNodeInHierarchy = (nodes: EmployeeNode[], id: string): EmployeeNode | null => {
+      for (const node of nodes) {
+        if (node.id === id) return node;
+        if (node.children) {
+          const found = findNodeInHierarchy(node.children, id);
+          if (found) return found;
+        }
+      }
+      return null;
     };
 
     const positions = calculatePositions();
@@ -905,15 +1000,12 @@ export const OrgChart: React.FC<OrgChartProps> = ({
       );
     }
     
-    const maxLevel = Math.max(...positions.map(p => p.level));
-    const maxNodesInLevel = Math.max(...Array.from(new Set(positions.map(p => p.level))).map(level => 
-      positions.filter(p => p.level === level).length
-    ));
-    
+    // Calculate canvas dimensions based on actual positions
+    const maxX = Math.max(...positions.map(p => p.x)) + nodeWidth;
+    const maxY = Math.max(...positions.map(p => p.y)) + nodeHeight;
     const canvasPadding = 40;
-    const maxLevelWidth = maxNodesInLevel * nodeWidth + (maxNodesInLevel - 1) * horizontalSpacing;
-    const svgWidth = maxLevelWidth + canvasPadding * 2;
-    const svgHeight = (maxLevel + 1) * verticalSpacing + nodeHeight + canvasPadding + 20;
+    const svgWidth = Math.max(maxX + canvasPadding, 800);
+    const svgHeight = maxY + canvasPadding + 20;
 
     return (
       <div className="relative">
@@ -950,75 +1042,117 @@ export const OrgChart: React.FC<OrgChartProps> = ({
               height={svgHeight}
               className="absolute top-0 left-0"
             >
-              {/* Draw orthogonal connections - yFiles style */}
-              {positions.map(({ node, x, y }) => {
-                if (node.manager_id) {
-                  const managerPos = positions.find(p => p.node.id === node.manager_id);
-                  if (managerPos) {
-                    const fromX = managerPos.x + nodeWidth / 2;
-                    const fromY = managerPos.y + nodeHeight;
-                    const toX = x + nodeWidth / 2;
-                    const toY = y;
-                    const midY = (fromY + toY) / 2;
+              {/* Draw orthogonal connections - parent → vertical → horizontal backbone → vertical → children */}
+              {positions.map(({ node, x, y, level }) => {
+                const children = node.children || [];
+                if (children.length === 0) return null;
 
-                    return (
-                      <g key={`connection-${node.id}`}>
-                        {/* Vertical line from manager down */}
-                        <line
-                          x1={fromX}
-                          y1={fromY}
-                          x2={fromX}
-                          y2={midY}
-                          stroke="hsl(var(--primary))"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeOpacity="0.8"
-                        />
-                        {/* Horizontal line */}
-                        <line
-                          x1={fromX}
-                          y1={midY}
-                          x2={toX}
-                          y2={midY}
-                          stroke="hsl(var(--primary))"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeOpacity="0.8"
-                        />
-                        {/* Vertical line to child */}
-                        <line
-                          x1={toX}
-                          y1={midY}
-                          x2={toX}
-                          y2={toY}
-                          stroke="hsl(var(--primary))"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeOpacity="0.8"
-                        />
-                        {/* Connection dot at bottom of manager */}
-                        <circle
-                          cx={fromX}
-                          cy={fromY}
-                          r="4"
-                          fill="hsl(var(--primary))"
-                          stroke="hsl(var(--background))"
-                          strokeWidth="2"
-                        />
-                        {/* Connection dot at top of child */}
-                        <circle
-                          cx={toX}
-                          cy={toY}
-                          r="3"
-                          fill="hsl(var(--primary))"
-                          stroke="hsl(var(--background))"
-                          strokeWidth="1.5"
-                        />
-                      </g>
-                    );
-                  }
-                }
-                return null;
+                const parentCenterX = x + nodeWidth / 2;
+                const parentBottomY = y + nodeHeight;
+
+                // Her parent için çocuklarını bul
+                const childPositions = children
+                  .map(child => positions.find(p => p.node.id === child.id))
+                  .filter(Boolean) as Array<{node: EmployeeNode, x: number, y: number, level: number}>;
+
+                if (childPositions.length === 0) return null;
+
+                // Yatay backbone'un Y pozisyonu (parent ile çocuklar arasında)
+                const backboneY = parentBottomY + verticalSpacing / 2;
+
+                // İlk ve son çocuğun X pozisyonları
+                const firstChildX = childPositions[0].x + nodeWidth / 2;
+                const lastChildX = childPositions[childPositions.length - 1].x + nodeWidth / 2;
+
+                return (
+                  <g key={`connection-group-${node.id}`}>
+                    {/* 1. Parent'tan aşağı inen dikey çizgi */}
+                    <line
+                      x1={parentCenterX}
+                      y1={parentBottomY}
+                      x2={parentCenterX}
+                      y2={backboneY}
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeOpacity="0.7"
+                    />
+
+                    {/* Bağlantı noktası - parent'ın altı */}
+                    <circle
+                      cx={parentCenterX}
+                      cy={parentBottomY}
+                      r="4"
+                      fill="hsl(var(--primary))"
+                      stroke="hsl(var(--background))"
+                      strokeWidth="2"
+                    />
+
+                    {/* 2. Yatay backbone (ana hat) */}
+                    <line
+                      x1={firstChildX}
+                      y1={backboneY}
+                      x2={lastChildX}
+                      y2={backboneY}
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeOpacity="0.7"
+                    />
+
+                    {/* Bağlantı noktası - backbone'un ortası */}
+                    <circle
+                      cx={parentCenterX}
+                      cy={backboneY}
+                      r="3.5"
+                      fill="hsl(var(--primary))"
+                      stroke="hsl(var(--background))"
+                      strokeWidth="1.5"
+                    />
+
+                    {/* 3. Her child'a dikey bağlantılar */}
+                    {childPositions.map((childPos) => {
+                      const childCenterX = childPos.x + nodeWidth / 2;
+                      const childTopY = childPos.y;
+
+                      return (
+                        <g key={`child-connection-${childPos.node.id}`}>
+                          {/* Backbone'dan child'a dikey çizgi */}
+                          <line
+                            x1={childCenterX}
+                            y1={backboneY}
+                            x2={childCenterX}
+                            y2={childTopY}
+                            stroke="hsl(var(--primary))"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeOpacity="0.7"
+                          />
+
+                          {/* Bağlantı noktası - backbone üzerinde */}
+                          <circle
+                            cx={childCenterX}
+                            cy={backboneY}
+                            r="3"
+                            fill="hsl(var(--primary))"
+                            stroke="hsl(var(--background))"
+                            strokeWidth="1.5"
+                          />
+
+                          {/* Bağlantı noktası - child'ın üstü */}
+                          <circle
+                            cx={childCenterX}
+                            cy={childTopY}
+                            r="3"
+                            fill="hsl(var(--primary))"
+                            stroke="hsl(var(--background))"
+                            strokeWidth="1.5"
+                          />
+                        </g>
+                      );
+                    })}
+                  </g>
+                );
               })}
             </svg>
 

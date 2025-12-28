@@ -64,7 +64,7 @@ export const OrgChartEmployeeCard: React.FC<OrgChartEmployeeCardProps> = ({
               "bg-card border-2",
               departmentColor.border
             )}
-            style={{ width: 220, height: 90 }}
+            style={{ width: 200, height: 85 }}
             onClick={onClick}
           >
             {/* Department Color Accent Bar */}
@@ -74,10 +74,10 @@ export const OrgChartEmployeeCard: React.FC<OrgChartEmployeeCardProps> = ({
             />
             
             {/* Card Content */}
-            <div className="flex-1 flex items-center gap-3 p-3 min-w-0">
+            <div className="flex-1 flex items-center gap-2.5 p-2.5 min-w-0">
               {/* Avatar Section */}
               <div className="relative flex-shrink-0">
-                <Avatar className="h-14 w-14 border-2 border-background shadow-sm">
+                <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
                   <AvatarImage src={avatarUrl || undefined} alt={`${firstName} ${lastName}`} />
                   <AvatarFallback 
                     className={cn(
@@ -100,41 +100,41 @@ export const OrgChartEmployeeCard: React.FC<OrgChartEmployeeCardProps> = ({
               </div>
               
               {/* Info Section */}
-              <div className="flex-1 min-w-0 flex flex-col justify-center">
+              <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
                 {/* Name */}
-                <h3 className="font-bold text-sm text-foreground leading-tight truncate">
+                <h3 className="font-bold text-xs text-foreground leading-tight line-clamp-1">
                   {firstName} {lastName}
                 </h3>
                 
                 {/* Position */}
                 {position && (
-                  <p className="text-xs text-muted-foreground leading-tight truncate mt-0.5">
+                  <p className="text-[10px] text-muted-foreground leading-tight line-clamp-1">
                     {position}
                   </p>
                 )}
                 
                 {/* Divider */}
-                <div className="w-full h-px bg-border my-1.5" />
+                <div className="w-full h-px bg-border my-1" />
                 
                 {/* Bottom Row - Status & Contact Icons */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
+                <div className="flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-0.5 min-w-0">
                     <div 
                       className={cn(
-                        "w-2 h-2 rounded-full flex-shrink-0",
+                        "w-1.5 h-1.5 rounded-full flex-shrink-0",
                         isActive ? "bg-green-500" : "bg-gray-400"
                       )}
                     />
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-[9px] text-muted-foreground truncate">
                       {isActive ? 'Aktif' : 'Pasif'}
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity flex-shrink-0">
                     {email && (
-                      <Mail className="h-3 w-3 text-muted-foreground" />
+                      <Mail className="h-2.5 w-2.5 text-muted-foreground" />
                     )}
-                    <Phone className="h-3 w-3 text-muted-foreground" />
+                    <Phone className="h-2.5 w-2.5 text-muted-foreground" />
                   </div>
                 </div>
               </div>
@@ -142,12 +142,12 @@ export const OrgChartEmployeeCard: React.FC<OrgChartEmployeeCardProps> = ({
             
             {/* Direct Reports Badge */}
             {directReports > 0 && (
-              <div className="absolute -bottom-2.5 right-3">
+              <div className="absolute -bottom-2 right-2">
                 <Badge 
                   variant="secondary" 
-                  className="text-[10px] py-0 px-1.5 shadow-sm bg-primary/10 text-primary border border-primary/20"
+                  className="text-[9px] py-0 px-1 shadow-sm bg-primary/10 text-primary border border-primary/20"
                 >
-                  <Users className="h-2.5 w-2.5 mr-0.5" />
+                  <Users className="h-2 w-2 mr-0.5" />
                   {directReports}
                 </Badge>
               </div>

@@ -30,6 +30,7 @@ const formSchema = z.object({
   is_technical: z.boolean().optional().default(false),
   hire_date: z.string().min(1, "İşe başlama tarihi gereklidir"),
   status: z.enum(["aktif", "pasif"]).default("aktif"),
+  manager_id: z.string().uuid().optional().nullable(),
   
   // Personal Information
   date_of_birth: z.string().optional(),
@@ -102,6 +103,7 @@ const SimpleEmployeeForm = () => {
       is_technical: false,
       hire_date: new Date().toISOString().split("T")[0],
       status: "aktif",
+      manager_id: null,
       date_of_birth: "",
       gender: undefined,
       marital_status: undefined,
@@ -164,6 +166,7 @@ const SimpleEmployeeForm = () => {
         department: data.department,
         hire_date: data.hire_date,
         status: data.status,
+        manager_id: data.manager_id || null,
         date_of_birth: data.date_of_birth || null,
         gender: data.gender || null,
         marital_status: data.marital_status || null,

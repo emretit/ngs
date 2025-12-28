@@ -9,6 +9,7 @@ import { User } from "lucide-react";
 import { Control } from "react-hook-form";
 import { format } from "date-fns";
 import { DepartmentSelect } from "./DepartmentSelect";
+import { ManagerSelector } from "@/components/employees/ManagerSelector";
 
 interface BasicInfoSectionProps {
   control: Control<any>;
@@ -99,6 +100,24 @@ export const BasicInfoSection = ({ control }: BasicInfoSectionProps) => {
         />
 
         <DepartmentSelect control={control} />
+
+        <FormField
+          control={control}
+          name="manager_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-medium text-gray-700">Yönetici</FormLabel>
+              <FormControl>
+                <ManagerSelector
+                  value={field.value || null}
+                  onChange={field.onChange}
+                  excludeEmployeeId={undefined}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={control}

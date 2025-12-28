@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Settings2, Users, UserCheck, Zap, Wrench, FileText, CreditCard, ClipboardList } from "lucide-react";
+import { Settings2, Users, UserCheck, Zap, Wrench, FileText, CreditCard, ClipboardList, UsersRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface SettingsProps {
@@ -63,9 +63,28 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Kullanıcılar */}
+              {/* Birleşik Kullanıcı & Çalışan Yönetimi */}
               <div 
-                onClick={() => navigate("/users")}
+                onClick={() => navigate("/settings/unified-management")}
+                className="p-6 rounded-xl border border-gray-200 hover:border-indigo-300 hover:shadow-lg transition-all duration-200 cursor-pointer group bg-gradient-to-br from-indigo-50 to-blue-50"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                    <UsersRound className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                      Kullanıcı & Çalışan Yönetimi
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Kullanıcı-çalışan eşleşmesi, roller, izinler ve onay süreçleri
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {/* Kullanıcılar (Legacy - redirects to unified) */}
+              <div 
+                onClick={() => navigate("/settings/unified-management?tab=users")}
                 className="p-6 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-center gap-4">
@@ -101,9 +120,9 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                 </div>
               </div>
-              {/* Roller & İzinler */}
+              {/* Roller & İzinler (Legacy - redirects to unified) */}
               <div 
-                onClick={() => navigate("/settings/roles")}
+                onClick={() => navigate("/settings/unified-management?tab=roles")}
                 className="p-6 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-center gap-4">

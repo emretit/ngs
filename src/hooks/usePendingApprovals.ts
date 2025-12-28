@@ -24,7 +24,7 @@ export function usePendingApprovals() {
     queryFn: async (): Promise<Approval[]> => {
       if (!companyId) return [];
 
-      const { data, error } = await supabase
+      const { data: approvals, error } = await supabase
         .from("approvals")
         .select(`
           id,
@@ -50,19 +50,75 @@ export function usePendingApprovals() {
         return [];
       }
 
-      // Transform data
-      return (data || []).map(approval => ({
+      // Fetch related object data for better context
+      const approvalsWithData = await Promise.all(
+        (approvals || []).map(async (approval) => {
+          let objectData: any = null;
+          let requesterName = 'Sistem';
+          let amount = 0;
+
+          try {
+            switch (approval.object_type) {
+              case 'expense_request':
+                const { data: expense } = await supabase
+                  .from('expense_requests')
+                  .select('id, amount, description, requester_id, profiles:requester_id(first_name, last_name)')
+                  .eq('id', approval.object_id)
+                  .single();
+                if (expense) {
+                  objectData = expense;
+                  amount = Number(expense.amount) || 0;
+                  if (expense.profiles) {
+                    requesterName = `${(expense.profiles as any).first_name} ${(expense.profiles as any).last_name}`;
+                  }
+                }
+                break;
+              case 'purchase_request':
+                const { data: purchase } = await supabase
+                  .from('purchase_requests')
+                  .select('id, total_budget, title, requester_id, profiles:requester_id(first_name, last_name)')
+                  .eq('id', approval.object_id)
+                  .single();
+                if (purchase) {
+                  objectData = purchase;
+                  amount = Number(purchase.total_budget) || 0;
+                  if (purchase.profiles) {
+                    requesterName = `${(purchase.profiles as any).first_name} ${(purchase.profiles as any).last_name}`;
+                  }
+                }
+                break;
+              case 'leave_request':
+                const { data: leave } = await supabase
+                  .from('employee_leaves')
+                  .select('id, employee_id, employees:employee_id(first_name, last_name)')
+                  .eq('id', approval.object_id)
+                  .single();
+                if (leave && leave.employees) {
+                  requesterName = `${(leave.employees as any).first_name} ${(leave.employees as any).last_name}`;
+                }
+                break;
+            }
+          } catch (err) {
+            console.error(`Error fetching ${approval.object_type} data:`, err);
+          }
+
+          return {
         id: approval.id,
         type: mapApprovalType(approval.object_type),
         title: `${getApprovalTypeLabel(approval.object_type)} Onayı`,
-        description: `Onay bekleyen ${getApprovalTypeLabel(approval.object_type).toLowerCase()}`,
+            description: objectData?.description || objectData?.title || `Onay bekleyen ${getApprovalTypeLabel(approval.object_type).toLowerCase()}`,
+            amount: amount > 0 ? amount : undefined,
         createdAt: approval.created_at || new Date().toISOString(),
         priority: approval.step && approval.step > 1 ? 'high' : 'medium' as const,
         requester: {
-          name: 'Sistem',
-          avatar: undefined
+              name: requesterName,
+              avatar: (approval.profiles as any)?.avatar_url || undefined
         }
-      }));
+          };
+        })
+      );
+
+      return approvalsWithData;
     },
     enabled: !!companyId,
     staleTime: 30000
@@ -72,7 +128,7 @@ export function usePendingApprovals() {
 function mapApprovalType(type: string): 'proposal' | 'expense' | 'purchase' | 'leave' | 'budget' {
   switch (type) {
     case 'proposal': return 'proposal';
-    case 'expense': return 'expense';
+    case 'expense_request': return 'expense';
     case 'purchase_request': return 'purchase';
     case 'leave_request': return 'leave';
     case 'budget_revision': return 'budget';
@@ -83,7 +139,7 @@ function mapApprovalType(type: string): 'proposal' | 'expense' | 'purchase' | 'l
 function getApprovalTypeLabel(type: string): string {
   switch (type) {
     case 'proposal': return 'Teklif';
-    case 'expense': return 'Masraf';
+    case 'expense_request': return 'Harcama';
     case 'purchase_request': return 'Satın Alma';
     case 'leave_request': return 'İzin';
     case 'budget_revision': return 'Bütçe';

@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Mail, Phone, Building, MapPin, FileText, User, Users, Globe, Calendar, CreditCard, Briefcase } from "lucide-react";
+import { Mail, Phone, Building, MapPin, FileText, User, Users, Globe, Calendar, CreditCard, Briefcase, UserCheck } from "lucide-react";
 import { Employee } from "@/types/employee";
 import { formatPhoneNumber } from "@/utils/phoneFormatter";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { formatDate } from "./utils/formatDate";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface EmployeeInfoProps {
   employee: Employee;
@@ -13,6 +16,28 @@ interface EmployeeInfoProps {
 
 export const EmployeeInfo = ({ employee, onUpdate }: EmployeeInfoProps) => {
   const [isExpanded, setIsExpanded] = useState(true); // Açık olarak başlatıldı
+  const navigate = useNavigate();
+
+  // Use manager from employee object if available, otherwise fetch it
+  const { data: fetchedManager } = useQuery({
+    queryKey: ['employee-manager', employee.manager_id],
+    queryFn: async () => {
+      if (!employee.manager_id) return null;
+      
+      const { data, error } = await supabase
+        .from('employees')
+        .select('id, first_name, last_name, position, email, department')
+        .eq('id', employee.manager_id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!employee.manager_id && !employee.manager,
+  });
+
+  // Use manager from employee object if available, otherwise use fetched manager
+  const manager = employee.manager || fetchedManager;
 
   return (
     <Card className="bg-gradient-to-br from-background to-muted/20 border shadow-sm">
@@ -70,6 +95,30 @@ export const EmployeeInfo = ({ employee, onUpdate }: EmployeeInfoProps) => {
               </div>
               <div className="text-xs font-medium text-gray-900 truncate">
                 {employee.department || <span className="text-gray-400 italic">Atanmamış</span>}
+              </div>
+            </div>
+
+            {/* Yönetici Bilgisi */}
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <UserCheck className="w-2.5 h-2.5 text-blue-600" />
+                <span>Yönetici</span>
+              </div>
+              <div 
+                className="text-xs font-medium text-gray-900 truncate cursor-pointer hover:text-primary transition-colors"
+                onClick={() => manager && navigate(`/employees/${manager.id}`)}
+                title={manager ? `${manager.first_name} ${manager.last_name} - ${manager.position}` : undefined}
+              >
+                {manager ? (
+                  <span className="hover:underline">
+                    {manager.first_name} {manager.last_name}
+                    {manager.position && ` (${manager.position})`}
+                  </span>
+                ) : employee.manager_id ? (
+                  <span className="text-gray-400 italic">Yükleniyor...</span>
+                ) : (
+                  <span className="text-gray-400 italic">Yönetici yok</span>
+                )}
               </div>
             </div>
 

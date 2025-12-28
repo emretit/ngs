@@ -10,7 +10,8 @@ const TimePayrollPage = React.lazy(() => import("@/pages/hr/TimePayrollPage"));
 const EmployeeLeaves = React.lazy(() => import("@/pages/EmployeeLeaves"));
 const EmployeeDocuments = React.lazy(() => import("@/pages/EmployeeDocuments"));
 const LeaveCreate = React.lazy(() => import("@/pages/LeaveCreate"));
-const LeaveSettings = React.lazy(() => import("@/pages/LeaveSettings"));
+const OrganizationChart = React.lazy(() => import("@/pages/OrganizationChart"));
+import Redirect from "@/components/routes/Redirect";
 
 // Define employee routes
 export const employeeRoutes: RouteConfig[] = [
@@ -21,6 +22,11 @@ export const employeeRoutes: RouteConfig[] = [
   { path: "/employees/payroll", component: TimePayrollPage, protected: true },
   { path: "/employees/leaves", component: EmployeeLeaves, protected: true },
   { path: "/employees/leaves/new", component: LeaveCreate, protected: true },
-  { path: "/employees/leaves/settings", component: LeaveSettings, protected: true },
+  { 
+    path: "/employees/leaves/settings", 
+    component: () => <Redirect to="/settings/unified-management?tab=leave-types" />, 
+    protected: true 
+  },
   { path: "/employees/documents", component: EmployeeDocuments, protected: true },
+  { path: "/organization-chart", component: OrganizationChart, protected: true },
 ];

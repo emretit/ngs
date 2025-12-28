@@ -38,13 +38,13 @@ interface QuickStatsBarProps {
 }
 
 const formatCurrency = (value: number) => {
-  if (value >= 1000000) {
-    return `₺${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `₺${(value / 1000).toFixed(0)}K`;
-  }
-  return `₺${value.toFixed(0)}`;
+  // Türkçe format: binlik ayırıcı nokta, ondalık ayırıcı virgül
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency: 'TRY',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 };
 
 export const QuickStatsBar = memo(({ data, isLoading, selectedTimePeriod = 'month' }: QuickStatsBarProps) => {

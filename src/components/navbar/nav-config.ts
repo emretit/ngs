@@ -51,7 +51,8 @@ import {
   BarChart,
   CheckCircle,
   PieChart,
-  Clock
+  Clock,
+  ArrowRight
 } from "lucide-react";
 
 export const navItems = [
@@ -302,6 +303,12 @@ export const navItems = [
         label: "Krediler",
         translationKey: "nav.loans",
       },
+      {
+        path: "/expense-requests",
+        icon: Receipt,
+        label: "Harcama Talepleri",
+        translationKey: "nav.expenseRequests",
+      },
     ],
   },
   // 9. Bütçe Yönetimi
@@ -416,6 +423,12 @@ export const navItems = [
         label: "Dökümanlar",
         translationKey: "nav.documents",
       },
+      {
+        path: "/organization-chart",
+        icon: Users2,
+        label: "Organizasyon Şeması",
+        translationKey: "nav.organizationChart",
+      },
     ],
   },
   // 11. Araç Yönetimi
@@ -499,22 +512,16 @@ export const navItems = [
     hasDropdown: true,
     items: [
       {
-        path: "/users",
-        icon: Users,
-        label: "Kullanıcı Yönetimi",
-        translationKey: "nav.userManagement",
+        path: "/settings/unified-management",
+        icon: Users2,
+        label: "Kullanıcı & Çalışan Yönetimi",
+        translationKey: "nav.unifiedManagement",
       },
       {
         path: "/subscription",
         icon: CreditCard,
         label: "Abonelik & Faturalama",
         translationKey: "nav.subscriptionBilling",
-      },
-      {
-        path: "/settings/roles",
-        icon: UserCheck,
-        label: "Roller & İzinler",
-        translationKey: "nav.rolesPermissions",
       },
       {
         path: "/integrator",
@@ -545,6 +552,12 @@ export const navItems = [
         icon: ClipboardList,
         label: "Denetim Günlüğü",
         translationKey: "nav.auditLogs",
+      },
+      {
+        path: "/settings/unified-management?tab=approvals",
+        icon: Workflow,
+        label: "Onay Süreçleri",
+        translationKey: "nav.approvalWorkflows",
       },
     ],
   },

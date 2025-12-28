@@ -65,6 +65,18 @@ export interface Employee {
   // Company info
   company_id?: string | null;
   
+  // Manager hierarchy
+  manager_id?: string | null;
+  
+  // İlişkili veriler (join edildiğinde)
+  manager?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    position: string;
+  } | null;
+  
   created_at?: string;
   updated_at?: string;
 }

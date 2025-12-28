@@ -17,13 +17,14 @@ const ServiceTemplateEditor = React.lazy(() => import("@/pages/templates/Service
 const NotificationSettings = React.lazy(() => import("@/pages/NotificationSettings"));
 const Subscription = React.lazy(() => import("@/pages/settings/Subscription"));
 const AuditLogs = React.lazy(() => import("@/pages/admin/AuditLogs"));
+const ApprovalWorkflowSettings = React.lazy(() => import("@/pages/settings/ApprovalWorkflowSettings"));
+const UnifiedManagement = React.lazy(() => import("@/pages/settings/UnifiedManagement"));
 import Redirect from "@/components/routes/Redirect";
 
 // Define settings routes
 export const settingsRoutes: RouteConfig[] = [
   { path: "/settings", component: Settings, protected: true },
   { path: "/settings/user", component: UserRedirect, protected: true },
-  { path: "/settings/roles", component: RolesSettings, protected: true },
   { path: "/settings/subscription", component: Subscription, protected: true },
   { path: "/settings/integrator", component: IntegratorSettings, protected: true },
   { path: "/settings/nilvera", component: NilveraSettingsPage, protected: true },
@@ -39,6 +40,13 @@ export const settingsRoutes: RouteConfig[] = [
   { path: "/settings/pdf-templates/quote/edit/:templateId", component: PdfTemplateEditor, protected: true },
   { path: "/settings/audit-logs", component: AuditLogs, protected: true },
   { path: "/settings/notifications", component: NotificationSettings, protected: true },
+  { path: "/settings/unified-management", component: UnifiedManagement, protected: true },
+  // Redirect approval-workflows to unified management
+  { 
+    path: "/settings/approval-workflows", 
+    component: () => <Redirect to="/settings/unified-management?tab=approvals" />, 
+    protected: true 
+  },
   // Backward compatibility routes (without /settings prefix)
   { path: "/users", component: UsersSettings, protected: true },
   { path: "/roles", component: RolesSettings, protected: true },
@@ -62,4 +70,15 @@ export const settingsRoutes: RouteConfig[] = [
   },
   { path: "/audit-logs", component: AuditLogs, protected: true },
   { path: "/notifications", component: NotificationSettings, protected: true },
+  // Redirect old routes to unified management
+  { 
+    path: "/settings/users", 
+    component: () => <Redirect to="/settings/unified-management?tab=users" />, 
+    protected: true 
+  },
+  { 
+    path: "/settings/roles", 
+    component: () => <Redirect to="/settings/unified-management?tab=roles" />, 
+    protected: true 
+  },
 ];

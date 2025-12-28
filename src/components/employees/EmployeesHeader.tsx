@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Users, UserCheck, UserX, UserCog, Briefcase, Clock, TrendingUp, Building2, MoreHorizontal, Download, FileText, Mail, Calculator, CreditCard } from "lucide-react";
+import { Plus, Users, UserCheck, UserX, UserCog, Briefcase, Clock, TrendingUp, Building2, MoreHorizontal, Download, FileText, Mail, Calculator, CreditCard, Network } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import EmployeesViewToggle from "./header/EmployeesViewToggle";
@@ -131,6 +131,15 @@ const EmployeesHeader = ({ viewMode, setViewMode, employeeStats, totalCosts }: E
           viewMode={viewMode} 
           setViewMode={setViewMode} 
         />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/organization-chart")}
+          className="gap-2"
+        >
+          <Network className="h-4 w-4" />
+          <span className="hidden sm:inline">Organizasyon</span>
+        </Button>
         <Button 
           className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg transition-all duration-300" 
           onClick={() => navigate("/add-employee")}

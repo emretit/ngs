@@ -11,6 +11,7 @@ const FinancingManagement = React.lazy(() => import("@/pages/FinancingManagement
 const OtherActivitiesManagement = React.lazy(() => import("@/pages/OtherActivitiesManagement"));
 const Reports = React.lazy(() => import("@/pages/Reports"));
 const GeneralCalendar = React.lazy(() => import("@/pages/GeneralCalendar"));
+const ExpenseRequests = React.lazy(() => import("@/pages/ExpenseRequests"));
 
 export const dashboardRoutes: RouteConfig[] = [
   { 
@@ -56,6 +57,11 @@ export const dashboardRoutes: RouteConfig[] = [
   {
     path: "/calendar",
     component: GeneralCalendar,
+    protected: true
+  },
+  {
+    path: "/expense-requests",
+    component: ExpenseRequests,
     protected: true
   }
 ];

@@ -16,6 +16,8 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OrgChartEmployeeCard, getDepartmentColorPalette } from "./OrgChartEmployeeCard";
+import { OrgChartMiniMap } from "./OrgChartMiniMap";
 
 type ViewMode = 'tree' | 'list' | 'grid' | 'hierarchy' | 'table';
 type SortField = 'name' | 'position' | 'department' | 'email' | 'status';
@@ -808,12 +810,12 @@ export const OrgChart: React.FC<OrgChartProps> = ({
     return departmentColors[index];
   };
 
-  // Render hierarchy tree view (SVG-based)
+  // Render hierarchy tree view (SVG-based) - yFiles style
   const renderHierarchyTree = () => {
-    const nodeWidth = 160;
-    const nodeHeight = 80;
-    const horizontalSpacing = 30;
-    const verticalSpacing = 100;
+    const nodeWidth = 220;
+    const nodeHeight = 90;
+    const horizontalSpacing = 40;
+    const verticalSpacing = 120;
 
     // Build level map: collect all nodes at each hierarchy level
     const buildLevelMap = (nodes: EmployeeNode[], level: number = 0, levelMap: Map<number, EmployeeNode[]> = new Map()): Map<number, EmployeeNode[]> => {
@@ -841,12 +843,12 @@ export const OrgChart: React.FC<OrgChartProps> = ({
       const maxNodesInLevel = Math.max(...Array.from(levelMap.values()).map(nodes => nodes.length));
       
       // Calculate canvas dimensions
-      const canvasPadding = 50;
+      const canvasPadding = 80;
       const maxLevelWidth = maxNodesInLevel * nodeWidth + (maxNodesInLevel - 1) * horizontalSpacing;
       const canvasWidth = maxLevelWidth + canvasPadding * 2;
       const centerX = canvasWidth / 2;
       
-      const startY = 40;
+      const startY = 60;
 
       // Position each level, centering all nodes horizontally
       levelMap.forEach((nodes, level) => {
@@ -866,10 +868,10 @@ export const OrgChart: React.FC<OrgChartProps> = ({
     const positions = calculatePositions();
     if (positions.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center h-[700px] border border-gray-300 bg-white">
-          <Users className="h-16 w-16 text-gray-400 mb-4" />
-          <p className="text-lg font-semibold text-gray-700 mb-2">Organizasyon şeması için veri bulunamadı</p>
-          <p className="text-sm text-gray-500">Çalışanlar eklendiğinde şema burada görünecektir</p>
+        <div className="flex flex-col items-center justify-center h-[700px] border border-border rounded-lg bg-muted/20">
+          <Users className="h-16 w-16 text-muted-foreground mb-4" />
+          <p className="text-lg font-semibold text-foreground mb-2">Organizasyon şeması için veri bulunamadı</p>
+          <p className="text-sm text-muted-foreground">Çalışanlar eklendiğinde şema burada görünecektir</p>
         </div>
       );
     }
@@ -879,163 +881,134 @@ export const OrgChart: React.FC<OrgChartProps> = ({
       positions.filter(p => p.level === level).length
     ));
     
-    const canvasPadding = 50;
+    const canvasPadding = 80;
     const maxLevelWidth = maxNodesInLevel * nodeWidth + (maxNodesInLevel - 1) * horizontalSpacing;
     const svgWidth = maxLevelWidth + canvasPadding * 2;
-    const svgHeight = (maxLevel + 1) * verticalSpacing + nodeHeight + canvasPadding;
+    const svgHeight = (maxLevel + 1) * verticalSpacing + nodeHeight + canvasPadding + 40;
 
     return (
-      <div
-        ref={containerRef}
-        className="relative w-full h-[700px] overflow-auto border border-gray-300 bg-white"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-      >
+      <div className="relative">
+        {/* Mini Map */}
+        <OrgChartMiniMap
+          containerRef={containerRef}
+          contentWidth={svgWidth}
+          contentHeight={svgHeight}
+          zoom={zoom}
+          pan={pan}
+          onNavigate={setPan}
+        />
+        
         <div
-          style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: '0 0',
-            width: svgWidth,
-            height: svgHeight,
-            position: 'relative',
-          }}
+          ref={containerRef}
+          className="relative w-full h-[700px] overflow-auto border border-border rounded-lg bg-gradient-to-br from-background via-muted/10 to-background"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
         >
-        <svg
-          ref={svgRef}
-          width={svgWidth}
-          height={svgHeight}
-          className="absolute top-0 left-0"
-        >
-          <defs>
-            <marker
-              id="arrowhead"
-              markerWidth="8"
-              markerHeight="8"
-              refX="7"
-              refY="2.5"
-              orient="auto"
+          <div
+            style={{
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transformOrigin: '0 0',
+              width: svgWidth,
+              height: svgHeight,
+              position: 'relative',
+            }}
+          >
+            <svg
+              ref={svgRef}
+              width={svgWidth}
+              height={svgHeight}
+              className="absolute top-0 left-0"
             >
-              <polygon points="0 0, 8 2.5, 0 5" fill="#64748b" />
-            </marker>
+              {/* Draw orthogonal connections - yFiles style */}
+              {positions.map(({ node, x, y }) => {
+                if (node.manager_id) {
+                  const managerPos = positions.find(p => p.node.id === node.manager_id);
+                  if (managerPos) {
+                    const fromX = managerPos.x + nodeWidth / 2;
+                    const fromY = managerPos.y + nodeHeight;
+                    const toX = x + nodeWidth / 2;
+                    const toY = y;
+                    const midY = (fromY + toY) / 2;
 
-            {/* Gradient for department heads */}
-            <linearGradient id="gradient-head" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#fef3c7', stopOpacity: 1 }} />
-              <stop offset="100%" style={{ stopColor: '#ffffff', stopOpacity: 1 }} />
-            </linearGradient>
+                    return (
+                      <g key={`connection-${node.id}`}>
+                        {/* Vertical line from manager down */}
+                        <line
+                          x1={fromX}
+                          y1={fromY}
+                          x2={fromX}
+                          y2={midY}
+                          stroke="hsl(var(--border))"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+                        {/* Horizontal line */}
+                        <line
+                          x1={fromX}
+                          y1={midY}
+                          x2={toX}
+                          y2={midY}
+                          stroke="hsl(var(--border))"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+                        {/* Vertical line to child */}
+                        <line
+                          x1={toX}
+                          y1={midY}
+                          x2={toX}
+                          y2={toY}
+                          stroke="hsl(var(--border))"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+                        {/* Connection dot at bottom of manager */}
+                        <circle
+                          cx={fromX}
+                          cy={fromY}
+                          r="3"
+                          fill="hsl(var(--primary))"
+                        />
+                      </g>
+                    );
+                  }
+                }
+                return null;
+              })}
+            </svg>
 
-            {/* Gradient for normal employees */}
-            <linearGradient id="gradient-normal" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#ffffff', stopOpacity: 1 }} />
-              <stop offset="100%" style={{ stopColor: '#f8fafc', stopOpacity: 1 }} />
-            </linearGradient>
+            {/* Draw yFiles-style employee cards */}
+            {positions.map(({ node, x, y }) => {
+              const deptColor = getDepartmentColorPalette(node.department);
+              const directReports = getDirectReports(node.id);
+              const hasChildren = node.children && node.children.length > 0;
 
-            {/* Drop shadow filter */}
-            <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-              <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.08"/>
-            </filter>
-          </defs>
-
-          {/* Draw connections - simple straight lines from parent to child */}
-          {positions.map(({ node, x, y }) => {
-            if (node.manager_id) {
-              const managerPos = positions.find(p => p.node.id === node.manager_id);
-              if (managerPos) {
-                const fromX = managerPos.x + nodeWidth / 2;
-                const fromY = managerPos.y + nodeHeight;
-                const toX = x + nodeWidth / 2;
-                const toY = y;
-                const midY = (fromY + toY) / 2;
-
-                return (
-                  <g key={`connection-${node.id}`}>
-                    {/* Vertical line from manager down */}
-                    <line
-                      x1={fromX}
-                      y1={fromY}
-                      x2={fromX}
-                      y2={midY}
-                      stroke="#000000"
-                      strokeWidth="1.5"
-                    />
-                    {/* Horizontal line */}
-                    <line
-                      x1={fromX}
-                      y1={midY}
-                      x2={toX}
-                      y2={midY}
-                      stroke="#000000"
-                      strokeWidth="1.5"
-                    />
-                    {/* Vertical line to child */}
-                    <line
-                      x1={toX}
-                      y1={midY}
-                      x2={toX}
-                      y2={toY}
-                      stroke="#000000"
-                      strokeWidth="1.5"
-                    />
-                  </g>
-                );
-              }
-            }
-            return null;
-          })}
-
-          {/* Draw nodes */}
-          {positions.map(({ node, x, y }) => {
-            const isHead = departments.some(d => d.head_id === node.id);
-            const deptColor = getDepartmentColor(node.department);
-
-            return (
-              <g key={node.id}>
-                <foreignObject x={x} y={y} width={nodeWidth} height={nodeHeight}>
-                  <div
-                    className={cn(
-                      "h-full flex flex-col items-center justify-center text-center bg-white rounded-lg shadow-sm border-2 cursor-pointer group",
-                      "transition-all duration-300 ease-in-out",
-                      "hover:shadow-lg hover:scale-105 hover:-translate-y-1 hover:border-primary",
-                      deptColor.border
-                    )}
+              return (
+                <div
+                  key={node.id}
+                  className="absolute"
+                  style={{ left: x, top: y }}
+                >
+                  <OrgChartEmployeeCard
+                    id={node.id}
+                    firstName={node.first_name}
+                    lastName={node.last_name}
+                    position={node.position}
+                    department={node.department}
+                    email={node.email}
+                    avatarUrl={node.avatar_url}
+                    status={node.status}
+                    directReports={directReports}
+                    hasChildren={hasChildren}
+                    departmentColor={deptColor}
                     onClick={() => navigate(`/employees/${node.id}`)}
-                  >
-                    {/* Avatar - Top */}
-                    <div className="mt-2">
-                      <Avatar className="h-10 w-10 border-2 border-background shadow-sm group-hover:shadow-md group-hover:ring-2 group-hover:ring-primary/20 transition-all duration-300">
-                        <AvatarImage src={node.avatar_url || undefined} alt={`${node.first_name} ${node.last_name}`} />
-                        <AvatarFallback className={cn(
-                          "text-xs font-semibold transition-colors",
-                          `${deptColor.bg} ${deptColor.text}`
-                        )}>
-                          {node.first_name[0]}{node.last_name[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-
-                    {/* Name - Bold */}
-                    <div className="mt-2 px-2">
-                      <div className="font-bold text-xs text-gray-900 leading-tight group-hover:text-primary transition-colors">
-                        {node.first_name} {node.last_name}
-                      </div>
-                    </div>
-
-                    {/* Position - Italic */}
-                    {node.position && (
-                      <div className="mt-0.5 px-2 mb-2">
-                        <div className="text-[10px] italic text-gray-600 leading-tight truncate max-w-full">
-                          {node.position}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </foreignObject>
-              </g>
-            );
-          })}
-        </svg>
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     );

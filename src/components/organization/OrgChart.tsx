@@ -73,6 +73,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [collapsedHierarchyNodes, setCollapsedHierarchyNodes] = useState<Set<string>>(new Set());
 
   // Fetch departments with parent_id for hierarchy
   const { data: departments = [], isLoading: isLoadingDepts } = useQuery({
@@ -266,6 +267,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({
 
   // Build complete hierarchy tree (all employees regardless of department)
   // Only includes employees from the current company and ensures managers are also from the same company
+  // Respects collapsed state for hierarchy view
   const completeHierarchy = useMemo(() => {
     const employeeMap = new Map<string, EmployeeNode>();
     const roots: EmployeeNode[] = [];
@@ -291,6 +293,33 @@ export const OrgChart: React.FC<OrgChartProps> = ({
 
     return roots;
   }, [employees]);
+
+  // Toggle hierarchy node expansion
+  const toggleHierarchyNode = (nodeId: string) => {
+    setCollapsedHierarchyNodes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(nodeId)) {
+        newSet.delete(nodeId);
+      } else {
+        newSet.add(nodeId);
+      }
+      return newSet;
+    });
+  };
+
+  // Get visible hierarchy (respects collapsed state)
+  const getVisibleHierarchy = useMemo(() => {
+    const filterCollapsed = (nodes: EmployeeNode[]): EmployeeNode[] => {
+      return nodes.map(node => {
+        const isCollapsed = collapsedHierarchyNodes.has(node.id);
+        return {
+          ...node,
+          children: isCollapsed ? [] : filterCollapsed(node.children || [])
+        };
+      });
+    };
+    return filterCollapsed(completeHierarchy);
+  }, [completeHierarchy, collapsedHierarchyNodes]);
 
   // Zoom controls
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
@@ -835,7 +864,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({
     // Calculate positions with proper centering for each level
     const calculatePositions = (): Array<{node: EmployeeNode, x: number, y: number, level: number}> => {
       const positions: Array<{node: EmployeeNode, x: number, y: number, level: number}> = [];
-      const levelMap = buildLevelMap(completeHierarchy);
+      const levelMap = buildLevelMap(getVisibleHierarchy);
       
       if (levelMap.size === 0) return positions;
       
@@ -997,7 +1026,9 @@ export const OrgChart: React.FC<OrgChartProps> = ({
             {positions.map(({ node, x, y }) => {
               const deptColor = getDepartmentColorPalette(node.department);
               const directReports = getDirectReports(node.id);
-              const hasChildren = node.children && node.children.length > 0;
+              // Check original hierarchy for actual children (not filtered)
+              const hasActualChildren = directReports > 0;
+              const isCollapsed = collapsedHierarchyNodes.has(node.id);
 
               return (
                 <div
@@ -1015,9 +1046,11 @@ export const OrgChart: React.FC<OrgChartProps> = ({
                     avatarUrl={node.avatar_url}
                     status={node.status}
                     directReports={directReports}
-                    hasChildren={hasChildren}
+                    hasChildren={hasActualChildren}
+                    isExpanded={!isCollapsed}
                     departmentColor={deptColor}
                     onClick={() => navigate(`/employees/${node.id}`)}
+                    onToggleExpand={() => toggleHierarchyNode(node.id)}
                   />
                 </div>
               );

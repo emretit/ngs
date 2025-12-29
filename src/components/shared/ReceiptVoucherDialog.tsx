@@ -186,7 +186,7 @@ export default function ReceiptVoucherDialog({
       onClose={(isOpen) => onOpenChange(isOpen)}
       title="Borç-Alacak Fişleri"
       maxWidth="xl"
-      headerColor="emerald"
+      headerColor="green"
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

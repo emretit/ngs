@@ -1,13 +1,11 @@
 import { useMemo } from "react";
 import { Payment } from "@/types/payment";
 import { UnifiedTransaction } from "../utils/paymentUtils";
-import { CustomerCheck } from "./useCustomerChecksQuery";
 
 interface UseUnifiedTransactionsProps {
   payments: Payment[];
   salesInvoices: any[];
   purchaseInvoices: any[];
-  checks?: CustomerCheck[];
   customerId?: string;
 }
 
@@ -15,7 +13,6 @@ export const useUnifiedTransactions = ({
   payments,
   salesInvoices,
   purchaseInvoices,
-  checks = [],
   customerId,
 }: UseUnifiedTransactionsProps) => {
   return useMemo<UnifiedTransaction[]>(() => {
@@ -37,32 +34,8 @@ export const useUnifiedTransactions = ({
       });
     });
 
-    // Çekler
-    checks.forEach((check) => {
-      // Müşteri çekin issuer'ı mı yoksa payee'si mi olduğunu belirle
-      // issuer_customer_id = müşteri çeki veren → müşteri bize ödeme yapıyor → incoming
-      // payee_customer_id = müşteri çeki alan → biz müşteriye ödeme yapıyoruz → outgoing
-      const isIssuer = check.issuer_customer_id === customerId;
-      const direction: 'incoming' | 'outgoing' = isIssuer ? 'incoming' : 'outgoing';
-      
-      const statusLabel = check.status === 'pending' ? 'Beklemede' : 
-                          check.status === 'deposited' ? 'Tahsile Verildi' :
-                          check.status === 'cashed' ? 'Tahsil Edildi' :
-                          check.status === 'bounced' ? 'Karşılıksız' :
-                          check.status === 'cancelled' ? 'İptal' : check.status;
-      
-      transactions.push({
-        id: check.id,
-        type: 'check',
-        date: check.issue_date,
-        amount: Number(check.amount),
-        direction,
-        description: `Çek No: ${check.check_number} - ${check.bank} (${statusLabel})`,
-        reference: check.check_number,
-        currency: 'TRY',
-        dueDate: check.due_date,
-      });
-    });
+    // Çekler artık payments tablosunda payment_type='cek' olarak kaydediliyor
+    // Bu yüzden ayrıca checks tablosundan veri çekmeye gerek yok
 
     // Satış faturaları
     salesInvoices.forEach((invoice: any) => {
@@ -130,15 +103,15 @@ export const useUnifiedTransactions = ({
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
       if (dateA === dateB) {
-        // Aynı tarihte ise, type'a göre sırala (önce ödemeler, sonra çekler, sonra faturalar)
-        const typeOrder = { payment: 0, check: 1, sales_invoice: 2, purchase_invoice: 3 };
+        // Aynı tarihte ise, type'a göre sırala (önce ödemeler, sonra faturalar)
+        const typeOrder = { payment: 0, sales_invoice: 1, purchase_invoice: 2 };
         return (typeOrder[a.type] || 0) - (typeOrder[b.type] || 0);
       }
       return dateB - dateA;
     });
     
     return sorted;
-  }, [payments, salesInvoices, purchaseInvoices, checks, customerId]);
+  }, [payments, salesInvoices, purchaseInvoices, customerId]);
 };
 
 

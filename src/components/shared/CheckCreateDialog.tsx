@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { toast } from "sonner";
 
 interface Bank { id: string; name: string; short_name?: string | null }
 
@@ -26,6 +27,14 @@ export interface CheckRecord {
   status?: string;
   notes?: string | null;
   check_type?: "incoming" | "outgoing";
+  issuer_customer_id?: string | null;
+  issuer_supplier_id?: string | null;
+  payee_customer_id?: string | null;
+  payee_supplier_id?: string | null;
+  receipt_account_type?: string | null;
+  receipt_account_id?: string | null;
+  payment_account_type?: string | null;
+  payment_account_id?: string | null;
 }
 
 interface CheckCreateDialogProps {
@@ -150,55 +159,192 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
   const issuerSupplierId = issuerForm.watch("supplier_id");
   const payeeSupplierId = payeeForm.watch("supplier_id");
 
+  // Seçilen müşteri/tedarikçiyi direkt database'den fetch et
+  const { data: selectedIssuerCustomer } = useQuery({
+    queryKey: ["selected-issuer-customer", issuerSelectedId],
+    queryFn: async () => {
+      if (!issuerSelectedId) return null;
+      const { data, error } = await supabase
+        .from("customers")
+        .select("id, name, company")
+        .eq("id", issuerSelectedId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!issuerSelectedId,
+  });
+
+  const { data: selectedIssuerSupplier } = useQuery({
+    queryKey: ["selected-issuer-supplier", issuerSupplierId],
+    queryFn: async () => {
+      if (!issuerSupplierId) return null;
+      const { data, error } = await supabase
+        .from("suppliers")
+        .select("id, name, company")
+        .eq("id", issuerSupplierId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!issuerSupplierId,
+  });
+
+  const { data: selectedPayeeSupplier } = useQuery({
+    queryKey: ["selected-payee-supplier", payeeSupplierId],
+    queryFn: async () => {
+      if (!payeeSupplierId) return null;
+      const { data, error } = await supabase
+        .from("suppliers")
+        .select("id, name, company")
+        .eq("id", payeeSupplierId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!payeeSupplierId,
+  });
+
   // Dialog açıldığında default değerleri form'a yükle
   useEffect(() => {
-    if (open && !editingCheck) {
-      // Gelen çek için müşteri seçimi
-      if (defaultCheckType === "incoming" && defaultCustomerId) {
-        issuerForm.setValue("customer_id", defaultCustomerId);
-      }
-      // Giden çek için tedarikçi seçimi
-      if (defaultCheckType === "outgoing" && defaultSupplierId) {
-        payeeForm.setValue("supplier_id", defaultSupplierId);
+    if (open) {
+      if (editingCheck) {
+        // Düzenleme modunda: mevcut çekin verilerini yükle
+        if (checkType === "incoming") {
+          // Gelen çek: issuer bilgilerini yükle
+          if (editingCheck.issuer_customer_id) {
+            issuerForm.setValue("customer_id", editingCheck.issuer_customer_id);
+          }
+          if (editingCheck.issuer_supplier_id) {
+            issuerForm.setValue("supplier_id", editingCheck.issuer_supplier_id);
+          }
+        } else {
+          // Giden çek: payee bilgilerini yükle
+          if (editingCheck.payee_supplier_id) {
+            payeeForm.setValue("supplier_id", editingCheck.payee_supplier_id);
+          }
+        }
+      } else {
+        // Yeni çek modunda: default değerleri yükle
+        if (defaultCheckType === "incoming" && defaultCustomerId) {
+          issuerForm.setValue("customer_id", defaultCustomerId);
+        }
+        if (defaultCheckType === "outgoing" && defaultSupplierId) {
+          payeeForm.setValue("supplier_id", defaultSupplierId);
+        }
       }
     }
-  }, [open, defaultCustomerId, defaultSupplierId, defaultCheckType, editingCheck]);
+  }, [open, defaultCustomerId, defaultSupplierId, defaultCheckType, editingCheck, checkType]);
 
   // Seçilen müşteri/tedarikçi id'sine göre isimleri güncelle
   useEffect(() => {
-    if (issuerSelectedId) {
-      const c = customers.find((x: any) => x.id === issuerSelectedId);
-      if (c) setIssuerName(c.company || c.name || "");
-    } else if (issuerSupplierId) {
-      const s = suppliers.find((x: any) => x.id === issuerSupplierId);
-      if (s) setIssuerName(s.company || s.name || "");
+    if (selectedIssuerCustomer) {
+      const name = selectedIssuerCustomer.company || selectedIssuerCustomer.name || "";
+      setIssuerName(name);
+    } else if (selectedIssuerSupplier) {
+      const name = selectedIssuerSupplier.company || selectedIssuerSupplier.name || "";
+      setIssuerName(name);
+    } else if (!issuerSelectedId && !issuerSupplierId) {
+      // ID'ler boşsa ismi de temizle
+      setIssuerName("");
     }
-  }, [issuerSelectedId, issuerSupplierId, customers, suppliers]);
+  }, [selectedIssuerCustomer, selectedIssuerSupplier, issuerSelectedId, issuerSupplierId]);
 
   useEffect(() => {
-    if (payeeSelectedId) {
-      const c = customers.find((x: any) => x.id === payeeSelectedId);
-      if (c) setPayeeName(c.company || c.name || "");
-    } else if (payeeSupplierId) {
-      const s = suppliers.find((x: any) => x.id === payeeSupplierId);
-      if (s) setPayeeName(s.company || s.name || "");
+    if (selectedPayeeSupplier) {
+      const name = selectedPayeeSupplier.company || selectedPayeeSupplier.name || "";
+      setPayeeName(name);
+    } else if (!payeeSupplierId) {
+      setPayeeName("");
     }
-  }, [payeeSelectedId, payeeSupplierId, customers, suppliers]);
+  }, [selectedPayeeSupplier, payeeSupplierId]);
+
+  // editingCheck değiştiğinde state'leri güncelle
+  useEffect(() => {
+    if (editingCheck) {
+      setBankName(editingCheck.bank || "");
+      setIssueDate(editingCheck.issue_date ? new Date(editingCheck.issue_date) : undefined);
+      setDueDate(editingCheck.due_date ? new Date(editingCheck.due_date) : undefined);
+      setStatus(editingCheck.status || (checkType === "incoming" ? "portfoyde" : "odenecek"));
+      setIssuerName(editingCheck.issuer_name || "");
+      setPayeeName(editingCheck.payee || "");
+
+      // Hesap bilgilerini yükle
+      if (editingCheck.receipt_account_type && editingCheck.receipt_account_id) {
+        setPaymentAccountType(editingCheck.receipt_account_type as "cash" | "bank" | "credit_card" | "partner");
+        setSelectedPaymentAccountId(editingCheck.receipt_account_id);
+      } else if (editingCheck.payment_account_type && editingCheck.payment_account_id) {
+        setPaymentAccountType(editingCheck.payment_account_type as "cash" | "bank" | "credit_card" | "partner");
+        setSelectedPaymentAccountId(editingCheck.payment_account_id);
+      }
+    } else {
+      // Reset form when closing
+      setBankName(banks[0]?.name || "");
+      setIssueDate(undefined);
+      setDueDate(undefined);
+      setStatus(checkType === "incoming" ? "portfoyde" : "odenecek");
+      setIssuerName("");
+      setPayeeName("");
+      setPaymentAccountType("bank");
+      setSelectedPaymentAccountId("");
+    }
+  }, [editingCheck, checkType, banks]);
 
   const saveMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const payload: any = {
-        check_number: formData.get("check_number") as string,
-        issue_date: formData.get("issue_date") as string,
-        due_date: formData.get("due_date") as string,
-        amount: parseFloat((formData.get("amount") as string) || "0"),
-        bank: formData.get("bank") as string,
-        issuer_name: checkType === "outgoing" ? (companyName || "") : (formData.get("issuer_name") as string || ""),
-        payee: checkType === "incoming" ? (companyName || "") : (formData.get("payee") as string || ""),
-        status: formData.get("status") as string,
-        notes: (formData.get("notes") as string) || null,
-        check_type: checkType,
+      const amount = parseFloat((formData.get("amount") as string) || "0");
+      const issueDate = formData.get("issue_date") as string;
+      const checkNumber = formData.get("check_number") as string;
+      const bank = formData.get("bank") as string;
+
+      // payee zorunlu alan, boş olamaz
+      const payeeValue = checkType === "incoming" ? (companyName || "Şirket") : (payeeName || "Tedarikçi");
+      
+      // Boş string'leri null'a çevir
+      const cleanString = (value: string | null | undefined): string | null => {
+        if (!value || value.trim() === "") return null;
+        return value;
       };
+      
+      // issue_date ve due_date zorunlu alanlar, boş olamaz
+      const issueDateValue = issueDate || formData.get("issue_date") as string;
+      const dueDateValue = formData.get("due_date") as string;
+      
+      if (!issueDateValue || issueDateValue.trim() === "") {
+        throw new Error("Keşide tarihi zorunludur");
+      }
+      if (!dueDateValue || dueDateValue.trim() === "") {
+        throw new Error("Vade tarihi zorunludur");
+      }
+      
+      const payload: any = {
+        check_number: checkNumber,
+        issue_date: issueDateValue,
+        due_date: dueDateValue,
+        amount: amount,
+        bank: bank,
+        issuer_name: checkType === "outgoing" ? cleanString(companyName) : cleanString(issuerName),
+        payee: payeeValue, // Zorunlu alan, boş olamaz
+        status: formData.get("status") as string || "pending",
+        notes: cleanString(formData.get("notes") as string),
+        check_type: checkType,
+        company_id: userData?.company_id || null,
+      };
+
+      // Müşteri/tedarikçi ID'lerini ekle
+      if (checkType === "incoming") {
+        // Gelen çek: keşideci müşteri/tedarikçi olabilir
+        const issuerCustomerId = formData.get("issuer_customer_id") as string;
+        const issuerSupplierId = formData.get("issuer_supplier_id") as string;
+        payload.issuer_customer_id = cleanString(issuerCustomerId) || null;
+        payload.issuer_supplier_id = cleanString(issuerSupplierId) || null;
+      } else {
+        // Giden çek: lehtar tedarikçi olabilir
+        const payeeSupplierId = formData.get("payee_supplier_id") as string;
+        const payeeCustomerId = formData.get("payee_customer_id") as string;
+        payload.payee_supplier_id = cleanString(payeeSupplierId) || null;
+        payload.payee_customer_id = cleanString(payeeCustomerId) || null;
+      }
 
       // Ciro edildi durumunda
       if (status === "ciro_edildi") {
@@ -210,39 +356,216 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
         }
       }
 
-      // Tahsil Edildi durumunda hesap bilgileri (gelen çek)
+      // Tahsil Edildi durumunda hesap bilgileri (gelen çek) - sadece payments tablosunda kullanılacak
+      let receiptAccountType: string | null = null;
+      let receiptAccountId: string | null = null;
       if (status === "tahsil_edildi") {
-        const accountType = formData.get("receipt_account_type") as string;
-        const accountId = formData.get("receipt_account_id") as string;
-        if (accountType && accountId) {
-          payload.receipt_account_type = accountType;
-          payload.receipt_account_id = accountId;
-        }
+        receiptAccountType = formData.get("receipt_account_type") as string;
+        receiptAccountId = formData.get("receipt_account_id") as string;
+        // Bu alanlar checks tablosunda değil, sadece payments tablosunda kullanılacak
       }
 
-      // Ödendi durumunda hesap bilgileri (giden çek)
+      // Ödendi durumunda hesap bilgileri (giden çek) - sadece payments tablosunda kullanılacak
+      let paymentAccountType: string | null = null;
+      let paymentAccountId: string | null = null;
       if (status === "odendi") {
-        const accountType = formData.get("payment_account_type") as string;
-        const accountId = formData.get("payment_account_id") as string;
-        if (accountType && accountId) {
-          payload.payment_account_type = accountType;
-          payload.payment_account_id = accountId;
-        }
+        paymentAccountType = formData.get("payment_account_type") as string;
+        paymentAccountId = formData.get("payment_account_id") as string;
+        // Bu alanlar checks tablosunda değil, sadece payments tablosunda kullanılacak
       }
 
+      // 1. Çek kaydını kaydet
+      let insertedCheckId: string | null = null;
       if (editingCheck?.id) {
         const { error } = await supabase.from("checks").update(payload).eq("id", editingCheck.id);
-        if (error) throw error;
+        if (error) {
+          console.error("Check update error:", error);
+          throw error;
+        }
+        insertedCheckId = editingCheck.id;
       } else {
-        const { error } = await supabase.from("checks").insert([payload]);
-        if (error) throw error;
+        console.log("Inserting check with payload:", payload);
+        const { data: insertedCheck, error } = await supabase.from("checks").insert([payload]).select("id").single();
+        if (error) {
+          console.error("Check insert error:", error);
+          console.error("Payload was:", JSON.stringify(payload, null, 2));
+          throw error;
+        }
+        insertedCheckId = insertedCheck?.id || null;
+      }
+
+      // 2. Payment kaydı oluştur (her yeni çek için)
+      // Yeni çek oluşturulduğunda her zaman payments tablosuna kayıt ekle
+      if (!editingCheck?.id && insertedCheckId) {
+        const paymentDirection = checkType === "incoming" ? "incoming" : "outgoing";
+        const accountType = checkType === "incoming" ? receiptAccountType : paymentAccountType;
+        const accountId = checkType === "incoming" ? receiptAccountId : paymentAccountId;
+
+        // Müşteri veya tedarikçi ID'sini al
+        const customerId = checkType === "incoming" ?
+          (formData.get("issuer_customer_id") as string || null) : null;
+        const supplierId = checkType === "outgoing" ?
+          (formData.get("payee_supplier_id") as string || null) : null;
+
+        // Payment kaydı oluştur
+        // issueDate yyyy-MM-dd formatında string olarak geliyor, ISO formatına çevir
+        const paymentDate = issueDate ? new Date(issueDate + 'T00:00:00').toISOString() : new Date().toISOString();
+        
+        const paymentData: any = {
+          amount: amount,
+          payment_type: "cek",
+          description: `Çek No: ${checkNumber} - ${bank}`,
+          payment_date: paymentDate,
+          customer_id: customerId || null,
+          supplier_id: supplierId || null,
+          payment_direction: paymentDirection,
+          currency: "TRY",
+          company_id: userData?.company_id || null,
+          account_id: accountId || null,
+          account_type: accountType || null,
+          reference_note: checkNumber || null,
+        };
+
+        const { error: paymentError } = await supabase.from("payments").insert(paymentData);
+        if (paymentError) throw paymentError;
+      }
+
+      // 3. Bakiye güncellemeleri yap (sadece tahsil_edildi veya ödendi durumlarında)
+      const shouldUpdateBalances = status === "tahsil_edildi" || status === "odendi";
+
+      if (shouldUpdateBalances && !editingCheck?.id) {
+        const paymentDirection = checkType === "incoming" ? "incoming" : "outgoing";
+        const accountType = checkType === "incoming" ? receiptAccountType : paymentAccountType;
+        const accountId = checkType === "incoming" ? receiptAccountId : paymentAccountId;
+
+        // Müşteri veya tedarikçi ID'sini al
+        const customerId = checkType === "incoming" ?
+          (formData.get("issuer_customer_id") as string || null) : null;
+        const supplierId = checkType === "outgoing" ?
+          (formData.get("payee_supplier_id") as string || null) : null;
+
+        // 4. Hesap bakiyesini güncelle (eğer hesap seçildiyse)
+        if (accountId && accountType) {
+          const balanceMultiplier = paymentDirection === "incoming" ? 1 : -1;
+
+          if (accountType === "bank") {
+            const { data: bankData } = await supabase
+              .from("bank_accounts")
+              .select("current_balance, available_balance")
+              .eq("id", accountId)
+              .single();
+
+            if (bankData) {
+              const newCurrentBalance = bankData.current_balance + (amount * balanceMultiplier);
+              const newAvailableBalance = bankData.available_balance + (amount * balanceMultiplier);
+
+              const { error: accountUpdateError } = await supabase
+                .from("bank_accounts")
+                .update({
+                  current_balance: newCurrentBalance,
+                  available_balance: newAvailableBalance,
+                })
+                .eq("id", accountId);
+
+              if (accountUpdateError) throw accountUpdateError;
+            }
+          } else if (accountType === "cash") {
+            const { data: cashData } = await supabase
+              .from("cash_accounts")
+              .select("current_balance")
+              .eq("id", accountId)
+              .single();
+
+            if (cashData) {
+              const newCurrentBalance = cashData.current_balance + (amount * balanceMultiplier);
+
+              const { error: accountUpdateError } = await supabase
+                .from("cash_accounts")
+                .update({
+                  current_balance: newCurrentBalance,
+                })
+                .eq("id", accountId);
+
+              if (accountUpdateError) throw accountUpdateError;
+            }
+          } else if (accountType === "credit_card") {
+            const { error: cardUpdateError } = await supabase.rpc('update_credit_card_balance', {
+              card_id: accountId,
+              amount: amount * balanceMultiplier,
+              transaction_type: paymentDirection === 'incoming' ? 'income' : 'expense'
+            });
+
+            if (cardUpdateError) throw cardUpdateError;
+          } else if (accountType === "partner") {
+            const { error: partnerUpdateError } = await supabase.rpc('update_partner_account_balance', {
+              account_id: accountId,
+              amount: amount * balanceMultiplier,
+              transaction_type: paymentDirection === 'incoming' ? 'income' : 'expense'
+            });
+
+            if (partnerUpdateError) throw partnerUpdateError;
+          }
+        }
+
+        // 5. Müşteri veya tedarikçi bakiyesini güncelle
+        if (customerId) {
+          const { data: customerData } = await supabase
+            .from("customers")
+            .select("balance")
+            .eq("id", customerId)
+            .single();
+
+          if (customerData) {
+            const customerBalanceMultiplier = paymentDirection === "incoming" ? -1 : 1;
+            const newCustomerBalance = customerData.balance + (amount * customerBalanceMultiplier);
+
+            const { error: customerUpdateError } = await supabase
+              .from("customers")
+              .update({
+                balance: newCustomerBalance,
+              })
+              .eq("id", customerId);
+
+            if (customerUpdateError) throw customerUpdateError;
+          }
+        } else if (supplierId) {
+          const { data: supplierData } = await supabase
+            .from("suppliers")
+            .select("balance")
+            .eq("id", supplierId)
+            .single();
+
+          if (supplierData) {
+            const supplierBalanceMultiplier = paymentDirection === "incoming" ? -1 : 1;
+            const newSupplierBalance = supplierData.balance + (amount * supplierBalanceMultiplier);
+
+            const { error: supplierUpdateError } = await supabase
+              .from("suppliers")
+              .update({
+                balance: newSupplierBalance,
+              })
+              .eq("id", supplierId);
+
+            if (supplierUpdateError) throw supplierUpdateError;
+          }
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["checks"] });
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["payment-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["customer-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["supplier-payments"] });
+      toast.success(editingCheck?.id ? "Çek güncellendi" : "Çek kaydedildi", { duration: 1000 });
       onOpenChange(false);
       setEditingCheck?.(null);
       onSaved?.();
+    },
+    onError: (error: any) => {
+      toast.error(editingCheck?.id ? "Çek güncellenirken hata oluştu" : "Çek kaydedilirken hata oluştu", { duration: 2000 });
     },
   });
 
@@ -260,8 +583,19 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
             const form = e.currentTarget as HTMLFormElement;
             const fd = new FormData(form);
             fd.set("bank", bankName || "");
-            fd.set("issue_date", issueDate ? format(issueDate, "yyyy-MM-dd") : "");
-            fd.set("due_date", dueDate ? format(dueDate, "yyyy-MM-dd") : "");
+            
+            // issue_date ve due_date zorunlu alanlar
+            if (!issueDate) {
+              toast.error("Keşide tarihi seçilmelidir");
+              return;
+            }
+            if (!dueDate) {
+              toast.error("Vade tarihi seçilmelidir");
+              return;
+            }
+            
+            fd.set("issue_date", format(issueDate, "yyyy-MM-dd"));
+            fd.set("due_date", format(dueDate, "yyyy-MM-dd"));
             fd.set("status", status);
             saveMutation.mutate(fd);
           }}

@@ -107,7 +107,11 @@ export const PaymentsHeader = ({
         {onAddPayment && (
           <PaymentMethodSelector
             customerId={customerId}
-            onMethodSelect={(method) => onAddPayment({ type: method.type })}
+            onMethodSelect={(method) => {
+              if (method.type === "hesap" || method.type === "cek" || method.type === "senet") {
+                onAddPayment({ type: method.type });
+              }
+            }}
           />
         )}
       </div>

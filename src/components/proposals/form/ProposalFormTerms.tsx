@@ -35,33 +35,7 @@ interface Term {
   id: string;
   label: string;
   text: string;
-  is_default?: boolean;
 }
-
-// Predefined terms based on the image
-const INITIAL_TERMS = {
-  payment: [
-    { id: "pesin", label: "Peşin Ödeme", text: "%100 peşin ödeme yapılacaktır.", is_default: true },
-    { id: "vade30", label: "30-70 Avans - Vadeli", text: "%30 avans, kalan %70 teslimde ödenecektir.", is_default: true },
-    { id: "vade50", label: "50-50 Avans - Vadeli", text: "%50 avans, kalan %50 teslimde ödenecektir.", is_default: true },
-    { id: "vade30gun", label: "30 Gün Vadeli", text: "Fatura tarihinden itibaren 30 gün vadeli ödenecektir.", is_default: true }
-  ],
-  delivery: [
-    { id: "hemen", label: "Teslimat", text: "Sipariş tarihinden itibaren 7-10 iş günü içinde teslimat yapılacaktır.", is_default: true },
-    { id: "standart", label: "Standart Teslimat", text: "Sipariş tarihinden itibaren 15-20 iş günü içinde teslimat yapılacaktır.", is_default: true },
-    { id: "hizli", label: "Hızlı Teslimat", text: "Sipariş tarihinden itibaren 3-5 iş günü içinde teslimat yapılacaktır.", is_default: true }
-  ],
-  warranty: [
-    { id: "garanti1", label: "Garanti", text: "Ürünlerimiz 1 yıl garantilidir.", is_default: true },
-    { id: "garanti2", label: "2 Yıl Garanti", text: "Ürünlerimiz 2 yıl garantilidir.", is_default: true },
-    { id: "garanti3", label: "Uzatılmış Garanti", text: "Ürünlerimiz 3 yıl garantilidir.", is_default: true }
-  ],
-  price: [
-    { id: "fiyat", label: "Fiyat", text: "Belirtilen fiyatlar KDV hariçtir.", is_default: true },
-    { id: "fiyatdahil", label: "KDV Dahil Fiyat", text: "Belirtilen fiyatlar KDV dahildir.", is_default: true },
-    { id: "fiyatgecerli", label: "Fiyat Geçerliliği", text: "Fiyatlar 30 gün geçerlidir.", is_default: true }
-  ]
-};
 
 const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
   paymentTerms,
@@ -80,12 +54,12 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
   onSelectedTermsChange
 }) => {
   const { t } = useTranslation();
-  // State to hold all available terms (predefined + custom from DB)
+  // State to hold all available terms from database (company-specific)
   const [availableTerms, setAvailableTerms] = useState<{[key: string]: Term[]}>({
-    payment: INITIAL_TERMS.payment,
-    delivery: INITIAL_TERMS.delivery,
-    warranty: INITIAL_TERMS.warranty,
-    price: INITIAL_TERMS.price
+    payment: [],
+    delivery: [],
+    warranty: [],
+    price: []
   });
   
   // Confirmation dialog states
@@ -99,10 +73,15 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<'payment' | 'delivery' | 'warranty' | 'price' | null>(null);
   const [newTermText, setNewTermText] = useState("");
-  
-  // Inline editing states
-  const [editingTerm, setEditingTerm] = useState<{category: string, term: Term} | null>(null);
-  const [editingText, setEditingText] = useState("");
+  const [editingTermId, setEditingTermId] = useState<string | null>(null); // Track if we're editing an existing term
+
+  // Dropdown open states for each category
+  const [openDropdowns, setOpenDropdowns] = useState<{[key: string]: boolean}>({
+    payment: false,
+    delivery: false,
+    warranty: false,
+    price: false
+  });
 
   // Load custom terms from database on component mount
   useEffect(() => {
@@ -120,30 +99,28 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
       if (error) throw error;
 
       if (data) {
-        // Group custom terms by category and add to existing terms
-        const customTermsByCategory = data.reduce((acc, term) => {
+        // Group all terms by category (all terms are company-specific now)
+        const termsByCategory = data.reduce((acc, term) => {
           if (!acc[term.category]) {
             acc[term.category] = [];
           }
           acc[term.category].push({
             id: term.id,
             label: term.label,
-            text: term.text,
-            is_default: false
+            text: term.text
           });
           return acc;
         }, {} as {[key: string]: Term[]});
 
-        // Merge with initial terms
-        setAvailableTerms(prev => ({
-          payment: [...INITIAL_TERMS.payment, ...(customTermsByCategory.payment || [])],
-          delivery: [...INITIAL_TERMS.delivery, ...(customTermsByCategory.delivery || [])],
-          warranty: [...INITIAL_TERMS.warranty, ...(customTermsByCategory.warranty || [])],
-          price: [...INITIAL_TERMS.price, ...(customTermsByCategory.price || [])]
-        }));
+        setAvailableTerms({
+          payment: termsByCategory.payment || [],
+          delivery: termsByCategory.delivery || [],
+          warranty: termsByCategory.warranty || [],
+          price: termsByCategory.price || []
+        });
       }
     } catch (error) {
-      console.error('Error loading custom terms:', error);
+      console.error('Error loading terms:', error);
     }
   };
 
@@ -222,7 +199,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     }
   };
 
-  const handleAddCustomTerm = async () => {
+  const handleSaveTerm = async () => {
     if (!currentCategory || !newTermText.trim()) {
       toast.error("Lütfen şart metnini giriniz.");
       return;
@@ -231,110 +208,88 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     setIsLoading(true);
 
     try {
-      // Save to database
-      const { data, error } = await supabase
-        .from('proposal_terms')
-        .insert({
-          category: currentCategory,
+      if (editingTermId) {
+        // Update existing term in database
+        const { error } = await supabase
+          .from('proposal_terms')
+          .update({
+            label: newTermText.trim(),
+            text: newTermText.trim()
+          })
+          .eq('id', editingTermId);
+
+        if (error) throw error;
+
+        // Update in available terms
+        setAvailableTerms(prev => ({
+          ...prev,
+          [currentCategory]: prev[currentCategory].map(term =>
+            term.id === editingTermId
+              ? { ...term, label: newTermText.trim(), text: newTermText.trim() }
+              : term
+          )
+        }));
+
+        toast.success("Şart başarıyla güncellendi!");
+      } else {
+        // Save new term to database
+        const { data, error } = await supabase
+          .from('proposal_terms')
+          .insert({
+            category: currentCategory,
+            label: newTermText.trim(),
+            text: newTermText.trim(),
+            is_active: true,
+            sort_order: 999 // Put new terms at the end
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Add the new term to available terms
+        const newTerm: Term = {
+          id: data.id,
           label: newTermText.trim(),
-          text: newTermText.trim(),
-          is_default: false,
-          is_active: true,
-          sort_order: 999 // Put custom terms at the end
-        })
-        .select()
-        .single();
+          text: newTermText.trim()
+        };
 
-      if (error) throw error;
+        setAvailableTerms(prev => ({
+          ...prev,
+          [currentCategory]: [...prev[currentCategory], newTerm]
+        }));
 
-      // Add the new term to available terms
-      const newTerm: Term = {
-        id: data.id,
-        label: newTermText.trim(),
-        text: newTermText.trim(),
-        is_default: false
-      };
-
-      setAvailableTerms(prev => ({
-        ...prev,
-        [currentCategory]: [...prev[currentCategory], newTerm]
-      }));
+        toast.success("Yeni şart başarıyla eklendi! Şimdi dropdown'dan seçebilirsiniz.");
+      }
 
       // Reset the form and close dialog
       setNewTermText("");
       setIsDialogOpen(false);
       setCurrentCategory(null);
-
-      toast.success("Yeni şart başarıyla eklendi! Şimdi dropdown'dan seçebilirsiniz.");
+      setEditingTermId(null);
 
     } catch (error) {
-      console.error('Error saving custom term:', error);
-      toast.error("Şart eklenirken bir hata oluştu: " + (error as Error).message);
+      console.error('Error saving term:', error);
+      toast.error("Şart kaydedilirken bir hata oluştu: " + (error as Error).message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleEditTermClick = (category: 'payment' | 'delivery' | 'warranty' | 'price', term: Term) => {
-    setEditingTerm({category, term});
-    setEditingText(term.text);
-  };
+    // Dropdown'ı kapat
+    setOpenDropdowns(prev => ({ ...prev, [category]: false }));
 
-  const handleUpdateTerm = async () => {
-    if (!editingTerm || !editingText.trim()) {
-      toast.error("Lütfen şart metnini giriniz.");
-      return;
-    }
-
-    // Predefined term ise güncelleme yapma
-    if (editingTerm.term.is_default) {
-      toast.error("Varsayılan şartlar düzenlenemez.");
-      setEditingTerm(null);
-      setEditingText("");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabase
-        .from('proposal_terms')
-        .update({
-          label: editingText.trim(),
-          text: editingText.trim()
-        })
-        .eq('id', editingTerm.term.id);
-
-      if (error) throw error;
-
-      // Update in available terms
-      setAvailableTerms(prev => ({
-        ...prev,
-        [editingTerm.category]: prev[editingTerm.category].map(term => 
-          term.id === editingTerm.term.id 
-            ? { ...term, label: editingText.trim(), text: editingText.trim() }
-            : term
-        )
-      }));
-
-      toast.success("Şart başarıyla güncellendi!");
-      setEditingTerm(null);
-      setEditingText("");
-
-    } catch (error) {
-      console.error('Error updating term:', error);
-      toast.error("Şart güncellenirken bir hata oluştu: " + (error as Error).message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingTerm(null);
-    setEditingText("");
+    setCurrentCategory(category);
+    setEditingTermId(term.id);
+    setNewTermText(term.text);
+    setIsDialogOpen(true);
   };
 
   const handleDeleteCustomTermClick = (category: 'payment' | 'delivery' | 'warranty' | 'price', term: Term) => {
+    // Dropdown'ı kapat
+    setOpenDropdowns(prev => ({ ...prev, [category]: false }));
+
     setTermToDelete({category, term});
     setIsDeleteDialogOpen(true);
   };
@@ -344,6 +299,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
 
     setIsDeleting(true);
     try {
+      // Delete term from database
       const { error } = await supabase
         .from('proposal_terms')
         .delete()
@@ -358,9 +314,8 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
       }));
 
       toast.success("Şart başarıyla silindi!");
-
     } catch (error) {
-      console.error('Error deleting custom term:', error);
+      console.error('Error deleting term:', error);
       toast.error("Şart silinirken bir hata oluştu: " + (error as Error).message);
     } finally {
       setIsDeleting(false);
@@ -399,10 +354,15 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
       <Label className="text-sm font-medium text-gray-700">{title}</Label>
       
       {/* Dropdown for predefined terms */}
-      <Select 
+      <Select
         value={currentValue}
+        open={openDropdowns[category]}
+        onOpenChange={(open) => {
+          setOpenDropdowns(prev => ({ ...prev, [category]: open }));
+        }}
         onValueChange={(value) => {
           if (value === 'add_custom') {
+            setOpenDropdowns(prev => ({ ...prev, [category]: false }));
             setCurrentCategory(category);
             setIsDialogOpen(true);
           } else {
@@ -419,103 +379,58 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
         </SelectTrigger>
         <SelectContent className="bg-background border border-border shadow-xl z-[100] max-h-[300px] overflow-y-auto">
           {availableTerms[category].map((term) => {
-            const isEditing = editingTerm?.term.id === term.id && editingTerm?.category === category;
-            
             return (
               <div key={term.id} className="group relative">
-                {isEditing ? (
-                  <div className="p-3 space-y-2 border-b border-border">
-                    <Textarea
-                      value={editingText}
-                      onChange={(e) => setEditingText(e.target.value)}
-                      className="min-h-[60px] text-sm"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                          handleUpdateTerm();
-                        } else if (e.key === 'Escape') {
-                          handleCancelEdit();
-                        }
-                      }}
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleCancelEdit();
-                        }}
-                        type="button"
-                      >
-                        İptal
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleUpdateTerm();
-                        }}
-                        type="button"
-                        disabled={isLoading || !editingText.trim()}
-                      >
-                        Kaydet
-                      </Button>
-                    </div>
+                <SelectItem
+                  value={term.id}
+                  className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50 data-[highlighted]:bg-muted/50 pr-20 transition-colors"
+                >
+                  <div className="flex flex-col gap-0.5 w-full">
+                    <span className="text-sm text-foreground leading-snug whitespace-normal break-words">{term.text}</span>
                   </div>
-                ) : (
-                  <>
-                    <SelectItem
-                      value={term.id}
-                      className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50 data-[highlighted]:bg-muted/50 pr-20 transition-colors"
-                    >
-                      <div className="flex flex-col gap-0.5 w-full">
-                        <span className="text-sm text-foreground leading-snug whitespace-normal break-words">{term.text}</span>
-                      </div>
-                    </SelectItem>
-                    
-                    {/* Edit and Delete buttons positioned outside SelectItem */}
-                    <div className="absolute top-2 right-2 z-10 flex gap-1">
-                      {!term.is_default && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-primary/20 hover:text-primary"
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleEditTermClick(category, term);
-                          }}
-                        >
-                          <Pencil size={12} />
-                        </Button>
-                      )}
-                      {!term.is_default && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setTermToDelete({category, term});
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 size={12} />
-                        </Button>
-                      )}
-                    </div>
-                  </>
-                )}
+                </SelectItem>
+
+                {/* Edit and Delete buttons positioned outside SelectItem */}
+                <div className="absolute top-2 right-2 z-10 flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-primary/20 hover:text-primary"
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleEditTermClick(category, term);
+                    }}
+                  >
+                    <Pencil size={12} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDeleteCustomTermClick(category, term);
+                    }}
+                  >
+                    <Trash2 size={12} />
+                  </Button>
+                </div>
               </div>
             );
           })}
-          
+
           {/* Add custom option */}
           <SelectItem value="add_custom" className="cursor-pointer hover:bg-primary/10 focus:bg-primary/10 data-[highlighted]:bg-primary/10 p-3 border-t border-border mt-1">
             <div className="flex items-center gap-2">
@@ -575,13 +490,20 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
         )}
       </CardContent>
 
-      {/* Add Term Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      {/* Add/Edit Term Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) {
+          setNewTermText("");
+          setCurrentCategory(null);
+          setEditingTermId(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Yeni Şart Ekle</DialogTitle>
+            <DialogTitle>{editingTermId ? 'Şartı Düzenle' : 'Yeni Şart Ekle'}</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="termText" className="text-sm font-medium text-gray-700">Şart Metni *</Label>
@@ -603,16 +525,17 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
                   setIsDialogOpen(false);
                   setNewTermText("");
                   setCurrentCategory(null);
+                  setEditingTermId(null);
                 }}
                 disabled={isLoading}
               >
                 İptal
               </Button>
-              <Button 
-                onClick={handleAddCustomTerm}
+              <Button
+                onClick={handleSaveTerm}
                 disabled={isLoading || !newTermText.trim()}
               >
-                {isLoading ? "Ekleniyor..." : "Ekle"}
+                {isLoading ? (editingTermId ? "Güncelleniyor..." : "Ekleniyor...") : (editingTermId ? "Güncelle" : "Ekle")}
               </Button>
             </div>
           </div>

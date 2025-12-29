@@ -21,7 +21,7 @@ const SupplierFormContent = ({
   return (
     <div className="w-full">
       <form id="supplier-form" onSubmit={handleSubmit} className="space-y-6">
-        <SupplierFormFields formData={formData} setFormData={setFormData} />
+        <SupplierFormFields formData={formData} setFormData={setFormData} isEdit={isEdit} />
       </form>
     </div>
   );

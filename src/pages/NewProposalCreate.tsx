@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useForm, FormProvider } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
+import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { Plus, Trash, FileText, Eye, MoreHorizontal, Save, FileDown, Send, ShoppingCart, Printer, Receipt } from "lucide-react";
 import { PdfExportService } from "@/services/pdf/pdfExportService";
@@ -84,10 +85,11 @@ interface NewProposalCreateProps {
 
 const NewProposalCreate = () => {
   const queryClient = useQueryClient();
-  const form = useForm({ 
-    defaultValues: { 
-      customer_id: "", 
-      supplier_id: "" 
+  const location = useLocation();
+  const form = useForm({
+    defaultValues: {
+      customer_id: "",
+      supplier_id: ""
     },
     mode: "onChange" // Form değişikliklerini anında yakala
   });
@@ -98,6 +100,9 @@ const NewProposalCreate = () => {
   const { createProposal } = useProposalCreation();
   const { generateProposalNumber, loading: numberLoading } = useNumberGenerator();
   const { companyId, isLoading: companyLoading } = useCurrentCompany();
+
+  // Revizyon bilgilerini location.state'ten al
+  const revisionData = location.state?.revisionData;
   const [saving, setSaving] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [productModalOpen, setProductModalOpen] = useState(false);
@@ -163,6 +168,69 @@ const NewProposalCreate = () => {
     loadTemplates();
   }, []);
 
+  // Revizyon bilgilerini form state'lerine aktar
+  useEffect(() => {
+    if (revisionData) {
+      console.log('📋 Revizyon bilgileri yükleniyor:', revisionData);
+
+      // Customer bilgilerini doldur
+      if (revisionData.customer_id) {
+        setCustomerData(prev => ({
+          ...prev,
+          customer_id: revisionData.customer_id,
+          contact_name: revisionData.contact_name || ""
+        }));
+
+        // Form context'i de güncelle
+        form.setValue('customer_id', revisionData.customer_id);
+      }
+
+      // Proposal bilgilerini doldur
+      setProposalData(prev => ({
+        ...prev,
+        subject: revisionData.subject || "",
+        offer_date: revisionData.offer_date ? new Date(revisionData.offer_date) : new Date(),
+        offer_number: "", // Yeni numara oluşturulacak
+        revision_number: revisionData.revision_number || 0,
+        validity_date: undefined, // Yeni geçerlilik tarihi girilecek
+        prepared_by: revisionData.employee_id || "",
+        employee_id: revisionData.employee_id || "",
+        notes: revisionData.notes || "",
+        status: "draft"
+      }));
+
+      // Financial bilgilerini doldur
+      setFinancialData(prev => ({
+        ...prev,
+        currency: revisionData.currency || "TRY",
+        exchange_rate: revisionData.exchange_rate || 1,
+        vat_percentage: DEFAULT_VAT_PERCENTAGE
+      }));
+
+      // Terms bilgilerini doldur
+      setTermsData(prev => ({
+        ...prev,
+        payment_terms: revisionData.payment_terms || prev.payment_terms,
+        delivery_terms: revisionData.delivery_terms || prev.delivery_terms,
+        warranty_terms: revisionData.warranty_terms || prev.warranty_terms,
+        price_terms: revisionData.price_terms || "",
+        other_terms: revisionData.other_terms || ""
+      }));
+
+      // Items'ları doldur
+      if (revisionData.items && revisionData.items.length > 0) {
+        const revisionItems = revisionData.items.map((item: any, index: number) => ({
+          ...item,
+          id: Date.now().toString() + index, // Yeni ID oluştur
+          row_number: index + 1
+        }));
+        setItems(revisionItems);
+      }
+
+      toast.success(`Revizyon R${revisionData.revision_number} hazırlandı. Formu doldurun ve kaydedin.`);
+    }
+  }, [revisionData]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Generate proposal number when component mounts and companyId is ready
   useEffect(() => {
     // companyId yüklenene kadar bekle
@@ -182,21 +250,21 @@ const NewProposalCreate = () => {
           setProposalData(prev => ({ ...prev, offer_number: number }));
         } else {
           // Fallback to timestamp-based number if generation fails or returns invalid value
-          setProposalData(prev => ({ 
-            ...prev, 
-            offer_number: `TKF-${Date.now().toString().slice(-6)}` 
+          setProposalData(prev => ({
+            ...prev,
+            offer_number: `TKF-${Date.now().toString().slice(-6)}`
           }));
         }
       } catch (error) {
         console.error('Error generating proposal number:', error);
         // Fallback to timestamp-based number if generation fails
-        setProposalData(prev => ({ 
-          ...prev, 
-          offer_number: `TKF-${Date.now().toString().slice(-6)}` 
+        setProposalData(prev => ({
+          ...prev,
+          offer_number: `TKF-${Date.now().toString().slice(-6)}`
         }));
       }
     };
-    
+
     loadProposalNumber();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, companyLoading]);
@@ -738,6 +806,9 @@ const NewProposalCreate = () => {
         exchange_rate: formData.exchange_rate, // Döviz kuru
         // Override hook's calculation with our computed total
         computed_total_amount: primaryTotals.grand,
+        // Revizyon bilgileri (eğer revizyon ise)
+        parent_proposal_id: revisionData?.parent_proposal_id || null,
+        revision_number: revisionData?.revision_number || 0,
         items: validItems.map(item => ({
           ...item,
           total_price: item.quantity * item.unit_price
@@ -851,11 +922,21 @@ const NewProposalCreate = () => {
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-muted-foreground" />
               <div className="space-y-0.5">
-                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                  Yeni Teklif Oluştur
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                    {revisionData ? 'Yeni Revizyon Oluştur' : 'Yeni Teklif Oluştur'}
+                  </h1>
+                  {revisionData && revisionData.revision_number && (
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] px-1.5 py-0 bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-700"
+                    >
+                      R{revisionData.revision_number}
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground/70">
-                  Hızlı ve kolay teklif oluşturma
+                  {revisionData ? 'Revizyon bilgilerini düzenleyin ve kaydedin' : 'Hızlı ve kolay teklif oluşturma'}
                 </p>
               </div>
             </div>

@@ -126,6 +126,9 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [customerSelectOpen, setCustomerSelectOpen] = useState(false);
 
+  // Revision states
+  const [revisions, setRevisions] = useState<any[]>([]);
+
   // Form state matching the proposal edit format
   const [formData, setFormData] = useState({
     // Customer Section
@@ -257,6 +260,38 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
       }
     }
   }, [proposal]);
+
+  // Revizyonları getir
+  useEffect(() => {
+    const fetchRevisions = async () => {
+      if (!proposal?.id) return;
+
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+
+        // Orijinal proposal ID'yi belirle
+        const originalProposalId = (proposal as any).parent_proposal_id || proposal.id;
+
+        // Tüm revizyonları getir (parent + tüm revisions)
+        const { data, error } = await supabase
+          .from('proposals')
+          .select('id, number, revision_number, status, created_at, valid_until')
+          .or(`id.eq.${originalProposalId},parent_proposal_id.eq.${originalProposalId}`)
+          .order('revision_number', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching revisions:', error);
+          return;
+        }
+
+        setRevisions(data || []);
+      } catch (error) {
+        console.error('Error fetching revisions:', error);
+      }
+    };
+
+    fetchRevisions();
+  }, [proposal?.id]);
 
   // Track changes
   const handleFieldChange = useCallback((field: string, value: any) => {
@@ -741,25 +776,27 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   const handleCreateRevision = async () => {
     try {
       toast.loading("Revizyon oluşturuluyor...", { id: 'revision' });
-      
+
       // Orijinal teklifi belirle (bu zaten bir revizyon mu?)
       const originalProposalId = (proposal as any).parent_proposal_id || proposal.id;
-      
+
       // Mevcut revizyonların sayısını al
       const { supabase } = await import('@/integrations/supabase/client');
       const { data: revisionCount } = await supabase.rpc('get_next_revision_number', { p_parent_id: originalProposalId });
-      
+
       const nextRevisionNumber = revisionCount || 1;
-      
-      // Revizyon için yeni proposal verisi hazırla
+
+      // Revizyon için yeni proposal verisi hazırla ve hemen kaydet
       const { createProposal } = await import('@/services/proposal/api/crudOperations');
-      
+
       const revisionData = {
         title: proposal.title,
         subject: (proposal as any).subject,
         description: proposal.description,
         customer_id: proposal.customer_id,
         employee_id: proposal.employee_id,
+        contact_name: proposal.contact_name,
+        offer_date: proposal.offer_date,
         opportunity_id: proposal.opportunity_id,
         status: 'draft' as ProposalStatus,
         valid_until: undefined,
@@ -773,16 +810,19 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         currency: proposal.currency || 'TRY',
         exchange_rate: (proposal as any).exchange_rate,
         total_amount: proposal.total_amount,
+        subtotal: proposal.subtotal,
+        total_discount: proposal.total_discount,
+        total_tax: proposal.total_tax,
         items: proposal.items?.map(item => ({
           ...item,
-          id: undefined
+          id: undefined // Yeni itemlar için ID'yi temizle
         })) || [],
         parent_proposal_id: originalProposalId,
         revision_number: nextRevisionNumber,
       };
 
       const { data: newProposal, error } = await createProposal(revisionData as any);
-      
+
       if (error) {
         throw error;
       }
@@ -791,10 +831,10 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
       queryClient.invalidateQueries({ queryKey: ['proposal', proposal.id] });
-      
-      toast.success(`Revizyon R${nextRevisionNumber} başarıyla oluşturuldu!`, { id: 'revision' });
-      
-      // Yeni revizyona yönlendir
+
+      toast.success(`Revizyon R${nextRevisionNumber} oluşturuldu!`, { id: 'revision' });
+
+      // Yeni oluşturulan revizyonun düzenleme sayfasına yönlendir (aynı sayfa formatı)
       if (newProposal?.id) {
         navigate(`/proposal/${newProposal.id}`);
       }
@@ -1113,7 +1153,56 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                   <GitBranch className="h-4 w-4" />
                   <span>Yeni Revizyon Oluştur</span>
                 </DropdownMenuItem>
-                
+
+                {/* Revizyonlar Listesi */}
+                {revisions.length > 1 && (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="cursor-pointer">
+                      <GitBranch className="h-4 w-4 mr-2 text-orange-500" />
+                      <span>Revizyonlar ({revisions.length})</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="w-64">
+                      {revisions.map((rev) => (
+                        <DropdownMenuItem
+                          key={rev.id}
+                          onClick={() => navigate(`/proposal/${rev.id}`)}
+                          className={cn(
+                            "cursor-pointer flex items-center justify-between",
+                            rev.id === proposal.id && "bg-orange-50"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "text-[10px] px-1.5 py-0",
+                                rev.revision_number === 0
+                                  ? "bg-blue-50 text-blue-600 border-blue-200"
+                                  : "bg-orange-50 text-orange-600 border-orange-200"
+                              )}
+                            >
+                              R{rev.revision_number || 0}
+                            </Badge>
+                            <span className="text-xs">{rev.number}</span>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "text-[10px] px-1.5 py-0",
+                                proposalStatusColors[rev.status as ProposalStatus]
+                              )}
+                            >
+                              {proposalStatusLabels[rev.status as ProposalStatus]}
+                            </Badge>
+                          </div>
+                          {rev.id === proposal.id && (
+                            <Check className="h-3 w-3 text-orange-600" />
+                          )}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                )}
+
                 <DropdownMenuSeparator />
                 
                 {/* Dönüştürme İşlemleri */}

@@ -216,11 +216,22 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
 
       if (supplierUpdateError) throw supplierUpdateError;
 
-      // Cache'i güncelle
+      // Cache'i güncelle - company_id ile birlikte invalidate et
       queryClient.invalidateQueries({ queryKey: ["payment-accounts"] });
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-      queryClient.invalidateQueries({ queryKey: ["supplier-payments", supplier.id] });
+      queryClient.invalidateQueries({ queryKey: ["supplier-payments", supplier.id, profile.company_id] });
       queryClient.invalidateQueries({ queryKey: ["supplier-payment-stats", supplier.id] });
+      queryClient.invalidateQueries({ queryKey: ["supplier", supplier.id] });
+      
+      // İşlem geçmişi tablosunu yenile - company_id'ye göre tüm supplier-activities query'lerini invalidate et
+      queryClient.invalidateQueries({ 
+        queryKey: ["supplier-activities", supplier.id, profile.company_id] 
+      });
+      
+      // Hemen refetch yap - tablonun anında güncellenmesi için
+      await queryClient.refetchQueries({ 
+        queryKey: ["supplier-payments", supplier.id, profile.company_id] 
+      });
 
       toast.success("Ödeme kaydedildi ve bakiyeler güncellendi.", { duration: 1000 });
 

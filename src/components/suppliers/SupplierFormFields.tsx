@@ -19,6 +19,7 @@ import { toast } from "sonner";
 interface SupplierFormFieldsProps {
   formData: SupplierFormData;
   setFormData: (value: SupplierFormData) => void;
+  isEdit?: boolean;
 }
 
 interface Term {
@@ -42,7 +43,7 @@ const INITIAL_PAYMENT_TERMS = [
   { id: "havale", label: "Havale", text: "Ödeme havale ile yapılacaktır.", is_default: true }
 ];
 
-const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) => {
+const SupplierFormFields = ({ formData, setFormData, isEdit = false }: SupplierFormFieldsProps) => {
   const { t } = useTranslation();
   // Payment terms state
   const [availablePaymentTerms, setAvailablePaymentTerms] = useState<Term[]>(INITIAL_PAYMENT_TERMS);
@@ -374,23 +375,27 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
               </div>
 
               {/* Finansal Bilgiler */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-gray-100">
-                <div className="space-y-1.5">
-                  <Label htmlFor="balance" className="text-xs font-medium text-gray-700">
-                    Başlangıç Bakiye
-                  </Label>
-                  <Input
-                    id="balance"
-                    type="number"
-                    value={formData.balance}
-                    onChange={(e) => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })}
-                    placeholder="0.00"
-                    className="h-7 text-xs"
-                  />
-                  <p className="text-xs text-gray-500">
-                    Pozitif değer alacak, negatif değer borç anlamına gelir
-                  </p>
-                </div>
+              <div className={`grid grid-cols-1 ${!isEdit ? 'md:grid-cols-2' : ''} gap-3 pt-2 border-t border-gray-100`}>
+                {/* Başlangıç Bakiyesi - Sadece yeni ekleme sayfasında */}
+                {!isEdit && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="balance" className="text-xs font-medium text-gray-700">
+                      Başlangıç Bakiyesi
+                    </Label>
+                    <Input
+                      id="balance"
+                      type="number"
+                      step="0.01"
+                      value={formData.balance}
+                      onChange={(e) => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })}
+                      placeholder="0.00"
+                      className="h-7 text-xs"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Pozitif değer alacak, negatif değer borç anlamına gelir
+                    </p>
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label htmlFor="payee_financial_account_id" className="text-xs font-medium text-gray-700">
                     Finansal Hesap ID

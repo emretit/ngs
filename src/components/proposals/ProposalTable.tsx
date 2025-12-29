@@ -305,36 +305,37 @@ const ProposalTable = ({
   // Revizyon oluşturma fonksiyonu
   const handleCreateRevision = async (proposal: Proposal) => {
     if (isCopying) return;
-    
+
     setIsCopying(true);
     try {
+      toast.loading("Revizyon oluşturuluyor...", { id: 'revision' });
+
       // Önce tam proposal verisini çekelim
       const { data: fullProposal, error: fetchError } = await getProposalById(proposal.id);
-      
+
       if (fetchError || !fullProposal) {
         throw new Error('Teklif detayları alınamadı');
       }
 
       // Orijinal teklifi belirle (bu zaten bir revizyon mu?)
       const originalProposalId = (fullProposal as any).parent_proposal_id || fullProposal.id;
-      
-      // Mevcut teklifin numarasından base numarayı al
-      const baseNumber = fullProposal.number?.replace(/-R\d+$/, '') || fullProposal.number;
-      
+
       // Mevcut revizyonların sayısını al (database fonksiyonu kullanarak)
-      const { data: revisionCount } = await import('@/integrations/supabase/client').then(m => 
+      const { data: revisionCount } = await import('@/integrations/supabase/client').then(m =>
         m.supabase.rpc('get_next_revision_number', { p_parent_id: originalProposalId })
       );
-      
+
       const nextRevisionNumber = revisionCount || 1;
-      
-      // Revizyon için yeni proposal verisi hazırla
+
+      // Revizyon için yeni proposal verisi hazırla ve hemen kaydet
       const revisionData = {
         title: fullProposal.title, // Başlığı değiştirme
         subject: fullProposal.subject,
         description: fullProposal.description,
         customer_id: fullProposal.customer_id,
         employee_id: fullProposal.employee_id,
+        contact_name: fullProposal.contact_name,
+        offer_date: fullProposal.offer_date,
         opportunity_id: fullProposal.opportunity_id, // Opportunity bağlantısını koru
         status: 'draft' as ProposalStatus,
         valid_until: undefined, // Yeni geçerlilik tarihi girilmeli
@@ -348,9 +349,12 @@ const ProposalTable = ({
         currency: fullProposal.currency || 'TRY',
         exchange_rate: (fullProposal as any).exchange_rate,
         total_amount: fullProposal.total_amount,
+        subtotal: fullProposal.subtotal,
+        total_discount: fullProposal.total_discount,
+        total_tax: fullProposal.total_tax,
         items: fullProposal.items?.map(item => ({
           ...item,
-          id: undefined
+          id: undefined // Yeni itemlar için ID'yi temizle
         })) || [],
         // Revizyon bilgileri
         parent_proposal_id: originalProposalId,
@@ -358,7 +362,7 @@ const ProposalTable = ({
       };
 
       const { data: newProposal, error } = await createProposal(revisionData as any);
-      
+
       if (error) {
         throw error;
       }
@@ -367,16 +371,16 @@ const ProposalTable = ({
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
       await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
-      
-      toast.success(`Revizyon ${nextRevisionNumber} başarıyla oluşturuldu!`);
-      
-      // Yeni oluşturulan revizyonu düzenleme sayfasına yönlendir
+
+      toast.success(`Revizyon R${nextRevisionNumber} oluşturuldu!`, { id: 'revision' });
+
+      // Yeni oluşturulan revizyonun düzenleme sayfasına yönlendir (aynı sayfa formatı)
       if (newProposal?.id) {
         navigate(`/proposal/${newProposal.id}`);
       }
     } catch (error) {
       console.error('Error creating revision:', error);
-      toast.error("Revizyon oluşturulurken bir hata oluştu.");
+      toast.error("Revizyon oluşturulurken bir hata oluştu.", { id: 'revision' });
     } finally {
       setIsCopying(false);
     }

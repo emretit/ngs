@@ -83,14 +83,33 @@ export const useProposals = (filters?: ProposalFilters) => {
       }
       
       const { data, error } = await query;
-      
+
       if (error) {
         console.error("Error fetching proposals:", error);
         throw error;
       }
-      
+
       // Map the database fields to match our Proposal type
-      return data.map(mapProposalData);
+      const mappedData = data.map(mapProposalData);
+
+      // Sadece en son revizyonları göster
+      // Her proposal grubu için (parent_proposal_id veya kendi id'si) en yüksek revision_number'a sahip olanı seç
+      const latestRevisions = new Map<string, Proposal>();
+
+      mappedData.forEach(proposal => {
+        // Proposal'ın ait olduğu grup ID'si (parent varsa parent, yoksa kendi ID'si)
+        const groupId = (proposal as any).parent_proposal_id || proposal.id;
+        const revisionNumber = (proposal as any).revision_number || 0;
+
+        // Bu gruptaki mevcut en son revizyon
+        const existing = latestRevisions.get(groupId);
+
+        if (!existing || revisionNumber > ((existing as any).revision_number || 0)) {
+          latestRevisions.set(groupId, proposal);
+        }
+      });
+
+      return Array.from(latestRevisions.values());
     },
     enabled: !!userData?.company_id, // Sadece company_id varsa query'yi çalıştır
   });
@@ -215,7 +234,29 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters) => {
         throw queryError;
       }
 
-      return data ? data.map(mapProposalData) : [];
+      if (!data) return [];
+
+      // Map the database fields to match our Proposal type
+      const mappedData = data.map(mapProposalData);
+
+      // Sadece en son revizyonları göster
+      // Her proposal grubu için (parent_proposal_id veya kendi id'si) en yüksek revision_number'a sahip olanı seç
+      const latestRevisions = new Map<string, Proposal>();
+
+      mappedData.forEach(proposal => {
+        // Proposal'ın ait olduğu grup ID'si (parent varsa parent, yoksa kendi ID'si)
+        const groupId = (proposal as any).parent_proposal_id || proposal.id;
+        const revisionNumber = (proposal as any).revision_number || 0;
+
+        // Bu gruptaki mevcut en son revizyon
+        const existing = latestRevisions.get(groupId);
+
+        if (!existing || revisionNumber > ((existing as any).revision_number || 0)) {
+          latestRevisions.set(groupId, proposal);
+        }
+      });
+
+      return Array.from(latestRevisions.values());
     },
     enabled: !!userData?.company_id,
     refetchOnMount: true,

@@ -137,15 +137,47 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
 
       if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
 
-      // 1. Hesap bakiyesini kontrol et
-      const { data: account, error: accountFetchError } = await supabase
-        .from("accounts")
-        .select("current_balance, account_type")
-        .eq("id", data.account_id)
-        .single();
+      // 1. Hesap bakiyesini kontrol et - account_type'a göre doğru tablodan sorgula
+      let accountBalance = 0;
+      let accountType = data.account_type;
       
-      if (accountFetchError) throw accountFetchError;
-      const accountBalance = account.current_balance;
+      if (!accountType || !data.account_id) {
+        throw new Error("Hesap türü ve hesap seçimi zorunludur");
+      }
+
+      if (accountType === 'bank') {
+        const { data: account, error: accountFetchError } = await supabase
+          .from("bank_accounts")
+          .select("current_balance")
+          .eq("id", data.account_id)
+          .single();
+        if (accountFetchError) throw accountFetchError;
+        accountBalance = account?.current_balance || 0;
+      } else if (accountType === 'cash') {
+        const { data: account, error: accountFetchError } = await supabase
+          .from("cash_accounts")
+          .select("current_balance")
+          .eq("id", data.account_id)
+          .single();
+        if (accountFetchError) throw accountFetchError;
+        accountBalance = account?.current_balance || 0;
+      } else if (accountType === 'credit_card') {
+        const { data: account, error: accountFetchError } = await supabase
+          .from("credit_cards")
+          .select("current_balance")
+          .eq("id", data.account_id)
+          .single();
+        if (accountFetchError) throw accountFetchError;
+        accountBalance = account?.current_balance || 0;
+      } else if (accountType === 'partner') {
+        const { data: account, error: accountFetchError } = await supabase
+          .from("partner_accounts")
+          .select("current_balance")
+          .eq("id", data.account_id)
+          .single();
+        if (accountFetchError) throw accountFetchError;
+        accountBalance = account?.current_balance || 0;
+      }
 
       const { data: customerData, error: customerFetchError } = await supabase
         .from("customers")
@@ -165,21 +197,21 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
         payment_direction: data.payment_direction,
         currency: "TRY",
         company_id: profile.company_id,
-        account_id: data.account_id // Birleşik accounts tablosundan
+        account_id: data.account_id,
+        account_type: accountType // Hesap türünü de kaydet
       };
 
       const { error: paymentError } = await supabase.from("payments").insert(paymentData);
 
       if (paymentError) throw paymentError;
 
-      // 3. Hesap bakiyesini güncelle
+      // 3. Hesap bakiyesini güncelle - account_type'a göre doğru tabloya update yap
       const balanceMultiplier = data.payment_direction === "incoming" ? 1 : -1;
       const newCurrentBalance = accountBalance + (data.amount * balanceMultiplier);
 
-      // Banka hesapları için available_balance da güncelle
-      if (account.account_type === "bank") {
+      if (accountType === "bank") {
         const { error: accountUpdateError } = await supabase
-          .from("accounts")
+          .from("bank_accounts")
           .update({
             current_balance: newCurrentBalance,
             available_balance: newCurrentBalance, // Basitleştirme için aynı değer
@@ -187,10 +219,27 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
           .eq("id", data.account_id);
 
         if (accountUpdateError) throw accountUpdateError;
-      } else {
-        // Diğer hesap türleri için sadece current_balance güncelle
+      } else if (accountType === "cash") {
         const { error: accountUpdateError } = await supabase
-          .from("accounts")
+          .from("cash_accounts")
+          .update({
+            current_balance: newCurrentBalance,
+          })
+          .eq("id", data.account_id);
+
+        if (accountUpdateError) throw accountUpdateError;
+      } else if (accountType === "credit_card") {
+        const { error: accountUpdateError } = await supabase
+          .from("credit_cards")
+          .update({
+            current_balance: newCurrentBalance,
+          })
+          .eq("id", data.account_id);
+
+        if (accountUpdateError) throw accountUpdateError;
+      } else if (accountType === "partner") {
+        const { error: accountUpdateError } = await supabase
+          .from("partner_accounts")
           .update({
             current_balance: newCurrentBalance,
           })
@@ -212,11 +261,22 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
 
       if (customerUpdateError) throw customerUpdateError;
 
-      // Cache'i güncelle
+      // Cache'i güncelle - company_id ile birlikte invalidate et
       queryClient.invalidateQueries({ queryKey: ["payment-accounts"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
-      queryClient.invalidateQueries({ queryKey: ["customer-payments", customer.id] });
+      queryClient.invalidateQueries({ queryKey: ["customer-payments", customer.id, profile.company_id] });
       queryClient.invalidateQueries({ queryKey: ["customer-payment-stats", customer.id] });
+      queryClient.invalidateQueries({ queryKey: ["customer", customer.id] });
+      
+      // İşlem geçmişi tablosunu yenile - company_id'ye göre tüm customer-activities query'lerini invalidate et
+      queryClient.invalidateQueries({ 
+        queryKey: ["customer-activities", customer.id, profile.company_id] 
+      });
+      
+      // Hemen refetch yap - tablonun anında güncellenmesi için
+      await queryClient.refetchQueries({ 
+        queryKey: ["customer-payments", customer.id, profile.company_id] 
+      });
 
       toast.success("Ödeme kaydedildi ve bakiyeler güncellendi.", { duration: 1000 });
 
@@ -253,6 +313,18 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
           <div className="lg:col-span-2 space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Temel Bilgiler</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Müşteri Adı */}
+              <div className="space-y-1">
+                <FormLabel className="text-sm font-medium text-gray-700">
+                  Müşteri
+                </FormLabel>
+                <Input
+                  value={customer.company || customer.name || ""}
+                  disabled
+                  className="bg-gray-50 h-9"
+                />
+              </div>
+
               <FormField
                 control={form.control}
                 name="amount"

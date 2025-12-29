@@ -1,5 +1,5 @@
 
-export type PaymentType = "havale" | "eft" | "kredi_karti" | "nakit" | "hesap" | "cek" | "senet";
+export type PaymentType = "havale" | "eft" | "kredi_karti" | "nakit" | "hesap" | "cek" | "senet" | "fis";
 export type PaymentStatus = "pending" | "completed" | "cancelled" | "refunded";
 export type PaymentDirection = "incoming" | "outgoing";
 

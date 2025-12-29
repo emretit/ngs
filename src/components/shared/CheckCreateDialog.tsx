@@ -36,9 +36,11 @@ interface CheckCreateDialogProps {
   onSaved?: () => void;
   defaultCheckType?: "incoming" | "outgoing";
   defaultStatus?: string;
+  defaultCustomerId?: string;  // Otomatik seçili gelecek müşteri ID'si
+  defaultSupplierId?: string;  // Otomatik seçili gelecek tedarikçi ID'si
 }
 
-export default function CheckCreateDialog({ open, onOpenChange, editingCheck, setEditingCheck, onSaved, defaultCheckType = "incoming", defaultStatus }: CheckCreateDialogProps) {
+export default function CheckCreateDialog({ open, onOpenChange, editingCheck, setEditingCheck, onSaved, defaultCheckType = "incoming", defaultStatus, defaultCustomerId, defaultSupplierId }: CheckCreateDialogProps) {
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
   const { data: companyData } = useQuery({
@@ -124,8 +126,21 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
   // Payment account states
   const [paymentAccountType, setPaymentAccountType] = useState<"cash" | "bank" | "credit_card" | "partner">("bank");
   const [selectedPaymentAccountId, setSelectedPaymentAccountId] = useState<string>("");
-  const issuerForm = useForm({ defaultValues: { customer_id: "", supplier_id: "" } });
-  const payeeForm = useForm({ defaultValues: { customer_id: "", supplier_id: "" } });
+
+  // Form'ları başlangıç değerleriyle oluştur
+  const issuerForm = useForm({
+    defaultValues: {
+      customer_id: defaultCheckType === "incoming" && defaultCustomerId ? defaultCustomerId : "",
+      supplier_id: ""
+    }
+  });
+  const payeeForm = useForm({
+    defaultValues: {
+      customer_id: "",
+      supplier_id: defaultCheckType === "outgoing" && defaultSupplierId ? defaultSupplierId : ""
+    }
+  });
+
   const [issuerName, setIssuerName] = useState<string>(editingCheck?.issuer_name || "");
   const [payeeName, setPayeeName] = useState<string>(editingCheck?.payee || "");
   const { customers = [], suppliers = [] } = useCustomerSelect();
@@ -134,6 +149,20 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
   const payeeSelectedId = payeeForm.watch("customer_id");
   const issuerSupplierId = issuerForm.watch("supplier_id");
   const payeeSupplierId = payeeForm.watch("supplier_id");
+
+  // Dialog açıldığında default değerleri form'a yükle
+  useEffect(() => {
+    if (open && !editingCheck) {
+      // Gelen çek için müşteri seçimi
+      if (defaultCheckType === "incoming" && defaultCustomerId) {
+        issuerForm.setValue("customer_id", defaultCustomerId);
+      }
+      // Giden çek için tedarikçi seçimi
+      if (defaultCheckType === "outgoing" && defaultSupplierId) {
+        payeeForm.setValue("supplier_id", defaultSupplierId);
+      }
+    }
+  }, [open, defaultCustomerId, defaultSupplierId, defaultCheckType, editingCheck]);
 
   // Seçilen müşteri/tedarikçi id'sine göre isimleri güncelle
   useEffect(() => {

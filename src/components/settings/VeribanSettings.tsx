@@ -18,7 +18,7 @@ export const VeribanSettings = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [hasSavedCredentials, setHasSavedCredentials] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>("");
-  const [veribanData, setVeribanData] = useState<{username: string, webserviceUrl: string} | null>(null);
+  const [veribanData, setVeribanData] = useState<{username: string, password: string, webserviceUrl: string} | null>(null);
   const [showCredentials, setShowCredentials] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
   const { toast } = useToast();
@@ -68,6 +68,7 @@ export const VeribanSettings = () => {
         setConnectionStatus(data.is_active ? "Veriban bağlantısı aktif" : "Veriban bilgileri kaydedilmiş (bağlı değil)");
         setVeribanData({
           username: data.username,
+          password: data.password || "",
           webserviceUrl: data.webservice_url
         });
         // Form alanlarına kaydedilmiş verileri yükle
@@ -178,6 +179,17 @@ export const VeribanSettings = () => {
 
       setHasSavedCredentials(true);
       setConnectionStatus("Veriban bilgileri kaydedildi (bağlı değil)");
+      
+      // veribanData'yı güncelle
+      setVeribanData({
+        username: username.trim(),
+        password: passwordToSave,
+        webserviceUrl: webserviceUrl || (testMode 
+          ? "https://efaturatransfertest.veriban.com.tr/IntegrationService.svc"
+          : "https://efaturatransfer.veriban.com.tr/IntegrationService.svc"
+        )
+      });
+      
       toast({
         title: "Başarılı",
         description: "Veriban bilgileri kaydedildi. Şimdi 'Bağlan' butonuna tıklayarak bağlantıyı test edebilirsiniz.",
@@ -516,6 +528,48 @@ export const VeribanSettings = () => {
           )}
         </div>
 
+        {/* Hesap Bilgileri - Kart Başında */}
+        {veribanData && hasSavedCredentials && (
+          <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-medium text-green-900">Hesap Bilgileri</h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCredentials(!showCredentials)}
+                className="h-7 px-2 text-xs text-green-700 hover:bg-green-100"
+              >
+                {showCredentials ? (
+                  <>
+                    <EyeOff className="h-3 w-3 mr-1" />
+                    Gizle
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3 w-3 mr-1" />
+                    Göster
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-green-800">Kullanıcı:</span>
+                <span className="font-mono bg-white px-2 py-0.5 rounded text-xs">
+                  {showCredentials ? veribanData.username : '••••••••'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-green-800">Şifre:</span>
+                <span className="font-mono bg-white px-2 py-0.5 rounded text-xs">
+                  {showCredentials ? veribanData.password : '••••••••'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {!isConnected || hasSavedCredentials ? (
           <div className="space-y-3">
             <div className="grid gap-3">
@@ -623,55 +677,6 @@ export const VeribanSettings = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {veribanData && (
-              <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-medium text-green-900">Hesap Bilgileri</h4>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowCredentials(!showCredentials)}
-                    className="h-7 px-2 text-xs text-green-700 hover:bg-green-100"
-                  >
-                    {showCredentials ? (
-                      <>
-                        <EyeOff className="h-3 w-3 mr-1" />
-                        Gizle
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="h-3 w-3 mr-1" />
-                        Göster
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                <div className="space-y-1.5 text-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="text-green-800">Kullanıcı:</span>
-                    <span className="font-mono bg-white px-2 py-0.5 rounded text-xs">
-                      {showCredentials ? veribanData.username : '••••••••'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-green-800">Webservice URL:</span>
-                    <span className="font-mono bg-white px-2 py-0.5 rounded text-xs truncate max-w-[200px]">
-                      {showCredentials ? veribanData.webserviceUrl : '••••••••'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-green-800">Mod:</span>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      testMode ? 'bg-yellow-100 text-yellow-800' : 'bg-purple-100 text-purple-800'
-                    }`}>
-                      {testMode ? 'Test' : 'Production'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {isConnected && (
               <Button
                 variant="destructive"

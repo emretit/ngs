@@ -1,15 +1,15 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Proposal, ProposalStatus } from "@/types/proposal";
-import { Edit2, MoreHorizontal, Trash2, Printer, ShoppingCart, Receipt, Copy, FileEdit, Users, UserPlus, GitBranch } from "lucide-react";
+import { Proposal, ProposalStatus, proposalStatusColors, proposalStatusLabels } from "@/types/proposal";
+import { Edit2, MoreHorizontal, Trash2, Printer, ShoppingCart, Receipt, Copy, FileEdit, Users, UserPlus, GitBranch, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ProposalStatusCell } from "./ProposalStatusCell";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-
+import { cn } from "@/lib/utils";
 import { useProposalCalculations } from "@/hooks/proposals/useProposalCalculations";
 import { toast } from "sonner";
 import { PdfExportService } from "@/services/pdf/pdfExportService";
@@ -33,9 +33,9 @@ interface ProposalTableRowProps {
 }
 
 export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
-  proposal, 
-  index, 
-  formatMoney, 
+  proposal,
+  index,
+  formatMoney,
   onSelect,
   onStatusChange,
   onDelete,
@@ -48,6 +48,39 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
 }) => {
   const navigate = useNavigate();
   const { calculateTotals } = useProposalCalculations();
+  const [revisions, setRevisions] = useState<any[]>([]);
+
+  // Revizyonları getir
+  useEffect(() => {
+    const fetchRevisions = async () => {
+      if (!proposal?.id) return;
+
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+
+        // Orijinal proposal ID'yi belirle
+        const originalProposalId = (proposal as any).parent_proposal_id || proposal.id;
+
+        // Tüm revizyonları getir (parent + tüm revisions)
+        const { data, error } = await supabase
+          .from('proposals')
+          .select('id, number, revision_number, status, created_at, valid_until')
+          .or(`id.eq.${originalProposalId},parent_proposal_id.eq.${originalProposalId}`)
+          .order('revision_number', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching revisions:', error);
+          return;
+        }
+
+        setRevisions(data || []);
+      } catch (error) {
+        console.error('Error fetching revisions:', error);
+      }
+    };
+
+    fetchRevisions();
+  }, [proposal?.id]);
 
   // Loading state için skeleton göster
   if (isLoading || !proposal) {
@@ -267,11 +300,14 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56" onClick={(e) => e.stopPropagation()}>
               {/* Yazdırma İşlemleri */}
               <DropdownMenuLabel>Yazdırma</DropdownMenuLabel>
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger 
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
                   <Printer className="h-4 w-4 mr-2 text-blue-500" />
                   <span>Yazdır</span>
                 </DropdownMenuSubTrigger>
@@ -300,7 +336,10 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
               {/* Kopyala ve Revizyon İşlemleri */}
               <DropdownMenuLabel>Kopyala</DropdownMenuLabel>
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
                   <Copy className="h-4 w-4 mr-2 text-blue-500" />
                   <span>Teklifi Kopyala</span>
                 </DropdownMenuSubTrigger>
@@ -333,7 +372,7 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
               </DropdownMenuSub>
               
               {onCreateRevision && (
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
                     onCreateRevision(proposal);
@@ -344,13 +383,72 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
                   <span>Revizyon Oluştur</span>
                 </DropdownMenuItem>
               )}
+
+              {/* Revizyonlar Listesi */}
+              {revisions.length > 1 && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger
+                    className="cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <GitBranch className="h-4 w-4 mr-2 text-orange-500" />
+                    <span>Revizyonlar ({revisions.length})</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-64">
+                    {revisions.map((rev) => (
+                      <DropdownMenuItem
+                        key={rev.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/proposal/${rev.id}`);
+                        }}
+                        className={cn(
+                          "cursor-pointer flex items-center justify-between",
+                          rev.id === proposal.id && "bg-orange-50"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[10px] px-1.5 py-0",
+                              rev.revision_number === 0
+                                ? "bg-blue-50 text-blue-600 border-blue-200"
+                                : "bg-orange-50 text-orange-600 border-orange-200"
+                            )}
+                          >
+                            R{rev.revision_number || 0}
+                          </Badge>
+                          <span className="text-xs">{rev.number}</span>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[10px] px-1.5 py-0",
+                              proposalStatusColors[rev.status as ProposalStatus]
+                            )}
+                          >
+                            {proposalStatusLabels[rev.status as ProposalStatus]}
+                          </Badge>
+                        </div>
+                        {rev.id === proposal.id && (
+                          <Check className="h-3 w-3 text-orange-600" />
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
               
               <DropdownMenuSeparator />
               
               {/* Dönüştürme İşlemleri */}
               <DropdownMenuLabel>Dönüştür</DropdownMenuLabel>
               <DropdownMenuItem 
-                onClick={handleConvertToOrder}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConvertToOrder(e);
+                }}
                 className="cursor-pointer"
               >
                 <ShoppingCart className="h-4 w-4 mr-2 text-green-500" />
@@ -358,7 +456,10 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
               </DropdownMenuItem>
               
               <DropdownMenuItem 
-                onClick={handleConvertToInvoice}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConvertToInvoice(e);
+                }}
                 className="cursor-pointer"
               >
                 <Receipt className="h-4 w-4 mr-2 text-purple-500" />

@@ -96,7 +96,8 @@ export const EditableCustomerDetails = ({
         <form onSubmit={handleSubmit} className="space-y-6">
           <CustomerFormFields 
             formData={formData} 
-            setFormData={setFormData} 
+            setFormData={setFormData}
+            isEdit={true}
           />
         </form>
       </div>

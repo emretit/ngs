@@ -220,14 +220,8 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false, custom
         // Formu temizle
         setPrefilledCustomerId(undefined);
         setPrefilledSupplierId(undefined);
-        // Callback'i çağır
-        onMethodSelect({
-          id: "cek",
-          label: "Çek",
-          description: "Çek ile ödeme",
-          icon: <FileText className="h-4 w-4 text-green-500" />,
-          type: "cek"
-        });
+        // Çek kaydedildikten sonra PaymentDialog açılmasın
+        // onMethodSelect çağrılmıyor
       }}
     />
 

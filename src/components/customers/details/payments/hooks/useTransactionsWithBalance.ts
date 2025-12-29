@@ -13,8 +13,9 @@ export const useTransactionsWithBalance = ({
   currentBalance,
 }: UseTransactionsWithBalanceProps) => {
   return useMemo(() => {
-    // İşlemleri tarihe göre sırala (en eski en üstte)
-    const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+    // ÖNCE: Tüm işlemler için gerçek bakiyeyi hesapla (filtreye bakmaksızın)
+    // Tüm işlemleri tarihe göre sırala (en eski en önce)
+    const allSortedTransactions = [...allTransactions].sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
       if (dateA === dateB) {
@@ -24,27 +25,15 @@ export const useTransactionsWithBalance = ({
       return dateA - dateB;
     });
 
-    // Filtrelenmiş işlemlerin en eski tarihini bul
-    const oldestFilteredDate = sortedTransactions.length > 0 
-      ? new Date(sortedTransactions[0].date).getTime()
-      : null;
-
-    // Filtrelenmiş işlemlerin en eskisinden ÖNCEKİ tüm işlemleri al (başlangıç bakiyesi için)
-    const transactionsBeforeFilter = oldestFilteredDate
-      ? allTransactions.filter(t => new Date(t.date).getTime() < oldestFilteredDate)
-      : [];
-
-    // Sadece balance'a etki eden işlemleri filtrele (filtrelenmiş + öncesi)
-    const allBalanceAffectingTransactions = [
-      ...transactionsBeforeFilter.filter(t => t.type === 'payment' || t.type === 'purchase_invoice'),
-      ...sortedTransactions.filter(t => t.type === 'payment' || t.type === 'purchase_invoice')
-    ];
-
     // Mevcut bakiyeden başlayarak geriye doğru başlangıç bakiyesini hesapla
     let initialBalance = currentBalance || 0;
     
     // Tüm balance'a etki eden işlemleri geriye doğru çıkar (tarihe göre sıralı, en yeni en önce)
-    const sortedAllBalanceAffecting = [...allBalanceAffectingTransactions].sort((a, b) => {
+    const allBalanceAffecting = allSortedTransactions.filter(
+      t => t.type === 'payment' || t.type === 'purchase_invoice'
+    );
+    
+    const sortedAllBalanceAffecting = [...allBalanceAffecting].sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
       return dateB - dateA; // En yeni en önce
@@ -63,10 +52,11 @@ export const useTransactionsWithBalance = ({
       }
     });
     
-    // Şimdi en eski işlemden başlayarak ileriye doğru bakiyeyi hesapla
+    // Şimdi tüm işlemler için gerçek bakiyeyi hesapla
     let runningBalance = initialBalance;
+    const balanceMap = new Map<string, number>();
 
-    const transactionsWithBalances = sortedTransactions.map((transaction) => {
+    allSortedTransactions.forEach((transaction) => {
       // İşlem tutarını hesapla - sadece balance'a etki eden işlemler için
       let amount: number = 0;
       if (transaction.type === 'payment') {
@@ -82,10 +72,28 @@ export const useTransactionsWithBalance = ({
 
       // Bu işlemden sonraki bakiye (sadece balance'a etki eden işlemler için)
       runningBalance = runningBalance + amount;
+      
+      // Her işlem için bakiyeyi map'e kaydet
+      balanceMap.set(transaction.id, runningBalance);
+    });
+
+    // SONRA: Filtrelenmiş işlemleri al ve gerçek bakiyeleriyle eşleştir
+    const filteredSorted = [...filteredTransactions].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (dateA === dateB) {
+        return a.id.localeCompare(b.id);
+      }
+      return dateA - dateB;
+    });
+
+    const transactionsWithBalances = filteredSorted.map((transaction) => {
+      // Gerçek bakiyeyi map'ten al
+      const balanceAfter = balanceMap.get(transaction.id) ?? currentBalance;
 
       return {
         ...transaction,
-        balanceAfter: runningBalance, // Bu işlemden sonraki bakiye
+        balanceAfter, // Bu işlemden sonraki gerçek bakiye (tüm işlemlere göre)
       };
     });
 

@@ -1243,7 +1243,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
            (schema.notes.termsSettings?.showWarrantyTerms && data.warranty_terms && String(data.warranty_terms).trim() !== '') ||
            (schema.notes.termsSettings?.showPriceTerms && data.price_terms && String(data.price_terms).trim() !== '') ||
            (schema.notes.termsSettings?.showOtherTerms && data.other_terms && String(data.other_terms).trim() !== '') ? (
-            <>
+            <View wrap={false}>
               <Text style={[
                 styles.sectionTitle,
                 { textAlign: schema.notes.termsSettings?.titleAlign || 'left' }
@@ -1305,7 +1305,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                   </View>
                 </View>
               )}
-            </>
+            </View>
           ) : null}
         </View>
 

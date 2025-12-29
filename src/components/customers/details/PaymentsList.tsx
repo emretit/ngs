@@ -7,6 +7,7 @@ import { PaymentsTable } from "./payments/PaymentsTable";
 import { usePaymentsQuery } from "./payments/hooks/usePaymentsQuery";
 import { useSalesInvoicesQuery } from "./payments/hooks/useSalesInvoicesQuery";
 import { usePurchaseInvoicesQuery } from "./payments/hooks/usePurchaseInvoicesQuery";
+import { useCustomerChecksQuery } from "./payments/hooks/useCustomerChecksQuery";
 import { useUnifiedTransactions } from "./payments/hooks/useUnifiedTransactions";
 import { useFilteredTransactions } from "./payments/hooks/useFilteredTransactions";
 import { useTransactionsWithBalance } from "./payments/hooks/useTransactionsWithBalance";
@@ -37,6 +38,7 @@ export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
   const { data: payments = [] } = usePaymentsQuery(customer);
   const { data: salesInvoices = [] } = useSalesInvoicesQuery(customer);
   const { data: purchaseInvoices = [] } = usePurchaseInvoicesQuery(customer);
+  const { data: checks = [] } = useCustomerChecksQuery(customer);
 
   // Realtime subscriptions
   usePaymentsRealtime(customer);
@@ -46,6 +48,8 @@ export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
     payments,
     salesInvoices,
     purchaseInvoices,
+    checks,
+    customerId: customer.id,
   });
 
   // Filtered transactions

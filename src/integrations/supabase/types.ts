@@ -315,6 +315,41 @@ export type Database = {
           },
         ]
       }
+      ai_conversations: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_insights: {
         Row: {
           company_id: string
@@ -352,6 +387,41 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -4581,6 +4651,161 @@ export type Database = {
           },
         ]
       }
+      leave_settings: {
+        Row: {
+          approval_model: string | null
+          created_at: string | null
+          default_approver_id: string | null
+          employee_cannot_approve_own: boolean | null
+          exclude_holidays: boolean | null
+          id: string
+          max_concurrent_leaves_per_department: number | null
+          rejection_reason_required: boolean | null
+          requires_approval: boolean | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          approval_model?: string | null
+          created_at?: string | null
+          default_approver_id?: string | null
+          employee_cannot_approve_own?: boolean | null
+          exclude_holidays?: boolean | null
+          id?: string
+          max_concurrent_leaves_per_department?: number | null
+          rejection_reason_required?: boolean | null
+          requires_approval?: boolean | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          approval_model?: string | null
+          created_at?: string | null
+          default_approver_id?: string | null
+          employee_cannot_approve_own?: boolean | null
+          exclude_holidays?: boolean | null
+          id?: string
+          max_concurrent_leaves_per_department?: number | null
+          rejection_reason_required?: boolean | null
+          requires_approval?: boolean | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_settings_default_approver_id_fkey"
+            columns: ["default_approver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_type_rules: {
+        Row: {
+          created_at: string | null
+          days_entitled: number
+          description: string | null
+          id: string
+          leave_type_id: string
+          max_years_of_service: number | null
+          min_years_of_service: number | null
+          name: string
+          priority: number | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          days_entitled: number
+          description?: string | null
+          id?: string
+          leave_type_id: string
+          max_years_of_service?: number | null
+          min_years_of_service?: number | null
+          name: string
+          priority?: number | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          days_entitled?: number
+          description?: string | null
+          id?: string
+          leave_type_id?: string
+          max_years_of_service?: number | null
+          min_years_of_service?: number | null
+          name?: string
+          priority?: number | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_type_rules_leave_type_id_fkey"
+            columns: ["leave_type_id"]
+            isOneToOne: false
+            referencedRelation: "leave_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_type_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_types: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_types_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loans: {
         Row: {
           amount: number
@@ -6876,11 +7101,10 @@ export type Database = {
       proposal_terms: {
         Row: {
           category: string
-          company_id: string | null
+          company_id: string
           created_at: string | null
           id: string
           is_active: boolean | null
-          is_default: boolean | null
           label: string
           sort_order: number | null
           text: string
@@ -6888,11 +7112,10 @@ export type Database = {
         }
         Insert: {
           category: string
-          company_id?: string | null
+          company_id: string
           created_at?: string | null
           id?: string
           is_active?: boolean | null
-          is_default?: boolean | null
           label: string
           sort_order?: number | null
           text: string
@@ -6900,11 +7123,10 @@ export type Database = {
         }
         Update: {
           category?: string
-          company_id?: string | null
+          company_id?: string
           created_at?: string | null
           id?: string
           is_active?: boolean | null
-          is_default?: boolean | null
           label?: string
           sort_order?: number | null
           text?: string
@@ -6924,6 +7146,7 @@ export type Database = {
         Row: {
           attachments: Json | null
           company_id: string | null
+          contact_name: string | null
           created_at: string
           currency: string | null
           customer_id: string | null
@@ -6960,6 +7183,7 @@ export type Database = {
         Insert: {
           attachments?: Json | null
           company_id?: string | null
+          contact_name?: string | null
           created_at?: string
           currency?: string | null
           customer_id?: string | null
@@ -6996,6 +7220,7 @@ export type Database = {
         Update: {
           attachments?: Json | null
           company_id?: string | null
+          contact_name?: string | null
           created_at?: string
           currency?: string | null
           customer_id?: string | null
@@ -10687,6 +10912,47 @@ export type Database = {
           },
         ]
       }
+      user_dashboard_layouts: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          layout_config: Json
+          layout_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          layout_config: Json
+          layout_name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          layout_config?: Json
+          layout_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_dashboard_layouts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           created_at: string | null
@@ -12736,6 +13002,10 @@ export type Database = {
         Args: { company_uuid: string }
         Returns: undefined
       }
+      create_default_proposal_terms: {
+        Args: { p_company_id: string }
+        Returns: undefined
+      }
       create_default_templates_for_company: {
         Args: { company_id_param: string }
         Returns: undefined
@@ -13799,7 +14069,7 @@ export type Database = {
         | "cancelled"
       payment_direction: "incoming" | "outgoing"
       payment_status: "pending" | "completed" | "failed"
-      payment_type: "havale" | "eft" | "kredi_karti" | "nakit"
+      payment_type: "havale" | "eft" | "kredi_karti" | "nakit" | "fis"
       proposal_status:
         | "draft"
         | "sent"
@@ -14018,7 +14288,7 @@ export const Constants = {
       ],
       payment_direction: ["incoming", "outgoing"],
       payment_status: ["pending", "completed", "failed"],
-      payment_type: ["havale", "eft", "kredi_karti", "nakit"],
+      payment_type: ["havale", "eft", "kredi_karti", "nakit", "fis"],
       proposal_status: [
         "draft",
         "sent",

@@ -71,6 +71,36 @@ export const usePaymentsRealtime = (customer: Customer) => {
       .on(
         'postgres_changes',
         {
+          event: '*',
+          schema: 'public',
+          table: 'checks',
+          filter: `issuer_customer_id=eq.${customer.id}`
+        },
+        () => {
+          // Müşterinin issuer olduğu çekler değiştiğinde query'leri invalidate et
+          if (customer.id) {
+            queryClient.invalidateQueries({ queryKey: ['customer-checks', customer.id, userData?.company_id] });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'checks',
+          filter: `payee_customer_id=eq.${customer.id}`
+        },
+        () => {
+          // Müşterinin payee olduğu çekler değiştiğinde query'leri invalidate et
+          if (customer.id) {
+            queryClient.invalidateQueries({ queryKey: ['customer-checks', customer.id, userData?.company_id] });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
           event: 'UPDATE',
           schema: 'public',
           table: 'customers',

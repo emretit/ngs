@@ -1,7 +1,7 @@
 import { Payment } from "@/types/payment";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 
-export type TransactionType = 'payment' | 'sales_invoice' | 'purchase_invoice';
+export type TransactionType = 'payment' | 'sales_invoice' | 'purchase_invoice' | 'check';
 
 export interface UnifiedTransaction {
   id: string;
@@ -40,10 +40,20 @@ export const getTransactionTypeLabel = (
     return 'Ödeme';
   }
 
+  if (type === 'check') {
+    if (direction === 'incoming') {
+      return 'Alınan Çek';
+    } else if (direction === 'outgoing') {
+      return 'Verilen Çek';
+    }
+    return 'Çek';
+  }
+
   const labels: Record<TransactionType, string> = {
     payment: 'Ödeme',
     sales_invoice: 'Satış Faturası',
     purchase_invoice: 'Alış Faturası',
+    check: 'Çek',
   };
   return labels[type];
 };

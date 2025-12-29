@@ -1,0 +1,314 @@
+{
+  "graph": {
+    "nodes": {
+      "mobile": {
+        "name": "mobile",
+        "type": "app",
+        "data": {
+          "root": "apps/mobile",
+          "name": "mobile",
+          "tags": [
+            "npm:public",
+            "type:app",
+            "platform:mobile"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "targets": {
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "flutter build",
+                "cwd": "apps/mobile"
+              },
+              "configurations": {
+                "ios": {
+                  "command": "flutter build ios"
+                },
+                "android": {
+                  "command": "flutter build apk"
+                }
+              },
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "dev": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "flutter run",
+                "cwd": "apps/mobile"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "flutter test",
+                "cwd": "apps/mobile"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "get": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "flutter pub get",
+                "cwd": "apps/mobile"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "lib",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "web": {
+        "name": "web",
+        "type": "app",
+        "data": {
+          "root": ".",
+          "name": "web",
+          "tags": [
+            "npm:private",
+            "type:app",
+            "platform:web"
+          ],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "build:dev",
+                "nx",
+                "web:dev",
+                "web:build",
+                "web:lint",
+                "mobile:dev",
+                "mobile:build",
+                "mobile:get"
+              ]
+            },
+            "js": {
+              "packageName": "pafta-business-management",
+              "packageVersion": "0.4.1",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "build:dev": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "build:dev"
+              },
+              "metadata": {
+                "scriptContent": "vite build --mode development",
+                "runCommand": "bun run build:dev -- undefined"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "nx"
+              },
+              "metadata": {
+                "scriptContent": "nx",
+                "runCommand": "bun run nx -- undefined"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "web:dev": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "web:dev"
+              },
+              "metadata": {
+                "scriptContent": "nx dev web",
+                "runCommand": "bun run web:dev -- undefined"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "web:build": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "web:build"
+              },
+              "metadata": {
+                "scriptContent": "nx build web",
+                "runCommand": "bun run web:build -- undefined"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "web:lint": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "web:lint"
+              },
+              "metadata": {
+                "scriptContent": "nx lint web",
+                "runCommand": "bun run web:lint -- undefined"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "mobile:dev": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "mobile:dev"
+              },
+              "metadata": {
+                "scriptContent": "nx dev mobile",
+                "runCommand": "bun run mobile:dev -- undefined"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "mobile:build": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "mobile:build"
+              },
+              "metadata": {
+                "scriptContent": "nx build mobile",
+                "runCommand": "bun run mobile:build -- undefined"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "mobile:get": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "mobile:get"
+              },
+              "metadata": {
+                "scriptContent": "nx get mobile",
+                "runCommand": "bun run mobile:get -- undefined"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/vite:build",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "defaultConfiguration": "production",
+              "options": {
+                "outputPath": "dist"
+              },
+              "configurations": {
+                "production": {
+                  "mode": "production"
+                },
+                "development": {
+                  "mode": "development"
+                }
+              },
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "dev": {
+              "executor": "@nx/vite:dev-server",
+              "defaultConfiguration": "development",
+              "options": {
+                "buildTarget": "web:build",
+                "port": 8080,
+                "hmr": true
+              },
+              "configurations": {
+                "development": {
+                  "buildTarget": "web:build:development"
+                },
+                "production": {
+                  "buildTarget": "web:build:production"
+                }
+              },
+              "parallelism": true,
+              "continuous": true
+            },
+            "preview": {
+              "executor": "@nx/vite:preview-server",
+              "defaultConfiguration": "production",
+              "options": {
+                "buildTarget": "web:build"
+              },
+              "configurations": {
+                "production": {
+                  "buildTarget": "web:build:production"
+                }
+              },
+              "parallelism": true,
+              "continuous": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "options": {
+                "lintFilePatterns": [
+                  "src/**/*.{ts,tsx,js,jsx}"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/eslint.config.js"
+              ],
+              "cache": true
+            }
+          },
+          "$schema": "../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "mobile": [],
+      "web": []
+    }
+  }
+}

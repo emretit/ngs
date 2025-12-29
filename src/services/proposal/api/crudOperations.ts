@@ -191,6 +191,7 @@ export async function createProposal(proposal: Partial<Proposal>) {
       currency: string;
       exchange_rate?: number;
       total_amount: number;
+      contact_name?: string;
       attachments?: Json;
       items?: Json;
       history?: Json;
@@ -225,6 +226,7 @@ export async function createProposal(proposal: Partial<Proposal>) {
       currency: proposal.currency || 'TRY',
       exchange_rate: (proposal as any).exchange_rate || null,
       total_amount: proposal.total_amount || 0,
+      contact_name: (proposal as any).contact_name || null,
       history: JSON.stringify([historyEntry]) as unknown as Json,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -471,6 +473,7 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
       currency?: string;
       exchange_rate?: number;
       total_amount?: number;
+      contact_name?: string;
       attachments?: Json;
       items?: Json;
       history?: Json;
@@ -498,6 +501,7 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
     if (proposal.currency !== undefined) updateData.currency = proposal.currency;
     if ((proposal as any).exchange_rate !== undefined) updateData.exchange_rate = (proposal as any).exchange_rate;
     if (proposal.total_amount !== undefined) updateData.total_amount = proposal.total_amount;
+    if ((proposal as any).contact_name !== undefined) updateData.contact_name = (proposal as any).contact_name;
     
     // Handle complex types with proper serialization
     if (proposal.attachments !== undefined) {

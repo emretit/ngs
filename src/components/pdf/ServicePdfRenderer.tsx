@@ -213,7 +213,7 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
       borderColor: '#D1D5DB',
       borderStyle: 'dashed',
       marginBottom: 8,
-      backgroundColor: '#F9FAFB',
+      backgroundColor: '#FFFFFF',
     },
     signatureLabel: {
       fontSize: safeSchema.signatures?.fontSize || 10,

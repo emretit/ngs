@@ -75,16 +75,16 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
     return text.substring(0, maxLength - 3) + "...";
   };
 
-  // Firma ismini kısalt
+  // Şirket adını kısalt
   const getShortenedCompanyName = () => {
-    const companyName = proposal.customer?.name || proposal.customer_name || "Müşteri yok";
+    const companyName = proposal.customer?.company || proposal.customer_name || "Müşteri yok";
     return shortenText(companyName, 20);
   };
 
-  // Firma şirket bilgisini kısalt
+  // Yetkili kişi adını kısalt
   const getShortenedCompanyInfo = () => {
-    if (!proposal.customer?.company) return null;
-    return shortenText(proposal.customer.company, 18);
+    if (!proposal.customer?.name) return null;
+    return shortenText(proposal.customer.name, 18);
   };
   
   // Use the stored total_amount from database (calculated and saved correctly)
@@ -161,11 +161,11 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
       <TableCell className="py-2 px-3">
         {proposal.customer ? (
           <div className="flex flex-col space-y-0">
-            <span className="text-xs font-medium" title={proposal.customer.name}>
+            <span className="text-xs font-medium" title={proposal.customer.company || proposal.customer.name}>
               {getShortenedCompanyName()}
             </span>
-            {proposal.customer.company && (
-              <span className="text-xs text-muted-foreground" title={proposal.customer.company}>
+            {proposal.customer.name && (
+              <span className="text-xs text-muted-foreground" title={proposal.customer.name}>
                 {getShortenedCompanyInfo()}
               </span>
             )}

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, Plus, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -98,8 +98,11 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
   // Dialog states for each category
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<'payment' | 'delivery' | 'warranty' | 'price' | null>(null);
-  const [newTermLabel, setNewTermLabel] = useState("");
   const [newTermText, setNewTermText] = useState("");
+  
+  // Inline editing states
+  const [editingTerm, setEditingTerm] = useState<{category: string, term: Term} | null>(null);
+  const [editingText, setEditingText] = useState("");
 
   // Load custom terms from database on component mount
   useEffect(() => {
@@ -220,8 +223,8 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
   };
 
   const handleAddCustomTerm = async () => {
-    if (!currentCategory || !newTermLabel.trim() || !newTermText.trim()) {
-      toast.error("Lütfen hem başlık hem de açıklama giriniz.");
+    if (!currentCategory || !newTermText.trim()) {
+      toast.error("Lütfen şart metnini giriniz.");
       return;
     }
 
@@ -233,7 +236,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
         .from('proposal_terms')
         .insert({
           category: currentCategory,
-          label: newTermLabel.trim(),
+          label: newTermText.trim(),
           text: newTermText.trim(),
           is_default: false,
           is_active: true,
@@ -247,7 +250,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
       // Add the new term to available terms
       const newTerm: Term = {
         id: data.id,
-        label: newTermLabel.trim(),
+        label: newTermText.trim(),
         text: newTermText.trim(),
         is_default: false
       };
@@ -258,7 +261,6 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
       }));
 
       // Reset the form and close dialog
-      setNewTermLabel("");
       setNewTermText("");
       setIsDialogOpen(false);
       setCurrentCategory(null);
@@ -271,6 +273,65 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleEditTermClick = (category: 'payment' | 'delivery' | 'warranty' | 'price', term: Term) => {
+    setEditingTerm({category, term});
+    setEditingText(term.text);
+  };
+
+  const handleUpdateTerm = async () => {
+    if (!editingTerm || !editingText.trim()) {
+      toast.error("Lütfen şart metnini giriniz.");
+      return;
+    }
+
+    // Predefined term ise güncelleme yapma
+    if (editingTerm.term.is_default) {
+      toast.error("Varsayılan şartlar düzenlenemez.");
+      setEditingTerm(null);
+      setEditingText("");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('proposal_terms')
+        .update({
+          label: editingText.trim(),
+          text: editingText.trim()
+        })
+        .eq('id', editingTerm.term.id);
+
+      if (error) throw error;
+
+      // Update in available terms
+      setAvailableTerms(prev => ({
+        ...prev,
+        [editingTerm.category]: prev[editingTerm.category].map(term => 
+          term.id === editingTerm.term.id 
+            ? { ...term, label: editingText.trim(), text: editingText.trim() }
+            : term
+        )
+      }));
+
+      toast.success("Şart başarıyla güncellendi!");
+      setEditingTerm(null);
+      setEditingText("");
+
+    } catch (error) {
+      console.error('Error updating term:', error);
+      toast.error("Şart güncellenirken bir hata oluştu: " + (error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTerm(null);
+    setEditingText("");
   };
 
   const handleDeleteCustomTermClick = (category: 'payment' | 'delivery' | 'warranty' | 'price', term: Term) => {
@@ -357,37 +418,103 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
           )}
         </SelectTrigger>
         <SelectContent className="bg-background border border-border shadow-xl z-[100] max-h-[300px] overflow-y-auto">
-          {availableTerms[category].map((term) => (
-            <div key={term.id} className="group relative">
-              <SelectItem
-                value={term.id}
-                className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50 data-[highlighted]:bg-muted/50 pr-10 transition-colors"
-              >
-                <div className="flex flex-col gap-0.5 w-full">
-                  <span className="font-medium text-sm text-foreground leading-tight">{term.label}</span>
-                  <span className="text-xs text-muted-foreground leading-snug whitespace-normal break-words">{term.text}</span>
-                </div>
-              </SelectItem>
-              
-              {/* Delete button positioned outside SelectItem */}
-              <div className="absolute top-2 right-2 z-10">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setTermToDelete({category, term});
-                    setIsDeleteDialogOpen(true);
-                  }}
-                >
-                  <Trash2 size={12} />
-                </Button>
+          {availableTerms[category].map((term) => {
+            const isEditing = editingTerm?.term.id === term.id && editingTerm?.category === category;
+            
+            return (
+              <div key={term.id} className="group relative">
+                {isEditing ? (
+                  <div className="p-3 space-y-2 border-b border-border">
+                    <Textarea
+                      value={editingText}
+                      onChange={(e) => setEditingText(e.target.value)}
+                      className="min-h-[60px] text-sm"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                          handleUpdateTerm();
+                        } else if (e.key === 'Escape') {
+                          handleCancelEdit();
+                        }
+                      }}
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleCancelEdit();
+                        }}
+                        type="button"
+                      >
+                        İptal
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleUpdateTerm();
+                        }}
+                        type="button"
+                        disabled={isLoading || !editingText.trim()}
+                      >
+                        Kaydet
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <SelectItem
+                      value={term.id}
+                      className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50 data-[highlighted]:bg-muted/50 pr-20 transition-colors"
+                    >
+                      <div className="flex flex-col gap-0.5 w-full">
+                        <span className="text-sm text-foreground leading-snug whitespace-normal break-words">{term.text}</span>
+                      </div>
+                    </SelectItem>
+                    
+                    {/* Edit and Delete buttons positioned outside SelectItem */}
+                    <div className="absolute top-2 right-2 z-10 flex gap-1">
+                      {!term.is_default && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-primary/20 hover:text-primary"
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleEditTermClick(category, term);
+                          }}
+                        >
+                          <Pencil size={12} />
+                        </Button>
+                      )}
+                      {!term.is_default && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setTermToDelete({category, term});
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
           
           {/* Add custom option */}
           <SelectItem value="add_custom" className="cursor-pointer hover:bg-primary/10 focus:bg-primary/10 data-[highlighted]:bg-primary/10 p-3 border-t border-border mt-1">
@@ -457,24 +584,14 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="termLabel" className="text-sm font-medium text-gray-700">Şart Başlığı *</Label>
-              <Input
-                id="termLabel"
-                placeholder="Şart başlığı giriniz"
-                value={newTermLabel}
-                onChange={(e) => setNewTermLabel(e.target.value)}
-                autoFocus
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="termText" className="text-sm font-medium text-gray-700">Şart Açıklaması *</Label>
+              <Label htmlFor="termText" className="text-sm font-medium text-gray-700">Şart Metni *</Label>
               <Textarea
                 id="termText"
-                placeholder="Şart açıklamasını yazınız"
+                placeholder="Şart metnini yazınız"
                 value={newTermText}
                 onChange={(e) => setNewTermText(e.target.value)}
                 rows={4}
+                autoFocus
               />
             </div>
 
@@ -484,7 +601,6 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
                 variant="outline"
                 onClick={() => {
                   setIsDialogOpen(false);
-                  setNewTermLabel("");
                   setNewTermText("");
                   setCurrentCategory(null);
                 }}
@@ -494,7 +610,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
               </Button>
               <Button 
                 onClick={handleAddCustomTerm}
-                disabled={isLoading || !newTermLabel.trim() || !newTermText.trim()}
+                disabled={isLoading || !newTermText.trim()}
               >
                 {isLoading ? "Ekleniyor..." : "Ekle"}
               </Button>

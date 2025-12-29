@@ -135,6 +135,8 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
       setValue("supplier_id", id);
       setValue("customer_id", null);
     }
+    // Müşteri/tedarikçi değiştiğinde iletişim kişisi alanını temizle
+    setValue("contact_name", "");
     setSearchQuery(""); // Arama sorgusunu temizle
     setIsOpen(false);
   };

@@ -15,29 +15,29 @@ export const useProposalEdit = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const fetchProposal = async () => {
-      if (!id) return;
-      
-      try {
-        setLoading(true);
-        const { data, error } = await mockCrmService.getProposalById(id);
-        
-        if (error) {
-          toast.error("Teklif bilgileri yüklenemedi");
-          throw error;
-        }
-        
-        if (data) {
-          setProposal(data);
-        }
-      } catch (error) {
-        console.error("Error fetching proposal:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchProposal = async () => {
+    if (!id) return;
     
+    try {
+      setLoading(true);
+      const { data, error } = await mockCrmService.getProposalById(id);
+      
+      if (error) {
+        toast.error("Teklif bilgileri yüklenemedi");
+        throw error;
+      }
+      
+      if (data) {
+        setProposal(data);
+      }
+    } catch (error) {
+      console.error("Error fetching proposal:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProposal();
   }, [id]);
 
@@ -69,6 +69,7 @@ export const useProposalEdit = () => {
         items: formData.items || proposal.items,
         customer_id: formData.customer_id || proposal.customer_id,
         employee_id: formData.employee_id || proposal.employee_id,
+        contact_name: formData.contact_name !== undefined ? formData.contact_name : (proposal as any).contact_name || "",
         // Financial totals for PDF generation
         subtotal: formData.subtotal !== undefined ? formData.subtotal : proposal.subtotal,
         total_discount: formData.total_discount !== undefined ? formData.total_discount : proposal.total_discount,
@@ -94,8 +95,9 @@ export const useProposalEdit = () => {
       await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
       
       toast.success("Teklif başarıyla güncellendi");
-      // Stay on the same page, just update the proposal data
-      setProposal(updatedProposal);
+      
+      // Teklifi tekrar fetch et - sayfayı güncel verilerle yenile
+      await fetchProposal();
     } catch (error) {
       console.error("Error saving proposal:", error);
       toast.error("Teklif güncellenirken bir hata oluştu");
@@ -109,6 +111,7 @@ export const useProposalEdit = () => {
     loading,
     saving,
     handleBack,
-    handleSave
+    handleSave,
+    refetchProposal: fetchProposal
   };
 };

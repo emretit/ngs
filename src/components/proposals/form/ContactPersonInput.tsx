@@ -13,10 +13,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { UserCircle, Plus } from "lucide-react";
+import { UserCircle, Plus, Check, ChevronsUpDown, Search, User } from "lucide-react";
 import { toast } from "sonner";
 import { formatPhoneNumber, getDigitsOnly } from "@/utils/phoneFormatter";
 import { cn } from "@/lib/utils";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface ContactPersonInputProps {
   value: string;
@@ -45,6 +47,12 @@ interface Customer {
     email?: string | null;
     phone?: string | null;
   } | null;
+}
+
+interface ContactPersonInfo {
+  name: string;
+  type: "primary" | "secondary" | "employee" | "custom";
+  canDelete: boolean;
 }
 
 const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
@@ -147,31 +155,63 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
   // Build contact persons list from customer or supplier data
   // name alanı: Müşteri/Tedarikçi tablosunda şirket için yetkili kişi bilgisini içerir
   const contactPersons = useMemo(() => {
-    const contacts: string[] = [];
+    const contacts: ContactPersonInfo[] = [];
     const partnerData = customerData || supplierData;
     
     if (!partnerData) return contacts;
     
     // Birinci yetkili kişi (name alanı - müşteri/tedarikçi tablosunda yetkili kişi kolonu)
     if (partnerData.name) {
-      contacts.push(partnerData.name);
+      contacts.push({
+        name: partnerData.name,
+        type: "primary",
+        canDelete: false
+      });
     }
     
-    // İkinci yetkili kişi
+    // İkinci yetkili kişi (silinebilir)
     if (partnerData.second_contact_name) {
-      contacts.push(partnerData.second_contact_name);
+      contacts.push({
+        name: partnerData.second_contact_name,
+        type: "secondary",
+        canDelete: true
+      });
     }
     
     // Temsilci çalışan (representative employee)
     if (partnerData.employees) {
       const fullName = `${partnerData.employees.first_name} ${partnerData.employees.last_name}`;
-      if (!contacts.includes(fullName)) {
-        contacts.push(fullName);
+      if (!contacts.some(c => c.name === fullName)) {
+        contacts.push({
+          name: fullName,
+          type: "employee",
+          canDelete: false
+        });
       }
     }
     
     return contacts;
   }, [customerData, supplierData]);
+
+  // Müşteri/tedarikçi değiştiğinde, eğer mevcut iletişim kişisi yeni müşterinin listesinde yoksa temizle
+  useEffect(() => {
+    const partnerId = customerId || supplierId;
+    if (partnerId && value && contactPersons.length > 0) {
+      // Eğer mevcut değer yeni müşterinin iletişim kişileri listesinde yoksa temizle
+      if (!contactPersons.some(c => c.name === value)) {
+        onChangeRef.current("");
+        if (onContactChangeRef.current) {
+          onContactChangeRef.current({ phone: undefined, email: undefined });
+        }
+      }
+    } else if (partnerId && value && contactPersons.length === 0) {
+      // Yeni müşterinin hiç iletişim kişisi yoksa temizle
+      onChangeRef.current("");
+      if (onContactChangeRef.current) {
+        onContactChangeRef.current({ phone: undefined, email: undefined });
+      }
+    }
+  }, [customerId, supplierId, contactPersons, value]);
 
   // Auto-fill contact person when customer/supplier data is available and no value is set
   useEffect(() => {
@@ -224,37 +264,54 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
   // Create new contact person mutation
   const createContactMutation = useMutation({
     mutationFn: async (data: { name: string; phone?: string; email?: string }) => {
-      if (customerId) {
-        const { data: result, error } = await supabase
-          .from("customers")
-          .update({
-            second_contact_name: data.name,
-            second_contact_phone: data.phone || null,
-            second_contact_email: data.email || null,
-          })
-          .eq("id", customerId)
-          .select()
-          .single();
-
-        if (error) throw error;
-        return result;
-      } else if (supplierId) {
-        const { data: result, error } = await supabase
-          .from("suppliers")
-          .update({
-            second_contact_name: data.name,
-            second_contact_phone: data.phone || null,
-            second_contact_email: data.email || null,
-          })
-          .eq("id", supplierId)
-          .select()
-          .single();
-
-        if (error) throw error;
-        return result;
-      } else {
+      const tableName = customerId ? 'customers' : 'suppliers';
+      const partnerId = customerId || supplierId;
+      
+      if (!partnerId) {
         throw new Error("Müşteri veya tedarikçi seçilmedi");
       }
+
+      // Önce mevcut müşteri/tedarikçi bilgilerini çek
+      const { data: partnerData, error: fetchError } = await supabase
+        .from(tableName)
+        .select('name')
+        .eq('id', partnerId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Eğer name alanı boşsa, name'e ekle; doluysa second_contact_name'e ekle
+      const updateData: any = {};
+      
+      if (!partnerData.name) {
+        // name boşsa, name alanına ekle
+        updateData.name = data.name;
+        if (data.phone) {
+          updateData.mobile_phone = data.phone;
+        }
+        if (data.email) {
+          updateData.email = data.email;
+        }
+      } else {
+        // name doluysa, second_contact_name'e ekle
+        updateData.second_contact_name = data.name;
+        if (data.phone) {
+          updateData.second_contact_phone = data.phone;
+        }
+        if (data.email) {
+          updateData.second_contact_email = data.email;
+        }
+      }
+
+      const { data: result, error } = await supabase
+        .from(tableName)
+        .update(updateData)
+        .eq("id", partnerId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return result;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", customerId] });
@@ -295,10 +352,11 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
       return;
     }
 
-    // Eğer ikinci iletişim kişisi zaten varsa uyarı ver
+    // Eğer name boşsa name'e, doluysa second_contact_name'e ekleyeceğiz
+    // Eğer second_contact_name zaten varsa uyarı ver
     const partnerData = customerData || supplierData;
-    if (partnerData?.second_contact_name) {
-      if (!confirm(`"${partnerData.second_contact_name}" adlı iletişim kişisi zaten mevcut. Üzerine yazmak istediğinizden emin misiniz?`)) {
+    if (partnerData?.name && partnerData?.second_contact_name) {
+      if (!confirm(`"${partnerData.second_contact_name}" adlı ikinci iletişim kişisi zaten mevcut. Üzerine yazmak istediğinizden emin misiniz?`)) {
         return;
       }
     }
@@ -318,50 +376,194 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
     }
   };
 
+  // Manuel girilen değeri de seçenekler listesine ekle
+  const allContacts = useMemo(() => {
+    const contacts: ContactPersonInfo[] = [...contactPersons];
+    if (value && !contactPersons.some(c => c.name === value) && value.trim() !== "") {
+      contacts.push({
+        name: value,
+        type: "custom",
+        canDelete: false
+      });
+    }
+    return contacts;
+  }, [contactPersons, value]);
+
   // If no customer/supplier selected or no contacts available, allow manual input
   const hasContacts = contactPersons.length > 0;
-  const isCustomInput = value && !contactPersons.includes(value);
+  const isCustomInput = value && !contactPersons.some(c => c.name === value);
   const partnerId = customerId || supplierId;
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Filter contacts based on search query
+  const filteredContacts = useMemo(() => {
+    if (!searchQuery.trim()) return allContacts;
+    const query = searchQuery.toLowerCase();
+    return allContacts.filter(contact => 
+      contact.name.toLowerCase().includes(query)
+    );
+  }, [allContacts, searchQuery]);
 
   return (
     <div className="space-y-1.5">
       <Label className="text-xs font-medium text-gray-700">
         İletişim Kişisi {required && <span className="text-red-500">*</span>}
       </Label>
-      {hasContacts && !isCustomInput ? (
-        <Select
-          value={value}
-          onValueChange={handleSelectChange}
-        >
-          <SelectTrigger className={cn(error ? "border-red-500" : "", "h-8")}>
-            <SelectValue placeholder="İletişim kişisi seçin..." />
-          </SelectTrigger>
-          <SelectContent>
-            {contactPersons.map((contact, index) => (
-              <SelectItem key={index} value={contact}>
-                <div className="flex items-center gap-2">
-                  <UserCircle className="h-4 w-4 opacity-50" />
-                  <span>{contact}</span>
-                </div>
-              </SelectItem>
-            ))}
-            <SelectItem value="__add_new__" className="text-primary font-medium">
-              <div className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Yeni İletişim Kişisi Ekle
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      ) : (
-        <Input
-          value={value}
-          onChange={(e) => onChangeRef.current(e.target.value)}
-          placeholder={hasContacts ? "İletişim kişisi adını girin" : "Önce müşteri/tedarikçi seçin"}
-          className={cn(error ? "border-red-500" : "", "h-8")}
-          disabled={!partnerId}
-        />
-      )}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              "w-full justify-between mt-0.5 h-8 text-xs",
+              error && "border-red-500",
+              !value && "text-muted-foreground"
+            )}
+          >
+            <div className="flex items-center min-w-0 flex-1">
+              <User className="mr-1.5 h-3 w-3 shrink-0 opacity-50" />
+              <span className="truncate min-w-0">
+                {value || "İletişim kişisi seçin veya yazın..."}
+              </span>
+            </div>
+            <Search className="ml-1.5 h-3 w-3 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0" align="start">
+          <Command>
+            <CommandInput 
+              placeholder="İletişim kişisi ara veya yazın..." 
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+            />
+            <CommandList>
+              <CommandEmpty>
+                {searchQuery.trim() ? (
+                  <div className="py-2">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start"
+                      onClick={async () => {
+                        const contactName = searchQuery.trim();
+                        // Eğer müşteri/tedarikçi seçiliyse, bu iletişim kişisini müşteri tablosuna kaydet
+                        if ((customerId || supplierId) && contactName) {
+                          try {
+                            const tableName = customerId ? 'customers' : 'suppliers';
+                            const partnerId = customerId || supplierId;
+                            
+                            // Müşteri/tedarikçi bilgilerini çek
+                            const { data: partnerData, error: partnerError } = await supabase
+                              .from(tableName)
+                              .select('name, second_contact_name, representative, employees:representative(first_name, last_name)')
+                              .eq('id', partnerId)
+                              .single();
+                            
+                            if (!partnerError && partnerData) {
+                              // Mevcut iletişim kişilerini kontrol et
+                              const existingContacts: string[] = [];
+                              
+                              if (partnerData.name) {
+                                existingContacts.push(partnerData.name);
+                              }
+                              if (partnerData.second_contact_name) {
+                                existingContacts.push(partnerData.second_contact_name);
+                              }
+                              if (partnerData.employees) {
+                                const employeeName = `${partnerData.employees.first_name} ${partnerData.employees.last_name}`;
+                                existingContacts.push(employeeName);
+                              }
+                              
+                              // Eğer iletişim kişisi mevcut listede yoksa, müşteri tablosuna kaydet
+                              if (!existingContacts.includes(contactName)) {
+                                // Eğer name alanı boşsa, name'e ekle; doluysa second_contact_name'e ekle
+                                const updateData: any = {};
+                                
+                                if (!partnerData.name) {
+                                  // name boşsa, name alanına ekle
+                                  updateData.name = contactName;
+                                } else {
+                                  // name doluysa, second_contact_name'e ekle
+                                  updateData.second_contact_name = contactName;
+                                }
+                                
+                                const { error: updateError } = await supabase
+                                  .from(tableName)
+                                  .update(updateData)
+                                  .eq('id', partnerId);
+                                
+                                if (updateError) {
+                                  console.error('Error saving contact to partner:', updateError);
+                                  toast.error('İletişim kişisi kaydedilirken hata oluştu');
+                                } else {
+                                  // Müşteri/tedarikçi verilerini yeniden yükle
+                                  if (customerId) {
+                                    refetchCustomer();
+                                  } else if (supplierId) {
+                                    refetchSupplier();
+                                  }
+                                  toast.success('İletişim kişisi müşteri bilgilerine eklendi');
+                                }
+                              }
+                            }
+                          } catch (error) {
+                            console.error('Error saving contact to partner:', error);
+                            toast.error('İletişim kişisi kaydedilirken hata oluştu');
+                          }
+                        }
+                        
+                        onChangeRef.current(contactName);
+                        setOpen(false);
+                        setSearchQuery("");
+                      }}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      "{searchQuery}" olarak ekle
+                    </Button>
+                  </div>
+                ) : (
+                  "İletişim kişisi bulunamadı"
+                )}
+              </CommandEmpty>
+              <CommandGroup>
+                {filteredContacts.map((contact, index) => (
+                  <CommandItem
+                    key={index}
+                    value={contact.name}
+                    onSelect={() => {
+                      onChangeRef.current(contact.name);
+                      setOpen(false);
+                      setSearchQuery("");
+                    }}
+                    className="flex items-center"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4 shrink-0",
+                        value === contact.name ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <UserCircle className="mr-2 h-4 w-4 opacity-50 shrink-0" />
+                    <span className="truncate">{contact.name}</span>
+                  </CommandItem>
+                ))}
+                <CommandItem
+                  value="__add_new__"
+                  onSelect={() => {
+                    setOpen(false);
+                    setIsDialogOpen(true);
+                  }}
+                  className="text-primary font-medium"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Yeni İletişim Kişisi Ekle
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
       {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
 
       {/* Add Contact Person Dialog */}

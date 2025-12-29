@@ -42,7 +42,6 @@ import ProposalDetailsCard from "@/components/proposals/cards/ProposalDetailsCar
 import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard";
 import TermsConditionsCard from "@/components/proposals/cards/TermsConditionsCard";
 import FinancialSummaryCard from "@/components/proposals/cards/FinancialSummaryCard";
-import RevisionInfoCard from "@/components/proposals/cards/RevisionInfoCard";
 
 interface LineItem extends ProposalItem {
   row_number: number;
@@ -58,7 +57,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { proposal, loading, saving, handleBack, handleSave } = useProposalEdit();
+  const { proposal, loading, saving, handleBack, handleSave, refetchProposal } = useProposalEdit();
   const { customers } = useCustomerSelect();
   
   // Form object for FormProvider
@@ -555,6 +554,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         number: formData.offer_number,
         customer_id: formData.customer_id || null,
         employee_id: formData.employee_id || null,
+        contact_name: formData.contact_name || "", // İletişim kişisi
         offer_date: formData.offer_date ? formatDateToLocalString(formData.offer_date) : null, // Teklif tarihi (yerel timezone)
         valid_until: formData.validity_date ? formatDateToLocalString(formData.validity_date) : "",
         terms: `${formData.payment_terms}\n\n${formData.delivery_terms}\n\nGaranti: ${formData.warranty_terms}`,
@@ -590,6 +590,11 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
       }
       // Hemen refetch yap - tablo otomatik yenilensin
       await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      
+      // Teklif düzenle sayfasını yenile - güncel verileri yükle
+      if (refetchProposal) {
+        await refetchProposal();
+      }
       
       setHasChanges(false);
     } catch (error) {
@@ -1153,16 +1158,6 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
 
       {/* Main Content */}
       <div className="space-y-4">
-        {/* Revision Info Card - Sadece revizyon varsa göster */}
-        {proposal && (
-          <RevisionInfoCard
-            proposalId={proposal.id}
-            parentProposalId={(proposal as any).parent_proposal_id}
-            revisionNumber={(proposal as any).revision_number}
-            currentProposalNumber={proposal.number}
-          />
-        )}
-
         {/* Top Row - Customer & Proposal Details Combined */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {/* Customer Information */}

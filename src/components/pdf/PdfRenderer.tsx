@@ -417,6 +417,44 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       color: '#000',
       lineHeight: 1.4,
     },
+    signatureSection: {
+      marginTop: 20,
+      marginBottom: 12,
+      paddingTop: 15,
+      borderTopWidth: 1,
+      borderTopColor: '#E5E7EB',
+    },
+    signatureRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'flex-start',
+      marginTop: 10,
+    },
+    signatureBox: {
+      flex: 1,
+      alignItems: 'center',
+      marginHorizontal: 10,
+    },
+    signatureImage: {
+      width: 120,
+      height: 60,
+      borderWidth: 1,
+      borderColor: '#D1D5DB',
+      borderStyle: 'dashed',
+      marginBottom: 5,
+      backgroundColor: '#FFFFFF',
+    },
+    signatureLabel: {
+      fontSize: schema.signatures?.fontSize || 10,
+      fontWeight: 'bold',
+      color: schema.page.fontColor || '#374151',
+      marginBottom: 4,
+    },
+    signatureName: {
+      fontSize: (schema.signatures?.fontSize || 10) - 1,
+      color: schema.page.fontColor || '#6B7280',
+      marginTop: 4,
+    },
   });
 
   const formatCurrency = (amount: number, currency: string = 'TRY') => {
@@ -980,7 +1018,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
 
 
         {/* Customer and Quote Information Container */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+        <View wrap={false} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
           {/* Müşteri Bilgileri Container - Her zaman göster */}
           {data.customer && (
             <View style={[styles.customerSection, { flex: 2, marginRight: 20, marginBottom: 0, alignItems: 'flex-start' }]}>
@@ -1067,7 +1105,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
         {/* Items Table */}
         <View style={styles.table}>
           {/* Table Header */}
-          <View style={styles.tableHeader}>
+          <View wrap={false} style={styles.tableHeader}>
             {/* Sıra Numarası Header */}
             {schema.lineTable.showRowNumber && (
               <View key="row-number" style={[styles.tableCell, { flex: 0.5, justifyContent: 'center', alignItems: 'center' }]}>
@@ -1192,7 +1230,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
         </View>
 
         {/* Totals */}
-        <View style={styles.totalsSection}>
+        <View wrap={false} style={styles.totalsSection}>
           {schema.totals.showGross && (
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>{safeText('Ara Toplam:')}</Text>
@@ -1232,7 +1270,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
 
 
         {/* Notes */}
-        <View style={styles.notesSection}>
+        <View wrap={false} style={styles.notesSection}>
           {data.notes && data.notes.trim() !== '' && (
             <Text style={styles.notesText}>{safeText(data.notes)}</Text>
           )}
@@ -1309,9 +1347,54 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
           ) : null}
         </View>
 
+        {/* Signatures */}
+        {schema.signatures?.show && (
+          <View wrap={false} style={styles.signatureSection}>
+            <View wrap={false} style={styles.signatureRow}>
+              {/* Technician Signature */}
+              {schema.signatures.showTechnician && (
+                <View style={styles.signatureBox}>
+                  {(data as any).technicianSignature ? (
+                    <Image src={(data as any).technicianSignature} style={styles.signatureImage} />
+                  ) : (
+                    <View style={styles.signatureImage} />
+                  )}
+                  <Text style={styles.signatureLabel}>
+                    {schema.signatures.technicianLabel || 'Çalışan'}
+                  </Text>
+                  {data.employee && (
+                    <Text style={styles.signatureName}>
+                      {safeText(`${data.employee.first_name} ${data.employee.last_name}`)}
+                    </Text>
+                  )}
+                </View>
+              )}
+
+              {/* Customer Signature */}
+              {schema.signatures.showCustomer && (
+                <View style={styles.signatureBox}>
+                  {(data as any).customerSignature ? (
+                    <Image src={(data as any).customerSignature} style={styles.signatureImage} />
+                  ) : (
+                    <View style={styles.signatureImage} />
+                  )}
+                  <Text style={styles.signatureLabel}>
+                    {schema.signatures.customerLabel || 'Müşteri'}
+                  </Text>
+                  {data.customer?.name && (
+                    <Text style={styles.signatureName}>
+                      {safeText(data.customer.name)}
+                    </Text>
+                  )}
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
         {/* Footer */}
         {(schema.notes.footer && schema.notes.footer.trim() !== '') || (schema.notes.showFooterLogo && (schema.header as any).logoUrl) ? (
-          <View style={[
+          <View fixed wrap={false} style={[
             styles.footer,
             {
               flexDirection: 'row',

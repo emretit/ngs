@@ -129,7 +129,7 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
                 {(proposal as any).subject || proposal.title || "Konu belirtilmemiş"}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {proposal.customer?.name || proposal.customer_name || "Müşteri yok"}
+                {proposal.customer?.company || proposal.customer?.name || proposal.customer_name || "Müşteri yok"}
               </p>
             </div>
           </div>

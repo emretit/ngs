@@ -97,6 +97,15 @@ export interface CustomerSettings {
   customerInfoFontSize?: number;
 }
 
+export interface SignatureSettings {
+  show?: boolean;
+  showTechnician?: boolean;
+  showCustomer?: boolean;
+  technicianLabel?: string;
+  customerLabel?: string;
+  fontSize?: number;
+}
+
 export interface TemplateSchema {
   page: PageSettings;
   header: HeaderSettings;
@@ -104,6 +113,7 @@ export interface TemplateSchema {
   lineTable: LineTableSettings;
   totals: TotalsSettings;
   notes: NotesSettings;
+  signatures?: SignatureSettings;
 }
 
 export interface PdfTemplate {

@@ -117,6 +117,14 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
           titleAlign: z.enum(['left', 'center', 'right']).optional(),
         }).optional(),
       }),
+      signatures: z.object({
+        show: z.boolean().optional(),
+        showTechnician: z.boolean().optional(),
+        showCustomer: z.boolean().optional(),
+        technicianLabel: z.string().optional(),
+        customerLabel: z.string().optional(),
+        fontSize: z.number().min(8).max(14).optional(),
+      }).optional(),
     })),
     defaultValues: {
       page: {
@@ -185,6 +193,14 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
           showOtherTerms: false,
           titleAlign: 'left',
         },
+      },
+      signatures: {
+        show: true,
+        showTechnician: true,
+        showCustomer: true,
+        technicianLabel: 'Çalışan',
+        customerLabel: 'Müşteri',
+        fontSize: 10,
       },
     },
   });
@@ -411,6 +427,14 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
               showOtherTerms: false,
               titleAlign: 'left',
             },
+          },
+          signatures: template.schema_json.signatures || {
+            show: true,
+            showTechnician: true,
+            showCustomer: true,
+            technicianLabel: 'Çalışan',
+            customerLabel: 'Müşteri',
+            fontSize: 10,
           }
         };
         
@@ -477,11 +501,83 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
             discount_rate: 0,
             total: 150.00,
           },
+          {
+            id: '3',
+            description: 'Ürün/Hizmet 3',
+            quantity: 3,
+            unit: 'adet',
+            unit_price: 200.00,
+            discount_rate: 5,
+            total: 570.00,
+          },
+          {
+            id: '4',
+            description: 'Ürün/Hizmet 4',
+            quantity: 1,
+            unit: 'set',
+            unit_price: 350.00,
+            discount_rate: 0,
+            total: 350.00,
+          },
+          {
+            id: '5',
+            description: 'Ürün/Hizmet 5',
+            quantity: 4,
+            unit: 'adet',
+            unit_price: 75.00,
+            discount_rate: 15,
+            total: 255.00,
+          },
+          {
+            id: '6',
+            description: 'Ürün/Hizmet 6',
+            quantity: 2,
+            unit: 'paket',
+            unit_price: 250.00,
+            discount_rate: 8,
+            total: 460.00,
+          },
+          {
+            id: '7',
+            description: 'Ürün/Hizmet 7',
+            quantity: 1,
+            unit: 'adet',
+            unit_price: 500.00,
+            discount_rate: 20,
+            total: 400.00,
+          },
+          {
+            id: '8',
+            description: 'Ürün/Hizmet 8',
+            quantity: 3,
+            unit: 'set',
+            unit_price: 120.00,
+            discount_rate: 0,
+            total: 360.00,
+          },
+          {
+            id: '9',
+            description: 'Ürün/Hizmet 9',
+            quantity: 2,
+            unit: 'adet',
+            unit_price: 180.00,
+            discount_rate: 12,
+            total: 316.80,
+          },
+          {
+            id: '10',
+            description: 'Ürün/Hizmet 10',
+            quantity: 1,
+            unit: 'paket',
+            unit_price: 400.00,
+            discount_rate: 10,
+            total: 360.00,
+          },
         ],
-        subtotal: 350.00,
-        total_discount: 35.00,
-        total_tax: 63.00,
-        total_amount: 378.00,
+        subtotal: 3400.80,
+        total_discount: 340.08,
+        total_tax: 612.14,
+        total_amount: 3672.86,
         currency: 'TRY',
         notes: 'Bu bir örnek tekliftir.',
         payment_terms: '30 gün vadeli',
@@ -1270,6 +1366,103 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                           </div>
                         </div>
                       </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+
+                {/* Signatures Settings */}
+                <Accordion type="single" collapsible defaultValue="signatures">
+                  <AccordionItem value="signatures" className="border border-gray-200 rounded-lg">
+                    <AccordionTrigger className="bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs">✍️</span>
+                        <span>İmzalar</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-2 pb-2 pt-1.5 space-y-1.5">
+                      <div className="border rounded-md p-1.5 bg-indigo-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">1</span>
+                            <Label className="text-xs font-medium text-gray-700">İmza Bölümü</Label>
+                          </div>
+                          <Switch
+                            id="show-signatures"
+                            checked={watchedValues.signatures?.show ?? true}
+                            onCheckedChange={(checked) => form.setValue('signatures.show', checked)}
+                            className="scale-[0.65]"
+                          />
+                        </div>
+                      </div>
+
+                      {watchedValues.signatures?.show && (
+                        <>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <div className="border rounded-md p-1.5 bg-blue-50">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs">2</span>
+                                  <Label className="text-xs font-medium text-gray-700">Çalışan İmzası</Label>
+                                </div>
+                                <Switch
+                                  id="show-technician-signature"
+                                  checked={watchedValues.signatures?.showTechnician ?? true}
+                                  onCheckedChange={(checked) => form.setValue('signatures.showTechnician', checked)}
+                                  className="scale-[0.65]"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="border rounded-md p-1.5 bg-green-50">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs">3</span>
+                                  <Label className="text-xs font-medium text-gray-700">Müşteri İmzası</Label>
+                                </div>
+                                <Switch
+                                  id="show-customer-signature"
+                                  checked={watchedValues.signatures?.showCustomer ?? true}
+                                  onCheckedChange={(checked) => form.setValue('signatures.showCustomer', checked)}
+                                  className="scale-[0.65]"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5 pt-1">
+                            <div>
+                              <Label className="text-xs text-gray-600 mb-0.5 block">Çalışan Etiketi</Label>
+                              <Input
+                                value={watchedValues.signatures?.technicianLabel || 'Çalışan'}
+                                onChange={(e) => form.setValue('signatures.technicianLabel', e.target.value)}
+                                placeholder="Çalışan"
+                                className="h-7 text-xs"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-600 mb-0.5 block">Müşteri Etiketi</Label>
+                              <Input
+                                value={watchedValues.signatures?.customerLabel || 'Müşteri'}
+                                onChange={(e) => form.setValue('signatures.customerLabel', e.target.value)}
+                                placeholder="Müşteri"
+                                className="h-7 text-xs"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-600 mb-0.5 block">Font Boyutu</Label>
+                              <Input
+                                type="number"
+                                value={watchedValues.signatures?.fontSize || 10}
+                                onChange={(e) => form.setValue('signatures.fontSize', Number(e.target.value))}
+                                min="8"
+                                max="14"
+                                placeholder="10"
+                                className="h-7 w-14 text-center text-xs"
+                              />
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>

@@ -40,7 +40,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatUnit } from '@/utils/unitConstants';
 import { formatCurrency } from '@/utils/formatters';
-import { CategorySelect } from '@/components/budget/CategorySelect';
+import { ModernCategorySelect } from '@/components/budget/ModernCategorySelect';
 interface EInvoiceItem {
   id: string;
   line_number: number;
@@ -132,48 +132,48 @@ const MemoizedTableRow = React.memo(({
   
   return (
     <TableRow className="hover:bg-gray-50/50 transition-colors">
-      <TableCell className="font-medium text-center">
-        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600">
+      <TableCell className="font-medium text-center py-1.5">
+        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-semibold text-gray-600">
           {item.invoice_item.line_number}
         </div>
       </TableCell>
-      <TableCell>
-        <div className="max-w-48">
-          <p className="font-medium text-gray-900 truncate text-sm">
+      <TableCell className="py-1.5">
+        <div className="max-w-40">
+          <p className="font-medium text-gray-900 truncate text-xs">
             {item.invoice_item.product_name}
           </p>
         </div>
       </TableCell>
-      <TableCell className="text-right">
-        <div className="font-mono text-sm font-semibold text-gray-700">
+      <TableCell className="text-right py-1.5">
+        <div className="font-mono text-xs font-semibold text-gray-700">
           {item.invoice_item.quantity.toFixed(2)}
         </div>
       </TableCell>
-      <TableCell className="text-center">
-        <div className="text-xs font-medium text-gray-600">
+      <TableCell className="text-center py-1.5">
+        <div className="text-[10px] font-medium text-gray-600">
           {formatUnit(item.invoice_item.unit)}
         </div>
       </TableCell>
-      <TableCell className="text-right">
-        <div className="text-sm font-semibold text-gray-700">
+      <TableCell className="text-right py-1.5">
+        <div className="text-xs font-semibold text-gray-700">
           {formatCurrency(item.invoice_item.unit_price, invoice.currency)}
         </div>
       </TableCell>
-      <TableCell>
-        <div className="space-y-2">
+      <TableCell className="py-1.5">
+        <div className="space-y-1">
           {matchedProduct ? (
-            <div className="p-3 bg-gradient-to-r from-green-50 to-green-100/50 border border-green-200 rounded-lg shadow-sm">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                    <p className="font-semibold text-green-900 text-sm">
+            <div className="p-1.5 bg-gradient-to-r from-green-50 to-green-100/50 border border-green-200 rounded-md shadow-sm">
+              <div className="flex items-start justify-between gap-1.5">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <CheckCircle2 className="h-3 w-3 text-green-600 flex-shrink-0" />
+                    <p className="font-semibold text-green-900 text-xs truncate">
                       {matchedProduct.name}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2 text-xs text-green-700 mt-1">
+                  <div className="flex flex-wrap gap-1 text-[10px] text-green-700">
                     {matchedProduct.sku && (
-                      <span className="px-2 py-0.5 bg-green-200/50 rounded">SKU: {matchedProduct.sku}</span>
+                      <span className="px-1.5 py-0.5 bg-green-200/50 rounded text-[10px]">SKU: {matchedProduct.sku}</span>
                     )}
                     <span>{formatCurrency(matchedProduct.price, invoice.currency)}</span>
                   </div>
@@ -181,28 +181,28 @@ const MemoizedTableRow = React.memo(({
               </div>
             </div>
           ) : (
-             <React.Suspense fallback={<div className="text-xs text-gray-500 p-2">Yükleniyor...</div>}>
+             <React.Suspense fallback={<div className="text-[10px] text-gray-500 p-1">Yükleniyor...</div>}>
                <EInvoiceProductSelector
                  value=""
                  onChange={() => {}}
                  onProductSelect={(product) => handleProductSelect(index, product)}
                  onNewProduct={() => handleCreateNewProduct(index)}
-                 placeholder="Ürün ara ve seçin..."
+                 placeholder="Ürün ara..."
                  className="text-xs"
                />
              </React.Suspense>
           )}
         </div>
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center py-1.5">
         {item.matched_product_id && (
           <Button
             onClick={() => handleRemoveMatch(index)}
             variant="ghost"
             size="sm"
-            className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg"
+            className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3" />
           </Button>
         )}
       </TableCell>
@@ -466,13 +466,104 @@ export default function EInvoiceProcess() {
       
       console.log('💰 Invoice amounts:', { subtotal, taxTotal, totalAmount });
 
+      // Fatura tarihini doğru şekilde parse et
+      // Veriban'dan gelen tarih invoiceDate olarak gelir, Nilvera'dan IssueDate olarak gelir
+      // Integrator'a göre öncelik ver
+      let rawInvoiceDate: string | null = null;
+      if (integrator === 'veriban') {
+        // Veriban için önce invoiceDate kontrol et
+        rawInvoiceDate = apiInvoiceDetails?.invoiceDate || 
+                        apiInvoiceDetails?.InvoiceDate || 
+                        null;
+        console.log('📅 Veriban invoiceDate:', rawInvoiceDate);
+      } else {
+        // Nilvera için IssueDate kontrol et
+        rawInvoiceDate = apiInvoiceDetails?.IssueDate || 
+                        apiInvoiceDetails?.issueDate || 
+                        apiInvoiceDetails?.InvoiceDate || 
+                        null;
+        console.log('📅 Nilvera IssueDate:', rawInvoiceDate);
+      }
+      
+      // Fallback: Eğer integrator'a göre bulunamadıysa, tüm alanları kontrol et
+      if (!rawInvoiceDate) {
+        rawInvoiceDate = apiInvoiceDetails?.invoiceDate || 
+                        apiInvoiceDetails?.InvoiceDate || 
+                        apiInvoiceDetails?.IssueDate || 
+                        apiInvoiceDetails?.issueDate || 
+                        null;
+        console.log('📅 Fallback invoiceDate:', rawInvoiceDate);
+      }
+      
+      // Tarih formatını normalize et
+      let normalizedInvoiceDate: string;
+      if (rawInvoiceDate) {
+        console.log('📅 Raw invoice date value:', rawInvoiceDate, 'Type:', typeof rawInvoiceDate);
+        // Eğer tarih zaten ISO formatındaysa (örn: "2024-01-15T00:00:00Z")
+        if (rawInvoiceDate.includes('T')) {
+          normalizedInvoiceDate = rawInvoiceDate;
+          console.log('📅 Date is ISO format, using as-is');
+        } 
+        // Eğer tarih sadece tarih formatındaysa (örn: "2024-01-15")
+        else if (/^\d{4}-\d{2}-\d{2}$/.test(rawInvoiceDate)) {
+          normalizedInvoiceDate = `${rawInvoiceDate}T00:00:00Z`;
+          console.log('📅 Date is YYYY-MM-DD format, converting to ISO');
+        }
+        // Diğer formatlar için Date objesi kullan
+        else {
+          const parsedDate = new Date(rawInvoiceDate);
+          if (!isNaN(parsedDate.getTime())) {
+            normalizedInvoiceDate = parsedDate.toISOString();
+            console.log('📅 Date parsed successfully:', normalizedInvoiceDate);
+          } else {
+            console.warn('⚠️ Invalid date format, using current date as fallback');
+            normalizedInvoiceDate = new Date().toISOString();
+          }
+        }
+        console.log('✅ Normalized invoice date:', normalizedInvoiceDate);
+      } else {
+        console.warn('⚠️ No invoice date found in API response! Available keys:', Object.keys(apiInvoiceDetails || {}));
+        console.warn('⚠️ Using current date as fallback');
+        normalizedInvoiceDate = new Date().toISOString();
+      }
+
+      // Vade tarihini de aynı şekilde parse et
+      let rawDueDate: string | null = null;
+      if (integrator === 'veriban') {
+        rawDueDate = apiInvoiceDetails?.dueDate || 
+                    apiInvoiceDetails?.DueDate || 
+                    null;
+      } else {
+        rawDueDate = apiInvoiceDetails?.DueDate || 
+                    apiInvoiceDetails?.dueDate || 
+                    null;
+      }
+      
+      let normalizedDueDate: string | null = null;
+      if (rawDueDate) {
+        console.log('📅 Raw due date value:', rawDueDate);
+        if (rawDueDate.includes('T')) {
+          normalizedDueDate = rawDueDate;
+        } else if (/^\d{4}-\d{2}-\d{2}$/.test(rawDueDate)) {
+          normalizedDueDate = `${rawDueDate}T00:00:00Z`;
+        } else {
+          const parsedDate = new Date(rawDueDate);
+          if (!isNaN(parsedDate.getTime())) {
+            normalizedDueDate = parsedDate.toISOString();
+          }
+        }
+        console.log('✅ Normalized due date:', normalizedDueDate);
+      } else {
+        console.log('ℹ️ No due date found in API response');
+      }
+
       const invoiceDetails: EInvoiceDetails = {
         id: invoiceId,
         invoice_number: apiInvoiceDetails?.InvoiceNumber || apiInvoiceDetails?.invoiceNumber || apiInvoiceDetails?.ID || invoiceId,
         supplier_name: supplierName,
         supplier_tax_number: supplierTaxNumber,
-        invoice_date: apiInvoiceDetails?.IssueDate || apiInvoiceDetails?.issueDate || apiInvoiceDetails?.InvoiceDate || new Date().toISOString(),
-        due_date: apiInvoiceDetails?.dueDate || apiInvoiceDetails?.DueDate || null,
+        invoice_date: normalizedInvoiceDate,
+        due_date: normalizedDueDate,
         currency: apiInvoiceDetails?.CurrencyCode || apiInvoiceDetails?.currency || 'TRY',
         subtotal: subtotal,
         tax_total: taxTotal,
@@ -502,10 +593,16 @@ export default function EInvoiceProcess() {
         }
       };
       setInvoice(invoiceDetails);
-      // Set default form values
+      // Set default form values - tarihi doğru formatta al
+      const invoiceDateForForm = normalizedInvoiceDate.includes('T') 
+        ? normalizedInvoiceDate.split('T')[0] 
+        : normalizedInvoiceDate.substring(0, 10);
+      const dueDateForForm = normalizedDueDate 
+        ? (normalizedDueDate.includes('T') ? normalizedDueDate.split('T')[0] : normalizedDueDate.substring(0, 10))
+        : '';
       setFormData({
-        invoice_date: invoiceDetails.invoice_date.split('T')[0],
-        due_date: invoiceDetails.due_date ? invoiceDetails.due_date.split('T')[0] : '',
+        invoice_date: invoiceDateForForm,
+        due_date: dueDateForForm,
         payment_terms: '30 gün',
         notes: `E-faturadan aktarılan alış faturası - Orijinal No: ${invoiceDetails.invoice_number}`,
         project_id: '',
@@ -1181,42 +1278,42 @@ export default function EInvoiceProcess() {
   }
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Sticky Header */}
         <div className="sticky top-0 z-20 bg-white rounded-lg border border-gray-200 shadow-sm mb-2">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3">
             {/* Sol taraf - Başlık */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => navigate('/e-invoice')}
-                className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-50/50 hover:text-blue-700 hover:border-blue-200 transition-all duration-200 hover:shadow-sm"
+                className="gap-1.5 px-2.5 py-1.5 h-8 text-xs rounded-lg hover:bg-blue-50 hover:text-blue-700"
               >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="font-medium">E-faturalar</span>
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>E-faturalar</span>
               </Button>
               
-              <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white shadow-lg">
-                <FileText className="h-5 w-5" />
+              <div className="p-1.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-md text-white">
+                <FileText className="h-4 w-4" />
               </div>
-              <div className="space-y-0.5">
-                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              <div className="space-y-0">
+                <h1 className="text-base font-semibold">
                   Fatura İşleme
                 </h1>
-                <p className="text-xs text-muted-foreground/70">
+                <p className="text-[10px] text-muted-foreground/70">
                   {invoice.invoice_number} • {invoice.supplier_name}
                 </p>
               </div>
             </div>
             
             {/* Sağ taraf - İstatistikler */}
-            <div className="flex flex-wrap gap-2 items-center">
-              <Badge variant="outline" className="px-3 py-1">
+            <div className="flex flex-wrap gap-1.5 items-center">
+              <Badge variant="outline" className="px-2 py-0.5 text-xs h-6">
                 <Package className="h-3 w-3 mr-1" />
                 {invoice.items.length} Kalem
               </Badge>
-              <Badge variant="outline" className="px-3 py-1">
+              <Badge variant="outline" className="px-2 py-0.5 text-xs h-6">
                 <DollarSign className="h-3 w-3 mr-1" />
                 {formatCurrency(invoice.total_amount, invoice.currency)}
               </Badge>
@@ -1225,32 +1322,32 @@ export default function EInvoiceProcess() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Left Column - Invoice Info */}
           <div className="lg:col-span-1">
-            <Card className="border-2 border-gray-300 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-b-2 border-gray-300 p-3">
-                <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-blue-600" />
+            <Card className="border border-gray-200 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-b border-gray-200 p-2.5">
+                <CardTitle className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-blue-600" />
                   Fatura & Tedarikçi Bilgileri
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 space-y-4">
+              <CardContent className="p-3 space-y-3">
                 {/* Fatura Bilgileri */}
-                <div className="space-y-1.5 text-sm">
+                <div className="space-y-1.5 text-xs">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Fatura No:</span>
+                    <span className="text-gray-500 text-xs">Fatura No:</span>
                     <span className="font-semibold text-xs">{invoice.invoice_number}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Tarih:</span>
+                    <span className="text-gray-500 text-xs">Tarih:</span>
                     <span className="text-xs">{format(new Date(invoice.invoice_date), 'dd.MM.yyyy', { locale: tr })}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Kalem:</span>
+                    <span className="text-gray-500 text-xs">Kalem:</span>
                     <span className="font-medium text-xs">{invoice.items.length}</span>
                   </div>
-                  <Separator className="my-2" />
+                  <Separator className="my-1.5" />
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-xs">Ara Toplam:</span>
                     <span className="font-medium text-xs">{formatCurrency(invoice.subtotal, invoice.currency)}</span>
@@ -1267,46 +1364,53 @@ export default function EInvoiceProcess() {
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="my-2" />
 
                 {/* Tedarikçi Bilgileri */}
-                <div className={`p-2.5 rounded-lg text-xs transition-all ${
+                <div className={`p-2 rounded-lg text-xs transition-all ${
                   supplierMatchStatus === 'found' ? 'bg-green-50 border border-green-200' : 
                   supplierMatchStatus === 'not_found' ? 'bg-orange-50 border border-orange-200' : 
                   'bg-gray-50 border border-gray-200'
                 }`}>
                   {/* Faturadan Gelen Tedarikçi Bilgileri */}
-                  <div className="mb-2">
-                    <div className="font-semibold text-gray-900 text-sm mb-0.5">
+                  <div className="mb-1.5">
+                    <div className="font-semibold text-gray-900 text-xs mb-0.5">
                       {invoice?.supplier_name || invoice?.supplier_details?.company_name || 'Tedarikçi Adı Bulunamadı'}
                     </div>
                     <div className="text-gray-600 text-xs">
                       VKN: {invoice?.supplier_tax_number || invoice?.supplier_details?.tax_number || 'Belirtilmemiş'}
                     </div>
-                    {invoice.supplier_details?.email && (
-                      <div className="text-gray-500 text-xs mt-0.5">📧 {invoice.supplier_details.email}</div>
-                    )}
-                    {invoice.supplier_details?.phone && (
-                      <div className="text-gray-500 text-xs mt-0.5">📞 {invoice.supplier_details.phone}</div>
-                    )}
-                    {invoice.supplier_details?.address && (
-                      <div className="text-gray-500 text-xs mt-0.5">
-                        📍 {[
-                          invoice.supplier_details.address.street,
-                          invoice.supplier_details.address.district,
-                          invoice.supplier_details.address.city
-                        ].filter(Boolean).join(', ')}
-                      </div>
+                    {(invoice.supplier_details?.email || invoice.supplier_details?.phone || invoice.supplier_details?.address) && (
+                      <details className="mt-1">
+                        <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">Detaylar</summary>
+                        <div className="mt-1 space-y-0.5 pl-2">
+                          {invoice.supplier_details?.email && (
+                            <div className="text-gray-500 text-xs">📧 {invoice.supplier_details.email}</div>
+                          )}
+                          {invoice.supplier_details?.phone && (
+                            <div className="text-gray-500 text-xs">📞 {invoice.supplier_details.phone}</div>
+                          )}
+                          {invoice.supplier_details?.address && (
+                            <div className="text-gray-500 text-xs">
+                              📍 {[
+                                invoice.supplier_details.address.street,
+                                invoice.supplier_details.address.district,
+                                invoice.supplier_details.address.city
+                              ].filter(Boolean).join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      </details>
                     )}
                   </div>
                   
-                  <Separator className="my-2" />
+                  <Separator className="my-1.5" />
                   
                   {/* Tedarikçi Durum ve Seçim Bölümü */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {/* Durum Göstergesi */}
                     {(supplierMatchStatus === 'searching' || supplierMatchStatus === null || isLoadingSuppliers) && (
-                      <div className="flex items-center gap-1.5 p-2 bg-blue-50 rounded border border-blue-200">
+                      <div className="flex items-center gap-1 p-1.5 bg-blue-50 rounded border border-blue-200">
                         <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
                         <span className="text-blue-700 text-xs">Tedarikçi aranıyor...</span>
                       </div>
@@ -1314,8 +1418,8 @@ export default function EInvoiceProcess() {
                     
                     {/* Tedarikçi Bulundu */}
                     {supplierMatchStatus === 'found' && selectedSupplierId && matchedSupplier && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-1.5 p-2 bg-green-50 rounded border border-green-200">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1 p-1.5 bg-green-50 rounded border border-green-200">
                           <CheckCircle2 className="h-3 w-3 text-green-600 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <div className="text-green-700 font-medium text-xs">VKN ile otomatik eşleşti</div>
@@ -1326,9 +1430,9 @@ export default function EInvoiceProcess() {
                         </div>
                         
                         {/* Farklı tedarikçi seçme opsiyonu */}
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           <Label htmlFor="change_supplier" className="text-xs font-medium text-gray-600">
-                            Farklı bir tedarikçi seçebilirsiniz
+                            Farklı tedarikçi seç
                           </Label>
                           <Select
                             value={selectedSupplierId || ''}
@@ -1339,7 +1443,7 @@ export default function EInvoiceProcess() {
                               }
                             }}
                           >
-                            <SelectTrigger id="change_supplier" className="h-8 text-xs">
+                            <SelectTrigger id="change_supplier" className="h-7 text-xs">
                               <SelectValue placeholder="Tedarikçi seçin..." />
                             </SelectTrigger>
                             <SelectContent>
@@ -1356,8 +1460,8 @@ export default function EInvoiceProcess() {
                     
                     {/* Tedarikçi Bulunamadı - VKN ile eşleşmedi */}
                     {supplierMatchStatus === 'not_found' && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-1.5 p-2 bg-orange-50 rounded border border-orange-200">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1 p-1.5 bg-orange-50 rounded border border-orange-200">
                           <AlertCircle className="h-3 w-3 text-orange-600" />
                           <span className="text-orange-700 text-xs font-medium">
                             Bu VKN sistemde kayıtlı değil
@@ -1367,7 +1471,7 @@ export default function EInvoiceProcess() {
                         {/* Önce manuel seçim opsiyonu sun */}
                         {suppliers.length > 0 && (
                           <>
-                            <div className="space-y-1">
+                            <div className="space-y-0.5">
                               <Label htmlFor="manual_supplier" className="text-xs font-medium">
                                 Mevcut tedarikçilerden seç
                               </Label>
@@ -1380,7 +1484,7 @@ export default function EInvoiceProcess() {
                                   }
                                 }}
                               >
-                                <SelectTrigger id="manual_supplier" className="h-8 text-xs">
+                                <SelectTrigger id="manual_supplier" className="h-7 text-xs">
                                   <SelectValue placeholder="Tedarikçi seçin..." />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1394,7 +1498,7 @@ export default function EInvoiceProcess() {
                             </div>
                             
                             {/* Ayraç */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               <Separator className="flex-1" />
                               <span className="text-xs text-gray-500">veya</span>
                               <Separator className="flex-1" />
@@ -1407,16 +1511,16 @@ export default function EInvoiceProcess() {
                           onClick={handleCreateNewSupplier}
                           disabled={isCreatingSupplier}
                           size="sm"
-                          className="w-full h-8 text-xs bg-orange-600 hover:bg-orange-700 text-white"
+                          className="w-full h-7 text-xs bg-orange-600 hover:bg-orange-700 text-white"
                         >
                           {isCreatingSupplier ? (
                             <>
-                              <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
-                              Tedarikçi ekleniyor...
+                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                              Ekleniyor...
                             </>
                           ) : (
                             <>
-                              <Plus className="h-3 w-3 mr-1.5" />
+                              <Plus className="h-3 w-3 mr-1" />
                               Yeni Tedarikçi Ekle
                             </>
                           )}
@@ -1426,31 +1530,31 @@ export default function EInvoiceProcess() {
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="my-2" />
 
                 {/* Ek Bilgiler */}
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   <div>
-                    <Label htmlFor="invoice_date" className="text-xs font-medium mb-1 block">Fatura Tarihi</Label>
+                    <Label htmlFor="invoice_date" className="text-xs font-medium mb-0.5 block">Fatura Tarihi</Label>
                     <Input
                       id="invoice_date"
                       type="date"
                       value={formData.invoice_date}
                       onChange={(e) => setFormData(prev => ({ ...prev, invoice_date: e.target.value }))}
-                      className="h-8 text-xs"
+                      className="h-7 text-xs"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="expense_category_id" className="text-xs font-medium mb-1 block">Gider Kategorisi</Label>
-                    <CategorySelect
+                    <Label htmlFor="expense_category_id" className="text-xs font-medium mb-0.5 block">Gider Kategorisi</Label>
+                    <ModernCategorySelect
                       value={formData.expense_category_id}
                       onChange={(value) => setFormData(prev => ({ ...prev, expense_category_id: value || '' }))}
                       placeholder="Kategori seçiniz"
-                      className="h-8 text-xs"
+                      className="h-7 text-xs"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="notes" className="text-xs font-medium mb-1 block">Notlar</Label>
+                    <Label htmlFor="notes" className="text-xs font-medium mb-0.5 block">Notlar</Label>
                     <Textarea
                       id="notes"
                       value={formData.notes}
@@ -1467,14 +1571,14 @@ export default function EInvoiceProcess() {
 
           {/* Right Column - Product Matching */}
           <div className="lg:col-span-3">
-            <Card className="border-2 border-gray-300 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-green-100/50 border-b-2 border-gray-300">
+            <Card className="border border-gray-200 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-green-50 to-green-100/50 border-b border-gray-200 p-2.5">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                    <Target className="h-4 w-4 text-green-600" />
+                  <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
+                    <Target className="h-3.5 w-3.5 text-green-600" />
                     Ürün Eşleştirme
                   </CardTitle>
-                  <Badge variant="outline" className="px-3 py-1">
+                  <Badge variant="outline" className="px-2 py-0.5 text-xs h-6">
                     {matchedCount} / {matchingItems.length} eşleşti
                   </Badge>
                 </div>
@@ -1482,17 +1586,17 @@ export default function EInvoiceProcess() {
               <CardContent className="p-0">
                 {/* Matching Table */}
                 <div className="overflow-x-auto">
-                  <div className="max-h-[65vh] overflow-y-auto">
+                  <div className="max-h-[70vh] overflow-y-auto">
                     <Table>
                       <TableHeader className="sticky top-0 bg-gray-50 z-10">
                         <TableRow>
-                          <TableHead className="w-12 font-semibold">#</TableHead>
-                          <TableHead className="min-w-48 font-semibold">Fatura Kalemi</TableHead>
-                          <TableHead className="w-24 text-right font-semibold">Miktar</TableHead>
-                          <TableHead className="w-20 text-center font-semibold">Birim</TableHead>
-                          <TableHead className="w-28 text-right font-semibold">Birim Fiyat</TableHead>
-                          <TableHead className="min-w-64 font-semibold">Eşleşen Ürün</TableHead>
-                          <TableHead className="w-32 text-center font-semibold">İşlemler</TableHead>
+                          <TableHead className="w-10 font-semibold text-xs py-2">#</TableHead>
+                          <TableHead className="min-w-40 font-semibold text-xs py-2">Fatura Kalemi</TableHead>
+                          <TableHead className="w-20 text-right font-semibold text-xs py-2">Miktar</TableHead>
+                          <TableHead className="w-16 text-center font-semibold text-xs py-2">Birim</TableHead>
+                          <TableHead className="w-24 text-right font-semibold text-xs py-2">Birim Fiyat</TableHead>
+                          <TableHead className="min-w-56 font-semibold text-xs py-2">Eşleşen Ürün</TableHead>
+                          <TableHead className="w-24 text-center font-semibold text-xs py-2">İşlemler</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1518,31 +1622,31 @@ export default function EInvoiceProcess() {
           </div>
         </div>
         {/* Action Buttons */}
-        <Card className="border-2 border-gray-300 shadow-sm bg-gradient-to-r from-gray-50 to-gray-100/50">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="space-y-1">
+        <Card className="border border-gray-200 shadow-sm bg-gradient-to-r from-gray-50 to-gray-100/50">
+          <CardContent className="p-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="space-y-0.5">
                 {allMatched ? (
-                  <div className="flex items-center gap-2 text-green-600 font-medium">
-                    <CheckCircle2 className="h-5 w-5" />
+                  <div className="flex items-center gap-1.5 text-green-600 font-medium text-xs">
+                    <CheckCircle2 className="h-4 w-4" />
                     <span>Tüm ürünler eşleştirildi</span>
                   </div>
                 ) : (
-                  <div className="space-y-1">
-                    <div className="text-sm text-gray-600">
+                  <div className="space-y-0.5">
+                    <div className="text-xs text-gray-600">
                       <span className="font-medium">{matchedCount} / {matchingItems.length}</span> ürün eşleştirildi
                     </div>
                     {matchingItems.length - matchedCount > 0 && (
-                      <div className="flex items-center gap-1 text-orange-600 text-sm">
-                        <AlertCircle className="h-4 w-4" />
+                      <div className="flex items-center gap-1 text-orange-600 text-xs">
+                        <AlertCircle className="h-3 w-3" />
                         <span>{matchingItems.length - matchedCount} ürün eksik</span>
                       </div>
                     )}
                   </div>
                 )}
                 {!selectedSupplierId && (
-                  <div className="flex items-center gap-1 text-orange-600 text-sm mt-2">
-                    <AlertCircle className="h-4 w-4" />
+                  <div className="flex items-center gap-1 text-orange-600 text-xs mt-1">
+                    <AlertCircle className="h-3 w-3" />
                     <span>Tedarikçi seçilmedi</span>
                   </div>
                 )}
@@ -1550,17 +1654,17 @@ export default function EInvoiceProcess() {
               <Button
                 onClick={handleCreatePurchaseInvoice}
                 disabled={!canCreateInvoice || isCreating}
-                size="lg"
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
+                size="default"
+                className="w-full sm:w-auto h-9 bg-blue-600 hover:bg-blue-700 text-white text-sm shadow-sm hover:shadow transition-all"
               >
                 {isCreating ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
                     Oluşturuluyor...
                   </>
                 ) : (
                   <>
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save className="h-3.5 w-3.5 mr-1.5" />
                     Alış Faturasını Oluştur
                   </>
                 )}

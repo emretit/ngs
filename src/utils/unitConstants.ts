@@ -47,8 +47,14 @@ export const UNIT_OPTIONS = Object.entries(UNIT_LABELS).map(([value, label]) => 
 
 // UBL-TR standart birim kodlarını okunabilir birimlere çevir
 export const formatUnit = (unit: string): string => {
+  if (!unit) return 'adet';
+  
+  const unitUpper = unit.toUpperCase();
+  const unitLower = unit.toLowerCase();
+  
   const unitMap: Record<string, string> = {
     'C62': 'adet',
+    'NIU': 'adet', // NIU = Number of Items Unit (adet)
     'MTR': 'metre',
     'MTK': 'metrekare',
     'MTQ': 'metreküp',
@@ -62,8 +68,24 @@ export const formatUnit = (unit: string): string => {
     'WEE': 'hafta',
     'PA': 'paket',
     'CT': 'kutu',
+    // Okunabilir formatları da destekle
+    'adet': 'adet',
+    'kilogram': 'kilogram',
+    'gram': 'gram',
+    'metre': 'metre',
+    'metrekare': 'metrekare',
+    'metreküp': 'metreküp',
+    'litre': 'litre',
+    'mililitre': 'mililitre',
+    'paket': 'paket',
+    'kutu': 'kutu',
+    'saat': 'saat',
+    'gün': 'gün',
+    'hafta': 'hafta',
+    'ay': 'ay',
   };
-  return unitMap[unit] || unit;
+  
+  return unitMap[unitUpper] || unitMap[unitLower] || unitMap[unit] || unit;
 };
 
 // UBL-TR birim kodlarını dropdown değerlerine çevir

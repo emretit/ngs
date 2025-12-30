@@ -117,18 +117,20 @@ export const useDeletePayment = (customer: Customer) => {
     },
     onSuccess: () => {
       toast.success("Ödeme başarıyla silindi");
-      
+
       // Sadece ilgili customer için spesifik query'leri invalidate et
       if (customer.id) {
         queryClient.invalidateQueries({ queryKey: ["customer-payments", customer.id, userData?.company_id] });
         queryClient.invalidateQueries({ queryKey: ["customer", customer.id] });
         queryClient.invalidateQueries({ queryKey: ["customer-payment-stats", customer.id] });
+        queryClient.invalidateQueries({ queryKey: ["customer-sales-invoices", customer.id, userData?.company_id] });
+        queryClient.invalidateQueries({ queryKey: ["customer-purchase-invoices", customer.id, userData?.company_id] });
       }
-      
+
       // Genel query'leri invalidate et (customer.id olmadan)
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: ["customers"],
-        exact: false 
+        exact: false
       });
       queryClient.invalidateQueries({ queryKey: ["payment-accounts"] });
     },

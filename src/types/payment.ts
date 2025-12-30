@@ -17,6 +17,7 @@ export interface Payment {
   payment_direction: PaymentDirection;
   recipient_name: string | null;
   reference_note?: string | null;
+  check_id?: string | null;
   created_at: string;
   updated_at: string;
   accounts?: {
@@ -24,4 +25,11 @@ export interface Payment {
     account_type: string;
     bank_name?: string;
   };
+  check?: {
+    id: string;
+    check_number: string;
+    bank: string;
+    due_date: string;
+    status: string;
+  } | null;
 }

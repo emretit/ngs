@@ -18,6 +18,14 @@ export interface UnifiedTransaction {
   dueDate?: string;
   branch?: string;
   balanceAfter?: number;
+  usdBalanceAfter?: number;
+  check?: {
+    id: string;
+    check_number: string;
+    bank: string;
+    due_date: string;
+    status: string;
+  } | null;
 }
 
 export const getTransactionTypeLabel = (
@@ -89,6 +97,26 @@ export const getCreditDebit = (
   usdRate: number,
   convertCurrency: (amount: number, from: string, to: string) => number
 ) => {
+  // Satış faturası: Müşteriye mal sattık → Müşteri bize borçlu → BORÇ
+  if (transaction.type === 'sales_invoice') {
+    return {
+      credit: 0,
+      debit: transaction.amount,
+      usdCredit: 0,
+      usdDebit: getUsdAmount(transaction.amount, transaction.currency, usdRate, convertCurrency),
+    };
+  }
+
+  // Alış faturası: Müşteriden mal aldık → Biz müşteriye borçluyuz → ALACAK
+  if (transaction.type === 'purchase_invoice') {
+    return {
+      credit: transaction.amount,
+      debit: 0,
+      usdCredit: getUsdAmount(transaction.amount, transaction.currency, usdRate, convertCurrency),
+      usdDebit: 0,
+    };
+  }
+
   // Fiş işlemleri için özel mantık
   if (transaction.type === 'payment' && transaction.paymentType === 'fis') {
     // Müşteri için: Borç fişi (outgoing) = müşteri bize borçlu → Borç kolonunda
@@ -111,10 +139,10 @@ export const getCreditDebit = (
       };
     }
   }
-  
-  // Diğer işlemler için mevcut mantık
+
+  // Diğer ödemeler için
   if (transaction.direction === 'incoming') {
-    // Gelen ödemeler ve satış faturaları → Alacak
+    // Gelen ödemeler (müşteri bize ödedi) → Alacak azaldı → ALACAK
     return {
       credit: transaction.amount,
       debit: 0,
@@ -122,7 +150,7 @@ export const getCreditDebit = (
       usdDebit: 0,
     };
   } else {
-    // Giden ödemeler ve alış faturaları → Borç
+    // Giden ödemeler (biz müşteriye ödedik) → Borç azaldı → BORÇ
     return {
       credit: 0,
       debit: transaction.amount,

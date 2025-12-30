@@ -32,14 +32,16 @@ export const usePaymentsQuery = (customer: Customer) => {
         throw error;
       }
 
-      // Her ödeme için hesap bilgisini manuel olarak çek
+      // Her ödeme için hesap ve check bilgisini manuel olarak çek
       const paymentsWithAccounts = await Promise.all(
         (data || []).map(async (payment: any) => {
-          if (payment.account_id && payment.account_type) {
-            let accountName = "Bilinmeyen Hesap";
-            let bankName = null;
-            
-            try {
+          let accountName = "Bilinmeyen Hesap";
+          let bankName = null;
+          let checkData = null;
+          
+          try {
+            // Hesap bilgisini çek
+            if (payment.account_id && payment.account_type) {
               if (payment.account_type === 'bank') {
                 const { data: bankAccount } = await supabase
                   .from('bank_accounts')
@@ -79,21 +81,47 @@ export const usePaymentsQuery = (customer: Customer) => {
                   accountName = partnerAccount.partner_name;
                 }
               }
-            } catch (err) {
-              console.error('Error fetching account for payment:', err);
             }
             
-            return {
-              ...payment,
-              accounts: {
-                name: accountName,
-                account_type: payment.account_type,
-                bank_name: bankName
+            // Check bilgisini çek (eğer check_id varsa)
+            if (payment.check_id) {
+              const { data: check } = await supabase
+                .from('checks')
+                .select('id, check_number, bank, due_date, status')
+                .eq('id', payment.check_id)
+                .single();
+              
+              if (check) {
+                checkData = {
+                  id: check.id,
+                  check_number: check.check_number,
+                  bank: check.bank,
+                  due_date: check.due_date,
+                  status: check.status,
+                };
               }
+            }
+          } catch (err) {
+            console.error('Error fetching account/check for payment:', err);
+          }
+          
+          const result: any = {
+            ...payment,
+          };
+          
+          if (payment.account_id && payment.account_type) {
+            result.accounts = {
+              name: accountName,
+              account_type: payment.account_type,
+              bank_name: bankName
             };
           }
           
-          return payment;
+          if (checkData) {
+            result.check = checkData;
+          }
+          
+          return result;
         })
       );
 
@@ -104,4 +132,5 @@ export const usePaymentsQuery = (customer: Customer) => {
     refetchOnMount: true,
   });
 };
+
 

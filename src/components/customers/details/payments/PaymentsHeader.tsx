@@ -107,6 +107,7 @@ export const PaymentsHeader = ({
         {onAddPayment && (
           <PaymentMethodSelector
             customerId={customerId}
+            calculatedBalance={paymentStats.currentBalance}
             onMethodSelect={(method) => {
               if (method.type === "hesap" || method.type === "cek" || method.type === "senet") {
                 onAddPayment({ type: method.type });

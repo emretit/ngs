@@ -891,8 +891,40 @@ const CreateSalesInvoice = () => {
 
       if (itemsError) throw itemsError;
 
+      // Müşteri bakiyesini güncelle (satış faturası = müşteriye borç = bakiye artar/pozitif yönde artar)
+      // Pozitif bakiye = müşteri bize borçlu, Negatif bakiye = biz müşteriye borçluyuz
+      if (customerId && totals.grand) {
+        const { data: customerData, error: customerFetchError } = await supabase
+          .from('customers')
+          .select('balance')
+          .eq('id', customerId)
+          .single();
+        
+        if (customerFetchError) {
+          console.error('❌ Error fetching customer balance:', customerFetchError);
+          // Hata olsa bile devam et, sadece logla
+        } else if (customerData) {
+          const newCustomerBalance = (customerData.balance || 0) + totals.grand;
+          const { error: customerUpdateError } = await supabase
+            .from('customers')
+            .update({ balance: newCustomerBalance })
+            .eq('id', customerId);
+          
+          if (customerUpdateError) {
+            console.error('❌ Error updating customer balance:', customerUpdateError);
+            // Hata olsa bile devam et, sadece logla
+          } else {
+            console.log('✅ Customer balance updated:', newCustomerBalance);
+          }
+        }
+      }
+
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['sales-invoices'] });
+      if (customerId) {
+        queryClient.invalidateQueries({ queryKey: ['customer', customerId] });
+        queryClient.invalidateQueries({ queryKey: ['customers'] });
+      }
 
       console.log("✅ [CreateSalesInvoice] Invoice saved successfully", { invoiceId: invoice.id, isDraft });
       

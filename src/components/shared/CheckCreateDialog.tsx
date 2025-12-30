@@ -424,6 +424,7 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
           account_id: accountId || null,
           account_type: accountType || null,
           reference_note: checkNumber || null,
+          check_id: insertedCheckId, // Çek ID'sini payment kaydına bağla
         };
 
         const { error: paymentError } = await supabase.from("payments").insert(paymentData);

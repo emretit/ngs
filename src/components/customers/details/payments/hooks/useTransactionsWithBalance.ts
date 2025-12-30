@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { UnifiedTransaction } from "../utils/paymentUtils";
+import { getCreditDebit } from "../utils/paymentUtils";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 
 interface UseTransactionsWithBalanceProps {
   allTransactions: UnifiedTransaction[];
@@ -12,9 +14,13 @@ export const useTransactionsWithBalance = ({
   filteredTransactions,
   currentBalance,
 }: UseTransactionsWithBalanceProps) => {
+  const { exchangeRates, convertCurrency } = useExchangeRates();
+
   return useMemo(() => {
-    // ÖNCE: Tüm işlemler için gerçek bakiyeyi hesapla (filtreye bakmaksızın)
-    // Tüm işlemleri tarihe göre sırala (en eski en önce)
+    // USD kuru
+    const usdRate = exchangeRates.find(r => r.currency_code === 'USD')?.forex_selling || 1;
+
+    // ADIM 1: Tüm işlemleri tarihe göre sırala (en eski en önce)
     const allSortedTransactions = [...allTransactions].sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
@@ -25,59 +31,31 @@ export const useTransactionsWithBalance = ({
       return dateA - dateB;
     });
 
-    // Mevcut bakiyeden başlayarak geriye doğru başlangıç bakiyesini hesapla
-    let initialBalance = currentBalance || 0;
-    
-    // Tüm balance'a etki eden işlemleri geriye doğru çıkar (tarihe göre sıralı, en yeni en önce)
-    const allBalanceAffecting = allSortedTransactions.filter(
-      t => t.type === 'payment' || t.type === 'purchase_invoice'
-    );
-    
-    const sortedAllBalanceAffecting = [...allBalanceAffecting].sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      return dateB - dateA; // En yeni en önce
-    });
-
-    sortedAllBalanceAffecting.forEach((transaction) => {
-      if (transaction.type === 'payment') {
-        // Ödeme: giden ödeme balance += amount, geri alırken balance -= amount
-        const amount = transaction.direction === 'incoming' 
-          ? -Number(transaction.amount)  // Gelen ödeme balance -= amount, geri alırken balance += amount
-          : Number(transaction.amount);  // Giden ödeme balance += amount, geri alırken balance -= amount
-        initialBalance = initialBalance - amount;
-      } else if (transaction.type === 'purchase_invoice') {
-        // Alış faturası: balance -= amount (oluşturulduğunda), geri alırken balance += amount
-        initialBalance = initialBalance + Number(transaction.amount);
-      }
-    });
-    
-    // Şimdi tüm işlemler için gerçek bakiyeyi hesapla
-    let runningBalance = initialBalance;
-    const balanceMap = new Map<string, number>();
+    // ADIM 2: Her işlem için bakiye hesapla (en eskiden başlayarak)
+    let runningBalance = 0;
+    let runningUsdBalance = 0;
+    const balanceMap = new Map<string, { balance: number; usdBalance: number }>();
 
     allSortedTransactions.forEach((transaction) => {
-      // İşlem tutarını hesapla - sadece balance'a etki eden işlemler için
-      let amount: number = 0;
-      if (transaction.type === 'payment') {
-        // Ödeme: giden ödeme balance += amount, gelen ödeme balance -= amount
-        amount = transaction.direction === 'incoming'
-          ? -Number(transaction.amount)  // Gelen ödeme: balance -= amount
-          : Number(transaction.amount);   // Giden ödeme: balance += amount
-      } else if (transaction.type === 'purchase_invoice') {
-        // Alış faturası: balance -= amount (oluşturulduğunda)
-        amount = -Number(transaction.amount);
-      }
-      // Satış faturaları, siparişler, teklifler, servis talepleri balance'a etki etmez (amount = 0)
+      // Borç ve alacak tutarlarını al
+      const { credit, debit, usdCredit, usdDebit } = getCreditDebit(transaction, usdRate, convertCurrency);
 
-      // Bu işlemden sonraki bakiye (sadece balance'a etki eden işlemler için)
-      runningBalance = runningBalance + amount;
-      
-      // Her işlem için bakiyeyi map'e kaydet
-      balanceMap.set(transaction.id, runningBalance);
+      // TRY Bakiye formülü: Yeni Bakiye = Eski Bakiye + Borç - Alacak
+      // - Borç (debit): Müşteri bize borçlu → bakiye artırır (+)
+      // - Alacak (credit): Biz müşteriye borçluyuz → bakiye azaltır (-)
+      runningBalance = runningBalance + debit - credit;
+
+      // USD Bakiye formülü: Aynı mantık ama USD tutarlarıyla
+      runningUsdBalance = runningUsdBalance + usdDebit - usdCredit;
+
+      // Her işlem için bakiyeleri map'e kaydet
+      balanceMap.set(transaction.id, {
+        balance: runningBalance,
+        usdBalance: runningUsdBalance
+      });
     });
 
-    // SONRA: Filtrelenmiş işlemleri al ve gerçek bakiyeleriyle eşleştir
+    // ADIM 3: Filtrelenmiş işlemleri al ve gerçek bakiyeleriyle eşleştir
     const filteredSorted = [...filteredTransactions].sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
@@ -88,17 +66,56 @@ export const useTransactionsWithBalance = ({
     });
 
     const transactionsWithBalances = filteredSorted.map((transaction) => {
-      // Gerçek bakiyeyi map'ten al
-      const balanceAfter = balanceMap.get(transaction.id) ?? currentBalance;
+      // Gerçek bakiyeleri map'ten al
+      const balances = balanceMap.get(transaction.id) ?? { balance: 0, usdBalance: 0 };
 
       return {
         ...transaction,
-        balanceAfter, // Bu işlemden sonraki gerçek bakiye (tüm işlemlere göre)
+        balanceAfter: balances.balance, // Bu işlemden sonraki TRY bakiye
+        usdBalanceAfter: balances.usdBalance, // Bu işlemden sonraki USD bakiye
       };
     });
 
-    // En yeni en üstte olacak şekilde ters çevir
-    return transactionsWithBalances.reverse();
-  }, [filteredTransactions, allTransactions, currentBalance]);
+    // ADIM 4: Devir bakiye hesapla (eğer filtre varsa ve filtre öncesi işlemler varsa)
+    let result = [...transactionsWithBalances];
+
+    // Eğer filtrelenmiş işlemler varsa ve tüm işlemlerden az ise (yani filtre uygulanmış)
+    if (filteredSorted.length > 0 && filteredSorted.length < allSortedTransactions.length) {
+      // Filtredeki ilk işlemi bul
+      const firstFilteredTransaction = filteredSorted[0];
+      const firstFilteredDate = new Date(firstFilteredTransaction.date).getTime();
+
+      // Filtre öncesi son işlemi bul (tarih olarak filtredeki ilk işlemden önceki)
+      const beforeFilterTransactions = allSortedTransactions.filter(t => {
+        const tDate = new Date(t.date).getTime();
+        return tDate < firstFilteredDate;
+      });
+
+      // Eğer filtre öncesi işlemler varsa, devir bakiye ekle
+      if (beforeFilterTransactions.length > 0) {
+        const lastBeforeFilter = beforeFilterTransactions[beforeFilterTransactions.length - 1];
+        const openingBalances = balanceMap.get(lastBeforeFilter.id) ?? { balance: 0, usdBalance: 0 };
+
+        // Devir bakiye satırı oluştur
+        const openingBalanceTransaction: UnifiedTransaction = {
+          id: 'opening-balance',
+          type: 'payment', // Dummy type
+          date: firstFilteredTransaction.date,
+          amount: 0,
+          direction: 'incoming',
+          description: 'Devir Bakiye',
+          currency: 'TRY',
+          balanceAfter: openingBalances.balance,
+          usdBalanceAfter: openingBalances.usdBalance,
+        };
+
+        // Devir bakiyeyi en başa ekle
+        result.unshift(openingBalanceTransaction);
+      }
+    }
+
+    // ADIM 5: En yeni en üstte olacak şekilde ters çevir
+    return result.reverse();
+  }, [filteredTransactions, allTransactions, currentBalance, exchangeRates, convertCurrency]);
 };
 

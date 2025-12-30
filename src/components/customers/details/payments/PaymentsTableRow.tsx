@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import { UnifiedTransaction, getTransactionTypeLabel, getAccountName, getCreditDebit, getUsdAmount } from "./utils/paymentUtils";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 
@@ -19,13 +20,41 @@ export const PaymentsTableRow = ({
   onDelete,
   isDeleting = false,
 }: PaymentsTableRowProps) => {
+  const navigate = useNavigate();
   const { convertCurrency } = useExchangeRates();
-  
+
+  // Devir bakiye kontrolü
+  const isOpeningBalance = transaction.id === 'opening-balance';
+
   const { credit, debit, usdCredit, usdDebit } = getCreditDebit(transaction, usdRate, convertCurrency);
-  const usdBalance = transaction.balanceAfter ? getUsdAmount(transaction.balanceAfter, transaction.currency, usdRate, convertCurrency) : 0;
+  const usdBalance = transaction.usdBalanceAfter ?? 0;
   const balanceIndicator = (transaction.balanceAfter || 0) >= 0 ? 'A' : 'B';
   const usdBalanceIndicator = usdBalance >= 0 ? 'A' : 'B';
   const exchangeRate = transaction.currency === 'USD' ? 1 : usdRate;
+
+  // Devir bakiye satırı için özel gösterim
+  if (isOpeningBalance) {
+    return (
+      <TableRow key={transaction.id} className="h-8 bg-blue-50 font-semibold border-b-2 border-blue-200">
+        <TableCell className="py-2 px-3 text-xs whitespace-nowrap" colSpan={3}>
+          <span className="font-bold text-blue-800">{transaction.description}</span>
+        </TableCell>
+        <TableCell className="py-2 px-3 text-xs whitespace-nowrap text-center">-</TableCell>
+        <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
+        <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
+        <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
+        <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
+        <TableCell className={`py-2 px-3 text-right text-xs font-bold whitespace-nowrap ${usdBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          {usdBalance.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {usdBalanceIndicator}
+        </TableCell>
+        <TableCell className={`py-2 px-3 text-right text-xs font-bold whitespace-nowrap ${(transaction.balanceAfter || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          {(transaction.balanceAfter || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {balanceIndicator}
+        </TableCell>
+        <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
+        <TableCell className="py-2 px-3 text-center">-</TableCell>
+      </TableRow>
+    );
+  }
 
   return (
     <TableRow key={`${transaction.type}-${transaction.id}`} className="h-8 transition-colors hover:bg-gray-50">
@@ -33,13 +62,33 @@ export const PaymentsTableRow = ({
         {format(new Date(transaction.date), "dd.MM.yyyy")}
       </TableCell>
       <TableCell className="py-2 px-3 text-xs whitespace-nowrap">
-        {transaction.reference || '-'}
+        {transaction.reference ? (
+          (transaction.type === 'purchase_invoice' || transaction.type === 'sales_invoice') ? (
+            <button
+              onClick={() => {
+                if (transaction.type === 'purchase_invoice') {
+                  navigate(`/purchase-invoices/${transaction.id}`);
+                } else if (transaction.type === 'sales_invoice') {
+                  navigate(`/sales-invoices/${transaction.id}`);
+                }
+              }}
+              className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer"
+              title="Fatura detayını görüntüle"
+            >
+              {transaction.reference}
+            </button>
+          ) : (
+            transaction.reference
+          )
+        ) : (
+          '-'
+        )}
       </TableCell>
       <TableCell className="py-2 px-3 whitespace-nowrap">
-        <Badge 
+        <Badge
           variant="outline"
           className={`text-[10px] px-1.5 py-0 ${
-            transaction.type === 'payment' 
+            transaction.type === 'payment'
               ? transaction.direction === 'incoming'
                 ? 'border-green-500 text-green-700 bg-green-50'
                 : 'border-red-500 text-red-700 bg-red-50'
@@ -63,6 +112,11 @@ export const PaymentsTableRow = ({
           {transaction.type === 'payment' && transaction.payment && (
             <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
               {getAccountName(transaction.payment)}
+            </div>
+          )}
+          {transaction.check && (
+            <div className="text-[10px] text-blue-600 mt-0.5 truncate font-medium">
+              Çek: {transaction.check.check_number} - {transaction.check.bank}
             </div>
           )}
         </div>

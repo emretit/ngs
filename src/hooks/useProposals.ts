@@ -1,11 +1,11 @@
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { Proposal, ProposalStatus } from "@/types/proposal";
 import { ProposalFilters } from "@/components/proposals/types";
 import { useCurrentUser } from "./useCurrentUser";
 import { parseProposalData } from "@/services/proposal/helpers/dataParser";
+import { buildCompanyQuery, buildCompanyQueryWithOr, QueryFilter } from "@/utils/supabaseQueryBuilder";
+import { useRealtimeSubscription } from "./useRealtimeSubscription";
 
 // Helper function to map database results to Proposal type
 const mapProposalData = (item: any): Proposal => {
@@ -26,9 +26,36 @@ const mapProposalData = (item: any): Proposal => {
 };
 
 // Original useProposals hook for backward compatibility
+// Migrated to use new query builder and real-time subscription
 export const useProposals = (filters?: ProposalFilters) => {
   const { userData, loading: userLoading } = useCurrentUser();
-  const queryClient = useQueryClient();
+  
+  // Build query filters
+  const queryFilters: QueryFilter[] = [];
+  
+  if (filters?.status && filters.status !== 'all') {
+    queryFilters.push({ field: 'status', operator: 'eq', value: filters.status });
+  }
+  
+  if (filters?.employeeId && filters.employeeId !== 'all') {
+    queryFilters.push({ field: 'employee_id', operator: 'eq', value: filters.employeeId });
+  }
+  
+  if (filters?.dateRange?.from) {
+    const fromDate = filters.dateRange.from instanceof Date 
+      ? filters.dateRange.from
+      : new Date(filters.dateRange.from);
+    queryFilters.push({ field: 'created_at', operator: 'gte', value: fromDate.toISOString() });
+  }
+  
+  if (filters?.dateRange?.to) {
+    const toDate = filters.dateRange.to instanceof Date
+      ? filters.dateRange.to
+      : new Date(filters.dateRange.to);
+    const endOfDay = new Date(toDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    queryFilters.push({ field: 'created_at', operator: 'lte', value: endOfDay.toISOString() });
+  }
   
   const { data, isLoading, error } = useQuery({
     queryKey: ["proposals", filters, userData?.company_id],
@@ -38,48 +65,45 @@ export const useProposals = (filters?: ProposalFilters) => {
         throw new Error("Kullanıcının company_id'si bulunamadı");
       }
 
-      let query = supabase
-        .from('proposals')
-        .select(`
-          *,
-          customer:customer_id (*),
-          employee:employee_id (*)
-        `)
-        .eq('company_id', userData.company_id) // Kullanıcının company_id'sini kullan
-        .order('offer_date', { ascending: false, nullsFirst: false });
-      
-      // Apply status filter if specified
-      if (filters?.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-      
-      // Apply search filter if specified
+      // Build query with search (OR condition) or without
+      let query;
       if (filters?.search) {
-        query = query.or(`title.ilike.%${filters.search}%,number.ilike.%${filters.search}%`);
-      }
-      
-      // Apply employee filter if specified
-      if (filters?.employeeId && filters.employeeId !== 'all') {
-        query = query.eq('employee_id', filters.employeeId);
-      }
-      
-      // Apply date range filter if specified - created_at kullan (teklifin oluşturulma tarihine göre filtrele)
-      // offer_date gelecekte olabilir, bu yüzden created_at kullanıyoruz
-      if (filters?.dateRange?.from) {
-        const fromDate = filters.dateRange.from instanceof Date 
-          ? filters.dateRange.from
-          : new Date(filters.dateRange.from);
-        const fromDateISO = fromDate.toISOString();
-        query = query.gte('created_at', fromDateISO);
-      }
-      
-      if (filters?.dateRange?.to) {
-        const toDate = filters.dateRange.to instanceof Date
-          ? filters.dateRange.to
-          : new Date(filters.dateRange.to);
-        const endOfDay = new Date(toDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        query = query.lte('created_at', endOfDay.toISOString());
+        query = buildCompanyQueryWithOr(
+          'proposals',
+          userData.company_id,
+          `title.ilike.%${filters.search}%,number.ilike.%${filters.search}%`,
+          {
+            select: `
+              *,
+              customer:customer_id (*),
+              employee:employee_id (*)
+            `,
+            filters: queryFilters,
+            orderBy: {
+              column: 'offer_date',
+              ascending: false,
+              nullsFirst: false,
+            },
+          }
+        );
+      } else {
+        query = buildCompanyQuery(
+          'proposals',
+          userData.company_id,
+          {
+            select: `
+              *,
+              customer:customer_id (*),
+              employee:employee_id (*)
+            `,
+            filters: queryFilters,
+            orderBy: {
+              column: 'offer_date',
+              ascending: false,
+              nullsFirst: false,
+            },
+          }
+        );
       }
       
       const { data, error } = await query;
@@ -90,7 +114,7 @@ export const useProposals = (filters?: ProposalFilters) => {
       }
 
       // Map the database fields to match our Proposal type
-      const mappedData = data.map(mapProposalData);
+      const mappedData = (data || []).map(mapProposalData);
 
       // Sadece en son revizyonları göster
       // Her proposal grubu için (parent_proposal_id veya kendi id'si) en yüksek revision_number'a sahip olanı seç
@@ -114,33 +138,12 @@ export const useProposals = (filters?: ProposalFilters) => {
     enabled: !!userData?.company_id, // Sadece company_id varsa query'yi çalıştır
   });
 
-  // Realtime subscription - proposals tablosundaki değişiklikleri dinle
-  useEffect(() => {
-    if (!userData?.company_id) return;
-
-    const channel = supabase
-      .channel('proposals-kanban-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'proposals',
-          filter: `company_id=eq.${userData.company_id}`,
-        },
-        () => {
-          // Proposals tablosunda herhangi bir değişiklik olduğunda query'yi invalidate et
-          queryClient.invalidateQueries({ queryKey: ["proposals"] });
-          queryClient.invalidateQueries({ queryKey: ["proposals-list"] });
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscription when component unmounts or company_id changes
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userData?.company_id, queryClient]);
+  // Real-time subscription using new hook
+  useRealtimeSubscription({
+    table: 'proposals',
+    companyId: userData?.company_id,
+    queryKeys: [["proposals"], ["proposals-list"]],
+  });
 
   return { 
     data, 
@@ -150,9 +153,44 @@ export const useProposals = (filters?: ProposalFilters) => {
 };
 
 // Normal query hook for proposals - son 1 aylık filtre olduğu için infinite scroll gerek yok
+// Migrated to use new query builder and real-time subscription
 export const useProposalsInfiniteScroll = (filters?: ProposalFilters) => {
   const { userData, loading: userLoading, error: userError } = useCurrentUser();
-  const queryClient = useQueryClient();
+  
+  // Build query filters
+  const queryFilters: QueryFilter[] = [];
+  
+  if (filters?.status && filters.status !== 'all') {
+    queryFilters.push({ field: 'status', operator: 'eq', value: filters.status });
+  }
+  
+  if (filters?.employeeId && filters.employeeId !== 'all') {
+    queryFilters.push({ field: 'employee_id', operator: 'eq', value: filters.employeeId });
+  }
+  
+  if (filters?.dateRange?.from) {
+    const fromDate = filters.dateRange.from instanceof Date 
+      ? filters.dateRange.from
+      : new Date(filters.dateRange.from);
+    queryFilters.push({ field: 'created_at', operator: 'gte', value: fromDate.toISOString() });
+  }
+  
+  if (filters?.dateRange?.to) {
+    const toDate = filters.dateRange.to instanceof Date
+      ? filters.dateRange.to
+      : new Date(filters.dateRange.to);
+    const endOfDay = new Date(toDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    queryFilters.push({ field: 'created_at', operator: 'lte', value: endOfDay.toISOString() });
+  }
+
+  // Determine sort field and direction
+  const sortField = filters?.sortField || 'offer_date';
+  const sortDirection = filters?.sortDirection || 'desc';
+  const ascending = sortDirection === 'asc';
+  const dbSortableFields = ['number', 'status', 'total_amount', 'offer_date', 'valid_until', 'created_at', 'updated_at', 'employee_id', 'customer_id'];
+  const finalSortField = dbSortableFields.includes(sortField) ? sortField : 'offer_date';
+  const finalSortDirection = dbSortableFields.includes(sortField) ? ascending : false;
   
   const {
     data: proposals = [],
@@ -167,67 +205,50 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters) => {
         return [];
       }
 
-      let query = supabase
-        .from('proposals')
-        .select(`
-          *,
-          customer:customer_id (*),
-          employee:employee_id (*)
-        `, { count: 'exact' })
-        .eq('company_id', userData.company_id);
-      
-      // Apply filters
-      if (filters?.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-      
+      // Build query with search (OR condition) or without
+      let query;
       if (filters?.search) {
-        query = query.or(`title.ilike.%${filters.search}%,number.ilike.%${filters.search}%`);
-      }
-      
-      if (filters?.employeeId && filters.employeeId !== 'all') {
-        query = query.eq('employee_id', filters.employeeId);
-      }
-      
-      // Tarih filtreleri - created_at kullan (teklifin oluşturulma tarihine göre filtrele)
-      // offer_date gelecekte olabilir, bu yüzden created_at kullanıyoruz
-      if (filters?.dateRange?.from) {
-        const fromDate = filters.dateRange.from instanceof Date 
-          ? filters.dateRange.from
-          : new Date(filters.dateRange.from);
-        const fromDateISO = fromDate.toISOString();
-        query = query.gte('created_at', fromDateISO);
-      }
-      
-      if (filters?.dateRange?.to) {
-        const toDate = filters.dateRange.to instanceof Date
-          ? filters.dateRange.to
-          : new Date(filters.dateRange.to);
-        const endOfDay = new Date(toDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        query = query.lte('created_at', endOfDay.toISOString());
-      }
-
-      // Apply sorting - veritabanı seviyesinde sıralama
-      // Not: employee_name ve customer_name gibi join edilen alanlar için
-      // veritabanı seviyesinde sıralama yapılamaz, client-side sıralama yapılmalı
-      const sortField = filters?.sortField || 'offer_date';
-      const sortDirection = filters?.sortDirection || 'desc';
-      const ascending = sortDirection === 'asc';
-
-      // Sadece veritabanı kolonları için sıralama yap
-      // employee_name ve customer_name gibi join edilen alanlar için sıralama yapma
-      const dbSortableFields = ['number', 'status', 'total_amount', 'offer_date', 'valid_until', 'created_at', 'updated_at', 'employee_id', 'customer_id'];
-      
-      let finalQuery = query;
-      if (dbSortableFields.includes(sortField)) {
-        finalQuery = query.order(sortField, { ascending, nullsFirst: false });
+        query = buildCompanyQueryWithOr(
+          'proposals',
+          userData.company_id,
+          `title.ilike.%${filters.search}%,number.ilike.%${filters.search}%`,
+          {
+            select: `
+              *,
+              customer:customer_id (*),
+              employee:employee_id (*)
+            `,
+            filters: queryFilters,
+            orderBy: {
+              column: finalSortField,
+              ascending: finalSortDirection,
+              nullsFirst: false,
+            },
+            count: 'exact',
+          }
+        );
       } else {
-        // Varsayılan sıralama (offer_date)
-        finalQuery = query.order('offer_date', { ascending: false, nullsFirst: false });
+        query = buildCompanyQuery(
+          'proposals',
+          userData.company_id,
+          {
+            select: `
+              *,
+              customer:customer_id (*),
+              employee:employee_id (*)
+            `,
+            filters: queryFilters,
+            orderBy: {
+              column: finalSortField,
+              ascending: finalSortDirection,
+              nullsFirst: false,
+            },
+            count: 'exact',
+          }
+        );
       }
 
-      const { data, error: queryError } = await finalQuery;
+      const { data, error: queryError } = await query;
 
       if (queryError) {
         console.error("Error fetching proposals:", queryError);
@@ -264,33 +285,12 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters) => {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Realtime subscription - proposals tablosundaki değişiklikleri dinle
-  useEffect(() => {
-    if (!userData?.company_id) return;
-
-    const channel = supabase
-      .channel('proposals-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'proposals',
-          filter: `company_id=eq.${userData.company_id}`,
-        },
-        () => {
-          // Proposals tablosunda herhangi bir değişiklik olduğunda query'yi invalidate et
-          queryClient.invalidateQueries({ queryKey: ["proposals-list"] });
-          queryClient.invalidateQueries({ queryKey: ["proposals"] });
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscription when component unmounts or company_id changes
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userData?.company_id, queryClient]);
+  // Real-time subscription using new hook
+  useRealtimeSubscription({
+    table: 'proposals',
+    companyId: userData?.company_id,
+    queryKeys: [["proposals-list"], ["proposals"]],
+  });
 
   return {
     data: proposals,

@@ -266,8 +266,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
   }
 
   const totalAmount = invoice.total_amount || 0;
-  const paidAmount = invoice.paid_amount || 0;
-  const remainingAmount = totalAmount - paidAmount;
   const subtotal = invoiceItems.reduce((sum, item) => {
     const itemSubtotal = item.unit_price * item.quantity;
     const discountAmount = itemSubtotal * (item.discount_rate / 100);
@@ -426,14 +424,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                     {formatCurrency(totalAmount, currency)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-xs">Ödenen:</span>
-                  <span className="font-medium text-xs text-blue-600">{formatCurrency(paidAmount, currency)}</span>
-                </div>
-                <div className="flex justify-between items-center pt-1 border-t">
-                  <span className="text-gray-700 font-medium text-xs">Kalan:</span>
-                  <span className="text-sm font-bold text-red-600">{formatCurrency(remainingAmount, currency)}</span>
-                </div>
                 <Separator className="my-2" />
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 text-xs">Durum:</span>
@@ -451,13 +441,8 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                     <span className="text-green-700 font-medium text-xs">Tedarikçi Bilgileri</span>
                   </div>
                   <div className="font-semibold text-gray-900 text-sm mb-0.5">
-                    {invoice.supplier?.name || 'Bilinmiyor'}
+                    {invoice.supplier?.company || invoice.supplier?.name || 'Bilinmiyor'}
                   </div>
-                  {invoice.supplier?.company && (
-                    <div className="text-gray-600 text-xs">
-                      {invoice.supplier.company}
-                    </div>
-                  )}
                   {invoice.supplier?.tax_number && (
                     <div className="text-gray-500 text-xs mt-0.5">
                       VKN: {invoice.supplier.tax_number}
@@ -522,70 +507,116 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                     <Table>
                       <TableHeader className="sticky top-0 bg-gray-50 z-10">
                         <TableRow className="border-gray-200">
-                          <TableHead className="w-12 font-semibold text-xs">#</TableHead>
-                          <TableHead className="min-w-48 font-semibold text-xs">Ürün</TableHead>
-                          <TableHead className="text-right font-semibold text-xs">Miktar</TableHead>
-                          <TableHead className="text-center font-semibold text-xs">Birim</TableHead>
-                          <TableHead className="text-right font-semibold text-xs">Birim Fiyat</TableHead>
-                          <TableHead className="text-right font-semibold text-xs">İndirim</TableHead>
-                          <TableHead className="text-right font-semibold text-xs">KDV</TableHead>
-                          <TableHead className="text-right font-semibold text-xs">Toplam</TableHead>
+                          <TableHead className="w-10 font-semibold text-[10px] px-2">#</TableHead>
+                          <TableHead className="min-w-80 font-semibold text-[10px] px-3">Ürün</TableHead>
+                          <TableHead className="text-right font-semibold text-[10px] px-2 w-20">Miktar</TableHead>
+                          <TableHead className="text-center font-semibold text-[10px] px-2 w-16">Birim</TableHead>
+                          <TableHead className="text-right font-semibold text-[10px] px-2 w-24">Birim Fiyat</TableHead>
+                          <TableHead className="text-right font-semibold text-[10px] px-2 w-20">İndirim</TableHead>
+                          <TableHead className="text-right font-semibold text-[10px] px-2 w-16">KDV</TableHead>
+                          <TableHead className="text-right font-semibold text-[10px] px-2 w-24">Toplam</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {invoiceItems.map((item, index) => (
                           <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors border-gray-100">
-                            <TableCell className="font-medium text-xs">
-                              <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600">
+                            <TableCell className="font-medium text-[10px] px-2 py-2">
+                              <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-semibold text-gray-600">
                                 {index + 1}
                               </div>
                             </TableCell>
-                            <TableCell>
-                              <div className="max-w-48">
-                                <p className="font-medium text-gray-900 truncate text-sm mb-1">
+                            <TableCell className="px-3 py-2">
+                              <div className="min-w-80 max-w-none">
+                                <p className="font-medium text-gray-900 text-xs mb-1 break-words">
                                   {item.product_name}
                                 </p>
-                                <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                                  {item.sku && (
+                                {item.sku && (
+                                  <div className="flex flex-wrap gap-2 text-[10px] text-gray-500 mt-1">
                                     <span className="px-2 py-0.5 bg-gray-100 rounded">SKU: {item.sku}</span>
-                                  )}
-                                </div>
+                                  </div>
+                                )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-right">
-                              <div className="font-mono text-sm font-semibold text-gray-700">
+                            <TableCell className="text-right px-2 py-2">
+                              <div className="font-mono text-xs font-semibold text-gray-700">
                                 {item.quantity.toFixed(2)}
                               </div>
                             </TableCell>
-                            <TableCell className="text-center">
-                              <div className="text-xs font-medium text-gray-600">
+                            <TableCell className="text-center px-2 py-2">
+                              <div className="text-[10px] font-medium text-gray-600">
                                 {formatUnit(item.unit)}
                               </div>
                             </TableCell>
-                            <TableCell className="text-right text-sm font-medium">
+                            <TableCell className="text-right text-xs font-medium px-2 py-2">
                               {formatCurrency(item.unit_price, currency)}
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-right px-2 py-2">
                               {item.discount_rate > 0 ? (
-                                <span className="text-red-600 text-xs">{item.discount_rate}%</span>
+                                <span className="text-red-600 text-[10px]">{item.discount_rate}%</span>
                               ) : (
-                                <span className="text-gray-400 text-xs">-</span>
+                                <span className="text-gray-400 text-[10px]">-</span>
                               )}
                             </TableCell>
-                            <TableCell className="text-right text-xs">{item.tax_rate}%</TableCell>
-                            <TableCell className="text-right font-semibold text-gray-900">
-                              {formatCurrency(item.line_total, currency)}
+                            <TableCell className="text-right text-[10px] px-2 py-2">{item.tax_rate}%</TableCell>
+                            <TableCell className="text-right font-semibold text-xs text-gray-900 px-2 py-2">
+                              {(() => {
+                                // KDV'siz tutar hesapla
+                                const itemSubtotal = item.unit_price * item.quantity;
+                                const discountAmount = itemSubtotal * (item.discount_rate / 100);
+                                const kdvsizTutar = itemSubtotal - discountAmount;
+                                return formatCurrency(kdvsizTutar, currency);
+                              })()}
                             </TableCell>
                           </TableRow>
                         ))}
-                        <TableRow className="bg-gray-50 font-bold border-t-2 border-gray-300">
-                          <TableCell colSpan={7} className="text-right text-sm">
-                            Genel Toplam
-                          </TableCell>
-                          <TableCell className="text-right text-base">
-                            {formatCurrency(invoiceItems.reduce((sum, item) => sum + (item.line_total || 0), 0), currency)}
-                          </TableCell>
-                        </TableRow>
+                        {(() => {
+                          // Genel toplam hesaplamaları
+                          const kdvsizToplam = invoiceItems.reduce((sum, item) => {
+                            const itemSubtotal = item.unit_price * item.quantity;
+                            const discountAmount = itemSubtotal * (item.discount_rate / 100);
+                            const kdvsizTutar = itemSubtotal - discountAmount;
+                            return sum + kdvsizTutar;
+                          }, 0);
+                          
+                          const kdvToplami = invoiceItems.reduce((sum, item) => {
+                            const itemSubtotal = item.unit_price * item.quantity;
+                            const discountAmount = itemSubtotal * (item.discount_rate / 100);
+                            const afterDiscount = itemSubtotal - discountAmount;
+                            const kdvTutari = afterDiscount * (item.tax_rate / 100);
+                            return sum + kdvTutari;
+                          }, 0);
+                          
+                          const kdvDahilToplam = kdvsizToplam + kdvToplami;
+                          
+                          return (
+                            <>
+                              <TableRow className="bg-gray-50 font-semibold border-t-2 border-gray-300 [&>td]:py-0.5">
+                                <TableCell colSpan={7} className="text-right text-xs px-2 leading-none">
+                                  Ara Toplam
+                                </TableCell>
+                                <TableCell className="text-right text-xs px-2 leading-none">
+                                  {formatCurrency(kdvsizToplam, currency)}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow className="bg-gray-50 font-semibold [&>td]:py-0.5">
+                                <TableCell colSpan={7} className="text-right text-xs px-2 leading-none">
+                                  KDV
+                                </TableCell>
+                                <TableCell className="text-right text-xs px-2 leading-none">
+                                  {formatCurrency(kdvToplami, currency)}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow className="bg-gray-50 font-bold border-b-2 border-gray-300 [&>td]:py-0.5">
+                                <TableCell colSpan={7} className="text-right text-xs px-2 leading-none">
+                                  Genel Toplam (KDV Dahil)
+                                </TableCell>
+                                <TableCell className="text-right text-sm px-2 leading-none">
+                                  {formatCurrency(kdvDahilToplam, currency)}
+                                </TableCell>
+                              </TableRow>
+                            </>
+                          );
+                        })()}
                       </TableBody>
                     </Table>
                   </div>

@@ -13,6 +13,7 @@ const CashflowBankAccounts = React.lazy(() => import("@/pages/CashflowBankAccoun
 const CashflowCategories = React.lazy(() => import("@/pages/CashflowCategories"));
 const PurchaseInvoices = React.lazy(() => import("@/pages/PurchaseInvoices"));
 const PurchaseInvoiceDetail = React.lazy(() => import("@/pages/PurchaseInvoiceDetail"));
+const EditPurchaseInvoice = React.lazy(() => import("@/pages/EditPurchaseInvoice"));
 const SalesInvoices = React.lazy(() => import("@/pages/SalesInvoices"));
 const CreateSalesInvoice = React.lazy(() => import("@/pages/CreateSalesInvoice"));
 const SalesInvoiceDetail = React.lazy(() => import("@/pages/SalesInvoiceDetail"));
@@ -64,6 +65,7 @@ export const cashflowRoutes: RouteConfig[] = [
 // NOT: Daha spesifik rotalar önce gelmeli (React Router v6 için önemli)
 export const financeRoutes: RouteConfig[] = [
   { path: "/financial-overview", component: FinancialOverview, protected: true },
+  { path: "/purchase-invoices/edit/:id", component: EditPurchaseInvoice, protected: true },
   { path: "/purchase-invoices/:id", component: PurchaseInvoiceDetail, protected: true },
   { path: "/purchase-invoices", component: PurchaseInvoices, protected: true },
   { path: "/sales-invoices/create", component: CreateSalesInvoice, protected: true },

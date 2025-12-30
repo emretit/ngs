@@ -28,6 +28,7 @@ interface PaymentMethodSelectorProps {
   disabled?: boolean;
   customerId?: string;  // Müşteri sayfasında kullanılıyorsa
   supplierId?: string;  // Tedarikçi sayfasında kullanılıyorsa
+  calculatedBalance?: number;  // Hesaplanan gerçek bakiye (opsiyonel)
 }
 
 const paymentMethods: PaymentMethod[] = [
@@ -71,7 +72,7 @@ const balanceActions: PaymentMethod[] = [
   }
 ];
 
-export function PaymentMethodSelector({ onMethodSelect, disabled = false, customerId, supplierId }: PaymentMethodSelectorProps) {
+export function PaymentMethodSelector({ onMethodSelect, disabled = false, customerId, supplierId, calculatedBalance }: PaymentMethodSelectorProps) {
   const [open, setOpen] = useState(false);
   const [checkDialogOpen, setCheckDialogOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
@@ -232,7 +233,12 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false, custom
         onOpenChange={setBalanceDialogOpen}
         customerId={customerId}
         supplierId={supplierId}
-        currentBalance={customerId ? (customerData?.balance || 0) : (supplierData?.balance || 0)}
+        currentBalance={
+          // Hesaplanan bakiye varsa onu kullan, yoksa database'den gelen değeri kullan
+          calculatedBalance !== undefined
+            ? calculatedBalance
+            : (customerId ? (customerData?.balance || 0) : (supplierData?.balance || 0))
+        }
         partnerName={customerId
           ? (customerData?.company || customerData?.name || "")
           : (supplierData?.company || supplierData?.name || "")

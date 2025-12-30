@@ -592,30 +592,30 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                       <Table>
                         <TableHeader className="sticky top-0 bg-gray-50 z-10">
                           <TableRow className="border-gray-200">
-                            <TableHead className="w-12 font-semibold text-xs">#</TableHead>
-                            <TableHead className="min-w-48 font-semibold text-xs">Ürün</TableHead>
-                            <TableHead className="text-right font-semibold text-xs">Miktar</TableHead>
-                            <TableHead className="text-center font-semibold text-xs">Birim</TableHead>
-                            <TableHead className="text-right font-semibold text-xs">Birim Fiyat</TableHead>
-                            <TableHead className="text-right font-semibold text-xs">İndirim</TableHead>
-                            <TableHead className="text-right font-semibold text-xs">KDV</TableHead>
-                            <TableHead className="text-right font-semibold text-xs">Toplam</TableHead>
+                            <TableHead className="w-10 font-semibold text-[10px] px-2">#</TableHead>
+                            <TableHead className="min-w-80 font-semibold text-[10px] px-3">Ürün</TableHead>
+                            <TableHead className="text-right font-semibold text-[10px] px-2 w-20">Miktar</TableHead>
+                            <TableHead className="text-center font-semibold text-[10px] px-2 w-16">Birim</TableHead>
+                            <TableHead className="text-right font-semibold text-[10px] px-2 w-24">Birim Fiyat</TableHead>
+                            <TableHead className="text-right font-semibold text-[10px] px-2 w-20">İndirim</TableHead>
+                            <TableHead className="text-right font-semibold text-[10px] px-2 w-16">KDV</TableHead>
+                            <TableHead className="text-right font-semibold text-[10px] px-2 w-24">Toplam</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {invoiceItems.map((item, index) => (
                             <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors border-gray-100">
-                              <TableCell className="font-medium text-xs">
-                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600">
+                              <TableCell className="font-medium text-[10px] px-2 py-2">
+                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-semibold text-gray-600">
                                   {item.sira_no || index + 1}
                                 </div>
                               </TableCell>
-                              <TableCell>
-                                <div className="max-w-48">
-                                  <p className="font-medium text-gray-900 truncate text-sm mb-1">
+                              <TableCell className="px-3 py-2">
+                                <div className="min-w-80 max-w-none">
+                                  <p className="font-medium text-gray-900 text-xs mb-1 break-words">
                                     {item.urun_adi}
                                   </p>
-                                  <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                                  <div className="flex flex-wrap gap-2 text-[10px] text-gray-500 mt-1">
                                     {item.product?.sku && (
                                       <span className="px-2 py-0.5 bg-gray-100 rounded">SKU: {item.product.sku}</span>
                                     )}
@@ -625,37 +625,37 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                                   </div>
                                 </div>
                               </TableCell>
-                              <TableCell className="text-right">
-                                <div className="font-mono text-sm font-semibold text-gray-700">
+                              <TableCell className="text-right px-2 py-2">
+                                <div className="font-mono text-xs font-semibold text-gray-700">
                                   {item.miktar.toFixed(2)}
                                 </div>
                               </TableCell>
-                              <TableCell className="text-center">
-                                <div className="text-xs font-medium text-gray-600">
+                              <TableCell className="text-center px-2 py-2">
+                                <div className="text-[10px] font-medium text-gray-600">
                                   {formatUnit(item.birim)}
                                 </div>
                               </TableCell>
-                              <TableCell className="text-right text-sm font-medium">
+                              <TableCell className="text-right text-xs font-medium px-2 py-2">
                                 {formatCurrency(item.birim_fiyat, item.para_birimi || invoice.para_birimi)}
                               </TableCell>
-                              <TableCell className="text-right">
+                              <TableCell className="text-right px-2 py-2">
                                 {item.indirim_orani && item.indirim_orani > 0 ? (
-                                  <span className="text-red-600 text-xs">{item.indirim_orani}%</span>
+                                  <span className="text-red-600 text-[10px]">{item.indirim_orani}%</span>
                                 ) : (
-                                  <span className="text-gray-400 text-xs">-</span>
+                                  <span className="text-gray-400 text-[10px]">-</span>
                                 )}
                               </TableCell>
-                              <TableCell className="text-right text-xs">{item.kdv_orani}%</TableCell>
-                              <TableCell className="text-right font-semibold text-gray-900">
+                              <TableCell className="text-right text-[10px] px-2 py-2">{item.kdv_orani}%</TableCell>
+                              <TableCell className="text-right font-semibold text-xs text-gray-900 px-2 py-2">
                                 {formatCurrency(item.satir_toplami, item.para_birimi || invoice.para_birimi)}
                               </TableCell>
                             </TableRow>
                           ))}
                           <TableRow className="bg-gray-50 font-bold border-t-2 border-gray-300">
-                            <TableCell colSpan={7} className="text-right text-sm">
+                            <TableCell colSpan={7} className="text-right text-xs px-2 py-2">
                               Genel Toplam
                             </TableCell>
-                            <TableCell className="text-right text-base">
+                            <TableCell className="text-right text-sm px-2 py-2">
                               {formatCurrency(invoiceItems.reduce((sum, item) => sum + (item.satir_toplami || 0), 0), invoice.para_birimi)}
                             </TableCell>
                           </TableRow>

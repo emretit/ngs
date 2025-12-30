@@ -1,7 +1,8 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, FileText, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, FileText, Calendar, RefreshCw } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 
 interface EInvoiceFilterBarProps {
@@ -13,6 +14,8 @@ interface EInvoiceFilterBarProps {
   setStartDate?: (value: Date | undefined) => void;
   endDate?: Date | undefined;
   setEndDate?: (value: Date | undefined) => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 const EInvoiceFilterBar = ({
@@ -23,8 +26,26 @@ const EInvoiceFilterBar = ({
   startDate,
   setStartDate,
   endDate,
-  setEndDate
+  setEndDate,
+  onRefresh,
+  isRefreshing = false
 }: EInvoiceFilterBarProps) => {
+  // Tarih aralığını formatla
+  const formatDate = (date: Date | undefined) => {
+    if (!date) return '';
+    return new Intl.DateTimeFormat('tr-TR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    }).format(date);
+  };
+
+  const dateRangeText = startDate && endDate 
+    ? `${formatDate(startDate)} - ${formatDate(endDate)}`
+    : startDate 
+    ? `${formatDate(startDate)} - ...`
+    : '';
+
   return (
     <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
       <div className="relative min-w-[250px] flex-1">
@@ -69,6 +90,19 @@ const EInvoiceFilterBar = ({
           placeholder="Bitiş"
         />
       </div>
+
+      {/* E-Fatura Çek Butonu */}
+      {onRefresh && (
+        <Button 
+          className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300" 
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          title={dateRangeText ? `Tarih aralığı: ${dateRangeText}` : 'E-Fatura çek'}
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span>E-Fatura Çek</span>
+        </Button>
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Supplier } from "@/types/supplier";
 import { Payment } from "@/types/payment";
@@ -37,16 +38,26 @@ interface UnifiedTransaction {
   paymentType?: string;
   dueDate?: string;
   branch?: string;
+  balanceAfter?: number;
+  usdBalanceAfter?: number;
+  check?: {
+    id: string;
+    check_number: string;
+    bank: string;
+    due_date: string;
+    status: string;
+  } | null;
 }
 
 export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [typeFilter, setTypeFilter] = useState<TransactionType | 'all'>('all');
-  // Son 30 gün için varsayılan tarih filtresi
+  // Bulunduğu yılın başı için varsayılan tarih filtresi
   const [startDate, setStartDate] = useState<Date | undefined>(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return date;
+    const now = new Date();
+    const yearStart = new Date(now.getFullYear(), 0, 1); // Yılın ilk günü (1 Ocak)
+    return yearStart;
   });
   const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
   const { exchangeRates, convertCurrency } = useExchangeRates();
@@ -105,13 +116,16 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         throw error;
       }
       
-      // Her ödeme için hesap bilgisini al
+      // Her ödeme için hesap ve check bilgisini al
       const paymentsWithAccounts = await Promise.all(
         (data || []).map(async (payment: any) => {
-          if (payment.account_id && payment.account_type) {
-            let accountName = "Bilinmeyen Hesap";
-            
-            try {
+          let accountName = "Bilinmeyen Hesap";
+          let bankName = null;
+          let checkData = null;
+          
+          try {
+            // Hesap bilgisini çek
+            if (payment.account_id && payment.account_type) {
               if (payment.account_type === 'bank') {
                 const { data: bankAccount } = await supabase
                   .from('bank_accounts')
@@ -119,7 +133,8 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
                   .eq('id', payment.account_id)
                   .single();
                 if (bankAccount) {
-                  accountName = `${bankAccount.account_name} - ${bankAccount.bank_name}`;
+                  accountName = bankAccount.account_name;
+                  bankName = bankAccount.bank_name;
                 }
               } else if (payment.account_type === 'cash') {
                 const { data: cashAccount } = await supabase
@@ -133,11 +148,12 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
               } else if (payment.account_type === 'credit_card') {
                 const { data: cardAccount } = await supabase
                   .from('credit_cards')
-                  .select('card_name')
+                  .select('card_name, bank_name')
                   .eq('id', payment.account_id)
                   .single();
                 if (cardAccount) {
                   accountName = cardAccount.card_name;
+                  bankName = cardAccount.bank_name;
                 }
               } else if (payment.account_type === 'partner') {
                 const { data: partnerAccount } = await supabase
@@ -149,21 +165,47 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
                   accountName = partnerAccount.partner_name;
                 }
               }
-            } catch (err) {
-              console.error('Error fetching account:', err);
             }
             
-            return {
-              ...payment,
-              accounts: {
-                name: accountName,
-                account_type: payment.account_type,
-                bank_name: null
+            // Check bilgisini çek (eğer check_id varsa)
+            if (payment.check_id) {
+              const { data: check } = await supabase
+                .from('checks')
+                .select('id, check_number, bank, due_date, status')
+                .eq('id', payment.check_id)
+                .single();
+              
+              if (check) {
+                checkData = {
+                  id: check.id,
+                  check_number: check.check_number,
+                  bank: check.bank,
+                  due_date: check.due_date,
+                  status: check.status,
+                };
               }
+            }
+          } catch (err) {
+            console.error('Error fetching account/check:', err);
+          }
+          
+          const result: any = {
+            ...payment,
+          };
+          
+          if (payment.account_id && payment.account_type) {
+            result.accounts = {
+              name: accountName,
+              account_type: payment.account_type,
+              bank_name: bankName
             };
           }
           
-          return payment;
+          if (checkData) {
+            result.check = checkData;
+          }
+          
+          return result;
         })
       );
       
@@ -206,7 +248,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         },
         () => {
           // Purchase invoices değiştiğinde query'leri invalidate et
-          queryClient.invalidateQueries({ queryKey: ['supplier-purchase-invoices', supplier.id] });
+          queryClient.invalidateQueries({ queryKey: ['supplier-purchase-invoices', supplier.id, userData?.company_id] });
         }
       )
       .on(
@@ -219,7 +261,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         },
         () => {
           // Tedarikçi müşteri de olabilir, sales invoices değiştiğinde query'leri invalidate et
-          queryClient.invalidateQueries({ queryKey: ['supplier-sales-invoices', supplier.id] });
+          queryClient.invalidateQueries({ queryKey: ['supplier-sales-invoices', supplier.id, userData?.company_id] });
         }
       )
       .on(
@@ -316,6 +358,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         currency: payment.currency || 'TRY',
         payment: payment as Payment & { account_name?: string },
         paymentType: payment.payment_type, // payment_type bilgisini ekle
+        check: payment.check || null,
       });
     });
 
@@ -421,10 +464,81 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     return filtered;
   }, [allTransactions, typeFilter, startDate, endDate]);
 
+  // USD dönüşümü
+  const getUsdAmount = useCallback((amount: number, currency: string) => {
+    if (currency === 'USD') return amount;
+    if (currency === 'TRY') return amount / usdRate;
+    return convertCurrency(amount, currency, 'USD');
+  }, [usdRate, convertCurrency]);
+
+  // Alacak/Borç hesaplama
+  const getCreditDebit = useCallback((transaction: UnifiedTransaction & { balanceAfter?: number }) => {
+    // Alış faturası: Tedarikçiden mal aldık → Ona borçluyuz → BORÇ
+    if (transaction.type === 'purchase_invoice') {
+      return {
+        credit: 0,
+        debit: transaction.amount,
+        usdCredit: 0,
+        usdDebit: getUsdAmount(transaction.amount, transaction.currency),
+      };
+    }
+
+    // Satış faturası: Ona mal sattık (tedarikçi aynı zamanda müşteri) → Bize borçlu → ALACAK
+    if (transaction.type === 'sales_invoice') {
+      return {
+        credit: transaction.amount,
+        debit: 0,
+        usdCredit: getUsdAmount(transaction.amount, transaction.currency),
+        usdDebit: 0,
+      };
+    }
+
+    // Fiş işlemleri için özel mantık
+    if (transaction.type === 'payment' && transaction.paymentType === 'fis') {
+      // Tedarikçi için: Borç fişi (outgoing) = tedarikçiye borç yazıyoruz → Borç kolonunda
+      // Tedarikçi için: Alacak fişi (incoming) = tedarikçiye alacak yazıyoruz → Alacak kolonunda
+      if (transaction.direction === 'outgoing') {
+        // Borç fişi → Borç kolonunda
+        return {
+          credit: 0,
+          debit: transaction.amount,
+          usdCredit: 0,
+          usdDebit: getUsdAmount(transaction.amount, transaction.currency),
+        };
+      } else {
+        // Alacak fişi → Alacak kolonunda
+        return {
+          credit: transaction.amount,
+          debit: 0,
+          usdCredit: getUsdAmount(transaction.amount, transaction.currency),
+          usdDebit: 0,
+        };
+      }
+    }
+
+    // Diğer ödemeler için
+    if (transaction.direction === 'incoming') {
+      // Gelen ödemeler (tedarikçi bize ödedi, iade gibi) → Borç artar → BORÇ
+      return {
+        credit: 0,
+        debit: transaction.amount,
+        usdCredit: 0,
+        usdDebit: getUsdAmount(transaction.amount, transaction.currency),
+      };
+    } else {
+      // Giden ödemeler (biz tedarikçiye ödedik) → Borç azalır → ALACAK
+      return {
+        credit: transaction.amount,
+        debit: 0,
+        usdCredit: getUsdAmount(transaction.amount, transaction.currency),
+        usdDebit: 0,
+      };
+    }
+  }, [getUsdAmount]);
+
   // Kümülatif bakiye hesapla - Gerçek bakiye her zaman tüm işlemlere göre hesaplanır (filtreden bağımsız)
   const transactionsWithBalance = useMemo(() => {
-    // ÖNCE: Tüm işlemler için gerçek bakiyeyi hesapla (filtreye bakmaksızın)
-    // Tüm işlemleri tarihe göre sırala (en eski en önce)
+    // ADIM 1: Tüm işlemleri tarihe göre sırala (en eski en önce)
     const allSortedTransactions = [...allTransactions].sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
@@ -435,65 +549,32 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
       return dateA - dateB;
     });
 
-    // Mevcut bakiyeden başlayarak geriye doğru başlangıç bakiyesini hesapla
-    let initialBalance = currentBalance || 0;
-
-    // Tüm balance'a etki eden işlemleri geriye doğru çıkar (tarihe göre sıralı, en yeni en önce)
-    const allBalanceAffecting = allSortedTransactions.filter(
-      t => t.type === 'payment' || t.type === 'purchase_invoice' || t.type === 'sales_invoice'
-    );
-
-    const sortedAllBalanceAffecting = [...allBalanceAffecting].sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      return dateB - dateA; // En yeni en önce
-    });
-
-    sortedAllBalanceAffecting.forEach((transaction) => {
-      if (transaction.type === 'payment') {
-        // Tedarikçi için: outgoing = biz ödeme yapıyoruz (borç azalır), incoming = tedarikçi bize ödeme yapıyor (borç artar/iade)
-        // Geriye giderken tersini yapıyoruz
-        const amount = transaction.direction === 'outgoing'
-          ? Number(transaction.amount)   // Giden ödeme: balance azalır, geri alırken balance artar
-          : -Number(transaction.amount);  // Gelen ödeme: balance artar, geri alırken balance azalır
-        initialBalance = initialBalance - amount;
-      } else if (transaction.type === 'purchase_invoice') {
-        // Alış faturası: balance artar (oluşturulduğunda), geri alırken balance azalır
-        initialBalance = initialBalance - Number(transaction.amount);
-      } else if (transaction.type === 'sales_invoice') {
-        // Satış faturası (tedarikçi müşteri de olabilir): balance azalır, geri alırken balance artar
-        initialBalance = initialBalance + Number(transaction.amount);
-      }
-    });
-
-    // Şimdi tüm işlemler için gerçek bakiyeyi hesapla
-    let runningBalance = initialBalance;
-    const balanceMap = new Map<string, number>();
+    // ADIM 2: Her işlem için bakiye hesapla (en eskiden başlayarak)
+    let runningBalance = 0;
+    let runningUsdBalance = 0;
+    const balanceMap = new Map<string, { balance: number; usdBalance: number }>();
 
     allSortedTransactions.forEach((transaction) => {
-      // İşlem tutarını hesapla - sadece balance'a etki eden işlemler için
-      let amount: number = 0;
-      if (transaction.type === 'payment') {
-        // Tedarikçi için: outgoing = biz ödeme yapıyoruz (borç azalır), incoming = tedarikçi bize ödeme yapıyor (borç artar)
-        amount = transaction.direction === 'outgoing'
-          ? -Number(transaction.amount)  // Giden ödeme: balance azalır (biz ödüyoruz)
-          : Number(transaction.amount);   // Gelen ödeme: balance artar (iade gibi)
-      } else if (transaction.type === 'purchase_invoice') {
-        // Alış faturası: balance artar (borcumuz artar)
-        amount = Number(transaction.amount);
-      } else if (transaction.type === 'sales_invoice') {
-        // Satış faturası (tedarikçi müşteri de olabilir): balance azalır (alacağımız artar)
-        amount = -Number(transaction.amount);
-      }
+      // Borç ve alacak tutarlarını al
+      const { credit, debit, usdCredit, usdDebit } = getCreditDebit(transaction);
 
-      // Bu işlemden sonraki bakiye (sadece balance'a etki eden işlemler için)
-      runningBalance = runningBalance + amount;
+      // TRY Bakiye formülü: Yeni Bakiye = Eski Bakiye + Borç - Alacak
+      // Tedarikçi için:
+      // - Borç (debit): Ona borçluyuz → bakiye artırır (+)
+      // - Alacak (credit): Bize borçlu (veya biz ödedik) → bakiye azaltır (-)
+      runningBalance = runningBalance + debit - credit;
 
-      // Her işlem için bakiyeyi map'e kaydet
-      balanceMap.set(transaction.id, runningBalance);
+      // USD Bakiye formülü: Aynı mantık ama USD tutarlarıyla
+      runningUsdBalance = runningUsdBalance + usdDebit - usdCredit;
+
+      // Her işlem için bakiyeleri map'e kaydet
+      balanceMap.set(transaction.id, {
+        balance: runningBalance,
+        usdBalance: runningUsdBalance
+      });
     });
 
-    // SONRA: Filtrelenmiş işlemleri al ve gerçek bakiyeleriyle eşleştir
+    // ADIM 3: Filtrelenmiş işlemleri al ve gerçek bakiyeleriyle eşleştir
     const filteredSorted = [...filteredTransactions].sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
@@ -504,18 +585,76 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     });
 
     const transactionsWithBalances = filteredSorted.map((transaction) => {
-      // Gerçek bakiyeyi map'ten al
-      const balanceAfter = balanceMap.get(transaction.id) ?? currentBalance;
+      // Gerçek bakiyeleri map'ten al
+      const balances = balanceMap.get(transaction.id) ?? { balance: 0, usdBalance: 0 };
 
       return {
         ...transaction,
-        balanceAfter, // Bu işlemden sonraki gerçek bakiye (tüm işlemlere göre)
+        balanceAfter: balances.balance, // Bu işlemden sonraki TRY bakiye
+        usdBalanceAfter: balances.usdBalance, // Bu işlemden sonraki USD bakiye
       };
     });
 
-    // En yeni en üstte olacak şekilde ters çevir
-    return transactionsWithBalances.reverse();
-  }, [filteredTransactions, allTransactions, currentBalance]);
+    // ADIM 4: Devir bakiye hesapla (eğer filtre varsa ve filtre öncesi işlemler varsa)
+    let result = [...transactionsWithBalances];
+
+    // Eğer filtrelenmiş işlemler varsa ve tüm işlemlerden az ise (yani filtre uygulanmış)
+    if (filteredSorted.length > 0 && filteredSorted.length < allSortedTransactions.length) {
+      // Filtredeki ilk işlemi bul
+      const firstFilteredTransaction = filteredSorted[0];
+      const firstFilteredDate = new Date(firstFilteredTransaction.date).getTime();
+
+      // Filtre öncesi son işlemi bul (tarih olarak filtredeki ilk işlemden önceki)
+      const beforeFilterTransactions = allSortedTransactions.filter(t => {
+        const tDate = new Date(t.date).getTime();
+        return tDate < firstFilteredDate;
+      });
+
+      // Eğer filtre öncesi işlemler varsa, devir bakiye ekle
+      if (beforeFilterTransactions.length > 0) {
+        const lastBeforeFilter = beforeFilterTransactions[beforeFilterTransactions.length - 1];
+        const openingBalances = balanceMap.get(lastBeforeFilter.id) ?? { balance: 0, usdBalance: 0 };
+
+        // Devir bakiye satırı oluştur
+        const openingBalanceTransaction: UnifiedTransaction = {
+          id: 'opening-balance',
+          type: 'payment', // Dummy type
+          date: firstFilteredTransaction.date,
+          amount: 0,
+          direction: 'incoming',
+          description: 'Devir Bakiye',
+          currency: 'TRY',
+          balanceAfter: openingBalances.balance,
+          usdBalanceAfter: openingBalances.usdBalance,
+        };
+
+        // Devir bakiyeyi en başa ekle
+        result.unshift(openingBalanceTransaction);
+      }
+    }
+
+    // ADIM 5: En yeni en üstte olacak şekilde ters çevir
+    return result.reverse();
+  }, [filteredTransactions, allTransactions, currentBalance, getCreditDebit]);
+
+  // Gerçek bakiye: Tüm işlemlerdeki en son (en yeni) işlemin bakiyesi
+  const calculatedBalance = useMemo(() => {
+    // Tüm işlemleri tarihe göre sırala (en eski en önce)
+    const sorted = [...allTransactions].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return dateA === dateB ? a.id.localeCompare(b.id) : dateA - dateB;
+    });
+
+    // Bakiye hesapla
+    let balance = 0;
+    sorted.forEach((transaction) => {
+      const { credit, debit } = getCreditDebit(transaction);
+      balance = balance + debit - credit;
+    });
+
+    return balance;
+  }, [allTransactions, getCreditDebit]);
 
   const getTransactionTypeLabel = (type: TransactionType, direction?: 'incoming' | 'outgoing', paymentType?: string) => {
     if (type === 'payment') {
@@ -554,58 +693,6 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
       return `${(payment as any).account_type} Hesabı`;
     }
     return "Bilinmeyen Hesap";
-  };
-
-  // USD dönüşümü
-  const getUsdAmount = (amount: number, currency: string) => {
-    if (currency === 'USD') return amount;
-    if (currency === 'TRY') return amount / usdRate;
-    return convertCurrency(amount, currency, 'USD');
-  };
-
-  // Alacak/Borç hesaplama
-  const getCreditDebit = (transaction: UnifiedTransaction & { balanceAfter?: number }) => {
-    // Fiş işlemleri için özel mantık
-    if (transaction.type === 'payment' && transaction.paymentType === 'fis') {
-      // Tedarikçi için: Borç fişi (outgoing) = tedarikçiye borç yazıyoruz → Borç kolonunda
-      // Tedarikçi için: Alacak fişi (incoming) = tedarikçiye alacak yazıyoruz → Alacak kolonunda
-      if (transaction.direction === 'outgoing') {
-        // Borç fişi → Borç kolonunda
-        return {
-          credit: 0,
-          debit: transaction.amount,
-          usdCredit: 0,
-          usdDebit: getUsdAmount(transaction.amount, transaction.currency),
-        };
-      } else {
-        // Alacak fişi → Alacak kolonunda
-        return {
-          credit: transaction.amount,
-          debit: 0,
-          usdCredit: getUsdAmount(transaction.amount, transaction.currency),
-          usdDebit: 0,
-        };
-      }
-    }
-    
-    // Diğer işlemler için mevcut mantık
-    if (transaction.direction === 'incoming') {
-      // Gelen ödemeler ve satış faturaları → Alacak
-      return {
-        credit: transaction.amount,
-        debit: 0,
-        usdCredit: getUsdAmount(transaction.amount, transaction.currency),
-        usdDebit: 0,
-      };
-    } else {
-      // Giden ödemeler ve alış faturaları → Borç
-      return {
-        credit: 0,
-        debit: transaction.amount,
-        usdCredit: 0,
-        usdDebit: getUsdAmount(transaction.amount, transaction.currency),
-      };
-    }
   };
 
   // Ödeme silme mutation'ı
@@ -717,16 +804,19 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     },
     onSuccess: () => {
       toast.success("Ödeme başarıyla silindi");
-      
+
       // Sadece ilgili supplier için spesifik query'leri invalidate et
       if (supplier.id) {
         queryClient.invalidateQueries({ queryKey: ["supplier-payments", supplier.id, userData?.company_id] });
+        queryClient.invalidateQueries({ queryKey: ["supplier", supplier.id] });
+        queryClient.invalidateQueries({ queryKey: ["supplier-purchase-invoices", supplier.id, userData?.company_id] });
+        queryClient.invalidateQueries({ queryKey: ["supplier-sales-invoices", supplier.id, userData?.company_id] });
       }
-      
+
       // Genel query'leri invalidate et (supplier.id olmadan)
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: ["suppliers"],
-        exact: false 
+        exact: false
       });
       queryClient.invalidateQueries({ queryKey: ["payment-accounts"] });
     },
@@ -742,7 +832,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     }
   };
 
-  // İstatistik bilgilerini hesapla
+  // İstatistik bilgilerini hesapla - hesaplanan bakiyeyi kullan
   const paymentStats = useMemo(() => {
     const totalIncoming = payments
       .filter(p => p.payment_direction === 'incoming')
@@ -753,11 +843,11 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
       .reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
     return {
-      currentBalance: currentBalance || 0,
+      currentBalance: calculatedBalance,
       totalIncoming,
       totalOutgoing,
     };
-  }, [payments, currentBalance]);
+  }, [payments, calculatedBalance]);
 
   return (
     <div className="space-y-4">
@@ -836,6 +926,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
           {onAddPayment && (
             <PaymentMethodSelector
               supplierId={supplier.id}
+              calculatedBalance={paymentStats.currentBalance}
               onMethodSelect={(method) => {
                 if (method.type === "hesap" || method.type === "cek" || method.type === "senet") {
                   onAddPayment({ type: method.type });
@@ -877,11 +968,37 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
                 </TableRow>
               ) : (
                 transactionsWithBalance.map((transaction) => {
+                  // Devir bakiye kontrolü
+                  const isOpeningBalance = transaction.id === 'opening-balance';
                   const { credit, debit, usdCredit, usdDebit } = getCreditDebit(transaction);
-                  const usdBalance = transaction.balanceAfter ? getUsdAmount(transaction.balanceAfter, transaction.currency) : 0;
+                  const usdBalance = transaction.usdBalanceAfter ?? 0;
                   const balanceIndicator = (transaction.balanceAfter || 0) >= 0 ? 'A' : 'B';
                   const usdBalanceIndicator = usdBalance >= 0 ? 'A' : 'B';
                   const exchangeRate = transaction.currency === 'USD' ? 1 : usdRate;
+
+                  // Devir bakiye satırı için özel gösterim
+                  if (isOpeningBalance) {
+                    return (
+                      <TableRow key={transaction.id} className="h-8 bg-blue-50 font-semibold border-b-2 border-blue-200">
+                        <TableCell className="py-2 px-3 text-xs whitespace-nowrap" colSpan={3}>
+                          <span className="font-bold text-blue-800">{transaction.description}</span>
+                        </TableCell>
+                        <TableCell className="py-2 px-3 text-xs whitespace-nowrap text-center">-</TableCell>
+                        <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
+                        <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
+                        <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
+                        <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
+                        <TableCell className={`py-2 px-3 text-right text-xs font-bold whitespace-nowrap ${usdBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {usdBalance.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {usdBalanceIndicator}
+                        </TableCell>
+                        <TableCell className={`py-2 px-3 text-right text-xs font-bold whitespace-nowrap ${(transaction.balanceAfter || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {(transaction.balanceAfter || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {balanceIndicator}
+                        </TableCell>
+                        <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
+                        <TableCell className="py-2 px-3 text-center">-</TableCell>
+                      </TableRow>
+                    );
+                  }
 
                   return (
                     <TableRow key={`${transaction.type}-${transaction.id}`} className="h-8 transition-colors hover:bg-gray-50">
@@ -889,13 +1006,33 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
                         {format(new Date(transaction.date), "dd.MM.yyyy")}
                       </TableCell>
                       <TableCell className="py-2 px-3 text-xs whitespace-nowrap">
-                        {transaction.reference || '-'}
+                        {transaction.reference ? (
+                          (transaction.type === 'purchase_invoice' || transaction.type === 'sales_invoice') ? (
+                            <button
+                              onClick={() => {
+                                if (transaction.type === 'purchase_invoice') {
+                                  navigate(`/purchase-invoices/${transaction.id}`);
+                                } else if (transaction.type === 'sales_invoice') {
+                                  navigate(`/sales-invoices/${transaction.id}`);
+                                }
+                              }}
+                              className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer"
+                              title="Fatura detayını görüntüle"
+                            >
+                              {transaction.reference}
+                            </button>
+                          ) : (
+                            transaction.reference
+                          )
+                        ) : (
+                          '-'
+                        )}
                       </TableCell>
                       <TableCell className="py-2 px-3 whitespace-nowrap">
-                        <Badge 
+                        <Badge
                           variant="outline"
                           className={`text-[10px] px-1.5 py-0 ${
-                            transaction.type === 'payment' 
+                            transaction.type === 'payment'
                               ? transaction.direction === 'incoming'
                                 ? 'border-green-500 text-green-700 bg-green-50'
                                 : 'border-red-500 text-red-700 bg-red-50'
@@ -915,6 +1052,11 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
                           {transaction.type === 'payment' && transaction.payment && (
                             <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
                               {getAccountName(transaction.payment)}
+                            </div>
+                          )}
+                          {transaction.check && (
+                            <div className="text-[10px] text-blue-600 mt-0.5 truncate font-medium">
+                              Çek: {transaction.check.check_number} - {transaction.check.bank}
                             </div>
                           )}
                         </div>
@@ -967,3 +1109,4 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     </div>
   );
 };
+

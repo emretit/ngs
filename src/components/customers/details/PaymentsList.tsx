@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Customer } from "@/types/customer";
 import { Payment } from "@/types/payment";
-import { TransactionType } from "./payments/utils/paymentUtils";
+import { TransactionType, getCreditDebit } from "./payments/utils/paymentUtils";
 import { PaymentsHeader } from "./payments/PaymentsHeader";
 import { PaymentsTable } from "./payments/PaymentsTable";
 import { usePaymentsQuery } from "./payments/hooks/usePaymentsQuery";
@@ -14,6 +14,7 @@ import { useCustomerBalance } from "./payments/hooks/useCustomerBalance";
 import { usePaymentStats } from "./payments/hooks/usePaymentStats";
 import { useDeletePayment } from "./payments/hooks/useDeletePayment";
 import { usePaymentsRealtime } from "./payments/hooks/usePaymentsRealtime";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 
 interface PaymentsListProps {
   customer: Customer;
@@ -22,16 +23,19 @@ interface PaymentsListProps {
 
 export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
   const [typeFilter, setTypeFilter] = useState<TransactionType | 'all'>('all');
-  // Son 30 gün için varsayılan tarih filtresi
+  // Bulunduğu yılın başı için varsayılan tarih filtresi
   const [startDate, setStartDate] = useState<Date | undefined>(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return date;
+    const now = new Date();
+    const yearStart = new Date(now.getFullYear(), 0, 1); // Yılın ilk günü (1 Ocak)
+    return yearStart;
   });
   const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
 
   // Customer balance
   const currentBalance = useCustomerBalance(customer);
+
+  // Exchange rates
+  const { exchangeRates, convertCurrency } = useExchangeRates();
 
   // Data queries - çekler artık payments tablosunda payment_type='cek' olarak tutuluyor
   const { data: payments = [] } = usePaymentsQuery(customer);
@@ -64,8 +68,29 @@ export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
     currentBalance,
   });
 
-  // Payment stats
-  const paymentStats = usePaymentStats(payments, currentBalance);
+  // Gerçek bakiye: Tüm işlemlerdeki en son (en yeni) işlemin bakiyesi
+  const calculatedBalance = useMemo(() => {
+    const usdRate = exchangeRates.find(r => r.currency_code === 'USD')?.forex_selling || 1;
+
+    // Tüm işlemleri tarihe göre sırala (en eski en önce)
+    const sorted = [...allTransactions].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return dateA === dateB ? a.id.localeCompare(b.id) : dateA - dateB;
+    });
+
+    // Bakiye hesapla
+    let balance = 0;
+    sorted.forEach((transaction) => {
+      const { credit, debit } = getCreditDebit(transaction, usdRate, convertCurrency);
+      balance = balance + debit - credit;
+    });
+
+    return balance;
+  }, [allTransactions, exchangeRates, convertCurrency]);
+
+  // Payment stats - hesaplanan bakiyeyi kullan
+  const paymentStats = usePaymentStats(payments, calculatedBalance);
 
   // Delete payment mutation
   const deletePaymentMutation = useDeletePayment(customer);

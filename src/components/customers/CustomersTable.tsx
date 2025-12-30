@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Download, FileText, MoreHorizontal } from "lucide-react";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { useCustomersCalculatedBalance } from "@/hooks/useCustomersCalculatedBalance";
 
 interface CustomersTableProps {
   customers: Customer[];
@@ -43,6 +44,9 @@ const CustomersTable = ({
 }: CustomersTableProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  
+  // Hesaplanan bakiyeleri al (ödemeler tabındaki mantıkla)
+  const { balances, isLoading: isLoadingBalances } = useCustomersCalculatedBalance(customers);
   
   // Fallback için internal state (eğer dışarıdan prop geçilmezse)
   const [internalSortField, setInternalSortField] = useState<string>("company");
@@ -128,13 +132,13 @@ const CustomersTable = ({
   };
 
   const formatMoney = (amount: number, currency: string = 'TRY') => {
-    if (!amount && amount !== 0) return `${getCurrencySymbol(currency)}0`;
+    if (!amount && amount !== 0) return `${getCurrencySymbol(currency)}0,00`;
     
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(amount);
   };
 
@@ -242,6 +246,8 @@ const CustomersTable = ({
                 onStatusChange={handleStatusUpdate}
                 onDelete={handleDeleteCustomerClick}
                 isSelected={selectedCustomers.some(c => c.id === customer.id)}
+                calculatedBalance={balances[customer.id] !== undefined ? balances[customer.id] : customer.balance}
+                isLoadingBalance={isLoadingBalances}
               />
             ))
           ) : null}

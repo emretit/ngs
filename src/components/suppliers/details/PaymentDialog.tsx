@@ -228,10 +228,18 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
         queryKey: ["supplier-activities", supplier.id, profile.company_id] 
       });
       
-      // Hemen refetch yap - tablonun anında güncellenmesi için
-      await queryClient.refetchQueries({ 
-        queryKey: ["supplier-payments", supplier.id, profile.company_id] 
-      });
+      // Hemen refetch yap - sayfanın anında güncellenmesi için
+      await Promise.all([
+        queryClient.refetchQueries({ 
+          queryKey: ["supplier-payments", supplier.id, profile.company_id] 
+        }),
+        queryClient.refetchQueries({ 
+          queryKey: ["supplier", supplier.id] 
+        }),
+        queryClient.refetchQueries({ 
+          queryKey: ["supplier-activities", supplier.id, profile.company_id] 
+        })
+      ]);
 
       toast.success("Ödeme kaydedildi ve bakiyeler güncellendi.", { duration: 1000 });
 

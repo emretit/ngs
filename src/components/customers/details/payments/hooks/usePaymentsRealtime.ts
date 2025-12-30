@@ -39,7 +39,7 @@ export const usePaymentsRealtime = (customer: Customer) => {
         },
         () => {
           // Sales invoices değiştiğinde query'leri invalidate et
-          queryClient.invalidateQueries({ queryKey: ['customer-sales-invoices', customer.id] });
+          queryClient.invalidateQueries({ queryKey: ['customer-sales-invoices', customer.id, userData?.company_id] });
         }
       )
       .on(
@@ -52,7 +52,7 @@ export const usePaymentsRealtime = (customer: Customer) => {
         },
         () => {
           // Purchase invoices değiştiğinde query'leri invalidate et
-          queryClient.invalidateQueries({ queryKey: ['customer-purchase-invoices', customer.id] });
+          queryClient.invalidateQueries({ queryKey: ['customer-purchase-invoices', customer.id, userData?.company_id] });
         }
       )
       .on(
@@ -65,7 +65,7 @@ export const usePaymentsRealtime = (customer: Customer) => {
         },
         () => {
           // Müşteri aynı zamanda tedarikçi ise supplier_id ile de dinle
-          queryClient.invalidateQueries({ queryKey: ['customer-purchase-invoices', customer.id] });
+          queryClient.invalidateQueries({ queryKey: ['customer-purchase-invoices', customer.id, userData?.company_id] });
         }
       )
       .on(

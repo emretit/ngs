@@ -5,6 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * @deprecated Use formatCurrency from @/utils/formatters instead
+ * This version does not handle NaN/Infinity properly
+ */
 export function formatCurrency(amount: number, currency: string = 'TRY'): string {
   // Convert TL to TRY directly
   const currencyCode = currency === 'TL' ? 'TRY' : (currency || 'TRY');
@@ -14,10 +18,14 @@ export function formatCurrency(amount: number, currency: string = 'TRY'): string
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  
+
   return formatter.format(amount);
 }
 
+/**
+ * @deprecated Use formatDate from @/utils/dateUtils instead
+ * This version has a fixed format, use dateUtils for flexible formatting
+ */
 export function formatDate(date: string | Date | null | undefined): string {
   if (!date) return "-";
   const d = new Date(date);

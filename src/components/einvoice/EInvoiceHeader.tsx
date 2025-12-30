@@ -1,21 +1,16 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, FileText, TrendingUp, DollarSign } from "lucide-react";
+import { FileText, TrendingUp } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 
 interface EInvoiceHeaderProps {
   totalCount: number;
   totalAmount: number;
-  onRefresh?: () => void;
-  isRefreshing?: boolean;
 }
 
 const EInvoiceHeader = ({ 
   totalCount,
-  totalAmount,
-  onRefresh, 
-  isRefreshing = false 
+  totalAmount
 }: EInvoiceHeaderProps) => {
   const navigate = useNavigate();
 
@@ -55,20 +50,6 @@ const EInvoiceHeader = ({
               {formatCurrency(totalAmount)}
             </span>
           </div>
-        </div>
-        
-        {/* Sağ taraf - Butonlar */}
-        <div className="flex items-center gap-2">
-          {onRefresh && (
-            <Button 
-              className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300" 
-              onClick={onRefresh}
-              disabled={isRefreshing}
-            >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>E-Fatura Çek</span>
-            </Button>
-          )}
         </div>
       </div>
   );

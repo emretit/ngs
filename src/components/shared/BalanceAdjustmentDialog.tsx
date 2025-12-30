@@ -72,8 +72,44 @@ export default function BalanceAdjustmentDialog({
 
       const difference = data.new_balance - currentBalance;
 
-      // Bakiye düzeltme kaydı oluştur
-      const payload: any = {
+      // Fark sıfırsa işlem yapma
+      if (difference === 0) {
+        throw new Error("Yeni bakiye mevcut bakiye ile aynı");
+      }
+
+      // Fişin yönünü belirle
+      // Fark pozitif ise: Bakiye artacak → Müşteri/Tedarikçi için BORÇ FİŞİ (outgoing)
+      // Fark negatif ise: Bakiye azalacak → Müşteri/Tedarikçi için ALACAK FİŞİ (incoming)
+      const paymentDirection = difference > 0 ? 'outgoing' : 'incoming';
+      const amount = Math.abs(difference);
+
+      // Fiş kaydı oluştur
+      const paymentPayload: any = {
+        company_id: userData.company_id,
+        payment_date: format(data.adjustment_date, "yyyy-MM-dd"),
+        amount: amount,
+        currency: 'TRY',
+        payment_direction: paymentDirection,
+        payment_type: 'fis', // Bakiye düzeltme fişi
+        description: `Bakiye Düzeltme Fişi - ${data.notes}`,
+        reference_note: `Eski Bakiye: ${currentBalance.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}, Yeni Bakiye: ${data.new_balance.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`,
+      };
+
+      if (customerId) {
+        paymentPayload.customer_id = customerId;
+      } else if (supplierId) {
+        paymentPayload.supplier_id = supplierId;
+      }
+
+      // Fiş kaydını oluştur - Trigger otomatik olarak bakiyeyi güncelleyecek
+      const { error: paymentError } = await supabase
+        .from("payments")
+        .insert([paymentPayload]);
+
+      if (paymentError) throw paymentError;
+
+      // Bakiye düzeltme kaydını da oluştur (log için)
+      const adjustmentPayload: any = {
         company_id: userData.company_id,
         adjustment_date: format(data.adjustment_date, "yyyy-MM-dd"),
         old_balance: currentBalance,
@@ -84,47 +120,64 @@ export default function BalanceAdjustmentDialog({
       };
 
       if (customerId) {
-        payload.customer_id = customerId;
-
-        // Müşteri bakiyesini güncelle
-        const { error: updateError } = await supabase
-          .from("customers")
-          .update({ balance: data.new_balance })
-          .eq("id", customerId);
-
-        if (updateError) throw updateError;
+        adjustmentPayload.customer_id = customerId;
       } else if (supplierId) {
-        payload.supplier_id = supplierId;
-
-        // Tedarikçi bakiyesini güncelle
-        const { error: updateError } = await supabase
-          .from("suppliers")
-          .update({ balance: data.new_balance })
-          .eq("id", supplierId);
-
-        if (updateError) throw updateError;
+        adjustmentPayload.supplier_id = supplierId;
       }
 
-      // Bakiye düzeltme kaydını kaydet
-      const { error: insertError } = await supabase
+      const { error: adjustmentError } = await supabase
         .from("balance_adjustments")
-        .insert([payload]);
+        .insert([adjustmentPayload]);
 
-      if (insertError) throw insertError;
+      if (adjustmentError) {
+        console.error("Balance adjustment log error:", adjustmentError);
+        // Log hatası işlemi durdurmasın
+      }
     },
-    onSuccess: () => {
-      toast.success("Bakiye başarıyla güncellendi");
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
-      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    onSuccess: async () => {
+      toast.success("Bakiye düzeltme fişi oluşturuldu");
 
-      // Customer ID veya Supplier ID ile query'leri invalidate et
+      // Genel query'leri invalidate et
+      queryClient.invalidateQueries({
+        queryKey: ["customers"],
+        exact: false
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["suppliers"],
+        exact: false
+      });
+
+      // Customer ID veya Supplier ID ile spesifik query'leri invalidate et
       if (customerId) {
-        queryClient.invalidateQueries({ queryKey: ["customer-payments", customerId] });
+        queryClient.invalidateQueries({ queryKey: ["customer-payments", customerId, userData?.company_id] });
         queryClient.invalidateQueries({ queryKey: ["customer", customerId] });
+        queryClient.invalidateQueries({ queryKey: ["customer-payment-stats", customerId] });
+        queryClient.invalidateQueries({ queryKey: ["customer-sales-invoices", customerId, userData?.company_id] });
+        queryClient.invalidateQueries({ queryKey: ["customer-purchase-invoices", customerId, userData?.company_id] });
+        queryClient.invalidateQueries({ queryKey: ["customer-activities", customerId, userData?.company_id] });
+        
+        // Hemen refetch yap - sayfanın anında güncellenmesi için
+        await queryClient.refetchQueries({ 
+          queryKey: ["customer-payments", customerId, userData?.company_id] 
+        });
+        await queryClient.refetchQueries({ 
+          queryKey: ["customer", customerId] 
+        });
       }
       if (supplierId) {
-        queryClient.invalidateQueries({ queryKey: ["supplier-payments", supplierId] });
+        queryClient.invalidateQueries({ queryKey: ["supplier-payments", supplierId, userData?.company_id] });
         queryClient.invalidateQueries({ queryKey: ["supplier", supplierId] });
+        queryClient.invalidateQueries({ queryKey: ["supplier-purchase-invoices", supplierId, userData?.company_id] });
+        queryClient.invalidateQueries({ queryKey: ["supplier-sales-invoices", supplierId, userData?.company_id] });
+        queryClient.invalidateQueries({ queryKey: ["supplier-activities", supplierId, userData?.company_id] });
+        
+        // Hemen refetch yap - sayfanın anında güncellenmesi için
+        await queryClient.refetchQueries({ 
+          queryKey: ["supplier-payments", supplierId, userData?.company_id] 
+        });
+        await queryClient.refetchQueries({ 
+          queryKey: ["supplier", supplierId] 
+        });
       }
 
       onOpenChange(false);

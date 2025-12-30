@@ -31,6 +31,7 @@ export const useUnifiedTransactions = ({
         currency: payment.currency || 'TRY',
         payment,
         paymentType: payment.payment_type,
+        check: payment.check || null,
       });
     });
 

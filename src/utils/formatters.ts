@@ -48,3 +48,34 @@ export const formatCurrency = (amount: number, currency = 'TRY'): string => {
     maximumFractionDigits: 2
   }).format(validAmount);
 };
+
+/**
+ * Get currency symbol for a given currency code
+ * @param currency The currency code
+ * @returns The currency symbol
+ */
+export const getCurrencySymbol = (currency: string): string => {
+  const symbols: Record<string, string> = {
+    TRY: '₺',
+    TL: '₺', // Backward compatibility
+    USD: '$',
+    EUR: '€',
+    GBP: '£'
+  };
+
+  const normalizedCurrency = normalizeCurrency(currency);
+  return symbols[normalizedCurrency] || currency;
+};
+
+/**
+ * Add currency symbol to a formatted amount
+ * @param amount The amount to format
+ * @param currency The currency code
+ * @returns Formatted string with currency symbol
+ */
+export const addCurrencySymbol = (amount: number, currency: string): string => {
+  return `${amount.toLocaleString('tr-TR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })} ${getCurrencySymbol(currency)}`;
+};

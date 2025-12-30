@@ -201,7 +201,9 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
         account_type: accountType // Hesap türünü de kaydet
       };
 
-      const { error: paymentError } = await supabase.from("payments").insert(paymentData);
+      const { error: paymentError } = await supabase
+        .from("payments")
+        .insert(paymentData);
 
       if (paymentError) throw paymentError;
 
@@ -273,10 +275,18 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
         queryKey: ["customer-activities", customer.id, profile.company_id] 
       });
       
-      // Hemen refetch yap - tablonun anında güncellenmesi için
-      await queryClient.refetchQueries({ 
-        queryKey: ["customer-payments", customer.id, profile.company_id] 
-      });
+      // Hemen refetch yap - sayfanın anında güncellenmesi için
+      await Promise.all([
+        queryClient.refetchQueries({ 
+          queryKey: ["customer-payments", customer.id, profile.company_id] 
+        }),
+        queryClient.refetchQueries({ 
+          queryKey: ["customer", customer.id] 
+        }),
+        queryClient.refetchQueries({ 
+          queryKey: ["customer-activities", customer.id, profile.company_id] 
+        })
+      ]);
 
       toast.success("Ödeme kaydedildi ve bakiyeler güncellendi.", { duration: 1000 });
 

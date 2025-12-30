@@ -16,6 +16,8 @@ interface CustomersTableRowProps {
   onStatusChange: (customerId: string, newStatus: 'aktif' | 'pasif' | 'potansiyel') => void;
   onDelete: (customer: Customer) => void;
   isSelected?: boolean;
+  calculatedBalance?: number;
+  isLoadingBalance?: boolean;
 }
 
 const CustomersTableRow = ({ 
@@ -26,7 +28,9 @@ const CustomersTableRow = ({
   onSelectToggle,
   onStatusChange, 
   onDelete,
-  isSelected = false
+  isSelected = false,
+  calculatedBalance,
+  isLoadingBalance = false
 }: CustomersTableRowProps) => {
   const navigate = useNavigate();
 
@@ -147,9 +151,13 @@ const CustomersTableRow = ({
 
       {/* Bakiye */}
       <TableCell className="py-2 px-2 text-center text-xs font-medium">
-        <span className={`${customer.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-          {formatMoney(customer.balance)}
-        </span>
+        {isLoadingBalance ? (
+          <span className="text-gray-400">...</span>
+        ) : (
+          <span className={`${(calculatedBalance ?? customer.balance) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {formatMoney(calculatedBalance ?? customer.balance)}
+          </span>
+        )}
       </TableCell>
 
       {/* Oluşturma Tarihi */}

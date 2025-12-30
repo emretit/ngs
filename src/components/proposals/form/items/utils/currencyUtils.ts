@@ -1,44 +1,36 @@
 
 import { ExchangeRates, CurrencyOption } from "../types/currencyTypes";
 import { supabase } from "@/integrations/supabase/client";
+// Import centralized utilities from formatters
+import {
+  normalizeCurrency,
+  areCurrenciesEqual,
+  formatCurrency,
+  getCurrencySymbol as getSymbol,
+  addCurrencySymbol as addSymbol
+} from "@/utils/formatters";
+
+// Re-export for backward compatibility
+export { normalizeCurrency, areCurrenciesEqual };
 
 /**
- * Normalizes currency code: TRY is the standard code
- * @param currency The currency code to normalize
- * @returns Normalized currency code (TRY for TRY/TL, otherwise unchanged)
+ * @deprecated Use formatCurrency from @/utils/formatters instead
  */
-export const normalizeCurrency = (currency: string | null | undefined): string => {
-  if (!currency) return 'TRY';
-  return currency === 'TL' ? 'TRY' : currency;
-};
+export const formatCurrencyValue = formatCurrency;
 
 /**
- * Compares two currencies, treating TRY and TL as the same
- * @param currency1 First currency code
- * @param currency2 Second currency code
- * @returns true if currencies are the same (including TRY === TL)
+ * @deprecated Use getCurrencySymbol from @/utils/formatters instead
  */
-export const areCurrenciesEqual = (currency1: string | null | undefined, currency2: string | null | undefined): boolean => {
-  const normalized1 = normalizeCurrency(currency1);
-  const normalized2 = normalizeCurrency(currency2);
-  return normalized1 === normalized2;
-};
+export const getCurrencySymbol = getSymbol;
 
-// Format a currency value for display
-export const formatCurrencyValue = (amount: number, currency: string = "TRY"): string => {
-  // Ensure currency is not empty to avoid Intl.NumberFormat errors
-  if (!currency) currency = "TRY";
-  
-  // Intl.NumberFormat için geçerli currency code kullan (TRY -> TRY)
-  const currencyCode = currency === 'TL' ? 'TRY' : currency;
-  const formatter = new Intl.NumberFormat('tr-TR', {
-    style: 'currency',
-    currency: currencyCode,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-  
-  return formatter.format(amount);
+/**
+ * @deprecated Use addCurrencySymbol from @/utils/formatters instead
+ */
+export const addCurrencySymbol = (price: string, currency: string): string => {
+  // Note: Original signature was (string, string), formatters uses (number, string)
+  // Keep wrapper for backward compatibility
+  const numPrice = parseFloat(price.replace(/[^\d.-]/g, ''));
+  return addSymbol(isNaN(numPrice) ? 0 : numPrice, currency);
 };
 
 // This function is deprecated - use useExchangeRates hook from dashboard instead
@@ -80,34 +72,6 @@ export const convertCurrency = (
 // Format a price with a specified number of decimal places
 export const formatPrice = (price: number, decimals: number = 2): string => {
   return price.toFixed(decimals);
-};
-
-// Add currency symbol to a formatted price
-export const addCurrencySymbol = (price: string, currency: string): string => {
-  const symbols: Record<string, string> = {
-    TRY: '₺',
-    TL: '₺', // Backward compatibility
-    USD: '$',
-    EUR: '€',
-    GBP: '£'
-  };
-  
-  const normalizedCurrency = currency === 'TL' ? 'TRY' : currency;
-  return `${symbols[normalizedCurrency] || symbols[currency] || currency} ${price}`;
-};
-
-// Get currency symbol for a given currency code
-export const getCurrencySymbol = (currency: string): string => {
-  const symbols: Record<string, string> = {
-    TRY: '₺',
-    TL: '₺', // Backward compatibility
-    USD: '$',
-    EUR: '€',
-    GBP: '£'
-  };
-  
-  const normalizedCurrency = currency === 'TL' ? 'TRY' : currency;
-  return symbols[normalizedCurrency] || symbols[currency] || currency;
 };
 
 // Get currency options for dropdowns

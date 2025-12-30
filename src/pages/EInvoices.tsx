@@ -143,8 +143,6 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
           <EInvoiceHeader 
             totalCount={filteredInvoices.length}
             totalAmount={totalAmount}
-            onRefresh={handleRefresh}
-            isRefreshing={isLoading || isSyncing}
           />
           {/* Toggle - Gelen/Giden Faturalar */}
           <div className="flex items-center gap-2 px-3">
@@ -184,6 +182,8 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
           setStartDate={setStartDate}
           endDate={endDate}
           setEndDate={setEndDate}
+          onRefresh={handleRefresh}
+          isRefreshing={isLoading || isSyncing}
         />
         <EInvoiceContent
           invoices={filteredInvoices}

@@ -49,8 +49,13 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
     }).format(amount);
   };
 
-  const formatCardNumber = (number: string) => {
-    return number.replace(/(.{4})/g, '$1-').slice(0, -1);
+  const formatCardNumber = (number: string | null | undefined) => {
+    if (!number) return "";
+    // Sadece rakamları al
+    const numbers = number.replace(/\D/g, '');
+    if (!numbers) return "";
+    // 4'lü gruplar halinde formatla
+    return numbers.replace(/(.{4})/g, '$1-').slice(0, -1);
   };
 
   const getCardTypeLabel = (type: string) => {
@@ -162,7 +167,7 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
                 <div>
                   <div className="font-medium text-xs text-gray-900">{card.card_name}</div>
                   <div className="text-xs text-gray-600">
-                    {card.bank_name} • {formatCardNumber(card.card_number)}
+                    {card.bank_name}{card.card_number ? ` • ${formatCardNumber(card.card_number)}` : ''}
                   </div>
                 </div>
               </div>

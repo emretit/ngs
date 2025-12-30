@@ -1,5 +1,7 @@
 import { useState, useMemo, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +36,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { 
   CustomTabs, 
   CustomTabsContent, 
@@ -42,6 +45,7 @@ import {
 } from "@/components/ui/custom-tabs";
 import { usePartnerAccountDetail, usePartnerAccountTransactions, useAccountTransfers } from "@/hooks/useAccountDetail";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import PartnerIncomeModal from "@/components/cashflow/modals/PartnerIncomeModal";
 import PartnerExpenseModal from "@/components/cashflow/modals/PartnerExpenseModal";
 import PartnerAccountModal from "@/components/cashflow/modals/PartnerAccountModal";
@@ -54,6 +58,7 @@ interface PartnerAccountDetailProps {
 }
 
 const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccountDetailProps) => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showBalances, setShowBalances] = useState(true);
@@ -67,6 +72,8 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
   const [selectedDateRange, setSelectedDateRange] = useState("all");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<any | null>(null);
 
   // React Query hooks ile optimize edilmiş veri çekme
   const { data: account, isLoading: isLoadingAccount, error: accountError } = usePartnerAccountDetail(id);
@@ -230,6 +237,75 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
     window.location.reload();
+  };
+
+  const queryClient = useQueryClient();
+
+  // Silme mutation'ı
+  const deleteTransactionMutation = useMutation({
+    mutationFn: async (transaction: any) => {
+      // Transfer işlemi ise
+      if (transaction.isTransfer) {
+        const transferId = transaction.id.replace('transfer_', '');
+        const { error } = await supabase
+          .from('account_transfers')
+          .delete()
+          .eq('id', transferId);
+        
+        if (error) throw error;
+        return;
+      }
+
+      // Normal transaction ise - partner_transactions tablosundan sil
+      if (transaction.id && !transaction.id.startsWith('transfer_')) {
+        const { error } = await supabase
+          .from('partner_transactions')
+          .delete()
+          .eq('id', transaction.id);
+        
+        if (error) throw error;
+
+        // Bakiye güncellemesi - transaction tipine göre ters işlem yap
+        if (account) {
+          const balanceChange = transaction.type === 'income' 
+            ? -transaction.amount  // Gelir silinirse bakiye azalır
+            : transaction.amount;  // Gider silinirse bakiye artar
+
+          const newBalance = (account.current_balance || 0) + balanceChange;
+          
+          await supabase
+            .from('partner_accounts')
+            .update({ current_balance: newBalance })
+            .eq('id', id);
+        }
+      }
+    },
+    onSuccess: () => {
+      toast.success("İşlem başarıyla silindi");
+      queryClient.invalidateQueries({ queryKey: ['partner-account-transactions', id] });
+      queryClient.invalidateQueries({ queryKey: ['partner-account', id] });
+      refetchTransactions();
+    },
+    onError: (error: any) => {
+      toast.error("İşlem silinirken hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    }
+  });
+
+  const handleDelete = (transaction: any) => {
+    setTransactionToDelete(transaction);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!transactionToDelete) return;
+    deleteTransactionMutation.mutate(transactionToDelete);
+    setIsDeleteDialogOpen(false);
+    setTransactionToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setTransactionToDelete(null);
   };
 
   const clearFilters = () => {
@@ -560,7 +636,13 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
               onFilterTypeChange={setFilterType}
               onAddIncome={() => setIsIncomeModalOpen(true)}
               onAddExpense={() => setIsExpenseModalOpen(true)}
+              onDelete={handleDelete}
               initialBalance={account.initial_capital || 0}
+              showHeader={true}
+              currentBalance={account.current_balance}
+              totalIncome={totalIncome}
+              totalExpense={totalExpense}
+              isDeleting={deleteTransactionMutation.isPending}
             />
           </div>
         </div>
@@ -601,6 +683,24 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
             // Refresh data after transfer
             window.location.reload();
           }}
+        />
+
+        {/* Silme Onay Dialog */}
+        <ConfirmationDialogComponent
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="İşlemi Sil"
+          description={
+            transactionToDelete
+              ? `"${transactionToDelete.description || 'Bu işlem'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+              : "Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+          }
+          confirmText={t("common.delete")}
+          cancelText={t("common.cancel")}
+          variant="destructive"
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          isLoading={deleteTransactionMutation.isPending}
         />
       </div>
     </div>

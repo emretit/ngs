@@ -1,5 +1,7 @@
 import { useState, useMemo, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +25,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { 
   CustomTabs, 
   CustomTabsContent, 
@@ -31,6 +34,7 @@ import {
 } from "@/components/ui/custom-tabs";
 import { useCashAccountDetail, useCashAccountTransactions, useAccountTransfers } from "@/hooks/useAccountDetail";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import CashIncomeModal from "@/components/cashflow/modals/CashIncomeModal";
 import CashExpenseModal from "@/components/cashflow/modals/CashExpenseModal";
 import CashAccountModal from "@/components/cashflow/modals/CashAccountModal";
@@ -43,6 +47,7 @@ interface CashAccountDetailProps {
 }
 
 const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDetailProps) => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showBalances, setShowBalances] = useState(true);
@@ -57,6 +62,8 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
   const [selectedDateRange, setSelectedDateRange] = useState("all");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<any | null>(null);
 
   // React Query hooks ile optimize edilmiş veri çekme
   const { data: account, isLoading: isLoadingAccount, error: accountError } = useCashAccountDetail(id);
@@ -220,6 +227,75 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
     window.location.reload();
+  };
+
+  const queryClient = useQueryClient();
+
+  // Silme mutation'ı
+  const deleteTransactionMutation = useMutation({
+    mutationFn: async (transaction: any) => {
+      // Transfer işlemi ise
+      if (transaction.isTransfer) {
+        const transferId = transaction.id.replace('transfer_', '');
+        const { error } = await supabase
+          .from('account_transfers')
+          .delete()
+          .eq('id', transferId);
+        
+        if (error) throw error;
+        return;
+      }
+
+      // Normal transaction ise - cash_transactions tablosundan sil
+      if (transaction.id && !transaction.id.startsWith('transfer_')) {
+        const { error } = await supabase
+          .from('cash_transactions')
+          .delete()
+          .eq('id', transaction.id);
+        
+        if (error) throw error;
+
+        // Bakiye güncellemesi - transaction tipine göre ters işlem yap
+        if (account) {
+          const balanceChange = transaction.type === 'income' 
+            ? -transaction.amount  // Gelir silinirse bakiye azalır
+            : transaction.amount;  // Gider silinirse bakiye artar
+
+          const newBalance = (account.current_balance || 0) + balanceChange;
+          
+          await supabase
+            .from('cash_accounts')
+            .update({ current_balance: newBalance })
+            .eq('id', id);
+        }
+      }
+    },
+    onSuccess: () => {
+      toast.success("İşlem başarıyla silindi");
+      queryClient.invalidateQueries({ queryKey: ['cash-account-transactions', id] });
+      queryClient.invalidateQueries({ queryKey: ['cash-account', id] });
+      refetchTransactions();
+    },
+    onError: (error: any) => {
+      toast.error("İşlem silinirken hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    }
+  });
+
+  const handleDelete = (transaction: any) => {
+    setTransactionToDelete(transaction);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!transactionToDelete) return;
+    deleteTransactionMutation.mutate(transactionToDelete);
+    setIsDeleteDialogOpen(false);
+    setTransactionToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setTransactionToDelete(null);
   };
 
   const clearFilters = () => {
@@ -444,7 +520,7 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
         {/* Main Grid Layout - Sol: Kompakt Bilgiler, Sağ: Geniş İşlem Geçmişi */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-2">
           {/* Sol Taraf - Kompakt Bilgiler ve İşlemler */}
-          <div className="xl:col-span-3 space-y-2">
+          <div className="xl:col-span-2 space-y-2">
             {/* Hesap Bilgileri ve Hızlı İşlemler - Tek Kart */}
             <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-xl">
               <CardHeader className="pb-2 px-3 pt-3">
@@ -522,7 +598,7 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
           </div>
 
           {/* Sağ Taraf - Geniş İşlem Geçmişi */}
-          <div className="xl:col-span-9 space-y-2">
+          <div className="xl:col-span-10 space-y-2">
             <AccountTransactionHistory
               transactions={allActivities}
               currency={account.currency}
@@ -531,7 +607,13 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
               onFilterTypeChange={setFilterType}
               onAddIncome={() => setIsIncomeModalOpen(true)}
               onAddExpense={() => setIsExpenseModalOpen(true)}
+              onDelete={handleDelete}
               initialBalance={0}
+              showHeader={true}
+              currentBalance={account.current_balance}
+              totalIncome={totalIncome}
+              totalExpense={totalExpense}
+              isDeleting={deleteTransactionMutation.isPending}
             />
           </div>
         </div>
@@ -572,6 +654,24 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
             // Refresh data after transfer
             window.location.reload();
           }}
+        />
+
+        {/* Silme Onay Dialog */}
+        <ConfirmationDialogComponent
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="İşlemi Sil"
+          description={
+            transactionToDelete
+              ? `"${transactionToDelete.description || 'Bu işlem'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+              : "Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+          }
+          confirmText={t("common.delete")}
+          cancelText={t("common.cancel")}
+          variant="destructive"
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          isLoading={deleteTransactionMutation.isPending}
         />
       </div>
     </div>

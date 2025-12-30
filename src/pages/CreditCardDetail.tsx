@@ -1,9 +1,12 @@
 import { useState, useMemo, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Plus, 
@@ -32,8 +35,10 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { useCreditCardDetail, useCreditCardTransactions } from "@/hooks/useAccountDetail";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import CreditCardIncomeModal from "@/components/cashflow/modals/CreditCardIncomeModal";
 import CreditCardExpenseModal from "@/components/cashflow/modals/CreditCardExpenseModal";
 import CreditCardModal from "@/components/cashflow/modals/CreditCardModal";
@@ -46,6 +51,7 @@ interface CreditCardDetailProps {
 }
 
 const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetailProps) => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showBalances, setShowBalances] = useState(true);
@@ -55,6 +61,8 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<any | null>(null);
 
   // React Query hooks ile optimize edilmiş veri çekme
   const { data: card, isLoading: isLoadingCard, error: cardError } = useCreditCardDetail(id);
@@ -99,6 +107,75 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
     window.location.reload();
+  };
+
+  const queryClient = useQueryClient();
+
+  // Silme mutation'ı
+  const deleteTransactionMutation = useMutation({
+    mutationFn: async (transaction: any) => {
+      // Transfer işlemi ise
+      if (transaction.isTransfer) {
+        const transferId = transaction.id.replace('transfer_', '');
+        const { error } = await supabase
+          .from('account_transfers')
+          .delete()
+          .eq('id', transferId);
+        
+        if (error) throw error;
+        return;
+      }
+
+      // Normal transaction ise - card_transactions tablosundan sil
+      if (transaction.id && !transaction.id.startsWith('transfer_')) {
+        const { error } = await supabase
+          .from('card_transactions')
+          .delete()
+          .eq('id', transaction.id);
+        
+        if (error) throw error;
+
+        // Bakiye güncellemesi - transaction tipine göre ters işlem yap
+        if (card) {
+          const balanceChange = transaction.type === 'income' 
+            ? -transaction.amount  // Gelir silinirse bakiye azalır
+            : transaction.amount;  // Gider silinirse bakiye artar
+
+          const newBalance = (card.current_balance || 0) + balanceChange;
+          
+          await supabase
+            .from('credit_cards')
+            .update({ current_balance: newBalance })
+            .eq('id', id);
+        }
+      }
+    },
+    onSuccess: () => {
+      toast.success("İşlem başarıyla silindi");
+      queryClient.invalidateQueries({ queryKey: ['credit-card-transactions', id] });
+      queryClient.invalidateQueries({ queryKey: ['credit-card', id] });
+      refetchTransactions();
+    },
+    onError: (error: any) => {
+      toast.error("İşlem silinirken hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    }
+  });
+
+  const handleDelete = (transaction: any) => {
+    setTransactionToDelete(transaction);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!transactionToDelete) return;
+    deleteTransactionMutation.mutate(transactionToDelete);
+    setIsDeleteDialogOpen(false);
+    setTransactionToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setTransactionToDelete(null);
   };
 
   if (loading) {
@@ -277,23 +354,44 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
             className="pl-10 w-full"
           />
         </div>
+        <Select value={filterType} onValueChange={setFilterType}>
+          <SelectTrigger className="w-[160px] h-9">
+            <Filter className="h-3.5 w-3.5 mr-2" />
+            <SelectValue placeholder="Filtrele" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm İşlemler</SelectItem>
+            <SelectItem value="income">Gelir</SelectItem>
+            <SelectItem value="expense">Gider</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Main Content */}
-      <div className="space-y-2">
+      <div className="space-y-4">
         {/* Main Grid Layout - Sol: Kompakt Bilgiler, Sağ: Geniş İşlem Geçmişi */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-2">
           {/* Sol Taraf - Kompakt Bilgiler ve İşlemler */}
-          <div className="xl:col-span-3 space-y-2">
-            {/* Kart Bilgileri ve Hızlı İşlemler - Tek Kart */}
+          <div className="xl:col-span-2 space-y-2">
+            {/* Kart Bilgileri ve Hızlı İşlemler - Modern Gradient */}
             <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-xl">
               <CardHeader className="pb-2 px-3 pt-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-                  <div className="p-1 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
-                    <CreditCard className="h-3.5 w-3.5 text-purple-600" />
-                  </div>
-                  Kart & İşlemler
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                    <div className="p-1 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
+                      <CreditCard className="h-3.5 w-3.5 text-purple-600" />
+                    </div>
+                    Kart & İşlemler
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleEdit}
+                    className="h-6 w-6 p-0"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="pt-0 px-3 pb-3 space-y-3">
                 {/* Kart Bilgileri - Kompakt */}
@@ -312,10 +410,10 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
                   </div>
                   <div>
                     <label className="text-[10px] font-medium text-muted-foreground">Durum</label>
-                    <Badge 
+                    <Badge
                       className={`text-[10px] h-4 px-1.5 ${
                         card.status === 'active'
-                          ? 'bg-green-100 text-green-800' 
+                          ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}
                     >
@@ -328,26 +426,26 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
                 {/* Hızlı İşlemler */}
                 <div className="border-t pt-2">
                   <div className="grid grid-cols-1 gap-1.5">
-                    <Button 
+                    <Button
                       onClick={() => setIsIncomeModalOpen(true)}
                       className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-xs h-7"
                     >
                       <Plus className="h-3 w-3 mr-1" />
-                      Ödeme
+                      Ödeme Ekle
                     </Button>
-                    <Button 
+                    <Button
                       onClick={() => setIsExpenseModalOpen(true)}
                       className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-xs h-7"
                     >
                       <Minus className="h-3 w-3 mr-1" />
-                      Harcama
+                      Harcama Ekle
                     </Button>
-                    <Button 
+                    <Button
                       onClick={() => setIsTransferModalOpen(true)}
                       className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs h-7"
                     >
                       <ArrowLeft className="h-3 w-3 mr-1" />
-                      Transfer
+                      Transfer Yap
                     </Button>
                   </div>
                 </div>
@@ -356,7 +454,7 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
           </div>
 
           {/* Sağ Taraf - Geniş İşlem Geçmişi */}
-          <div className="xl:col-span-9 space-y-2">
+          <div className="xl:col-span-10 space-y-2">
             <AccountTransactionHistory
               transactions={transactions}
               currency="TRY"
@@ -365,7 +463,10 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
               onFilterTypeChange={setFilterType}
               onAddIncome={() => setIsIncomeModalOpen(true)}
               onAddExpense={() => setIsExpenseModalOpen(true)}
+              onDelete={handleDelete}
               initialBalance={0}
+              hideUsdColumns={true}
+              isDeleting={deleteTransactionMutation.isPending}
             />
           </div>
         </div>
@@ -401,6 +502,24 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
             setIsTransferModalOpen(false);
             window.location.reload();
           }}
+        />
+
+        {/* Silme Onay Dialog */}
+        <ConfirmationDialogComponent
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="İşlemi Sil"
+          description={
+            transactionToDelete
+              ? `"${transactionToDelete.description || 'Bu işlem'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+              : "Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+          }
+          confirmText={t("common.delete")}
+          cancelText={t("common.cancel")}
+          variant="destructive"
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          isLoading={deleteTransactionMutation.isPending}
         />
       </div>
     </div>

@@ -4,16 +4,8 @@ import { MessageSquare, Trash2, Plus, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { ConfirmationDialogComponent } from '@/components/ui/confirmation-dialog';
+import { useTranslation } from 'react-i18next';
 
 interface ConversationListProps {
   conversations: AIConversation[];
@@ -32,6 +24,7 @@ export function ConversationList({
   onDeleteConversation,
   isLoading = false,
 }: ConversationListProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -143,34 +136,23 @@ export function ConversationList({
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog
+      <ConfirmationDialogComponent
         open={deleteConfirmId !== null}
         onOpenChange={(open) => !open && setDeleteConfirmId(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Sohbeti Sil</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bu sohbeti silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve
-              tüm mesajlar silinecektir.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>İptal</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (deleteConfirmId) {
-                  onDeleteConversation(deleteConfirmId);
-                  setDeleteConfirmId(null);
-                }
-              }}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              Sil
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Sohbeti Sil"
+        description="Bu sohbeti silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve tüm mesajlar silinecektir."
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
+        variant="destructive"
+        onConfirm={() => {
+          if (deleteConfirmId) {
+            onDeleteConversation(deleteConfirmId);
+            setDeleteConfirmId(null);
+          }
+        }}
+        onCancel={() => setDeleteConfirmId(null)}
+        isLoading={false}
+      />
     </div>
   );
 }

@@ -1,17 +1,15 @@
-import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Filter, Plus, Minus, MoreVertical } from "lucide-react";
+import { Table, TableBody } from "@/components/ui/table";
+import { Filter, Plus, Minus, Download } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
+import TransactionTableHeader from "./table/TransactionTableHeader";
+import { TransactionTableRow } from "./table/TransactionTableRow";
+import TransactionTableEmpty from "./table/TransactionTableEmpty";
+import { useSortedTransactions } from "./table/useSortedTransactions";
+import type { TransactionSortField, TransactionSortDirection } from "./table/types";
 
 interface Transaction {
   id: string;
@@ -25,10 +23,13 @@ interface Transaction {
   isTransfer?: boolean;
   transfer_direction?: "incoming" | "outgoing";
   balanceAfter?: number;
+  usdBalanceAfter?: number;
   updated_at?: string;
   created_at?: string;
   reference?: string | null;
+  user_name?: string | null;
 }
+
 
 interface AccountTransactionHistoryProps {
   transactions: Transaction[];
@@ -38,9 +39,16 @@ interface AccountTransactionHistoryProps {
   onFilterTypeChange: (value: "all" | "income" | "expense") => void;
   onAddIncome?: () => void;
   onAddExpense?: () => void;
+  onDelete?: (transaction: Transaction) => void;
   initialBalance?: number;
   emptyStateTitle?: string;
   emptyStateDescription?: string;
+  showHeader?: boolean;
+  currentBalance?: number;
+  totalIncome?: number;
+  totalExpense?: number;
+  hideUsdColumns?: boolean;
+  isDeleting?: boolean;
 }
 
 export const AccountTransactionHistory = ({
@@ -51,11 +59,38 @@ export const AccountTransactionHistory = ({
   onFilterTypeChange,
   onAddIncome,
   onAddExpense,
+  onDelete,
   initialBalance = 0,
   emptyStateTitle = "Henüz işlem bulunmuyor",
-  emptyStateDescription = "İlk işleminizi ekleyerek başlayın"
+  emptyStateDescription = "İlk işleminizi ekleyerek başlayın",
+  showHeader = false,
+  currentBalance,
+  totalIncome,
+  totalExpense,
+  hideUsdColumns = false,
+  isDeleting = false
 }: AccountTransactionHistoryProps) => {
-  const navigate = useNavigate();
+  const { exchangeRates, convertCurrency } = useExchangeRates();
+  
+  // Sıralama state'leri
+  const [sortField, setSortField] = useState<TransactionSortField>("transaction_date");
+  const [sortDirection, setSortDirection] = useState<TransactionSortDirection>("desc");
+  
+  // USD kuru
+  const usdRate = useMemo(() => {
+    const rate = exchangeRates.find(r => r.currency_code === 'USD');
+    return rate?.forex_selling || 1;
+  }, [exchangeRates]);
+  
+  const handleSort = (field: TransactionSortField) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
   // Filtreleme - önce filtreleme yap
   const filteredTransactions = useMemo(() => {
     return transactions.filter(transaction => {
@@ -67,82 +102,142 @@ export const AccountTransactionHistory = ({
   // Bakiye hesaplama - filtrelenmiş işlemleri tarihe göre sırala ve her işlemden sonraki bakiyeyi hesapla
   const transactionsWithBalance = useMemo(() => {
     // Eğer zaten balanceAfter varsa, onu kullan
+    let transactionsToProcess = filteredTransactions;
+    
     if (filteredTransactions.length > 0 && filteredTransactions[0].balanceAfter !== undefined) {
-      return filteredTransactions;
+      transactionsToProcess = filteredTransactions;
+    } else {
+      // İşlemleri tarihe göre sırala (en eski en üstte)
+      const sortedTransactions = [...filteredTransactions].sort((a, b) =>
+        new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
+      );
+
+      let runningBalance = initialBalance;
+      let runningUsdBalance = 0;
+
+      transactionsToProcess = sortedTransactions.map(transaction => {
+        // İşlem tutarını hesapla
+        const amount = transaction.type === "income" ? transaction.amount : -transaction.amount;
+        runningBalance += amount;
+        
+        // USD bakiye hesapla
+        const usdAmount = currency === 'USD' ? transaction.amount : transaction.amount / usdRate;
+        if (transaction.type === "income") {
+          runningUsdBalance -= usdAmount; // Gelir → Alacak (negatif)
+        } else {
+          runningUsdBalance += usdAmount; // Gider → Borç (pozitif)
+        }
+
+        return {
+          ...transaction,
+          balanceAfter: runningBalance,
+          usdBalanceAfter: runningUsdBalance
+        };
+      });
     }
 
-    // İşlemleri tarihe göre sırala (en eski en üstte)
-    const sortedTransactions = [...filteredTransactions].sort((a, b) =>
+    // USD bakiyeleri hesapla (eğer yoksa)
+    let runningUsdBalance = 0;
+    const sortedForUsd = [...transactionsToProcess].sort((a, b) =>
       new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
     );
 
-    let runningBalance = initialBalance;
-
-    return sortedTransactions.map(transaction => {
-      // İşlem tutarını hesapla
-      const amount = transaction.type === "income" ? transaction.amount : -transaction.amount;
-      runningBalance += amount;
-
-      return {
-        ...transaction,
-        balanceAfter: runningBalance
-      };
+    return sortedForUsd.map(transaction => {
+      if (transaction.usdBalanceAfter === undefined) {
+        const usdAmount = currency === 'USD' ? transaction.amount : transaction.amount / usdRate;
+        if (transaction.type === "income") {
+          runningUsdBalance -= usdAmount;
+        } else {
+          runningUsdBalance += usdAmount;
+        }
+        return {
+          ...transaction,
+          usdBalanceAfter: runningUsdBalance
+        };
+      }
+      return transaction;
     }).reverse(); // En yeni en üstte olacak şekilde ters çevir
-  }, [filteredTransactions, initialBalance]);
+  }, [filteredTransactions, initialBalance, usdRate, currency]);
 
-  const getTransactionTypeLabel = (transaction: Transaction) => {
-    if (transaction.isTransfer) {
-      return transaction.transfer_direction === 'incoming' ? 'Transfer (Giriş)' : 'Transfer (Çıkış)';
-    }
-    return transaction.type === "income" ? "Para Girişi" : "Para Çıkışı";
-  };
+  // Sıralama uygula
+  const sortedTransactions = useSortedTransactions(transactionsWithBalance, sortField, sortDirection);
 
-  const getAccountName = (transaction: Transaction) => {
-    if (transaction.customer_name) return transaction.customer_name;
-    if (transaction.supplier_name) return transaction.supplier_name;
-    return "-";
-  };
-
-  // Masraf açıklamasını düzelt - eğer "Masraf: {id}" formatındaysa veya boşsa sadece "Masraf" göster
-  const getExpenseDescription = (transaction: Transaction) => {
-    if (!transaction.description) return "Masraf";
-    
-    // Eğer "Masraf: {id}" formatındaysa sadece "Masraf" göster
-    if (transaction.description.startsWith("Masraf: ")) {
-      return "Masraf";
-    }
-    
-    return transaction.description;
-  };
-
-  // Reference'dan masraf ID'sini çıkar (EXP-{id} formatından)
-  const getExpenseIdFromReference = (reference: string | null | undefined): string | null => {
-    if (!reference || !reference.startsWith("EXP-")) return null;
-    return reference.replace("EXP-", "");
-  };
-
-  // Masraf satırına tıklandığında masrafa yönlendir
-  const handleTransactionClick = (transaction: Transaction) => {
-    const expenseId = getExpenseIdFromReference(transaction.reference);
-    if (expenseId) {
-      navigate(`/cashflow/expenses?expenseId=${expenseId}`);
-    }
-  };
+  // İstatistikleri hesapla
+  const stats = useMemo(() => {
+    const balance = currentBalance ?? (transactionsWithBalance[0]?.balanceAfter ?? initialBalance);
+    const income = totalIncome ?? transactions.filter(t => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
+    const expense = totalExpense ?? transactions.filter(t => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
+    return { balance, income, expense };
+  }, [currentBalance, totalIncome, totalExpense, transactions, transactionsWithBalance, initialBalance]);
 
   if (transactions.length === 0) {
     return (
-      <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-gray-50 to-gray-50/50 border border-gray-200/50">
-                <FileText className="h-4 w-4 text-gray-600" />
+      <div className="space-y-4">
+        {/* Header */}
+        {showHeader && (
+          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">İşlem Geçmişi</h3>
               </div>
-              Hesap Hareketleri
-            </CardTitle>
+              <div className="h-8 w-px bg-gray-300" />
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-500">Mevcut Bakiye</span>
+                  <span className={`text-sm font-semibold ${
+                    stats.balance >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {showBalances ? formatCurrency(stats.balance, currency) : "••••••"}
+                  </span>
+                </div>
+                <div className="h-8 w-px bg-gray-300" />
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-500">Toplam Gelir</span>
+                  <span className="text-sm font-semibold text-green-600">
+                    {showBalances ? formatCurrency(stats.income, currency) : "••••••"}
+                  </span>
+                </div>
+                <div className="h-8 w-px bg-gray-300" />
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-500">Toplam Gider</span>
+                  <span className="text-sm font-semibold text-red-600">
+                    {showBalances ? formatCurrency(stats.expense, currency) : "••••••"}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Select value={filterType} onValueChange={onFilterTypeChange}>
+                <SelectTrigger className="w-[160px] h-9">
+                  <Filter className="h-3.5 w-3.5 mr-2" />
+                  <SelectValue placeholder="Filtrele" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tüm İşlemler</SelectItem>
+                  <SelectItem value="income">Gelir</SelectItem>
+                  <SelectItem value="expense">Gider</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" className="h-9">
+                <Download className="h-4 w-4 mr-2" />
+                Ekstre
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Header (showHeader false ise) */}
+        {!showHeader && (
+          <div className="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600">
+                <FileText className="h-5 w-5 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Hesap Hareketleri</h3>
+            </div>
             <Select value={filterType} onValueChange={onFilterTypeChange}>
-              <SelectTrigger className="w-[140px] h-8">
-                <Filter className="h-3 w-3 mr-2" />
+              <SelectTrigger className="w-[160px] h-10">
+                <Filter className="h-4 w-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -152,190 +247,133 @@ export const AccountTransactionHistory = ({
               </SelectContent>
             </Select>
           </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="text-center py-12">
-            <div className="p-3 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-              <FileText className="h-8 w-8 text-gray-400" />
+        )}
+
+        {/* Empty State */}
+        <div className="bg-white border border-gray-200 rounded-lg">
+          <div className="text-center py-16">
+            <div className="p-4 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-lg">
+              <FileText className="h-10 w-10 text-indigo-600" />
             </div>
-            <h3 className="text-base font-semibold text-gray-700 mb-1">{emptyStateTitle}</h3>
-            <p className="text-sm text-gray-500 mb-3">{emptyStateDescription}</p>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">{emptyStateTitle}</h3>
+            <p className="text-sm text-gray-600 mb-4">{emptyStateDescription}</p>
             {(onAddIncome || onAddExpense) && (
-              <div className="flex gap-2 justify-center">
+              <div className="flex gap-3 justify-center">
                 {onAddIncome && (
                   <Button
                     onClick={onAddIncome}
                     size="sm"
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105 transition-all duration-300 rounded-xl"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Gelir
+                    <Plus className="h-4 w-4 mr-2" />
+                    Gelir Ekle
                   </Button>
                 )}
                 {onAddExpense && (
                   <Button
                     onClick={onAddExpense}
                     size="sm"
-                    variant="outline"
-                    className="border-red-200 text-red-700 hover:bg-red-50"
+                    className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-lg shadow-red-500/30 hover:shadow-xl hover:scale-105 transition-all duration-300 rounded-xl"
                   >
-                    <Minus className="h-3 w-3 mr-1" />
-                    Gider
+                    <Minus className="h-4 w-4 mr-2" />
+                    Gider Ekle
                   </Button>
                 )}
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-gray-50 to-gray-50/50 border border-gray-200/50">
-              <FileText className="h-4 w-4 text-gray-600" />
+    <div className="space-y-4">
+      {/* Header */}
+      {showHeader && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">İşlem Geçmişi</h3>
             </div>
-            Hesap Hareketleri
-          </CardTitle>
-          <Select value={filterType} onValueChange={onFilterTypeChange}>
-            <SelectTrigger className="w-[140px] h-8">
-              <Filter className="h-3 w-3 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tümü</SelectItem>
-              <SelectItem value="income">Gelir</SelectItem>
-              <SelectItem value="expense">Gider</SelectItem>
-            </SelectContent>
-          </Select>
+            <div className="h-8 w-px bg-gray-300" />
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500">Mevcut Bakiye</span>
+                <span className={`text-sm font-semibold ${
+                  stats.balance >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {showBalances ? formatCurrency(stats.balance, currency) : "••••••"}
+                </span>
+              </div>
+              <div className="h-8 w-px bg-gray-300" />
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500">Toplam Gelir</span>
+                <span className="text-sm font-semibold text-green-600">
+                  {showBalances ? formatCurrency(stats.income, currency) : "••••••"}
+                </span>
+              </div>
+              <div className="h-8 w-px bg-gray-300" />
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500">Toplam Gider</span>
+                <span className="text-sm font-semibold text-red-600">
+                  {showBalances ? formatCurrency(stats.expense, currency) : "••••••"}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Select value={filterType} onValueChange={onFilterTypeChange}>
+              <SelectTrigger className="w-[160px] h-9">
+                <Filter className="h-3.5 w-3.5 mr-2" />
+                <SelectValue placeholder="Filtrele" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tüm İşlemler</SelectItem>
+                <SelectItem value="income">Gelir</SelectItem>
+                <SelectItem value="expense">Gider</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" className="h-9">
+              <Download className="h-4 w-4 mr-2" />
+              Ekstre
+            </Button>
+          </div>
         </div>
-      </CardHeader>
-      <CardContent className="pt-0">
+      )}
+
+      {/* Table */}
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-700">Tarih</TableHead>
-                <TableHead className="font-semibold text-gray-700">İşlem</TableHead>
-                <TableHead className="font-semibold text-gray-700">Hesap</TableHead>
-                <TableHead className="font-semibold text-gray-700">Açıklama</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-right">Borç</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-right">Alacak</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-right">Bakiye</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-center w-20">İşlem</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TransactionTableHeader
+              sortField={sortField}
+              sortDirection={sortDirection}
+              handleSort={handleSort}
+              hideUsdColumns={hideUsdColumns}
+            />
             <TableBody>
-              {transactionsWithBalance.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                    İşlem bulunmuyor
-                  </TableCell>
-                </TableRow>
+              {sortedTransactions.length === 0 ? (
+                <TransactionTableEmpty colSpan={hideUsdColumns ? 8 : 12} />
               ) : (
-                transactionsWithBalance.map((transaction) => (
-                  <TableRow 
+                sortedTransactions.map((transaction, index) => (
+                  <TransactionTableRow
                     key={transaction.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <TableCell className="font-medium">
-                      {new Date(transaction.transaction_date).toLocaleDateString('tr-TR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        transaction.isTransfer
-                          ? transaction.transfer_direction === 'incoming'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-purple-100 text-purple-800'
-                          : transaction.type === "income"
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                      }`}>
-                        {getTransactionTypeLabel(transaction)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {getAccountName(transaction)}
-                    </TableCell>
-                    <TableCell className="max-w-[250px]">
-                      <div 
-                        className={`truncate ${
-                          getExpenseIdFromReference(transaction.reference) 
-                            ? 'cursor-pointer hover:text-blue-600 hover:underline' 
-                            : ''
-                        }`}
-                        title={transaction.description || transaction.category || '-'}
-                        onClick={() => handleTransactionClick(transaction)}
-                      >
-                        {getExpenseIdFromReference(transaction.reference) 
-                          ? getExpenseDescription(transaction)
-                          : (transaction.description || transaction.category || '-')}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {transaction.type === "expense" ? (
-                        <span className="text-red-600">
-                          {showBalances ? formatCurrency(transaction.amount, currency) : "••••••"}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {transaction.type === "income" ? (
-                        <span className="text-green-600">
-                          {showBalances ? formatCurrency(transaction.amount, currency) : "••••••"}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-bold">
-                      <span className={
-                        transaction.balanceAfter && transaction.balanceAfter >= 0
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }>
-                        {showBalances 
-                          ? formatCurrency(transaction.balanceAfter || 0, currency) 
-                          : "••••••"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            Detayları Görüntüle
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            Düzenle
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
-                            Sil
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+                    transaction={transaction}
+                    index={index}
+                    showBalances={showBalances}
+                    hideUsdColumns={hideUsdColumns}
+                    currency={currency}
+                    usdRate={usdRate}
+                    onDelete={onDelete}
+                    isDeleting={isDeleting}
+                  />
                 ))
               )}
             </TableBody>
           </Table>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

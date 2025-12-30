@@ -4,6 +4,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useTabs } from '@/components/tabs/TabContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import BackButton from '@/components/ui/back-button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -131,35 +132,33 @@ const MemoizedTableRow = React.memo(({
   const matchedProduct = getMatchedProduct(item.matched_product_id);
   
   return (
-    <TableRow className="hover:bg-gray-50/50 transition-colors">
-      <TableCell className="font-medium text-center py-1.5">
+    <TableRow className="hover:bg-gray-50/50 transition-colors border-gray-100">
+      <TableCell className="font-medium text-[10px] px-2 py-2">
         <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-semibold text-gray-600">
           {item.invoice_item.line_number}
         </div>
       </TableCell>
-      <TableCell className="py-1.5">
-        <div className="max-w-40">
-          <p className="font-medium text-gray-900 truncate text-xs">
+      <TableCell className="px-3 py-2">
+        <div className="min-w-80 max-w-none">
+          <p className="font-medium text-gray-900 text-xs mb-1 break-words">
             {item.invoice_item.product_name}
           </p>
         </div>
       </TableCell>
-      <TableCell className="text-right py-1.5">
+      <TableCell className="text-right px-2 py-2">
         <div className="font-mono text-xs font-semibold text-gray-700">
           {item.invoice_item.quantity.toFixed(2)}
         </div>
       </TableCell>
-      <TableCell className="text-center py-1.5">
+      <TableCell className="text-center px-2 py-2">
         <div className="text-[10px] font-medium text-gray-600">
           {formatUnit(item.invoice_item.unit)}
         </div>
       </TableCell>
-      <TableCell className="text-right py-1.5">
-        <div className="text-xs font-semibold text-gray-700">
-          {formatCurrency(item.invoice_item.unit_price, invoice.currency)}
-        </div>
+      <TableCell className="text-right text-xs font-medium px-2 py-2">
+        {formatCurrency(item.invoice_item.unit_price, invoice.currency)}
       </TableCell>
-      <TableCell className="py-1.5">
+      <TableCell className="px-3 py-2">
         <div className="space-y-1">
           {matchedProduct ? (
             <div className="p-1.5 bg-gradient-to-r from-green-50 to-green-100/50 border border-green-200 rounded-md shadow-sm">
@@ -194,7 +193,7 @@ const MemoizedTableRow = React.memo(({
           )}
         </div>
       </TableCell>
-      <TableCell className="text-center py-1.5">
+      <TableCell className="text-center px-2 py-2">
         {item.matched_product_id && (
           <Button
             onClick={() => handleRemoveMatch(index)}
@@ -1278,76 +1277,83 @@ export default function EInvoiceProcess() {
   }
   return (
     <>
-      <div className="space-y-4">
-        {/* Sticky Header */}
-        <div className="sticky top-0 z-20 bg-white rounded-lg border border-gray-200 shadow-sm mb-2">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3">
-            {/* Sol taraf - Başlık */}
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate('/e-invoice')}
-                className="gap-1.5 px-2.5 py-1.5 h-8 text-xs rounded-lg hover:bg-blue-50 hover:text-blue-700"
+      <div className="space-y-2">
+        {/* Enhanced Sticky Header */}
+        <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-2">
+          <div className="flex items-center justify-between p-3 pl-12">
+            <div className="flex items-center gap-3">
+              {/* Simple Back Button */}
+              <BackButton 
+                onClick={() => navigate("/e-invoice")}
+                variant="ghost"
+                size="sm"
               >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span>E-faturalar</span>
-              </Button>
+                E-faturalar
+              </BackButton>
               
-              <div className="p-1.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-md text-white">
-                <FileText className="h-4 w-4" />
-              </div>
-              <div className="space-y-0">
-                <h1 className="text-base font-semibold">
-                  Fatura İşleme
-                </h1>
-                <p className="text-[10px] text-muted-foreground/70">
-                  {invoice.invoice_number} • {invoice.supplier_name}
-                </p>
+              {/* Simple Title Section with Icon */}
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <div className="space-y-0.5">
+                  <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                    Fatura İşleme
+                  </h1>
+                  <p className="text-xs text-muted-foreground/70">
+                    {invoice.invoice_number || 'Henüz atanmadı'} • {invoice.supplier_name || 'Tedarikçi'}
+                  </p>
+                </div>
               </div>
             </div>
             
-            {/* Sağ taraf - İstatistikler */}
-            <div className="flex flex-wrap gap-1.5 items-center">
-              <Badge variant="outline" className="px-2 py-0.5 text-xs h-6">
-                <Package className="h-3 w-3 mr-1" />
-                {invoice.items.length} Kalem
-              </Badge>
-              <Badge variant="outline" className="px-2 py-0.5 text-xs h-6">
-                <DollarSign className="h-3 w-3 mr-1" />
-                {formatCurrency(invoice.total_amount, invoice.currency)}
-              </Badge>
+            <div className="flex items-center gap-4">
+              <div className="flex flex-wrap gap-2 items-center">
+                <Badge variant="outline" className="px-3 py-1">
+                  <Package className="h-3 w-3 mr-1" />
+                  {invoice.items.length} Kalem
+                </Badge>
+                <Badge variant="outline" className="px-3 py-1">
+                  <DollarSign className="h-3 w-3 mr-1" />
+                  {formatCurrency(invoice.total_amount, invoice.currency)}
+                </Badge>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Column - Invoice Info */}
-          <div className="lg:col-span-1">
-            <Card className="border border-gray-200 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-b border-gray-200 p-2.5">
-                <CardTitle className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
-                  <FileText className="h-3.5 w-3.5 text-blue-600" />
+          <div className="lg:col-span-1 space-y-4">
+            {/* Fatura & Tedarikçi Bilgileri */}
+            <Card className="border-2 border-gray-300 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-b-2 border-gray-300 p-3">
+                <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-600" />
                   Fatura & Tedarikçi Bilgileri
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-3 space-y-3">
+              <CardContent className="p-4 space-y-4">
                 {/* Fatura Bilgileri */}
-                <div className="space-y-1.5 text-xs">
+                <div className="space-y-1.5 text-sm">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-xs">Fatura No:</span>
-                    <span className="font-semibold text-xs">{invoice.invoice_number}</span>
+                    <span className="text-gray-500">Fatura No:</span>
+                    <span className={`font-semibold text-xs ${invoice.invoice_number ? 'text-blue-600' : 'text-gray-400'}`}>
+                      {invoice.invoice_number || 'Henüz atanmadı'}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-xs">Tarih:</span>
+                    <span className="text-gray-500">Tarih:</span>
                     <span className="text-xs">{format(new Date(invoice.invoice_date), 'dd.MM.yyyy', { locale: tr })}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-xs">Kalem:</span>
+                    <span className="text-gray-500">Kalem:</span>
                     <span className="font-medium text-xs">{invoice.items.length}</span>
                   </div>
-                  <Separator className="my-1.5" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Para Birimi:</span>
+                    <span className="text-xs font-medium">{invoice.currency === 'TL' ? 'TRY' : (invoice.currency || 'TRY')}</span>
+                  </div>
+                  <Separator className="my-2" />
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-xs">Ara Toplam:</span>
                     <span className="font-medium text-xs">{formatCurrency(invoice.subtotal, invoice.currency)}</span>
@@ -1366,20 +1372,28 @@ export default function EInvoiceProcess() {
 
                 <Separator className="my-2" />
 
+                <Separator />
+
                 {/* Tedarikçi Bilgileri */}
-                <div className={`p-2 rounded-lg text-xs transition-all ${
+                <div className={`p-2.5 rounded-lg text-xs transition-all ${
                   supplierMatchStatus === 'found' ? 'bg-green-50 border border-green-200' : 
                   supplierMatchStatus === 'not_found' ? 'bg-orange-50 border border-orange-200' : 
                   'bg-gray-50 border border-gray-200'
                 }`}>
                   {/* Faturadan Gelen Tedarikçi Bilgileri */}
-                  <div className="mb-1.5">
-                    <div className="font-semibold text-gray-900 text-xs mb-0.5">
+                  <div className="mb-2">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Building2 className="h-3 w-3 text-green-600" />
+                      <span className="text-green-700 font-medium text-xs">Tedarikçi Bilgileri</span>
+                    </div>
+                    <div className="font-semibold text-gray-900 text-sm mb-0.5">
                       {invoice?.supplier_name || invoice?.supplier_details?.company_name || 'Tedarikçi Adı Bulunamadı'}
                     </div>
-                    <div className="text-gray-600 text-xs">
-                      VKN: {invoice?.supplier_tax_number || invoice?.supplier_details?.tax_number || 'Belirtilmemiş'}
-                    </div>
+                    {invoice?.supplier_tax_number && (
+                      <div className="text-gray-500 text-xs mt-0.5">
+                        VKN: {invoice.supplier_tax_number || invoice?.supplier_details?.tax_number || 'Belirtilmemiş'}
+                      </div>
+                    )}
                     {(invoice.supplier_details?.email || invoice.supplier_details?.phone || invoice.supplier_details?.address) && (
                       <details className="mt-1">
                         <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">Detaylar</summary>
@@ -1570,15 +1584,16 @@ export default function EInvoiceProcess() {
           </div>
 
           {/* Right Column - Product Matching */}
-          <div className="lg:col-span-3">
-            <Card className="border border-gray-200 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-green-100/50 border-b border-gray-200 p-2.5">
+          <div className="lg:col-span-3 space-y-4">
+            {/* Ürün Eşleştirme */}
+            <Card className="border-2 border-gray-300 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100/50 border-b-2 border-gray-300 p-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
-                    <Target className="h-3.5 w-3.5 text-green-600" />
+                  <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <Target className="h-4 w-4 text-orange-600" />
                     Ürün Eşleştirme
                   </CardTitle>
-                  <Badge variant="outline" className="px-2 py-0.5 text-xs h-6">
+                  <Badge variant="outline" className="px-3 py-1">
                     {matchedCount} / {matchingItems.length} eşleşti
                   </Badge>
                 </div>
@@ -1586,17 +1601,17 @@ export default function EInvoiceProcess() {
               <CardContent className="p-0">
                 {/* Matching Table */}
                 <div className="overflow-x-auto">
-                  <div className="max-h-[70vh] overflow-y-auto">
+                  <div className="max-h-[50vh] overflow-y-auto">
                     <Table>
                       <TableHeader className="sticky top-0 bg-gray-50 z-10">
-                        <TableRow>
-                          <TableHead className="w-10 font-semibold text-xs py-2">#</TableHead>
-                          <TableHead className="min-w-40 font-semibold text-xs py-2">Fatura Kalemi</TableHead>
-                          <TableHead className="w-20 text-right font-semibold text-xs py-2">Miktar</TableHead>
-                          <TableHead className="w-16 text-center font-semibold text-xs py-2">Birim</TableHead>
-                          <TableHead className="w-24 text-right font-semibold text-xs py-2">Birim Fiyat</TableHead>
-                          <TableHead className="min-w-56 font-semibold text-xs py-2">Eşleşen Ürün</TableHead>
-                          <TableHead className="w-24 text-center font-semibold text-xs py-2">İşlemler</TableHead>
+                        <TableRow className="border-gray-200">
+                          <TableHead className="w-10 font-semibold text-[10px] px-2">#</TableHead>
+                          <TableHead className="min-w-80 font-semibold text-[10px] px-3">Fatura Kalemi</TableHead>
+                          <TableHead className="text-right font-semibold text-[10px] px-2 w-20">Miktar</TableHead>
+                          <TableHead className="text-center font-semibold text-[10px] px-2 w-16">Birim</TableHead>
+                          <TableHead className="text-right font-semibold text-[10px] px-2 w-24">Birim Fiyat</TableHead>
+                          <TableHead className="min-w-56 font-semibold text-[10px] px-3">Eşleşen Ürün</TableHead>
+                          <TableHead className="w-24 text-center font-semibold text-[10px] px-2">İşlemler</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1622,8 +1637,8 @@ export default function EInvoiceProcess() {
           </div>
         </div>
         {/* Action Buttons */}
-        <Card className="border border-gray-200 shadow-sm bg-gradient-to-r from-gray-50 to-gray-100/50">
-          <CardContent className="p-3">
+        <Card className="border-2 border-gray-300 shadow-sm bg-gradient-to-r from-gray-50 to-gray-100/50">
+          <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div className="space-y-0.5">
                 {allMatched ? (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
@@ -31,6 +31,8 @@ import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatUnit } from "@/utils/unitConstants";
+import { useCashflowCategories } from "@/hooks/useCashflowCategories";
+import { useCashflowSubcategories } from "@/hooks/useCashflowSubcategories";
 
 interface PurchaseInvoiceDetailProps {
   isCollapsed?: boolean;
@@ -76,6 +78,31 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
   const [loading, setLoading] = useState(true);
   const [itemsLoading, setItemsLoading] = useState(false);
   const [movementsLoading, setMovementsLoading] = useState(false);
+  
+  // Kategori bilgilerini çek
+  const { getCategoriesByType } = useCashflowCategories();
+  const expenseCategories = getCategoriesByType('expense');
+  const { subcategories: allSubcategories } = useCashflowSubcategories();
+  
+  // Seçili kategori adını bul
+  const categoryName = useMemo(() => {
+    if (!invoice?.category_id) return null;
+    
+    // Önce alt kategorilerde ara
+    const subcategory = allSubcategories.find((sub) => sub.id === invoice.category_id);
+    if (subcategory) {
+      const parentCategory = expenseCategories.find((cat) => cat.id === subcategory.category_id);
+      return `${parentCategory?.name || ''} > ${subcategory.name}`;
+    }
+    
+    // Sonra kategorilerde ara
+    const category = expenseCategories.find((cat) => cat.id === invoice.category_id);
+    if (category) {
+      return category.name;
+    }
+    
+    return null;
+  }, [invoice?.category_id, expenseCategories, allSubcategories]);
 
   useEffect(() => {
     if (id) {
@@ -429,6 +456,12 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                   <span className="text-gray-500 text-xs">Durum:</span>
                   {getStatusBadge(invoice.status)}
                 </div>
+                {categoryName && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 text-xs">Gider Kategorisi:</span>
+                    <span className="text-xs font-medium text-blue-600">{categoryName}</span>
+                  </div>
+                )}
               </div>
 
               <Separator />

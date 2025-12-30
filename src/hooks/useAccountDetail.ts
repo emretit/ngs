@@ -358,7 +358,8 @@ export function useCreditCardTransactions(cardId: string | undefined, limit: num
             customer:customers(name),
             supplier:suppliers(name)
           `)
-          .eq('credit_card_account_id', cardId)
+          .eq('account_id', cardId)
+          .eq('account_type', 'credit_card')
           .order('payment_date', { ascending: false })
           .limit(limit)
       ]);
@@ -366,13 +367,93 @@ export function useCreditCardTransactions(cardId: string | undefined, limit: num
       if (cardTransactions.error) throw cardTransactions.error;
       if (payments.error) throw payments.error;
       
+      // Get all transaction IDs to fetch user info from audit_logs
+      const cardTransactionIds = (cardTransactions.data || []).map((t: any) => t.id);
+      const paymentIds = (payments.data || []).map((p: any) => p.id);
+      
+      // Fetch user info from audit_logs for card_transactions
+      let userInfoMap: Record<string, string> = {};
+      if (cardTransactionIds.length > 0) {
+        const { data: cardAuditLogs } = await supabase
+          .from('audit_logs')
+          .select('entity_id, user_id')
+          .eq('entity_type', 'card_transactions')
+          .in('entity_id', cardTransactionIds)
+          .eq('action', 'create')
+          .order('created_at', { ascending: false });
+        
+        if (cardAuditLogs && cardAuditLogs.length > 0) {
+          const userIds = [...new Set(cardAuditLogs.map((log: any) => log.user_id).filter(Boolean))];
+          if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name')
+              .in('id', userIds);
+            
+            if (profiles) {
+              const profileMap: Record<string, string> = {};
+              profiles.forEach((profile: any) => {
+                const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+                if (fullName) {
+                  profileMap[profile.id] = fullName;
+                }
+              });
+              
+              cardAuditLogs.forEach((log: any) => {
+                if (log.user_id && profileMap[log.user_id]) {
+                  userInfoMap[log.entity_id] = profileMap[log.user_id];
+                }
+              });
+            }
+          }
+        }
+      }
+      
+      // Fetch user info from audit_logs for payments
+      if (paymentIds.length > 0) {
+        const { data: paymentAuditLogs } = await supabase
+          .from('audit_logs')
+          .select('entity_id, user_id')
+          .eq('entity_type', 'payments')
+          .in('entity_id', paymentIds)
+          .eq('action', 'create')
+          .order('created_at', { ascending: false });
+        
+        if (paymentAuditLogs && paymentAuditLogs.length > 0) {
+          const userIds = [...new Set(paymentAuditLogs.map((log: any) => log.user_id).filter(Boolean))];
+          if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name')
+              .in('id', userIds);
+            
+            if (profiles) {
+              const profileMap: Record<string, string> = {};
+              profiles.forEach((profile: any) => {
+                const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+                if (fullName) {
+                  profileMap[profile.id] = fullName;
+                }
+              });
+              
+              paymentAuditLogs.forEach((log: any) => {
+                if (log.user_id && profileMap[log.user_id]) {
+                  userInfoMap[log.entity_id] = profileMap[log.user_id];
+                }
+              });
+            }
+          }
+        }
+      }
+      
       // Map card_transactions to Transaction interface
       const mappedCardTransactions = (cardTransactions.data || []).map((item: any) => ({
         ...item,
         type: item.transaction_type === 'payment' ? 'income' : 'expense',
         category: item.merchant_category || item.category || 'Genel',
         description: item.description || item.merchant_name || 'Kart İşlemi',
-        reference: item.reference || null
+        reference: item.reference || null,
+        user_name: userInfoMap[item.id] || null
       }));
 
       const formattedPayments = payments.data.map((payment) => ({
@@ -386,7 +467,8 @@ export function useCreditCardTransactions(cardId: string | undefined, limit: num
         customer_name: payment.customer?.name,
         supplier_name: payment.supplier?.name,
         payment_direction: payment.payment_direction,
-        reference: null
+        reference: null,
+        user_name: userInfoMap[payment.id] || null
       }));
 
       const allTransactions = [

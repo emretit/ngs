@@ -1,6 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-import { PostgrestFilterBuilder, PostgrestQueryBuilder } from '@supabase/postgrest-js';
-import { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Query filter options
@@ -53,12 +51,12 @@ export function buildCompanyQuery<T = any>(
   table: string,
   companyId: string | null | undefined,
   options: QueryOptions = {}
-): PostgrestFilterBuilder<any, any, T[]> {
+) {
   if (!companyId) {
     throw new Error(`Company ID is required for querying ${table}`);
   }
 
-  let query: PostgrestFilterBuilder<any, any, T[]> = supabase
+  let query = supabase
     .from(table)
     .select(options.select || '*', options.count ? { count: options.count } : undefined);
 
@@ -132,12 +130,12 @@ export function buildCompanyQueryWithOr<T = any>(
   companyId: string | null | undefined,
   orConditions: string,
   options: QueryOptions = {}
-): PostgrestFilterBuilder<any, any, T[]> {
+) {
   if (!companyId) {
     throw new Error(`Company ID is required for querying ${table}`);
   }
 
-  let query: PostgrestFilterBuilder<any, any, T[]> = supabase
+  let query = supabase
     .from(table)
     .select(options.select || '*', options.count ? { count: options.count } : undefined);
 

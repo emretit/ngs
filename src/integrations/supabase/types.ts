@@ -6257,6 +6257,7 @@ export type Database = {
           account_id: string | null
           account_type: string | null
           amount: number
+          check_id: string | null
           company_id: string | null
           created_at: string | null
           currency: Database["public"]["Enums"]["currency_type"]
@@ -6275,6 +6276,7 @@ export type Database = {
           account_id?: string | null
           account_type?: string | null
           amount: number
+          check_id?: string | null
           company_id?: string | null
           created_at?: string | null
           currency: Database["public"]["Enums"]["currency_type"]
@@ -6293,6 +6295,7 @@ export type Database = {
           account_id?: string | null
           account_type?: string | null
           amount?: number
+          check_id?: string | null
           company_id?: string | null
           created_at?: string | null
           currency?: Database["public"]["Enums"]["currency_type"]
@@ -6308,6 +6311,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_check_id_fkey"
+            columns: ["check_id"]
+            isOneToOne: false
+            referencedRelation: "checks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_company_id_fkey"
             columns: ["company_id"]
@@ -13980,6 +13990,10 @@ export type Database = {
       unlockrows: { Args: { "": string }; Returns: number }
       update_cash_account_balance: {
         Args: { p_account_id: string; p_amount: number; p_type: string }
+        Returns: undefined
+      }
+      update_credit_card_balance: {
+        Args: { amount: number; card_id: string; transaction_type: string }
         Returns: undefined
       }
       update_order_totals: { Args: { order_uuid: string }; Returns: undefined }

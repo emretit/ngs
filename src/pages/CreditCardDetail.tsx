@@ -354,7 +354,7 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
             className="pl-10 w-full"
           />
         </div>
-        <Select value={filterType} onValueChange={setFilterType}>
+        <Select value={filterType} onValueChange={(value: string) => setFilterType(value as "all" | "income" | "expense")}>
           <SelectTrigger className="w-[160px] h-9">
             <Filter className="h-3.5 w-3.5 mr-2" />
             <SelectValue placeholder="Filtrele" />

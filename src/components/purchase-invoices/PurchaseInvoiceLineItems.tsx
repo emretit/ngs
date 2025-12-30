@@ -336,6 +336,7 @@ const PurchaseInvoiceLineItems: React.FC<PurchaseInvoiceLineItemsProps> = ({
         open={productSearchOpen}
         onOpenChange={setProductSearchOpen}
         onSelectProduct={handleProductSelect}
+        selectedCurrency={currency}
       />
 
       {/* Product Details Modal */}

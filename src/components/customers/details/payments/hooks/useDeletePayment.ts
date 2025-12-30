@@ -118,21 +118,37 @@ export const useDeletePayment = (customer: Customer) => {
     onSuccess: () => {
       toast.success("Ödeme başarıyla silindi");
 
-      // Sadece ilgili customer için spesifik query'leri invalidate et
+      // Sadece ilgili customer için spesifik query'leri invalidate et ve yeniden çek
       if (customer.id) {
-        queryClient.invalidateQueries({ queryKey: ["customer-payments", customer.id, userData?.company_id] });
-        queryClient.invalidateQueries({ queryKey: ["customer", customer.id] });
-        queryClient.invalidateQueries({ queryKey: ["customer-payment-stats", customer.id] });
-        queryClient.invalidateQueries({ queryKey: ["customer-sales-invoices", customer.id, userData?.company_id] });
-        queryClient.invalidateQueries({ queryKey: ["customer-purchase-invoices", customer.id, userData?.company_id] });
+        queryClient.invalidateQueries({ 
+          queryKey: ["customer-payments", customer.id, userData?.company_id],
+          refetchType: 'all'
+        });
+        queryClient.invalidateQueries({ 
+          queryKey: ["customer", customer.id],
+          refetchType: 'all'
+        });
+        queryClient.invalidateQueries({ 
+          queryKey: ["customer-payment-stats", customer.id],
+          refetchType: 'all'
+        });
+        queryClient.invalidateQueries({ 
+          queryKey: ["customer-sales-invoices", customer.id, userData?.company_id],
+          refetchType: 'all'
+        });
+        queryClient.invalidateQueries({ 
+          queryKey: ["customer-purchase-invoices", customer.id, userData?.company_id],
+          refetchType: 'all'
+        });
       }
 
       // Genel query'leri invalidate et (customer.id olmadan)
       queryClient.invalidateQueries({
         queryKey: ["customers"],
-        exact: false
+        exact: false,
+        refetchType: 'all'
       });
-      queryClient.invalidateQueries({ queryKey: ["payment-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["payment-accounts"], refetchType: 'all' });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Ödeme silinirken bir hata oluştu");

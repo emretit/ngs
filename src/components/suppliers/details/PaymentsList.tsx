@@ -616,12 +616,12 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         const openingBalances = balanceMap.get(lastBeforeFilter.id) ?? { balance: 0, usdBalance: 0 };
 
         // Devir bakiye satırı oluştur
-        const openingBalanceTransaction: UnifiedTransaction = {
+        const openingBalanceTransaction = {
           id: 'opening-balance',
-          type: 'payment', // Dummy type
+          type: 'payment' as const, // Dummy type
           date: firstFilteredTransaction.date,
           amount: 0,
-          direction: 'incoming',
+          direction: 'incoming' as const,
           description: 'Devir Bakiye',
           currency: 'TRY',
           balanceAfter: openingBalances.balance,
@@ -629,7 +629,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         };
 
         // Devir bakiyeyi en başa ekle
-        result.unshift(openingBalanceTransaction);
+        result.unshift(openingBalanceTransaction as typeof result[0]);
       }
     }
 

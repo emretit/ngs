@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { RealtimeChannel } from '@supabase/supabase-js';
 
 /**
  * Real-time subscription options
@@ -74,7 +73,7 @@ export interface RealtimeSubscriptionOptions {
  */
 export function useRealtimeSubscription(options: RealtimeSubscriptionOptions) {
   const queryClient = useQueryClient();
-  const channelRef = useRef<RealtimeChannel | null>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
     // Don't subscribe if company ID is not available

@@ -138,7 +138,7 @@ const EditPurchaseInvoice = () => {
           .select("id, name, company, tax_number")
           .eq("id", invoiceData.supplier_id)
           .single();
-        invoiceData.supplier = supplier;
+        (invoiceData as any).supplier = supplier;
       }
 
       setInvoice(invoiceData);

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody } from "@/components/ui/table";
-import { Filter, Plus, Minus, Download } from "lucide-react";
+import { Filter, Plus, Minus, Download, FileText } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import TransactionTableHeader from "./table/TransactionTableHeader";

@@ -128,8 +128,9 @@ export const usePaymentsQuery = (customer: Customer) => {
       return paymentsWithAccounts as Payment[];
     },
     enabled: !!customer.id && !!userData?.company_id && !userLoading,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Her zaman güncel veri çek
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 };
 

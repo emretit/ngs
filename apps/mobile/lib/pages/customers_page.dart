@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/customer_provider.dart';
 import '../models/customer.dart';
+import '../utils/responsive.dart';
 
 class CustomersPage extends ConsumerStatefulWidget {
   const CustomersPage({super.key});
@@ -87,7 +88,12 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                   children: [
                     // Stats
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                      padding: EdgeInsets.fromLTRB(
+                        Responsive.getHorizontalPadding(context),
+                        20,
+                        Responsive.getHorizontalPadding(context),
+                        20
+                      ),
                       child: statsAsync.when(
                         data: (stats) => _buildCompactStats(stats),
                         loading: () => _buildLoadingStats(),
@@ -97,7 +103,12 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                     
                     // Search and Filters
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      padding: EdgeInsets.fromLTRB(
+                        Responsive.getHorizontalPadding(context),
+                        0,
+                        Responsive.getHorizontalPadding(context),
+                        16
+                      ),
                       child: Column(
                         children: [
                           CupertinoSearchTextField(
@@ -136,7 +147,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
             
             // Customer List
             SliverPadding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(Responsive.getPadding(context)),
               sliver: customersAsync.when(
                 data: (customers) {
                   final filteredCustomers = _filterCustomers(customers);

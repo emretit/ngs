@@ -29,7 +29,6 @@ interface CreditCardFormData {
   expiry_date: string;
   expiry_date_date?: Date;
   credit_limit: string;
-  initial_balance: string;
   currency: string;
   notes: string;
 }
@@ -230,7 +229,6 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
     expiry_date: "",
     expiry_date_date: undefined,
     credit_limit: "",
-    initial_balance: "",
     currency: "TRY",
     notes: ""
   });
@@ -280,7 +278,6 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
             expiry_date: data.expiry_date || "",
             expiry_date_date: expiryDate,
             credit_limit: data.credit_limit ? String(data.credit_limit) : "",
-            initial_balance: data.available_limit ? String(data.available_limit) : "",
             currency: data.currency || 'TRY',
             notes: data.notes || ""
           });
@@ -333,11 +330,19 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
       }
 
       const creditLimit = formData.credit_limit ? parseFloat(formData.credit_limit) : 0;
-      const initialBalance = formData.initial_balance ? parseFloat(formData.initial_balance) : 0;
-      // Yeni kart eklerken current_balance, initial_balance ile aynı olmalı
-      const availableLimit = initialBalance > 0 ? initialBalance : 0;
       
       if (mode === 'edit' && cardId) {
+        // Edit modunda sadece credit_limit güncellenir
+        // available_limit otomatik olarak credit_limit - current_balance olarak hesaplanacak
+        const { data: currentCard } = await supabase
+          .from('credit_cards')
+          .select('current_balance')
+          .eq('id', cardId)
+          .single();
+
+        const currentBalance = currentCard?.current_balance || 0;
+        const newAvailableLimit = creditLimit > 0 ? creditLimit - currentBalance : null;
+
         const { error } = await supabase
           .from('credit_cards')
           .update({
@@ -347,7 +352,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
             card_type: formData.card_type,
             expiry_date: formData.expiry_date || null,
             credit_limit: creditLimit > 0 ? creditLimit : null,
-            available_limit: availableLimit > 0 ? availableLimit : null,
+            available_limit: newAvailableLimit,
             currency: formData.currency,
             notes: formData.notes.trim() || null
           })
@@ -356,6 +361,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
         if (error) throw error;
         toast.success("Kredi kartı güncellendi");
       } else {
+        // Yeni kart oluştururken: current_balance = 0, available_limit = credit_limit
         const { error } = await supabase
           .from('credit_cards')
           .insert({
@@ -365,8 +371,8 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
             card_type: formData.card_type,
             expiry_date: formData.expiry_date || null,
             credit_limit: creditLimit > 0 ? creditLimit : null,
-            available_limit: availableLimit > 0 ? availableLimit : null,
-            current_balance: initialBalance,
+            current_balance: 0, // Başlangıçta borç yok
+            available_limit: creditLimit > 0 ? creditLimit : null, // credit_limit ile aynı
             currency: formData.currency,
             notes: formData.notes.trim() || null,
             company_id: profile.company_id
@@ -386,7 +392,6 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
         expiry_date: "",
         expiry_date_date: undefined,
         credit_limit: "",
-        initial_balance: "",
         currency: "TRY",
         notes: ""
       });
@@ -506,7 +511,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
           />
         </div>
 
-        <div className={mode === 'create' ? "grid grid-cols-2 gap-4" : "space-y-2"}>
+        <div className="space-y-2">
           <div className="space-y-2">
             <Label htmlFor="credit_limit" className="text-sm font-medium text-gray-700">Kredi Limiti</Label>
             <Input
@@ -520,22 +525,6 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
               className="h-9"
             />
           </div>
-
-          {mode === 'create' && (
-            <div className="space-y-2">
-              <Label htmlFor="initial_balance" className="text-sm font-medium text-gray-700">Başlangıç Bakiyesi</Label>
-              <Input
-                id="initial_balance"
-                type="number"
-                value={formData.initial_balance}
-                onChange={(e) => handleInputChange('initial_balance', e.target.value)}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                className="h-9"
-              />
-            </div>
-          )}
         </div>
 
         <div className="space-y-2">

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../providers/service_request_provider.dart';
 import '../services/firebase_messaging_service.dart';
+import '../utils/responsive.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -64,9 +65,12 @@ class _HomePageState extends ConsumerState<HomePage> {
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+          child: Responsive.centeredConstrainedBox(
+            context: context,
+            maxWidth: 1200,
+            child: Padding(
+              padding: EdgeInsets.all(Responsive.getPadding(context)),
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Welcome message - iOS style
@@ -204,6 +208,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   error: (error, stack) => _buildErrorCard(),
                 ),
               ],
+              ),
             ),
           ),
         ),
@@ -246,6 +251,75 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ),
         const SizedBox(height: 16),
+        // İstatistik kartları - Responsive grid
+        _buildResponsiveStatsGrid(
+          context,
+          todayRequests,
+          newRequests,
+          inProgressRequests,
+          completedRequests,
+        ),
+      ],
+    );
+  }
+
+  // Responsive stats grid - tablet'te 4 kolon, telefonda 2 kolon
+  Widget _buildResponsiveStatsGrid(
+    BuildContext context,
+    int todayRequests,
+    int newRequests,
+    int inProgressRequests,
+    int completedRequests,
+  ) {
+    final isTablet = Responsive.isTablet(context);
+    final spacing = Responsive.getListSpacing(context);
+
+    if (isTablet) {
+      // Tablet: 4 kolon tek satırda
+      return Row(
+        children: [
+          Expanded(
+            child: _buildStatCard(
+              'Bugün',
+              todayRequests.toString(),
+              CupertinoIcons.calendar_today,
+              const Color(0xFF34C759),
+            ),
+          ),
+          SizedBox(width: spacing),
+          Expanded(
+            child: _buildStatCard(
+              'Yeni',
+              newRequests.toString(),
+              CupertinoIcons.plus_circle_fill,
+              const Color(0xFFB73D3D),
+            ),
+          ),
+          SizedBox(width: spacing),
+          Expanded(
+            child: _buildStatCard(
+              'Devam Eden',
+              inProgressRequests.toString(),
+              CupertinoIcons.clock_fill,
+              const Color(0xFFFF9500),
+            ),
+          ),
+          SizedBox(width: spacing),
+          Expanded(
+            child: _buildStatCard(
+              'Tamamlanan',
+              completedRequests.toString(),
+              CupertinoIcons.checkmark_circle_fill,
+              const Color(0xFF34C759),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Telefon: 2x2 grid
+    return Column(
+      children: [
         Row(
           children: [
             Expanded(
@@ -256,7 +330,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 const Color(0xFF34C759),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: spacing),
             Expanded(
               child: _buildStatCard(
                 'Yeni',
@@ -267,7 +341,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: spacing),
         Row(
           children: [
             Expanded(
@@ -278,7 +352,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 const Color(0xFFFF9500),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: spacing),
             Expanded(
               child: _buildStatCard(
                 'Tamamlanan',
@@ -439,6 +513,57 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _buildQuickActions(BuildContext context) {
+    final isTablet = Responsive.isTablet(context);
+    final spacing = Responsive.getListSpacing(context);
+
+    if (isTablet) {
+      // Tablet: 4 kolon tek satırda
+      return Row(
+        children: [
+          Expanded(
+            child: _buildQuickActionCard(
+              'Yeni Talep',
+              'Hızlı talep oluştur',
+              CupertinoIcons.add_circled_solid,
+              const Color(0xFF34C759),
+              () => context.go('/service-requests/create'),
+            ),
+          ),
+          SizedBox(width: spacing),
+          Expanded(
+            child: _buildQuickActionCard(
+              'Taleplerim',
+              'Atanmış talepler',
+              CupertinoIcons.doc_text_fill,
+              const Color(0xFFB73D3D),
+              () => context.go('/service-requests'),
+            ),
+          ),
+          SizedBox(width: spacing),
+          Expanded(
+            child: _buildQuickActionCard(
+              'Profil',
+              'Hesap ayarları',
+              CupertinoIcons.person_fill,
+              const Color(0xFFFF9500),
+              () => context.go('/profile'),
+            ),
+          ),
+          SizedBox(width: spacing),
+          Expanded(
+            child: _buildQuickActionCard(
+              'Raporlar',
+              'İstatistikler',
+              CupertinoIcons.chart_bar_fill,
+              const Color(0xFFAF52DE),
+              () => context.go('/service-requests'),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Telefon: 2x2 grid
     return Column(
       children: [
         Row(
@@ -452,7 +577,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 () => context.go('/service-requests/create'),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: spacing),
             Expanded(
               child: _buildQuickActionCard(
                 'Taleplerim',
@@ -464,7 +589,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: spacing),
         Row(
           children: [
             Expanded(
@@ -476,7 +601,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 () => context.go('/profile'),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: spacing),
             Expanded(
               child: _buildQuickActionCard(
                 'Raporlar',

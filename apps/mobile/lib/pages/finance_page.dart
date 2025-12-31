@@ -6,6 +6,7 @@ import '../providers/accounting_provider.dart';
 import '../models/bank_account.dart';
 import '../models/expense.dart';
 import '../models/payment.dart';
+import '../utils/responsive.dart';
 
 /// Finans Dashboard Sayfası
 /// Web app'teki Finance modülünün mobil versiyonu
@@ -108,8 +109,12 @@ class _FinancePageState extends ConsumerState<FinancePage> with SingleTickerProv
       color: const Color(0xFFD32F2F),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
+        child: Responsive.centeredConstrainedBox(
+          context: context,
+          maxWidth: 1200,
+          child: Padding(
+            padding: EdgeInsets.all(Responsive.getPadding(context)),
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Toplam Bakiye Kartı
@@ -140,7 +145,9 @@ class _FinancePageState extends ConsumerState<FinancePage> with SingleTickerProv
             ),
             const SizedBox(height: 16),
             _buildQuickActions(context),
-          ],
+            ],
+            ),
+          ),
         ),
       ),
     );
@@ -241,80 +248,95 @@ class _FinancePageState extends ConsumerState<FinancePage> with SingleTickerProv
     AsyncValue expensesAsync,
     AsyncValue paymentsAsync,
   ) {
+    final isTablet = Responsive.isTablet(context);
+    final spacing = Responsive.getListSpacing(context);
+
+    final statWidgets = [
+      bankAccountsAsync.when(
+        data: (accounts) => _buildStatCard(
+          'Hesap Sayısı',
+          '${accounts.length}',
+          CupertinoIcons.building_2_fill,
+          const Color(0xFF3B82F6),
+        ),
+        loading: () => _buildLoadingCard(),
+        error: (e, _) => _buildStatCard('Hesap Sayısı', '-', CupertinoIcons.building_2_fill, const Color(0xFF3B82F6)),
+      ),
+      expensesAsync.when(
+        data: (expenses) {
+          final thisMonthExpenses = expenses.where((Expense e) {
+            final now = DateTime.now();
+            return e.date.month == now.month && e.date.year == now.year;
+          }).fold<double>(0.0, (double sum, Expense e) => sum + e.amount);
+          return _buildStatCard(
+            'Bu Ay Gider',
+            '₺${_formatNumber(thisMonthExpenses)}',
+            CupertinoIcons.arrow_down_circle_fill,
+            const Color(0xFFEF4444),
+          );
+        },
+        loading: () => _buildLoadingCard(),
+        error: (e, _) => _buildStatCard('Bu Ay Gider', '-', CupertinoIcons.arrow_down_circle_fill, const Color(0xFFEF4444)),
+      ),
+      paymentsAsync.when(
+        data: (payments) {
+          final incomingPayments = payments.where((Payment p) => p.paymentDirection == 'incoming').length;
+          return _buildStatCard(
+            'Gelen',
+            '$incomingPayments',
+            CupertinoIcons.arrow_down_circle_fill,
+            const Color(0xFF22C55E),
+          );
+        },
+        loading: () => _buildLoadingCard(),
+        error: (e, _) => _buildStatCard('Gelen', '-', CupertinoIcons.arrow_down_circle_fill, const Color(0xFF22C55E)),
+      ),
+      paymentsAsync.when(
+        data: (payments) {
+          final outgoingPayments = payments.where((Payment p) => p.paymentDirection == 'outgoing').length;
+          return _buildStatCard(
+            'Giden',
+            '$outgoingPayments',
+            CupertinoIcons.arrow_up_circle_fill,
+            const Color(0xFFEF4444),
+          );
+        },
+        loading: () => _buildLoadingCard(),
+        error: (e, _) => _buildStatCard('Tamamlanan', '-', CupertinoIcons.checkmark_circle_fill, const Color(0xFF22C55E)),
+      ),
+    ];
+
+    if (isTablet) {
+      // Tablet: 4 kolon tek satırda
+      return Row(
+        children: [
+          Expanded(child: statWidgets[0]),
+          SizedBox(width: spacing),
+          Expanded(child: statWidgets[1]),
+          SizedBox(width: spacing),
+          Expanded(child: statWidgets[2]),
+          SizedBox(width: spacing),
+          Expanded(child: statWidgets[3]),
+        ],
+      );
+    }
+
+    // Telefon: 2x2 grid
     return Column(
       children: [
         Row(
           children: [
-            Expanded(
-              child: bankAccountsAsync.when(
-                data: (accounts) => _buildStatCard(
-                  'Hesap Sayısı',
-                  '${accounts.length}',
-                  CupertinoIcons.building_2_fill,
-                  const Color(0xFF3B82F6),
-                ),
-                loading: () => _buildLoadingCard(),
-                error: (e, _) => _buildStatCard('Hesap Sayısı', '-', CupertinoIcons.building_2_fill, const Color(0xFF3B82F6)),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: expensesAsync.when(
-                data: (expenses) {
-                  final thisMonthExpenses = expenses.where((Expense e) {
-                    final now = DateTime.now();
-                    return e.date.month == now.month && e.date.year == now.year;
-                  }).fold<double>(0.0, (double sum, Expense e) => sum + e.amount);
-                  return _buildStatCard(
-                    'Bu Ay Gider',
-                    '₺${_formatNumber(thisMonthExpenses)}',
-                    CupertinoIcons.arrow_down_circle_fill,
-                    const Color(0xFFEF4444),
-                  );
-                },
-                loading: () => _buildLoadingCard(),
-                error: (e, _) => _buildStatCard('Bu Ay Gider', '-', CupertinoIcons.arrow_down_circle_fill, const Color(0xFFEF4444)),
-              ),
-            ),
+            Expanded(child: statWidgets[0]),
+            SizedBox(width: spacing),
+            Expanded(child: statWidgets[1]),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: spacing),
         Row(
           children: [
-            Expanded(
-              child: paymentsAsync.when(
-                data: (payments) {
-                  // Payment modelinde status yok, paymentDirection kullanıyoruz
-                  // Gelen ödemeler için 'incoming', giden ödemeler için 'outgoing'
-                  final incomingPayments = payments.where((Payment p) => p.paymentDirection == 'incoming').length;
-                  return _buildStatCard(
-                    'Gelen',
-                    '$incomingPayments',
-                    CupertinoIcons.arrow_down_circle_fill,
-                    const Color(0xFF22C55E),
-                  );
-                },
-                loading: () => _buildLoadingCard(),
-                error: (e, _) => _buildStatCard('Gelen', '-', CupertinoIcons.arrow_down_circle_fill, const Color(0xFF22C55E)),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: paymentsAsync.when(
-                data: (payments) {
-                  // Giden ödemeler
-                  final outgoingPayments = payments.where((Payment p) => p.paymentDirection == 'outgoing').length;
-                  return _buildStatCard(
-                    'Giden',
-                    '$outgoingPayments',
-                    CupertinoIcons.arrow_up_circle_fill,
-                    const Color(0xFFEF4444),
-                  );
-                },
-                loading: () => _buildLoadingCard(),
-                error: (e, _) => _buildStatCard('Tamamlanan', '-', CupertinoIcons.checkmark_circle_fill, const Color(0xFF22C55E)),
-              ),
-            ),
+            Expanded(child: statWidgets[2]),
+            SizedBox(width: spacing),
+            Expanded(child: statWidgets[3]),
           ],
         ),
       ],
@@ -500,7 +522,7 @@ class _FinancePageState extends ConsumerState<FinancePage> with SingleTickerProv
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(Responsive.getPadding(context)),
             itemCount: accounts.length,
             itemBuilder: (context, index) {
               final account = accounts[index];
@@ -608,7 +630,7 @@ class _FinancePageState extends ConsumerState<FinancePage> with SingleTickerProv
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(Responsive.getPadding(context)),
             itemCount: expenses.length,
             itemBuilder: (context, index) {
               final expense = expenses[index];
@@ -722,7 +744,7 @@ class _FinancePageState extends ConsumerState<FinancePage> with SingleTickerProv
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(Responsive.getPadding(context)),
             itemCount: payments.length,
             itemBuilder: (context, index) {
               final payment = payments[index];

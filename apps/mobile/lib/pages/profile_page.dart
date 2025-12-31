@@ -12,6 +12,7 @@ import '../providers/service_request_provider.dart';
 import '../providers/profile_provider.dart';
 import '../services/company_service.dart';
 import '../services/activity_service.dart';
+import '../utils/responsive.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -112,7 +113,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 40, 20, 32),
+                padding: EdgeInsets.fromLTRB(
+                  Responsive.getHorizontalPadding(context),
+                  40,
+                  Responsive.getHorizontalPadding(context),
+                  32
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -168,7 +174,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           
           // Main Content
           SliverPadding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(Responsive.getPadding(context)),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // Ayarlar Bölümü

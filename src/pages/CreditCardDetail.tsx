@@ -44,6 +44,8 @@ import CreditCardExpenseModal from "@/components/cashflow/modals/CreditCardExpen
 import CreditCardModal from "@/components/cashflow/modals/CreditCardModal";
 import TransferModal from "@/components/cashflow/modals/TransferModal";
 import { AccountTransactionHistory } from "@/components/cashflow/AccountTransactionHistory";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
+import { Label } from "@/components/ui/label";
 
 interface CreditCardDetailProps {
   isCollapsed: boolean;
@@ -60,6 +62,8 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [isCreditLimitModalOpen, setIsCreditLimitModalOpen] = useState(false);
+  const [creditLimitValue, setCreditLimitValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<any | null>(null);
@@ -176,6 +180,54 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
   const handleDeleteCancel = () => {
     setIsDeleteDialogOpen(false);
     setTransactionToDelete(null);
+  };
+
+  // Kredi limiti güncelleme mutation'ı
+  const updateCreditLimitMutation = useMutation({
+    mutationFn: async (newLimit: number) => {
+      if (!id) throw new Error("Kart ID bulunamadı");
+      
+      // current_balance'ı al
+      const currentBalance = card?.current_balance || 0;
+      // available_limit = credit_limit - current_balance
+      const newAvailableLimit = newLimit - currentBalance;
+      
+      const { error } = await supabase
+        .from('credit_cards')
+        .update({ 
+          credit_limit: newLimit,
+          available_limit: newAvailableLimit
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Kredi limiti başarıyla güncellendi");
+      queryClient.invalidateQueries({ queryKey: ['credit-card', id] });
+      setIsCreditLimitModalOpen(false);
+      setCreditLimitValue("");
+      window.location.reload();
+    },
+    onError: (error: any) => {
+      toast.error("Limit güncellenirken hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    }
+  });
+
+  const handleOpenCreditLimitModal = () => {
+    if (card) {
+      setCreditLimitValue(card.credit_limit ? String(card.credit_limit) : "");
+    }
+    setIsCreditLimitModalOpen(true);
+  };
+
+  const handleUpdateCreditLimit = () => {
+    const limitValue = parseFloat(creditLimitValue);
+    if (isNaN(limitValue) || limitValue < 0) {
+      toast.error("Geçerli bir limit değeri girin");
+      return;
+    }
+    updateCreditLimitMutation.mutate(limitValue);
   };
 
   if (loading) {
@@ -447,6 +499,13 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
                       <ArrowLeft className="h-3 w-3 mr-1" />
                       Transfer Yap
                     </Button>
+                    <Button
+                      onClick={handleOpenCreditLimitModal}
+                      className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white text-xs h-7"
+                    >
+                      <Settings className="h-3 w-3 mr-1" />
+                      Limit Düzelt
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -503,6 +562,55 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
             window.location.reload();
           }}
         />
+
+        {/* Kredi Limiti Düzelt Modal */}
+        <UnifiedDialog
+          isOpen={isCreditLimitModalOpen}
+          onClose={(open) => {
+            setIsCreditLimitModalOpen(open);
+            if (!open) {
+              setCreditLimitValue("");
+            }
+          }}
+          title="Kredi Limiti Düzelt"
+          maxWidth="md"
+          headerColor="purple"
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="credit_limit" className="text-sm font-medium text-gray-700">
+                Kredi Limiti
+              </Label>
+              <Input
+                id="credit_limit"
+                type="number"
+                value={creditLimitValue}
+                onChange={(e) => setCreditLimitValue(e.target.value)}
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                className="h-10"
+              />
+              <p className="text-xs text-gray-500">
+                Kredi kartının limitini güncelleyin. Kullanılabilir limit otomatik olarak hesaplanacaktır.
+              </p>
+            </div>
+          </div>
+          <UnifiedDialogFooter>
+            <UnifiedDialogCancelButton 
+              onClick={() => {
+                setIsCreditLimitModalOpen(false);
+                setCreditLimitValue("");
+              }}
+            />
+            <UnifiedDialogActionButton
+              onClick={handleUpdateCreditLimit}
+              disabled={updateCreditLimitMutation.isPending || !creditLimitValue}
+            >
+              {updateCreditLimitMutation.isPending ? "Güncelleniyor..." : "Güncelle"}
+            </UnifiedDialogActionButton>
+          </UnifiedDialogFooter>
+        </UnifiedDialog>
 
         {/* Silme Onay Dialog */}
         <ConfirmationDialogComponent

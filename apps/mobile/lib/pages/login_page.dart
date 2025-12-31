@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
+import '../utils/responsive.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -57,9 +58,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           children: [
             // Ana içerik
             SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
+              padding: EdgeInsets.symmetric(
+                horizontal: Responsive.getHorizontalPadding(context),
+                vertical: 20.0,
+              ),
+              child: Responsive.centeredConstrainedBox(
+                context: context,
+                maxWidth: 500,
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -76,7 +81,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         'Hesabınıza Giriş Yapın',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontSize: 28,
+                          fontSize: Responsive.getTitleFontSize(context),
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF000000),
                           letterSpacing: -0.5,
@@ -89,7 +94,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: const Color(0xFF8E8E93),
-                          fontSize: 15,
+                          fontSize: Responsive.getBodyFontSize(context),
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -104,7 +109,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             width: 1,
                           ),
                         ),
-                        padding: const EdgeInsets.all(24.0),
+                        padding: EdgeInsets.all(Responsive.getCardPadding(context)),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -116,10 +121,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             _buildPasswordField(context),
                             const SizedBox(height: 24),
                             
-                            // Login Button - Web'deki gibi (h-12 = 48px)
+                            // Login Button - Responsive height
                             SizedBox(
                               width: double.infinity,
-                              height: 48, // Web'deki h-12
+                              height: Responsive.getButtonHeight(context),
                               child: ElevatedButton(
                                 onPressed: authState.isLoading ? null : _signIn,
                                 style: ElevatedButton.styleFrom(
@@ -168,75 +173,39 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ),
                       
                       const SizedBox(height: 24),
-                      
-                      // Kayıt ol linki
+
+                      // Şifre sıfırlama linki
                       Center(
-                        child: Column(
-                          children: [
-                            RichText(
-                              text: TextSpan(
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF8E8E93),
-                                  fontSize: 14,
-                                ),
-                                children: [
-                                  const TextSpan(text: 'Henüz bir hesabınız yok mu? '),
-                                  WidgetSpan(
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        // TODO: Kayıt sayfasına yönlendir
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Kayıt özelliği yakında eklenecek'),
-                                          ),
-                                        );
-                                      },
-                                      child: Text(
-                                        'Hemen Kaydolun',
-                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          color: const Color(0xFF8B2F2F),
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                        child: RichText(
+                          text: TextSpan(
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF8E8E93),
+                              fontSize: 14,
+                            ),
+                            children: [
+                              const TextSpan(text: 'Şifremi Unuttum? '),
+                              WidgetSpan(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    // TODO: Şifre sıfırlama sayfasına yönlendir
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Şifre sıfırlama özelliği yakında eklenecek'),
                                       ),
+                                    );
+                                  },
+                                  child: Text(
+                                    'Şifreyi Sıfırla',
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: const Color(0xFF8B2F2F),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            RichText(
-                              text: TextSpan(
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF8E8E93),
-                                  fontSize: 14,
                                 ),
-                                children: [
-                                  const TextSpan(text: 'Şifremi Unuttum? '),
-                                  WidgetSpan(
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        // TODO: Şifre sıfırlama sayfasına yönlendir
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Şifre sıfırlama özelliği yakında eklenecek'),
-                                          ),
-                                        );
-                                      },
-                                      child: Text(
-                                        'Şifreyi Sıfırla',
-                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          color: const Color(0xFF8B2F2F),
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ],

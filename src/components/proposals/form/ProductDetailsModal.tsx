@@ -4,11 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Plus, History, Check } from "lucide-react";
+import { History } from "lucide-react";
 import { Product } from "@/types/product";
-import { formatCurrency, areCurrenciesEqual, normalizeCurrency } from "@/utils/formatters";
+import { formatCurrency, normalizeCurrency } from "@/utils/formatters";
 import { useCurrencyManagement } from "@/components/proposals/form/items/hooks/useCurrencyManagement";
 import CurrencySelector from "@/components/proposals/form/items/product-dialog/components/price-section/CurrencySelector";
 import QuantityDepoSection from "@/components/proposals/form/items/product-dialog/components/QuantityDepoSection";
@@ -226,9 +225,6 @@ const ProductDetailsModal = ({
     onOpenChange(false);
   };
 
-  const showStockWarning = product && quantity > product.stock_quantity;
-  // TRY currency comparison - areCurrenciesEqual kullan
-  const showCurrencyWarning = product && !areCurrenciesEqual(product.currency, selectedCurrency);
 
   // Don't render if neither product nor existingData is provided
   if (!product && !existingData) return null;
@@ -253,43 +249,21 @@ const ProductDetailsModal = ({
       isOpen={open}
       onClose={() => onOpenChange(false)}
       title={dialogTitle}
-      maxWidth="2xl"
+      maxWidth="lg"
       headerColor="blue"
-      className="max-h-[90vh] overflow-y-auto"
+      className="max-h-[90vh] overflow-y-auto [&>div>div]:p-1.5"
     >
 
-      <div className="space-y-3">
-        {/* Warnings Section */}
-        {(product && showStockWarning) || (product && showCurrencyWarning) ? (
-          <div className="space-y-1">
-            {product && showStockWarning && (
-              <Alert variant="destructive" className="py-1">
-                <AlertDescription className="text-xs">
-                  <strong>Stok Uyarısı!</strong> Seçilen miktar ({quantity}) mevcut stoktan ({product.stock_quantity}) fazla.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {product && showCurrencyWarning && (
-              <Alert className="py-1">
-                <AlertDescription className="text-xs">
-                  <strong>Para Birimi Uyarısı!</strong> Bu ürün kartındaki fiyat ({originalCurrency}) ile seçilen para birimi ({selectedCurrency}) farklı.
-                  Günlük kur üzerinden otomatik olarak fiyat hesaplanmıştır. Dilerseniz hesaplanan rakamı değiştirebilirsiniz.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-        ) : null}
-
-        {/* Main Form Section - Compact Layout */}
-        <div className="space-y-3">
+      <div className="space-y-1.5">
+        {/* Main Form Section */}
+        <div className="space-y-1.5">
           {/* Miktar + Depo Seçimi */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="quantity" className="text-sm font-medium text-gray-600">
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="space-y-0.5">
+              <Label htmlFor="quantity" className="text-xs font-medium text-gray-700">
                 Miktar
               </Label>
-              <div className="flex gap-1.5 mt-1">
+              <div className="flex gap-1">
                 <Input
                   id="quantity"
                   type="number"
@@ -299,11 +273,11 @@ const ProductDetailsModal = ({
                     setQuantity(value === "" ? 1 : Number(value) || 1);
                   }}
                   min="1"
-                  className="flex-1"
+                  className="flex-1 h-7 text-sm"
                   placeholder="Miktar"
                 />
                 <Select value={unit} onValueChange={setUnit}>
-                  <SelectTrigger className="w-28">
+                  <SelectTrigger className="w-24 h-7 text-sm">
                     <SelectValue placeholder="Birim" />
                   </SelectTrigger>
                   <SelectContent>
@@ -325,91 +299,91 @@ const ProductDetailsModal = ({
             </div>
 
             {/* Depo Seçimi */}
-            <QuantityDepoSection 
-              quantity={quantity}
-              setQuantity={setQuantity}
-              selectedDepo={selectedDepo}
-              setSelectedDepo={setSelectedDepo}
-              availableStock={product?.stock_quantity}
-              stockStatus={product?.stock_quantity 
-                ? product.stock_quantity > (product.stock_threshold || 5) 
-                  ? 'in_stock' 
-                  : 'low_stock'
-                : 'out_of_stock'}
-              productId={product?.id || (existingData as any)?.product_id || (existingData as any)?.id}
-              showQuantity={false}
-            />
-          </div>
-
-          {/* Birim Fiyat */}
-          <div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="unit_price" className="text-sm font-medium text-gray-600">
-                  Birim Fiyat
-                </Label>
-                <div className="flex gap-1.5 mt-1">
-                  <Input
-                    id="unit_price"
-                    type="number"
-                    value={unitPrice || 0}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setUnitPrice(value === "" ? 0 : Number(value));
-                      setIsManualPriceEdit(true);
-                    }}
-                    step="0.0001"
-                    placeholder="0.0000"
-                    className="flex-1"
-                    disabled={isLoadingRates}
-                  />
-                  <Select 
-                    value={selectedCurrency} 
-                    onValueChange={handleCurrencyChange}
-                    disabled={isLoadingRates}
-                  >
-                    <SelectTrigger className="w-24">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="bg-background border z-[100]">
-                      {currencyOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.value}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-gray-600">
-                  1 {selectedCurrency} = ₺
-                </Label>
-                <div className="mt-1">
-                  <Input
-                    type="number"
-                    value={currentExchangeRate.toFixed(4)}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      const rate = value === "" ? null : Number(value);
-                      setManualExchangeRate(rate);
-                    }}
-                    step="0.0001"
-                    className="w-full"
-                    placeholder="0.0000"
-                  />
-                </div>
-              </div>
+            <div className="space-y-0.5">
+              <QuantityDepoSection
+                quantity={quantity}
+                setQuantity={setQuantity}
+                selectedDepo={selectedDepo}
+                setSelectedDepo={setSelectedDepo}
+                availableStock={product?.stock_quantity}
+                stockStatus={product?.stock_quantity
+                  ? product.stock_quantity > (product.stock_threshold || 5)
+                    ? 'in_stock'
+                    : 'low_stock'
+                  : 'out_of_stock'}
+                productId={product?.id || (existingData as any)?.product_id || (existingData as any)?.id}
+                showQuantity={false}
+              />
             </div>
           </div>
 
-          {/* İndirim ve KDV */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="discount" className="text-sm font-medium text-gray-600">
+          {/* Birim Fiyat + Kur */}
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="space-y-0.5">
+              <Label htmlFor="unit_price" className="text-xs font-medium text-gray-700">
+                Birim Fiyat
+              </Label>
+              <div className="flex gap-1">
+                <Input
+                  id="unit_price"
+                  type="number"
+                  value={unitPrice || 0}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setUnitPrice(value === "" ? 0 : Number(value));
+                    setIsManualPriceEdit(true);
+                  }}
+                  step="0.0001"
+                  placeholder="0.0000"
+                  className="flex-1 h-7 text-sm"
+                  disabled={isLoadingRates}
+                />
+                <Select
+                  value={selectedCurrency}
+                  onValueChange={handleCurrencyChange}
+                  disabled={isLoadingRates}
+                >
+                  <SelectTrigger className="w-24 h-7 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent position="popper" className="bg-background border z-[100]">
+                    {currencyOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.value}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-0.5">
+              <Label htmlFor="exchange_rate" className="text-xs font-medium text-gray-700">
+                1 {selectedCurrency} = ₺
+              </Label>
+              <Input
+                id="exchange_rate"
+                type="number"
+                value={currentExchangeRate.toFixed(4)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const rate = value === "" ? null : Number(value);
+                  setManualExchangeRate(rate);
+                }}
+                step="0.0001"
+                className="h-7 text-sm"
+                placeholder="0.0000"
+              />
+            </div>
+          </div>
+
+          {/* İndirim + KDV */}
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="space-y-0.5">
+              <Label htmlFor="discount" className="text-xs font-medium text-gray-700">
                 İndirim
               </Label>
-              <div className="flex gap-1.5 mt-1">
+              <div className="flex gap-1">
                 <Input
                   id="discount"
                   type="number"
@@ -421,10 +395,10 @@ const ProductDetailsModal = ({
                   step="0.01"
                   max="100"
                   placeholder="0"
-                  className="flex-1"
+                  className="flex-1 h-7 text-sm"
                 />
                 <Select value={discountType} onValueChange={(value) => setDiscountType(value as 'percentage' | 'amount')}>
-                  <SelectTrigger className="w-24">
+                  <SelectTrigger className="w-24 h-7 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -435,12 +409,12 @@ const ProductDetailsModal = ({
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="vat_rate" className="text-sm font-medium text-gray-600">
+            <div className="space-y-0.5">
+              <Label htmlFor="vat_rate" className="text-xs font-medium text-gray-700">
                 KDV Oranı
               </Label>
               <Select value={(vatRate || 20).toString()} onValueChange={(value) => setVatRate(Number(value))}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="h-7 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -455,121 +429,127 @@ const ProductDetailsModal = ({
           </div>
 
           {/* Açıklama */}
-          <div>
-            <Label htmlFor="description" className="text-sm font-medium text-gray-600">
+          <div className="space-y-0.5">
+            <Label htmlFor="description" className="text-xs font-medium text-gray-700">
               Açıklama
             </Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Açıklama"
-              rows={2}
-              className="mt-1 resize-none"
+              placeholder="Açıklama giriniz..."
+              rows={1}
+              className="resize-none text-sm py-1 min-h-[28px]"
             />
           </div>
 
           {/* Hesaplama Özeti */}
-          <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-gray-700">Hesaplama Özeti</span>
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-1.5 rounded-lg border border-gray-200 shadow-sm">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-semibold text-gray-800">Hesaplama Özeti</span>
               {product?.id && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => setPriceHistoryOpen(true)}
-                  className="h-6 px-2 text-xs"
+                  className="h-6 px-1.5 text-[10px] hover:bg-white/80"
                 >
-                  <History className="h-3 w-3 mr-1" />
+                  <History className="h-3 w-3 mr-0.5" />
                   Fiyat Geçmişi
                 </Button>
               )}
             </div>
+
             {normalizeCurrency(selectedCurrency) !== "TRY" && (
-              <div className="text-xs text-muted-foreground mb-1.5 pb-1.5 border-b border-gray-300 text-center">
+              <div className="text-[10px] text-gray-600 bg-white/60 py-0.5 px-1.5 rounded mb-1 text-center font-medium">
                 1 {selectedCurrency} = {currentExchangeRate.toFixed(4)} ₺
               </div>
             )}
-            <div className="text-xs text-gray-600 space-y-0.5 mb-1.5">
-              <div className="flex justify-between items-center">
-                <span>Ara Toplam:</span>
-                <div className="flex items-center">
-                  <span className="w-24 text-center">{formatCurrency(subtotal, selectedCurrency)}</span>
+
+            <div className="space-y-1 text-xs text-gray-700">
+              <div className="flex justify-between items-center py-0.5">
+                <span className="font-medium">Ara Toplam:</span>
+                <div className="flex items-center gap-2">
+                  <span className="min-w-[85px] text-right font-semibold">{formatCurrency(subtotal, selectedCurrency)}</span>
                   {normalizeCurrency(selectedCurrency) !== "TRY" && (
                     <>
-                      <span className="w-px h-4 bg-gray-300 mx-2"></span>
-                      <span className="w-24 text-center text-muted-foreground text-[10px]">
+                      <span className="w-px h-3 bg-gray-300"></span>
+                      <span className="min-w-[75px] text-right text-[10px] text-gray-500">
                         {formatCurrency(convertAmountWithManualRate(subtotal, selectedCurrency, "TRY"), "TRY")}
                       </span>
                     </>
                   )}
                 </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span>İndirim:</span>
-                <div className="flex items-center">
-                  <span className="w-24 text-center text-red-600">-{formatCurrency(discountAmount, selectedCurrency)}</span>
+
+              <div className="flex justify-between items-center py-0.5">
+                <span className="font-medium">İndirim:</span>
+                <div className="flex items-center gap-2">
+                  <span className="min-w-[85px] text-right font-semibold text-red-600">-{formatCurrency(discountAmount, selectedCurrency)}</span>
                   {normalizeCurrency(selectedCurrency) !== "TRY" && (
                     <>
-                      <span className="w-px h-4 bg-gray-300 mx-2"></span>
-                      <span className="w-24 text-center text-muted-foreground text-[10px]">
-                        {formatCurrency(convertAmountWithManualRate(discountAmount, selectedCurrency, "TRY"), "TRY")}
+                      <span className="w-px h-3 bg-gray-300"></span>
+                      <span className="min-w-[75px] text-right text-[10px] text-gray-500">
+                        -{formatCurrency(convertAmountWithManualRate(discountAmount, selectedCurrency, "TRY"), "TRY")}
                       </span>
                     </>
                   )}
                 </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span>Net Toplam:</span>
-                <div className="flex items-center">
-                  <span className="w-24 text-center">{formatCurrency(netAmount, selectedCurrency)}</span>
+
+              <div className="flex justify-between items-center py-0.5">
+                <span className="font-medium">Net Toplam:</span>
+                <div className="flex items-center gap-2">
+                  <span className="min-w-[85px] text-right font-semibold">{formatCurrency(netAmount, selectedCurrency)}</span>
                   {normalizeCurrency(selectedCurrency) !== "TRY" && (
                     <>
-                      <span className="w-px h-4 bg-gray-300 mx-2"></span>
-                      <span className="w-24 text-center text-muted-foreground text-[10px]">
+                      <span className="w-px h-3 bg-gray-300"></span>
+                      <span className="min-w-[75px] text-right text-[10px] text-gray-500">
                         {formatCurrency(convertAmountWithManualRate(netAmount, selectedCurrency, "TRY"), "TRY")}
                       </span>
                     </>
                   )}
                 </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span>KDV:</span>
-                <div className="flex items-center">
-                  <span className="w-24 text-center text-green-600">+{formatCurrency(vatAmount, selectedCurrency)}</span>
+
+              <div className="flex justify-between items-center py-0.5">
+                <span className="font-medium">KDV:</span>
+                <div className="flex items-center gap-2">
+                  <span className="min-w-[85px] text-right font-semibold text-green-600">+{formatCurrency(vatAmount, selectedCurrency)}</span>
                   {normalizeCurrency(selectedCurrency) !== "TRY" && (
                     <>
-                      <span className="w-px h-4 bg-gray-300 mx-2"></span>
-                      <span className="w-24 text-center text-muted-foreground text-[10px]">
-                        {formatCurrency(convertAmountWithManualRate(vatAmount, selectedCurrency, "TRY"), "TRY")}
+                      <span className="w-px h-3 bg-gray-300"></span>
+                      <span className="min-w-[75px] text-right text-[10px] text-gray-500">
+                        +{formatCurrency(convertAmountWithManualRate(vatAmount, selectedCurrency, "TRY"), "TRY")}
                       </span>
                     </>
                   )}
                 </div>
               </div>
             </div>
-            <div className="flex justify-between items-center text-sm font-bold pt-1.5 border-t border-gray-300">
-              <span className="text-gray-700">TOPLAM</span>
-              <div className="flex items-center">
-                <div className="w-24 text-center flex flex-col items-center">
-                  <span className="text-blue-600">
+
+            <div className="flex justify-between items-center pt-1.5 mt-1.5 border-t-2 border-gray-300">
+              <span className="text-xs font-bold text-gray-800">TOPLAM</span>
+              <div className="flex items-center gap-2">
+                <div className="min-w-[85px] text-right">
+                  <div className="text-sm font-bold text-blue-600">
                     {formatCurrency(total, selectedCurrency)}
-                  </span>
-                  <span className="text-[10px] text-blue-600/70 font-normal mt-0.5">
+                  </div>
+                  <div className="text-[10px] text-blue-600/70 font-medium mt-0.5">
                     {selectedCurrency}
-                  </span>
+                  </div>
                 </div>
                 {normalizeCurrency(selectedCurrency) !== "TRY" && (
                   <>
-                    <span className="w-px h-4 bg-gray-300 mx-2"></span>
-                    <div className="w-24 text-center flex flex-col items-center">
-                      <span className="text-muted-foreground text-[10px] font-normal">
+                    <span className="w-px h-6 bg-gray-300"></span>
+                    <div className="min-w-[75px] text-right">
+                      <div className="text-xs font-semibold text-gray-600">
                         {formatCurrency(convertAmountWithManualRate(total, selectedCurrency, "TRY"), "TRY")}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground/70 font-normal mt-0.5">
+                      </div>
+                      <div className="text-[10px] text-gray-500 font-medium mt-0.5">
                         TRY
-                      </span>
+                      </div>
                     </div>
                   </>
                 )}
@@ -579,7 +559,7 @@ const ProductDetailsModal = ({
 
           {/* Uyarı Mesajları */}
           {isLoadingRates && (
-            <p className="text-xs text-muted-foreground">Kurlar yükleniyor...</p>
+            <p className="text-[10px] text-center text-muted-foreground py-1">Kurlar yükleniyor...</p>
           )}
         </div>
 
@@ -588,19 +568,8 @@ const ProductDetailsModal = ({
           <UnifiedDialogActionButton
             onClick={handleAddToProposal}
             variant="primary"
-            className="gap-2"
           >
-            {existingData ? (
-              <>
-                <Check className="h-4 w-4" />
-                Güncelle
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4" />
-                Ekle
-              </>
-            )}
+            {existingData ? "Güncelle" : "Ekle"}
           </UnifiedDialogActionButton>
         </UnifiedDialogFooter>
       </div>

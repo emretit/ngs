@@ -449,7 +449,7 @@ export function useCreditCardTransactions(cardId: string | undefined, limit: num
       // Map card_transactions to Transaction interface
       const mappedCardTransactions = (cardTransactions.data || []).map((item: any) => ({
         ...item,
-        type: item.transaction_type === 'payment' ? 'income' : 'expense',
+        type: (item.transaction_type === 'payment' || item.transaction_type === 'refund') ? 'income' : 'expense',
         category: item.merchant_category || item.category || 'Genel',
         description: item.description || item.merchant_name || 'Kart İşlemi',
         reference: item.reference || null,

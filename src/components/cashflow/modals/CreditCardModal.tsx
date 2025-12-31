@@ -29,6 +29,7 @@ interface CreditCardFormData {
   expiry_date: string;
   expiry_date_date?: Date;
   credit_limit: string;
+  initial_balance: string;
   currency: string;
   notes: string;
 }
@@ -227,7 +228,9 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
     card_number: "",
     card_type: "credit",
     expiry_date: "",
+    expiry_date_date: undefined,
     credit_limit: "",
+    initial_balance: "",
     currency: "TRY",
     notes: ""
   });
@@ -252,7 +255,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
       try {
         const { data, error } = await supabase
           .from('credit_cards')
-          .select('card_name, bank_name, card_number, card_type, expiry_date, credit_limit, currency, notes')
+          .select('card_name, bank_name, card_number, card_type, expiry_date, credit_limit, available_limit, currency, notes')
           .eq('id', cardId)
           .single();
 
@@ -277,6 +280,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
             expiry_date: data.expiry_date || "",
             expiry_date_date: expiryDate,
             credit_limit: data.credit_limit ? String(data.credit_limit) : "",
+            initial_balance: data.available_limit ? String(data.available_limit) : "",
             currency: data.currency || 'TRY',
             notes: data.notes || ""
           });
@@ -329,6 +333,9 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
       }
 
       const creditLimit = formData.credit_limit ? parseFloat(formData.credit_limit) : 0;
+      const initialBalance = formData.initial_balance ? parseFloat(formData.initial_balance) : 0;
+      // Yeni kart eklerken current_balance, initial_balance ile aynı olmalı
+      const availableLimit = initialBalance > 0 ? initialBalance : 0;
       
       if (mode === 'edit' && cardId) {
         const { error } = await supabase
@@ -340,6 +347,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
             card_type: formData.card_type,
             expiry_date: formData.expiry_date || null,
             credit_limit: creditLimit > 0 ? creditLimit : null,
+            available_limit: availableLimit > 0 ? availableLimit : null,
             currency: formData.currency,
             notes: formData.notes.trim() || null
           })
@@ -357,8 +365,8 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
             card_type: formData.card_type,
             expiry_date: formData.expiry_date || null,
             credit_limit: creditLimit > 0 ? creditLimit : null,
-            available_limit: creditLimit > 0 ? creditLimit : null,
-            current_balance: 0,
+            available_limit: availableLimit > 0 ? availableLimit : null,
+            current_balance: initialBalance,
             currency: formData.currency,
             notes: formData.notes.trim() || null,
             company_id: profile.company_id
@@ -378,6 +386,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
         expiry_date: "",
         expiry_date_date: undefined,
         credit_limit: "",
+        initial_balance: "",
         currency: "TRY",
         notes: ""
       });
@@ -428,18 +437,35 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="card_number" className="text-sm font-medium text-gray-700">Kart Numarası</Label>
-          <Input
-            id="card_number"
-            type="text"
-            value={formData.card_number}
-            onChange={(e) => handleCardNumberChange(e.target.value)}
-            placeholder="1234-5678-9012-3456"
-            maxLength={19}
-            className="h-9"
-            disabled={isLoading || isPrefilling}
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="card_number" className="text-sm font-medium text-gray-700">Kart Numarası</Label>
+            <Input
+              id="card_number"
+              type="text"
+              value={formData.card_number}
+              onChange={(e) => handleCardNumberChange(e.target.value)}
+              placeholder="1234-5678-9012-3456"
+              maxLength={19}
+              className="h-9"
+              disabled={isLoading || isPrefilling}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="currency" className="text-sm font-medium text-gray-700">Para Birimi</Label>
+            <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TRY">TRY</SelectItem>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="EUR">EUR</SelectItem>
+                <SelectItem value="GBP">GBP</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -480,7 +506,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className={mode === 'create' ? "grid grid-cols-2 gap-4" : "space-y-2"}>
           <div className="space-y-2">
             <Label htmlFor="credit_limit" className="text-sm font-medium text-gray-700">Kredi Limiti</Label>
             <Input
@@ -495,20 +521,21 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="currency" className="text-sm font-medium text-gray-700">Para Birimi</Label>
-            <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="TRY">TRY</SelectItem>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="EUR">EUR</SelectItem>
-                <SelectItem value="GBP">GBP</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {mode === 'create' && (
+            <div className="space-y-2">
+              <Label htmlFor="initial_balance" className="text-sm font-medium text-gray-700">Başlangıç Bakiyesi</Label>
+              <Input
+                id="initial_balance"
+                type="number"
+                value={formData.initial_balance}
+                onChange={(e) => handleInputChange('initial_balance', e.target.value)}
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                className="h-9"
+              />
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">

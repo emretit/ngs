@@ -8,10 +8,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { CreditCard, FileText, Receipt, MoreHorizontal, Edit, FileSpreadsheet } from "lucide-react";
+import { CreditCard, FileText, Receipt, MoreHorizontal, Edit, FileSpreadsheet, ArrowLeftRight } from "lucide-react";
 import CheckCreateDialog from "./CheckCreateDialog";
 import BalanceAdjustmentDialog from "./BalanceAdjustmentDialog";
 import ReceiptVoucherDialog from "./ReceiptVoucherDialog";
+import CariVirmanDialog from "./CariVirmanDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,7 +21,7 @@ interface PaymentMethod {
   label: string;
   description: string;
   icon: React.ReactNode;
-  type: "hesap" | "cek" | "senet" | "bakiye_duzelt" | "fis_olustur";
+  type: "hesap" | "cek" | "senet" | "bakiye_duzelt" | "fis_olustur" | "cari_virman";
 }
 
 interface PaymentMethodSelectorProps {
@@ -69,6 +70,13 @@ const balanceActions: PaymentMethod[] = [
     description: "Ödeme fişi oluştur",
     icon: <FileSpreadsheet className="h-4 w-4 text-indigo-500" />,
     type: "fis_olustur"
+  },
+  {
+    id: "cari_virman",
+    label: "Cari Virman",
+    description: "Cari virman işlemi",
+    icon: <ArrowLeftRight className="h-4 w-4 text-teal-500" />,
+    type: "cari_virman"
   }
 ];
 
@@ -77,6 +85,7 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false, custom
   const [checkDialogOpen, setCheckDialogOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
   const [voucherDialogOpen, setVoucherDialogOpen] = useState(false);
+  const [cariVirmanDialogOpen, setCariVirmanDialogOpen] = useState(false);
   const [prefilledCustomerId, setPrefilledCustomerId] = useState<string | undefined>(undefined);
   const [prefilledSupplierId, setPrefilledSupplierId] = useState<string | undefined>(undefined);
 
@@ -138,6 +147,13 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false, custom
     // Fiş oluştur seçildiğinde dialog aç
     if (method.type === "fis_olustur") {
       setVoucherDialogOpen(true);
+      setOpen(false);
+      return;
+    }
+
+    // Cari virman seçildiğinde dialog aç
+    if (method.type === "cari_virman") {
+      setCariVirmanDialogOpen(true);
       setOpen(false);
       return;
     }
@@ -262,6 +278,19 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false, custom
         }
         onSaved={() => {
           setVoucherDialogOpen(false);
+        }}
+      />
+    )}
+
+    {/* Cari Virman Dialogu */}
+    {(customerId || supplierId) && (customerData || supplierData) && (
+      <CariVirmanDialog
+        open={cariVirmanDialogOpen}
+        onOpenChange={setCariVirmanDialogOpen}
+        customerId={customerId}
+        supplierId={supplierId}
+        onSaved={() => {
+          setCariVirmanDialogOpen(false);
         }}
       />
     )}

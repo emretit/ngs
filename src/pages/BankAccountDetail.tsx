@@ -378,7 +378,7 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
               onFilterTypeChange={setFilterType}
               onAddIncome={() => setIsIncomeModalOpen(true)}
               onAddExpense={() => setIsExpenseModalOpen(true)}
-              initialBalance={0}
+              initialBalance={account?.available_balance || 0}
             />
           </div>
         </div>

@@ -52,7 +52,7 @@ export const useRevenueTrend = () => {
           .from('bank_transactions')
           .select('amount')
           .eq('company_id', userData.company_id)
-          .eq('transaction_type', 'income')
+          .eq('transaction_type', 'giris')
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
 
@@ -74,7 +74,7 @@ export const useRevenueTrend = () => {
           .from('card_transactions')
           .select('amount')
           .eq('company_id', userData.company_id)
-          .eq('transaction_type', 'refund')
+          .in('transaction_type', ['payment', 'refund'])
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
 
@@ -122,7 +122,7 @@ export const useRevenueTrend = () => {
           .from('bank_transactions')
           .select('amount')
           .eq('company_id', userData.company_id)
-          .eq('transaction_type', 'expense')
+          .eq('transaction_type', 'cikis')
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
 

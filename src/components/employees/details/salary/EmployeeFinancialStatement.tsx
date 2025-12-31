@@ -272,9 +272,9 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
               
               // Credit card transactions
               const { data: cardTransactions } = await supabase
-                .from('credit_card_transactions')
+                .from('card_transactions')
                 .select('*')
-                .in('reference', referenceValues);
+                .in('reference_number', referenceValues);
               
               if (cardTransactions) {
                 paymentTransactions.push(...cardTransactions.map(t => ({ ...t, account_type: 'credit_card' })));

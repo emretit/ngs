@@ -335,15 +335,16 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
             
           case 'credit_card':
             const { error: cardError } = await supabase
-              .from('credit_card_transactions')
+              .from('card_transactions')
               .insert({
                 card_id: paymentAccountId,
                 amount: expenseAmount,
-                type: 'expense',
+                transaction_type: 'purchase',
                 description: transactionDescription,
-                category: categories.find(c => c.id === selectedCategory)?.name || 'Genel',
-                reference: `EXP-${insertedExpense.id}`,
+                merchant_category: categories.find(c => c.id === selectedCategory)?.name || 'Genel',
+                reference_number: `EXP-${insertedExpense.id}`,
                 transaction_date: transactionDate,
+                currency: 'TRY',
                 company_id: profile.company_id
               });
             transactionError = cardError;
@@ -600,15 +601,16 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
             
           case 'credit_card':
             const { error: cardError } = await supabase
-              .from('credit_card_transactions')
+              .from('card_transactions')
               .insert({
                 card_id: editPaymentAccountId,
                 amount: expenseAmount,
-                type: 'expense',
+                transaction_type: 'purchase',
                 description: transactionDescription,
-                category: categories.find(c => c.id === categoryId)?.name || 'Genel',
-                reference: `EXP-${editingExpense.id}`,
+                merchant_category: categories.find(c => c.id === categoryId)?.name || 'Genel',
+                reference_number: `EXP-${editingExpense.id}`,
                 transaction_date: transactionDate,
+                currency: 'TRY',
                 company_id: editingExpense.company_id || profile?.company_id
               });
             transactionError = cardError;

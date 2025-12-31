@@ -464,7 +464,7 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
               onAddIncome={() => setIsIncomeModalOpen(true)}
               onAddExpense={() => setIsExpenseModalOpen(true)}
               onDelete={handleDelete}
-              initialBalance={0}
+              initialBalance={card?.available_limit || 0}
               hideUsdColumns={true}
               isDeleting={deleteTransactionMutation.isPending}
             />

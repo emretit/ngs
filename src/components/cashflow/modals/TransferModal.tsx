@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ interface Account {
   type: string;
   balance: number;
   currency: string;
+  bankName?: string;
 }
 
 interface TransferFormData {
@@ -37,6 +38,8 @@ const TransferModal = ({
   onClose,
   onSuccess
 }: TransferModalProps) => {
+  const formRef = useRef<HTMLFormElement>(null);
+  const isSwapping = useRef(false);
   const [formData, setFormData] = useState<TransferFormData>({
     fromAccountId: "",
     toAccountId: "",
@@ -45,7 +48,7 @@ const TransferModal = ({
     description: "",
     transferDate: new Date().toISOString().split('T')[0]
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [fromAccounts, setFromAccounts] = useState<Account[]>([]);
@@ -53,14 +56,35 @@ const TransferModal = ({
 
   // Kaynak ve hedef hesapları yer değiştir
   const handleSwapAccounts = () => {
-    setFormData(prev => ({
-      fromAccountId: prev.toAccountId,
-      toAccountId: prev.fromAccountId,
-      amount: prev.amount,
-      currency: prev.currency,
-      description: prev.description,
-      transferDate: prev.transferDate
-    }));
+    if (!formData.fromAccountId || !formData.toAccountId) {
+      return;
+    }
+
+    const tempFrom = formData.fromAccountId;
+    const tempTo = formData.toAccountId;
+
+    // Swap işlemini başlat
+    isSwapping.current = true;
+
+    // Önce toAccounts listesini güncelle (yeni fromAccountId'ye göre)
+    const updatedToAccounts = accounts.filter(acc => acc.id !== tempTo);
+    setToAccounts(updatedToAccounts);
+
+    // Sonra formData'yı güncelle - callback kullanarak güncel state'i al
+    // setTimeout ile toAccounts state'inin güncellenmesini bekleyelim
+    // Bu şekilde Select component'i doğru listeyi görecek
+    setTimeout(() => {
+      setFormData(prev => ({
+        ...prev,
+        fromAccountId: tempTo,
+        toAccountId: tempFrom
+      }));
+    }, 0);
+
+    // useEffect'in çalışması için yeterli süre bekle
+    setTimeout(() => {
+      isSwapping.current = false;
+    }, 500);
     toast.info("Kaynak ve hedef hesaplar yer değiştirildi");
   };
 
@@ -82,7 +106,7 @@ const TransferModal = ({
         if (!profile?.company_id) return;
 
         // Tüm hesap tiplerini paralel olarak yükle
-        const [cashAccounts, bankAccounts, creditCards, partnerAccounts] = await Promise.all([
+        const [cashResult, bankResult, creditCardResult, partnerResult] = await Promise.all([
           supabase
             .from('cash_accounts')
             .select('id, name, current_balance, currency')
@@ -90,49 +114,53 @@ const TransferModal = ({
             .eq('is_active', true),
           supabase
             .from('bank_accounts')
-            .select('id, account_name as name, current_balance, currency')
+            .select('id, account_name, bank_name, current_balance, currency')
             .eq('company_id', profile.company_id)
             .eq('is_active', true),
           supabase
             .from('credit_cards')
-            .select('id, card_name as name, current_balance, currency')
+            .select('id, card_name, bank_name, current_balance, currency')
             .eq('company_id', profile.company_id)
-            .eq('is_active', true),
+            .eq('status', 'active'),
           supabase
             .from('partner_accounts')
-            .select('id, partner_name as name, current_balance, currency')
+            .select('id, partner_name, current_balance, currency')
             .eq('company_id', profile.company_id)
             .eq('is_active', true)
         ]);
 
+
+        // Tüm hesap türlerini birleştir
         const allAccounts: Account[] = [
-          ...(cashAccounts.data || []).map(acc => ({ 
+          ...(cashResult.data || []).map(acc => ({ 
             id: acc.id,
-            name: acc.name,
-            type: 'cash', 
+            name: (acc as any).name || '',
+            type: 'cash' as const, 
             balance: parseFloat(acc.current_balance?.toString() || '0'),
-            currency: acc.currency 
+            currency: acc.currency || 'TRY'
           })),
-          ...(bankAccounts.data || []).map(acc => ({ 
+          ...(bankResult.data || []).map(acc => ({ 
             id: acc.id,
-            name: acc.name,
-            type: 'bank', 
+            name: (acc as any).account_name || '',
+            type: 'bank' as const, 
             balance: parseFloat(acc.current_balance?.toString() || '0'),
-            currency: acc.currency 
+            currency: acc.currency || 'TRY',
+            bankName: (acc as any).bank_name || ''
           })),
-          ...(creditCards.data || []).map(acc => ({ 
+          ...(creditCardResult.data || []).map(acc => ({ 
             id: acc.id,
-            name: acc.name,
-            type: 'credit_card', 
+            name: (acc as any).card_name || '',
+            type: 'credit_card' as const, 
             balance: parseFloat(acc.current_balance?.toString() || '0'),
-            currency: acc.currency 
+            currency: acc.currency || 'TRY',
+            bankName: (acc as any).bank_name || ''
           })),
-          ...(partnerAccounts.data || []).map(acc => ({ 
+          ...(partnerResult.data || []).map(acc => ({ 
             id: acc.id,
-            name: acc.name,
-            type: 'partner', 
+            name: (acc as any).partner_name || '',
+            type: 'partner' as const, 
             balance: parseFloat(acc.current_balance?.toString() || '0'),
-            currency: acc.currency 
+            currency: acc.currency || 'TRY'
           }))
         ];
 
@@ -140,7 +168,6 @@ const TransferModal = ({
         setFromAccounts(allAccounts);
         setToAccounts(allAccounts);
       } catch (error) {
-        console.error('Error loading accounts:', error);
         toast.error("Hesaplar yüklenirken hata oluştu");
       }
     };
@@ -150,10 +177,15 @@ const TransferModal = ({
 
   // Kaynak hesap değiştiğinde hedef hesapları güncelle
   useEffect(() => {
+    // Swap işlemi sırasında bu effect'i atla
+    if (isSwapping.current) {
+      return;
+    }
+    
     if (formData.fromAccountId) {
       const filtered = accounts.filter(acc => acc.id !== formData.fromAccountId);
       setToAccounts(filtered);
-      // Eğer hedef hesap kaynak hesapla aynıysa sıfırla
+      // Eğer hedef hesap kaynak hesapla aynıysa sıfırla (swap sırasında değil)
       if (formData.toAccountId === formData.fromAccountId) {
         setFormData(prev => ({
           ...prev,
@@ -163,6 +195,7 @@ const TransferModal = ({
     } else {
       setToAccounts(accounts);
     }
+    setFromAccounts(accounts);
   }, [formData.fromAccountId, accounts]);
 
   const handleInputChange = (field: keyof TransferFormData, value: string) => {
@@ -177,6 +210,11 @@ const TransferModal = ({
 
     if (!formData.fromAccountId || !formData.toAccountId) {
       toast.error("Kaynak ve hedef hesap seçimi zorunludur");
+      return;
+    }
+
+    if (formData.fromAccountId === formData.toAccountId) {
+      toast.error("Kaynak ve hedef hesap aynı olamaz");
       return;
     }
 
@@ -263,7 +301,6 @@ const TransferModal = ({
         transferDate: new Date().toISOString().split('T')[0]
       });
     } catch (error) {
-      console.error('Error creating transfer:', error);
       toast.error("Transfer işlemi sırasında hata oluştu");
     } finally {
       setIsLoading(false);
@@ -280,6 +317,16 @@ const TransferModal = ({
     }
   };
 
+  const getAccountTypeLabel = (type: string) => {
+    switch (type) {
+      case 'cash': return 'Nakit Kasa';
+      case 'bank': return 'Banka Hesabı';
+      case 'credit_card': return 'Kredi Kartı';
+      case 'partner': return 'Şirket Ortakları Hesabı';
+      default: return type;
+    }
+  };
+
 
   return (
     <UnifiedDialog
@@ -289,43 +336,44 @@ const TransferModal = ({
       maxWidth="2xl"
       headerColor="blue"
     >
-      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-        <p className="text-sm text-blue-700">Hesaplarınız arasında para transferi yapın</p>
-      </div>
       
-      <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Kaynak ve Hedef Hesap - Basit Seçim */}
-          <div className="space-y-4">
-            {/* Kaynak Hesap */}
-            <div className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50/50">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-1.5 rounded-md bg-blue-600">
-                  <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                </div>
-                <Label className="text-base font-semibold text-gray-900">Nereden (Gönderen)</Label>
-              </div>
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+          {/* Kaynak ve Hedef Hesap - İki Sütunlu Kompakt Yapı */}
+          <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-end">
+            {/* Kaynak Hesap - Sol */}
+            <div className="space-y-2 flex-1">
+              <Label className="text-sm font-semibold text-gray-700">
+                Nereden
+              </Label>
               <Select
                 value={formData.fromAccountId}
                 onValueChange={(value) => handleInputChange('fromAccountId', value)}
               >
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Gönderilecek hesabı seçin" />
+                <SelectTrigger className="bg-white h-11 w-full">
+                  {formData.fromAccountId ? (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-medium">{accounts.find(a => a.id === formData.fromAccountId)?.name}</span>
+                      <span className="text-green-600 font-semibold text-sm">{formatCurrency(accounts.find(a => a.id === formData.fromAccountId)?.balance || 0, accounts.find(a => a.id === formData.fromAccountId)?.currency || 'TRY')}</span>
+                    </div>
+                  ) : (
+                    <span className="text-gray-500">Gönderen hesap</span>
+                  )}
                 </SelectTrigger>
                 <SelectContent>
                   {fromAccounts.map(acc => (
                     <SelectItem key={acc.id} value={acc.id}>
                       <div className="flex items-center gap-2">
-                        <span>
-                          {acc.type === 'cash' && '💵'}
-                          {acc.type === 'bank' && '🏦'}
-                          {acc.type === 'credit_card' && '💳'}
-                          {acc.type === 'partner' && '👥'}
-                        </span>
                         <span className="font-medium">{acc.name}</span>
                         <span className="text-gray-500">•</span>
-                        <span className="text-green-600 font-semibold">{formatCurrency(acc.balance, acc.currency)}</span>
+                        <span className="text-gray-600 text-xs">{getAccountTypeLabel(acc.type)}</span>
+                        {acc.bankName && (
+                          <>
+                            <span className="text-gray-500">•</span>
+                            <span className="text-gray-600 text-xs">{acc.bankName}</span>
+                          </>
+                        )}
+                        <span className="text-gray-500">•</span>
+                        <span className="text-green-600 font-semibold text-xs">{formatCurrency(acc.balance, acc.currency)}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -333,52 +381,57 @@ const TransferModal = ({
               </Select>
             </div>
 
-            {/* Yer Değiştir Butonu */}
-            <div className="flex justify-center">
+            {/* Yer Değiştir Butonu - Ortada */}
+            <div className="flex items-center justify-center pb-1">
               <Button
                 type="button"
                 onClick={handleSwapAccounts}
                 variant="outline"
-                className="rounded-full h-10 w-10 p-0 shadow-sm hover:bg-gray-50 border-gray-300"
-                title="Nereden ve Nereye konumlarını yer değiştir"
+                size="icon"
+                className="rounded-full h-10 w-10 shadow-sm hover:bg-gray-50 border-gray-300 flex-shrink-0"
+                title="Hesapları yer değiştir"
                 disabled={!formData.fromAccountId || !formData.toAccountId}
               >
                 <svg className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h11m0 0l-4-4m4 4l-4 4M20 17H9m0 0l4-4m-4 4l4 4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
               </Button>
             </div>
 
-            {/* Hedef Hesap */}
-            <div className="p-4 rounded-lg border-2 border-green-200 bg-green-50/50">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-1.5 rounded-md bg-green-600">
-                  <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                </div>
-                <Label className="text-base font-semibold text-gray-900">Nereye (Alıcı)</Label>
-              </div>
+            {/* Hedef Hesap - Sağ */}
+            <div className="space-y-2 flex-1">
+              <Label className="text-sm font-semibold text-gray-700">
+                Nereye
+              </Label>
               <Select
                 value={formData.toAccountId}
                 onValueChange={(value) => handleInputChange('toAccountId', value)}
               >
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Alıcı hesabı seçin" />
+                <SelectTrigger className="bg-white h-11 w-full">
+                  {formData.toAccountId ? (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-medium">{accounts.find(a => a.id === formData.toAccountId)?.name}</span>
+                      <span className="text-green-600 font-semibold text-sm">{formatCurrency(accounts.find(a => a.id === formData.toAccountId)?.balance || 0, accounts.find(a => a.id === formData.toAccountId)?.currency || 'TRY')}</span>
+                    </div>
+                  ) : (
+                    <span className="text-gray-500">Alıcı hesap</span>
+                  )}
                 </SelectTrigger>
                 <SelectContent>
                   {toAccounts.map(acc => (
                     <SelectItem key={acc.id} value={acc.id}>
                       <div className="flex items-center gap-2">
-                        <span>
-                          {acc.type === 'cash' && '💵'}
-                          {acc.type === 'bank' && '🏦'}
-                          {acc.type === 'credit_card' && '💳'}
-                          {acc.type === 'partner' && '👥'}
-                        </span>
                         <span className="font-medium">{acc.name}</span>
                         <span className="text-gray-500">•</span>
-                        <span className="text-green-600 font-semibold">{formatCurrency(acc.balance, acc.currency)}</span>
+                        <span className="text-gray-600 text-xs">{getAccountTypeLabel(acc.type)}</span>
+                        {acc.bankName && (
+                          <>
+                            <span className="text-gray-500">•</span>
+                            <span className="text-gray-600 text-xs">{acc.bankName}</span>
+                          </>
+                        )}
+                        <span className="text-gray-500">•</span>
+                        <span className="text-green-600 font-semibold text-xs">{formatCurrency(acc.balance, acc.currency)}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -388,10 +441,10 @@ const TransferModal = ({
           </div>
 
           {/* Transfer Detayları */}
-          <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="amount" className="text-sm font-semibold">Transfer Tutarı *</Label>
+                <Label htmlFor="amount" className="text-sm font-semibold">Tutar *</Label>
                 <div className="relative">
                   <Input
                     id="amount"
@@ -402,14 +455,14 @@ const TransferModal = ({
                     min="0"
                     step="0.01"
                     required
-                    className="text-lg font-semibold pr-16"
+                    className="pr-16"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
                     <Select 
                       value={formData.currency} 
                       onValueChange={(value) => handleInputChange('currency', value)}
                     >
-                      <SelectTrigger className="h-8 w-20 border-0 bg-transparent">
+                      <SelectTrigger className="h-7 w-16 border-0 bg-transparent p-0">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -424,25 +477,24 @@ const TransferModal = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="transferDate" className="text-sm font-semibold">Transfer Tarihi</Label>
+                <Label htmlFor="transferDate" className="text-sm font-semibold">Tarih</Label>
                 <Input
                   id="transferDate"
                   type="date"
                   value={formData.transferDate}
                   onChange={(e) => handleInputChange('transferDate', e.target.value)}
                   required
-                  className="text-base"
                 />
               </div>
             </div>
 
-            <div className="space-y-2 mt-4">
-              <Label htmlFor="description" className="text-sm font-semibold">Açıklama (Opsiyonel)</Label>
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-sm font-semibold">Açıklama</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Transfer notu ekleyin..."
+                placeholder="Transfer notu..."
                 rows={2}
                 className="resize-none"
               />
@@ -452,13 +504,17 @@ const TransferModal = ({
         <UnifiedDialogFooter className="gap-2">
           <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} className="flex-1" />
           <UnifiedDialogActionButton
-            onClick={() => {}}
+            onClick={() => {
+              if (formRef.current) {
+                formRef.current.requestSubmit();
+              }
+            }}
             variant="primary"
             disabled={isLoading}
             loading={isLoading}
             className="flex-1 bg-blue-600 hover:bg-blue-700"
           >
-            ✓ Transferi Onayla
+            Transferi Onayla
           </UnifiedDialogActionButton>
         </UnifiedDialogFooter>
       </form>

@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Filter, Plus, Minus, Download, FileText } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import TransactionTableHeader from "./table/TransactionTableHeader";
 import { TransactionTableRow } from "./table/TransactionTableRow";
@@ -356,19 +357,75 @@ export const AccountTransactionHistory = ({
               {sortedTransactions.length === 0 ? (
                 <TransactionTableEmpty colSpan={hideUsdColumns ? 8 : 12} />
               ) : (
-                sortedTransactions.map((transaction, index) => (
-                  <TransactionTableRow
-                    key={transaction.id}
-                    transaction={transaction}
-                    index={index}
-                    showBalances={showBalances}
-                    hideUsdColumns={hideUsdColumns}
-                    currency={currency}
-                    usdRate={usdRate}
-                    onDelete={onDelete}
-                    isDeleting={isDeleting}
-                  />
-                ))
+                <>
+                  {sortedTransactions.map((transaction, index) => (
+                    <TransactionTableRow
+                      key={transaction.id}
+                      transaction={transaction}
+                      index={index}
+                      showBalances={showBalances}
+                      hideUsdColumns={hideUsdColumns}
+                      currency={currency}
+                      usdRate={usdRate}
+                      onDelete={onDelete}
+                      isDeleting={isDeleting}
+                    />
+                  ))}
+                  {/* Başlangıç Bakiyesi Satırı - En altta göster */}
+                  {initialBalance !== 0 && (
+                    <TableRow className="h-8 bg-gray-50 border-t-2 border-gray-300">
+                      <TableCell className="py-2 px-3 text-xs whitespace-nowrap font-medium text-gray-500 italic">
+                        Başlangıç Bakiyesi
+                      </TableCell>
+                      <TableCell className="py-2 px-3 whitespace-nowrap">
+                        <Badge variant="outline" className="text-[10px] px-2 py-0.5 font-bold border-gray-300 text-gray-600 bg-gray-100">
+                          Başlangıç
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-2 px-3 text-xs text-gray-500 italic">
+                        -
+                      </TableCell>
+                      <TableCell className="py-2 px-3 text-xs whitespace-nowrap font-medium text-gray-500">
+                        -
+                      </TableCell>
+                      <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
+                        -
+                      </TableCell>
+                      <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
+                        -
+                      </TableCell>
+                      {!hideUsdColumns && (
+                        <>
+                          <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
+                            -
+                          </TableCell>
+                          <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
+                            -
+                          </TableCell>
+                          <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
+                            -
+                          </TableCell>
+                        </>
+                      )}
+                      <TableCell className={cn(
+                        "py-2 px-3 text-right text-xs font-bold whitespace-nowrap",
+                        initialBalance >= 0 ? 'text-green-600' : 'text-red-600'
+                      )}>
+                        {showBalances 
+                          ? `${initialBalance.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${initialBalance >= 0 ? 'A' : 'B'}`
+                          : "••••••"}
+                      </TableCell>
+                      {!hideUsdColumns && (
+                        <TableCell className="py-2 px-3 text-right text-xs text-gray-500 whitespace-nowrap">
+                          -
+                        </TableCell>
+                      )}
+                      <TableCell className="py-2 px-3 text-center">
+                        -
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
               )}
             </TableBody>
           </Table>

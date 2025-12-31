@@ -14,6 +14,8 @@ interface TotalPriceSectionProps {
   originalCurrency: string;
   currentCurrency: string;
   formatCurrency: (amount: number, currency?: string) => string;
+  hideContainer?: boolean;
+  hideTitle?: boolean;
 }
 
 const TotalPriceSection: React.FC<TotalPriceSectionProps> = ({
@@ -25,7 +27,9 @@ const TotalPriceSection: React.FC<TotalPriceSectionProps> = ({
   setCalculatedTotal,
   originalCurrency,
   currentCurrency,
-  formatCurrency
+  formatCurrency,
+  hideContainer = false,
+  hideTitle = false
 }) => {
   // Re-calculate total when inputs change
   useEffect(() => {
@@ -45,11 +49,13 @@ const TotalPriceSection: React.FC<TotalPriceSectionProps> = ({
   const netAmount = subtotal;
   const taxAmount = subtotal * (taxRate / 100);
 
-  return (
-    <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-gray-700">Hesaplama Özeti</span>
-      </div>
+  const content = (
+    <>
+      {!hideTitle && (
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-gray-700">Hesaplama Özeti</span>
+        </div>
+      )}
       <div className="text-xs text-gray-600 space-y-0.5 mb-1.5">
         <div className="flex justify-between items-center">
           <span>Ara Toplam:</span>
@@ -76,7 +82,17 @@ const TotalPriceSection: React.FC<TotalPriceSectionProps> = ({
               {formatCurrency(calculatedTotal, originalCurrency)}
             </span>
           </div>
-        </div>
+    </>
+  );
+
+  if (hideContainer) {
+    return content;
+  }
+
+  return (
+    <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
+      {content}
+    </div>
   );
 };
 

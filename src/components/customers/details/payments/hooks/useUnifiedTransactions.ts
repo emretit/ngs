@@ -105,7 +105,7 @@ export const useUnifiedTransactions = ({
       const dateB = new Date(b.date).getTime();
       if (dateA === dateB) {
         // Aynı tarihte ise, type'a göre sırala (önce ödemeler, sonra faturalar)
-        const typeOrder = { payment: 0, sales_invoice: 1, purchase_invoice: 2 };
+        const typeOrder: Record<string, number> = { payment: 0, check: 1, sales_invoice: 2, purchase_invoice: 3 };
         return (typeOrder[a.type] || 0) - (typeOrder[b.type] || 0);
       }
       return dateB - dateA;

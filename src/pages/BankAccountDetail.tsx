@@ -498,13 +498,16 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
           }}
         />
         <ConfirmationDialogComponent
-          isOpen={isDeleteDialogOpen}
-          onClose={handleDeleteCancel}
+          open={isDeleteDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) handleDeleteCancel();
+          }}
           onConfirm={handleDeleteConfirm}
           title="İşlemi Sil"
           description={`${transactionToDelete?.description || 'Bu işlem'} işlemini silmek istediğinizden emin misiniz?`}
           confirmText="Sil"
           cancelText="İptal"
+          variant="destructive"
         />
       </div>
     </div>

@@ -1,27 +1,27 @@
-
-import React from "react";
+// Re-export from common components for backward compatibility
+// TODO: Gradually migrate imports to use @/components/common directly
+import { EmptyState as CommonEmptyState, LoadingState as CommonLoadingState } from "@/components/common";
 import { Clock } from "lucide-react";
+import React from "react";
 
 interface EmptyStateProps {
   message?: string;
 }
 
+// Wrapper to maintain backward compatibility with local styling
 export const EmptyState: React.FC<EmptyStateProps> = ({ 
   message = "Arama kriterlerinize uygun servis talebi bulunmuyor" 
 }) => {
   return (
-    <div className="bg-white rounded-md border p-8 text-center">
-      <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-gray-900">Servis talebi bulunamadı</h3>
-      <p className="text-gray-500 mt-2">{message}</p>
-    </div>
+    <CommonEmptyState
+      icon={<Clock className="h-8 w-8 text-muted-foreground" />}
+      title="Servis talebi bulunamadı"
+      description={message}
+      size="md"
+    />
   );
 };
 
 export const LoadingState: React.FC = () => {
-  return (
-    <div className="flex items-center justify-center h-[500px]">
-      <div className="text-gray-500">Servis talepleri yükleniyor...</div>
-    </div>
-  );
+  return <CommonLoadingState message="Servis talepleri yükleniyor..." />;
 };

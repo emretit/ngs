@@ -1,3 +1,16 @@
+/**
+ * @deprecated Bu hook artık kullanımdan kaldırılmıştır.
+ * Yeni React Query tabanlı hook'ları kullanın:
+ * - usePaymentCashAccounts()
+ * - usePaymentBankAccounts()
+ * - usePaymentCreditCards()
+ * - usePaymentPartnerAccounts()
+ * - useAllPaymentAccounts() (tüm hesapları birleştirir)
+ * 
+ * Import: import { useAllPaymentAccounts } from '@/hooks/useAccountDetail';
+ * 
+ * Bu hook gelecekteki bir versiyonda kaldırılacaktır.
+ */
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 

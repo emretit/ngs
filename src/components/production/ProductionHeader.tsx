@@ -122,12 +122,11 @@ const ProductionHeader = ({
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSuccess={() => {
-          // Sayfayı yenile veya verileri güncelle
+          // Callback varsa onu çağır, yoksa sadece dialog'u kapat
           if (onCreateWorkOrder) {
             onCreateWorkOrder();
-          } else {
-            window.location.reload();
           }
+          setDialogOpen(false);
         }}
       />
     </div>

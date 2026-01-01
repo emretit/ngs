@@ -193,6 +193,83 @@ export function useCashAccountTransactions(accountId: string | undefined, limit:
       if (cashTransactions.error) throw cashTransactions.error;
       if (payments.error) throw payments.error;
 
+      // Get all transaction IDs to fetch user info from audit_logs
+      const cashTransactionIds = (cashTransactions.data || []).map((t: any) => t.id);
+      const paymentIds = (payments.data || []).map((p: any) => p.id);
+
+      // Fetch user info from audit_logs
+      let userInfoMap: Record<string, string> = {};
+      if (cashTransactionIds.length > 0) {
+        const { data: cashAuditLogs } = await supabase
+          .from('audit_logs')
+          .select('entity_id, user_id')
+          .eq('entity_type', 'cash_transactions')
+          .in('entity_id', cashTransactionIds)
+          .eq('action', 'create');
+
+        if (cashAuditLogs && cashAuditLogs.length > 0) {
+          const userIds = [...new Set(cashAuditLogs.map((log: any) => log.user_id).filter(Boolean))];
+          if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name')
+              .in('id', userIds);
+
+            if (profiles) {
+              const profileMap: Record<string, string> = {};
+              profiles.forEach((profile: any) => {
+                const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+                if (fullName) {
+                  profileMap[profile.id] = fullName;
+                }
+              });
+
+              cashAuditLogs.forEach((log: any) => {
+                if (log.user_id && profileMap[log.user_id]) {
+                  userInfoMap[log.entity_id] = profileMap[log.user_id];
+                }
+              });
+            }
+          }
+        }
+      }
+
+      // Fetch user info for payments
+      if (paymentIds.length > 0) {
+        const { data: paymentAuditLogs } = await supabase
+          .from('audit_logs')
+          .select('entity_id, user_id')
+          .eq('entity_type', 'payments')
+          .in('entity_id', paymentIds)
+          .eq('action', 'create');
+
+        if (paymentAuditLogs && paymentAuditLogs.length > 0) {
+          const userIds = [...new Set(paymentAuditLogs.map((log: any) => log.user_id).filter(Boolean))];
+          if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name')
+              .in('id', userIds);
+
+            if (profiles) {
+              const profileMap: Record<string, string> = {};
+              profiles.forEach((profile: any) => {
+                const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+                if (fullName) {
+                  profileMap[profile.id] = fullName;
+                }
+              });
+
+              paymentAuditLogs.forEach((log: any) => {
+                if (log.user_id && profileMap[log.user_id]) {
+                  userInfoMap[log.entity_id] = profileMap[log.user_id];
+                }
+              });
+            }
+          }
+        }
+      }
+
       const formattedPayments = payments.data.map((payment) => ({
         id: payment.id,
         amount: payment.amount,
@@ -203,13 +280,14 @@ export function useCashAccountTransactions(accountId: string | undefined, limit:
         currency: payment.currency,
         customer_name: payment.customer?.name,
         supplier_name: payment.supplier?.name,
-        payment_direction: payment.payment_direction
+        payment_direction: payment.payment_direction,
+        user_name: userInfoMap[payment.id] || null
       }));
 
       const allTransactions = [
-        ...cashTransactions.data.map(t => ({ ...t, reference: t.reference || null })),
+        ...cashTransactions.data.map(t => ({ ...t, reference: t.reference || null, user_name: userInfoMap[t.id] || null })),
         ...formattedPayments.map(p => ({ ...p, reference: null }))
-      ].sort((a, b) => 
+      ].sort((a, b) =>
         new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
       );
 
@@ -279,6 +357,83 @@ export function useBankAccountTransactions(accountId: string | undefined, limit:
       if (bankTransactions.error) throw bankTransactions.error;
       if (payments.error) throw payments.error;
 
+      // Get all transaction IDs to fetch user info from audit_logs
+      const bankTransactionIds = (bankTransactions.data || []).map((t: any) => t.id);
+      const paymentIds = (payments.data || []).map((p: any) => p.id);
+
+      // Fetch user info from audit_logs
+      let userInfoMap: Record<string, string> = {};
+      if (bankTransactionIds.length > 0) {
+        const { data: bankAuditLogs } = await supabase
+          .from('audit_logs')
+          .select('entity_id, user_id')
+          .eq('entity_type', 'bank_transactions')
+          .in('entity_id', bankTransactionIds)
+          .eq('action', 'create');
+
+        if (bankAuditLogs && bankAuditLogs.length > 0) {
+          const userIds = [...new Set(bankAuditLogs.map((log: any) => log.user_id).filter(Boolean))];
+          if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name')
+              .in('id', userIds);
+
+            if (profiles) {
+              const profileMap: Record<string, string> = {};
+              profiles.forEach((profile: any) => {
+                const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+                if (fullName) {
+                  profileMap[profile.id] = fullName;
+                }
+              });
+
+              bankAuditLogs.forEach((log: any) => {
+                if (log.user_id && profileMap[log.user_id]) {
+                  userInfoMap[log.entity_id] = profileMap[log.user_id];
+                }
+              });
+            }
+          }
+        }
+      }
+
+      // Fetch user info for payments
+      if (paymentIds.length > 0) {
+        const { data: paymentAuditLogs } = await supabase
+          .from('audit_logs')
+          .select('entity_id, user_id')
+          .eq('entity_type', 'payments')
+          .in('entity_id', paymentIds)
+          .eq('action', 'create');
+
+        if (paymentAuditLogs && paymentAuditLogs.length > 0) {
+          const userIds = [...new Set(paymentAuditLogs.map((log: any) => log.user_id).filter(Boolean))];
+          if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name')
+              .in('id', userIds);
+
+            if (profiles) {
+              const profileMap: Record<string, string> = {};
+              profiles.forEach((profile: any) => {
+                const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+                if (fullName) {
+                  profileMap[profile.id] = fullName;
+                }
+              });
+
+              paymentAuditLogs.forEach((log: any) => {
+                if (log.user_id && profileMap[log.user_id]) {
+                  userInfoMap[log.entity_id] = profileMap[log.user_id];
+                }
+              });
+            }
+          }
+        }
+      }
+
       const formattedPayments = payments.data.map((payment) => ({
         id: payment.id,
         amount: payment.amount,
@@ -290,13 +445,14 @@ export function useBankAccountTransactions(accountId: string | undefined, limit:
         supplier_name: payment.supplier?.name,
         payment_direction: payment.payment_direction,
         payment_type: payment.payment_type,
-        reference: null
+        reference: null,
+        user_name: userInfoMap[payment.id] || null
       }));
 
       const allTransactions = [
-        ...bankTransactions.data.map(t => ({ ...t, reference: t.reference || null })),
+        ...bankTransactions.data.map(t => ({ ...t, reference: t.reference || null, user_name: userInfoMap[t.id] || null })),
         ...formattedPayments
-      ].sort((a, b) => 
+      ].sort((a, b) =>
         new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
       );
 

@@ -1,6 +1,5 @@
 import React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
@@ -180,12 +179,13 @@ export const UnifiedDialogFooter: React.FC<UnifiedDialogFooterProps> = ({
 
 // Dialog Action Button Component
 interface UnifiedDialogActionButtonProps {
-  onClick: () => void;
+  onClick?: () => void;
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "destructive";
   disabled?: boolean;
   loading?: boolean;
   className?: string;
+  type?: "button" | "submit" | "reset";
 }
 
 export const UnifiedDialogActionButton: React.FC<UnifiedDialogActionButtonProps> = ({
@@ -194,10 +194,11 @@ export const UnifiedDialogActionButton: React.FC<UnifiedDialogActionButtonProps>
   variant = "primary",
   disabled = false,
   loading = false,
-  className
+  className,
+  type = "button"
 }) => {
   const baseClasses = "px-6 py-2 text-sm font-medium rounded-lg transition-colors";
-  
+
   const variantClasses = {
     primary: "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300",
     secondary: "bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-300",
@@ -206,6 +207,7 @@ export const UnifiedDialogActionButton: React.FC<UnifiedDialogActionButtonProps>
 
   return (
     <button
+      type={type}
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(

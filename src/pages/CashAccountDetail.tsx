@@ -226,7 +226,9 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
 
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
-    window.location.reload();
+    queryClient.invalidateQueries({ queryKey: ['cash-account', id] });
+    queryClient.invalidateQueries({ queryKey: ['cash-account-transactions', id] });
+    refetchTransactions();
   };
 
   const queryClient = useQueryClient();
@@ -651,8 +653,11 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
           onClose={() => setIsTransferModalOpen(false)}
           onSuccess={() => {
             setIsTransferModalOpen(false);
-            // Refresh data after transfer
-            window.location.reload();
+            queryClient.invalidateQueries({ queryKey: ['cash-account', id] });
+            queryClient.invalidateQueries({ queryKey: ['cash-account-transactions', id] });
+            queryClient.invalidateQueries({ queryKey: ['bank-account'] });
+            queryClient.invalidateQueries({ queryKey: ['credit-card'] });
+            refetchTransactions();
           }}
         />
 

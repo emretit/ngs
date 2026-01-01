@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -115,7 +114,7 @@ const CashIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
       }
 
       // İşlemi ekle
-      const { error: transactionError } = await supabase
+      const { data: transactionData, error: transactionError } = await supabase
         .from('cash_transactions')
         .insert({
           account_id: accountId,
@@ -126,9 +125,22 @@ const CashIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
           reference: formData.reference.trim() || null,
           transaction_date: formData.transaction_date.toISOString(),
           company_id: profile.company_id
-        });
+        })
+        .select()
+        .single();
 
       if (transactionError) throw transactionError;
+
+      // Audit log ekle
+      if (transactionData?.id) {
+        await supabase.from('audit_logs').insert({
+          entity_type: 'cash_transactions',
+          entity_id: transactionData.id,
+          action: 'create',
+          user_id: user.id,
+          company_id: profile.company_id
+        });
+      }
 
       // Hesap bakiyesini güncelle
       const { error: balanceError } = await supabase.rpc('update_cash_account_balance', {
@@ -159,20 +171,14 @@ const CashIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </div>
-            Gelir Ekle - {accountName}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <UnifiedDialog
+      isOpen={isOpen}
+      onClose={(open) => !open && onClose()}
+      title={`Gelir Ekle - ${accountName}`}
+      headerColor="green"
+      maxWidth="2xl"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Tutar *</Label>
@@ -244,17 +250,16 @@ const CashIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+          <UnifiedDialogFooter>
+            <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading}>
               İptal
-            </Button>
-            <Button type="submit" disabled={isLoading} className="bg-green-600 hover:bg-green-700">
+            </UnifiedDialogCancelButton>
+            <UnifiedDialogActionButton type="submit" disabled={isLoading}>
               {isLoading ? "Ekleniyor..." : "Gelir Ekle"}
-            </Button>
-          </DialogFooter>
+            </UnifiedDialogActionButton>
+          </UnifiedDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+    </UnifiedDialog>
   );
 };
 

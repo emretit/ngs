@@ -110,7 +110,7 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
       }
 
       // İşlemi ekle
-      const { error: transactionError } = await supabase
+      const { data: transactionData, error: transactionError } = await supabase
         .from('cash_transactions')
         .insert({
           account_id: accountId,
@@ -121,9 +121,22 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
           reference: formData.reference.trim() || null,
           transaction_date: formData.transaction_date.toISOString(),
           company_id: profile.company_id
-        });
+        })
+        .select()
+        .single();
 
       if (transactionError) throw transactionError;
+
+      // Audit log ekle
+      if (transactionData?.id) {
+        await supabase.from('audit_logs').insert({
+          entity_type: 'cash_transactions',
+          entity_id: transactionData.id,
+          action: 'create',
+          user_id: user.id,
+          company_id: profile.company_id
+        });
+      }
 
       // Hesap bakiyesini güncelle
       const { error: balanceError } = await supabase.rpc('update_cash_account_balance', {

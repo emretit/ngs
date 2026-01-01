@@ -7,30 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
-  Plus, 
-  Minus, 
-  TrendingUp, 
+import {
+  Plus,
+  Minus,
+  TrendingUp,
   TrendingDown,
-  Calendar,
   Filter,
-  Download,
   ArrowLeft,
   Pencil,
   CreditCard,
   Activity,
-  Receipt,
-  FileText,
   Settings,
-  Percent,
   DollarSign,
-  Calendar as CalendarIcon,
-  UserCheck,
-  PieChart,
-  BarChart3,
   Target,
-  Award,
   Search
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
@@ -47,12 +36,7 @@ import { AccountTransactionHistory } from "@/components/cashflow/AccountTransact
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Label } from "@/components/ui/label";
 
-interface CreditCardDetailProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetailProps) => {
+const CreditCardDetail = memo(() => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -62,8 +46,8 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-  const [isCreditLimitModalOpen, setIsCreditLimitModalOpen] = useState(false);
-  const [creditLimitValue, setCreditLimitValue] = useState("");
+  const [isAvailableLimitModalOpen, setIsAvailableLimitModalOpen] = useState(false);
+  const [availableLimitValue, setAvailableLimitValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<any | null>(null);
@@ -75,19 +59,6 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
   const loading = isLoadingCard || isLoadingTransactions;
 
   // Memoized calculations - sadece gerekli olduğunda yeniden hesapla
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter(transaction => {
-      if (filterType === "all") return true;
-      return transaction.type === filterType;
-    });
-  }, [transactions, filterType]);
-
-  const totalIncome = useMemo(() => {
-    return transactions
-      .filter(t => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
-
   const totalExpense = useMemo(() => {
     return transactions
       .filter(t => t.type === "expense")
@@ -110,7 +81,9 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
 
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
-    window.location.reload();
+    queryClient.invalidateQueries({ queryKey: ['credit-card', id] });
+    queryClient.invalidateQueries({ queryKey: ['credit-card-transactions', id] });
+    refetchTransactions();
   };
 
   const queryClient = useQueryClient();
@@ -182,52 +155,47 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
     setTransactionToDelete(null);
   };
 
-  // Kredi limiti güncelleme mutation'ı
-  const updateCreditLimitMutation = useMutation({
-    mutationFn: async (newLimit: number) => {
+  // Kullanılabilir limiti güncelleme mutation'ı
+  const updateAvailableLimitMutation = useMutation({
+    mutationFn: async (newAvailableLimit: number) => {
       if (!id) throw new Error("Kart ID bulunamadı");
-      
-      // current_balance'ı al
-      const currentBalance = card?.current_balance || 0;
-      // available_limit = credit_limit - current_balance
-      const newAvailableLimit = newLimit - currentBalance;
-      
+
       const { error } = await supabase
         .from('credit_cards')
-        .update({ 
-          credit_limit: newLimit,
+        .update({
           available_limit: newAvailableLimit
         })
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Kredi limiti başarıyla güncellendi");
+      toast.success("Kullanılabilir limit başarıyla güncellendi");
       queryClient.invalidateQueries({ queryKey: ['credit-card', id] });
-      setIsCreditLimitModalOpen(false);
-      setCreditLimitValue("");
-      window.location.reload();
+      queryClient.invalidateQueries({ queryKey: ['credit-card-transactions', id] });
+      setIsAvailableLimitModalOpen(false);
+      setAvailableLimitValue("");
+      refetchTransactions();
     },
     onError: (error: any) => {
       toast.error("Limit güncellenirken hata oluştu: " + (error.message || "Bilinmeyen hata"));
     }
   });
 
-  const handleOpenCreditLimitModal = () => {
+  const handleOpenAvailableLimitModal = () => {
     if (card) {
-      setCreditLimitValue(card.credit_limit ? String(card.credit_limit) : "");
+      setAvailableLimitValue(card.available_limit ? String(card.available_limit) : "");
     }
-    setIsCreditLimitModalOpen(true);
+    setIsAvailableLimitModalOpen(true);
   };
 
-  const handleUpdateCreditLimit = () => {
-    const limitValue = parseFloat(creditLimitValue);
+  const handleUpdateAvailableLimit = () => {
+    const limitValue = parseFloat(availableLimitValue);
     if (isNaN(limitValue) || limitValue < 0) {
       toast.error("Geçerli bir limit değeri girin");
       return;
     }
-    updateCreditLimitMutation.mutate(limitValue);
+    updateAvailableLimitMutation.mutate(limitValue);
   };
 
   if (loading) {
@@ -299,11 +267,6 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
       'corporate': 'Kurumsal Kart'
     };
     return types[type] || type;
-  };
-
-  const formatCardNumber = (number: string | null) => {
-    if (!number) return '****-****-****-****';
-    return number.replace(/(.{4})/g, '$1-').slice(0, -1);
   };
 
   return (
@@ -419,49 +382,30 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
         </Select>
       </div>
 
-      {/* Main Content */}
-      <div className="space-y-4">
-        {/* Main Grid Layout - Sol: Kompakt Bilgiler, Sağ: Geniş İşlem Geçmişi */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-2">
-          {/* Sol Taraf - Kompakt Bilgiler ve İşlemler */}
-          <div className="xl:col-span-2 space-y-2">
-            {/* Kart Bilgileri ve Hızlı İşlemler - Modern Gradient */}
-            <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-xl">
-              <CardHeader className="pb-2 px-3 pt-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-                    <div className="p-1 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
-                      <CreditCard className="h-3.5 w-3.5 text-purple-600" />
-                    </div>
-                    Kart & İşlemler
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleEdit}
-                    className="h-6 w-6 p-0"
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </Button>
+      {/* Main Content - İki Sütunlu Yapı */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Sol Sütun - Kart Bilgileri ve İşlemler */}
+        <div className="lg:col-span-3 xl:col-span-2 space-y-4">
+          {/* Kart Bilgileri ve Hızlı İşlemler */}
+          <Card className="shadow-lg border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-xl">
+            <CardContent className="px-3 py-3 space-y-3">
+              {/* Kart Bilgileri - İki Sütunlu */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground">Kart Adı</label>
+                  <p className="text-xs font-semibold truncate mt-0.5">{card.card_name}</p>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0 px-3 pb-3 space-y-3">
-                {/* Kart Bilgileri - Kompakt */}
-                <div className="space-y-2">
-                  <div>
-                    <label className="text-[10px] font-medium text-muted-foreground">Kart Adı</label>
-                    <p className="text-xs font-semibold truncate">{card.card_name}</p>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-medium text-muted-foreground">Kart Türü</label>
-                    <p className="text-xs">{getCardTypeLabel(card.card_type)}</p>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-medium text-muted-foreground">Banka</label>
-                    <p className="text-xs truncate">{card.bank_name}</p>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-medium text-muted-foreground">Durum</label>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground">Kart Türü</label>
+                  <p className="text-xs mt-0.5">{getCardTypeLabel(card.card_type)}</p>
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground">Banka</label>
+                  <p className="text-xs truncate mt-0.5">{card.bank_name}</p>
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground">Durum</label>
+                  <div className="mt-0.5">
                     <Badge
                       className={`text-[10px] h-4 px-1.5 ${
                         card.status === 'active'
@@ -474,162 +418,168 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
                     </Badge>
                   </div>
                 </div>
+              </div>
 
-                {/* Hızlı İşlemler */}
-                <div className="border-t pt-2">
-                  <div className="grid grid-cols-1 gap-1.5">
-                    <Button
-                      onClick={() => setIsIncomeModalOpen(true)}
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-xs h-7"
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Ödeme Ekle
-                    </Button>
-                    <Button
-                      onClick={() => setIsExpenseModalOpen(true)}
-                      className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-xs h-7"
-                    >
-                      <Minus className="h-3 w-3 mr-1" />
-                      Harcama Ekle
-                    </Button>
-                    <Button
-                      onClick={() => setIsTransferModalOpen(true)}
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs h-7"
-                    >
-                      <ArrowLeft className="h-3 w-3 mr-1" />
-                      Transfer Yap
-                    </Button>
-                    <Button
-                      onClick={handleOpenCreditLimitModal}
-                      className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white text-xs h-7"
-                    >
-                      <Settings className="h-3 w-3 mr-1" />
-                      Limit Düzelt
-                    </Button>
-                  </div>
+              {/* Hızlı İşlemler */}
+              <div className="border-t pt-2">
+                <h4 className="text-[10px] font-semibold text-gray-700 mb-1.5">Hızlı İşlemler</h4>
+                <div className="grid grid-cols-1 gap-1.5">
+                  <Button
+                    onClick={() => setIsIncomeModalOpen(true)}
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-xs h-7 w-full justify-start"
+                  >
+                    <Plus className="h-3 w-3 mr-1.5" />
+                    Ödeme Ekle
+                  </Button>
+                  <Button
+                    onClick={() => setIsExpenseModalOpen(true)}
+                    className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-xs h-7 w-full justify-start"
+                  >
+                    <Minus className="h-3 w-3 mr-1.5" />
+                    Harcama Ekle
+                  </Button>
+                  <Button
+                    onClick={() => setIsTransferModalOpen(true)}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs h-7 w-full justify-start"
+                  >
+                    <ArrowLeft className="h-3 w-3 mr-1.5" />
+                    Transfer Yap
+                  </Button>
+                  <Button
+                    onClick={handleOpenAvailableLimitModal}
+                    className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white text-xs h-7 w-full justify-start"
+                  >
+                    <Settings className="h-3 w-3 mr-1.5" />
+                    Kullanılabilir Limit Düzelt
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sağ Taraf - Geniş İşlem Geçmişi */}
-          <div className="xl:col-span-10 space-y-2">
-            <AccountTransactionHistory
-              transactions={transactions}
-              currency="TRY"
-              showBalances={showBalances}
-              filterType={filterType}
-              onFilterTypeChange={setFilterType}
-              onAddIncome={() => setIsIncomeModalOpen(true)}
-              onAddExpense={() => setIsExpenseModalOpen(true)}
-              onDelete={handleDelete}
-              initialBalance={card?.available_limit || 0}
-              hideUsdColumns={true}
-              isDeleting={deleteTransactionMutation.isPending}
-            />
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Modals */}
-        <CreditCardModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSuccess={handleEditSuccess}
-          mode="edit"
-          cardId={id}
-        />
-        <CreditCardIncomeModal
-          isOpen={isIncomeModalOpen}
-          onClose={() => setIsIncomeModalOpen(false)}
-          onSuccess={handleIncomeSuccess}
-          cardId={id}
-          cardName={card?.card_name || ""}
-          currency="TRY"
-        />
-        <CreditCardExpenseModal
-          isOpen={isExpenseModalOpen}
-          onClose={() => setIsExpenseModalOpen(false)}
-          onSuccess={handleExpenseSuccess}
-          cardId={id}
-          cardName={card?.card_name || ""}
-          currency="TRY"
-        />
-        <TransferModal
-          isOpen={isTransferModalOpen}
-          onClose={() => setIsTransferModalOpen(false)}
-          onSuccess={() => {
-            setIsTransferModalOpen(false);
-            window.location.reload();
-          }}
-        />
-
-        {/* Kredi Limiti Düzelt Modal */}
-        <UnifiedDialog
-          isOpen={isCreditLimitModalOpen}
-          onClose={(open) => {
-            setIsCreditLimitModalOpen(open);
-            if (!open) {
-              setCreditLimitValue("");
-            }
-          }}
-          title="Kredi Limiti Düzelt"
-          maxWidth="md"
-          headerColor="purple"
-        >
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="credit_limit" className="text-sm font-medium text-gray-700">
-                Kredi Limiti
-              </Label>
-              <Input
-                id="credit_limit"
-                type="number"
-                value={creditLimitValue}
-                onChange={(e) => setCreditLimitValue(e.target.value)}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                className="h-10"
-              />
-              <p className="text-xs text-gray-500">
-                Kredi kartının limitini güncelleyin. Kullanılabilir limit otomatik olarak hesaplanacaktır.
-              </p>
-            </div>
-          </div>
-          <UnifiedDialogFooter>
-            <UnifiedDialogCancelButton 
-              onClick={() => {
-                setIsCreditLimitModalOpen(false);
-                setCreditLimitValue("");
-              }}
-            />
-            <UnifiedDialogActionButton
-              onClick={handleUpdateCreditLimit}
-              disabled={updateCreditLimitMutation.isPending || !creditLimitValue}
-            >
-              {updateCreditLimitMutation.isPending ? "Güncelleniyor..." : "Güncelle"}
-            </UnifiedDialogActionButton>
-          </UnifiedDialogFooter>
-        </UnifiedDialog>
-
-        {/* Silme Onay Dialog */}
-        <ConfirmationDialogComponent
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          title="İşlemi Sil"
-          description={
-            transactionToDelete
-              ? `"${transactionToDelete.description || 'Bu işlem'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
-              : "Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
-          }
-          confirmText={t("common.delete")}
-          cancelText={t("common.cancel")}
-          variant="destructive"
-          onConfirm={handleDeleteConfirm}
-          onCancel={handleDeleteCancel}
-          isLoading={deleteTransactionMutation.isPending}
-        />
+        {/* Sağ Sütun - Hesap Hareketleri */}
+        <div className="lg:col-span-9 xl:col-span-10">
+          <AccountTransactionHistory
+            transactions={transactions}
+            currency="TRY"
+            showBalances={showBalances}
+            filterType={filterType}
+            onFilterTypeChange={setFilterType}
+            onAddIncome={() => setIsIncomeModalOpen(true)}
+            onAddExpense={() => setIsExpenseModalOpen(true)}
+            onDelete={handleDelete}
+            initialBalance={card?.available_limit || 0}
+            hideUsdColumns={true}
+            isDeleting={deleteTransactionMutation.isPending}
+            hideHeader={true}
+          />
+        </div>
       </div>
+
+      {/* Modals */}
+      <CreditCardModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={handleEditSuccess}
+        mode="edit"
+        cardId={id}
+      />
+      <CreditCardIncomeModal
+        isOpen={isIncomeModalOpen}
+        onClose={() => setIsIncomeModalOpen(false)}
+        onSuccess={handleIncomeSuccess}
+        cardId={id}
+        cardName={card?.card_name || ""}
+        currency="TRY"
+      />
+      <CreditCardExpenseModal
+        isOpen={isExpenseModalOpen}
+        onClose={() => setIsExpenseModalOpen(false)}
+        onSuccess={handleExpenseSuccess}
+        cardId={id}
+        cardName={card?.card_name || ""}
+        currency="TRY"
+      />
+      <TransferModal
+        isOpen={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
+        onSuccess={() => {
+          setIsTransferModalOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['credit-card', id] });
+          queryClient.invalidateQueries({ queryKey: ['credit-card-transactions', id] });
+          queryClient.invalidateQueries({ queryKey: ['bank-account'] });
+          queryClient.invalidateQueries({ queryKey: ['cash-account'] });
+          refetchTransactions();
+        }}
+      />
+
+      {/* Kullanılabilir Limit Düzelt Modal */}
+      <UnifiedDialog
+        isOpen={isAvailableLimitModalOpen}
+        onClose={(open) => {
+          setIsAvailableLimitModalOpen(open);
+          if (!open) {
+            setAvailableLimitValue("");
+          }
+        }}
+        title="Kullanılabilir Limit Düzelt"
+        maxWidth="md"
+        headerColor="purple"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="available_limit" className="text-sm font-medium text-gray-700">
+              Kullanılabilir Limit
+            </Label>
+            <Input
+              id="available_limit"
+              type="number"
+              value={availableLimitValue}
+              onChange={(e) => setAvailableLimitValue(e.target.value)}
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+              className="h-10"
+            />
+            <p className="text-xs text-gray-500">
+              Kredi kartının kullanılabilir limitini manuel olarak güncelleyin.
+            </p>
+          </div>
+        </div>
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton
+            onClick={() => {
+              setIsAvailableLimitModalOpen(false);
+              setAvailableLimitValue("");
+            }}
+          />
+          <UnifiedDialogActionButton
+            onClick={handleUpdateAvailableLimit}
+            disabled={updateAvailableLimitMutation.isPending || !availableLimitValue}
+          >
+            {updateAvailableLimitMutation.isPending ? "Güncelleniyor..." : "Güncelle"}
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </UnifiedDialog>
+
+      {/* Silme Onay Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="İşlemi Sil"
+        description={
+          transactionToDelete
+            ? `"${transactionToDelete.description || 'Bu işlem'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deleteTransactionMutation.isPending}
+      />
     </div>
   );
 });

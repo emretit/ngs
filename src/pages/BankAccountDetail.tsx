@@ -1,5 +1,7 @@
 import { useState, useMemo, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +38,7 @@ import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { useBankAccountDetail, useBankAccountTransactions } from "@/hooks/useAccountDetail";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import BankIncomeModal from "@/components/cashflow/modals/BankIncomeModal";
 import BankExpenseModal from "@/components/cashflow/modals/BankExpenseModal";
 import BankAccountModal from "@/components/cashflow/modals/BankAccountModal";
@@ -61,6 +64,8 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
   const [selectedDateRange, setSelectedDateRange] = useState("all");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<any | null>(null);
 
   // React Query hooks ile optimize edilmiş veri çekme
   const { data: account, isLoading: isLoadingAccount, error: accountError } = useBankAccountDetail(id);
@@ -104,7 +109,78 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
 
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
-    window.location.reload();
+    queryClient.invalidateQueries({ queryKey: ['bank-account', id] });
+    queryClient.invalidateQueries({ queryKey: ['bank-account-transactions', id] });
+    refetchTransactions();
+  };
+
+  const queryClient = useQueryClient();
+
+  // Silme mutation'ı
+  const deleteTransactionMutation = useMutation({
+    mutationFn: async (transaction: any) => {
+      // Transfer işlemi ise
+      if (transaction.isTransfer) {
+        const transferId = transaction.id.replace('transfer_', '');
+        const { error } = await supabase
+          .from('account_transfers')
+          .delete()
+          .eq('id', transferId);
+        
+        if (error) throw error;
+        return;
+      }
+
+      // Normal transaction ise - bank_transactions tablosundan sil
+      if (transaction.id && !transaction.id.startsWith('transfer_')) {
+        const { error } = await supabase
+          .from('bank_transactions')
+          .delete()
+          .eq('id', transaction.id);
+        
+        if (error) throw error;
+
+        // Bakiye güncellemesi - transaction tipine göre ters işlem yap
+        if (account) {
+          const balanceChange = transaction.type === 'income' 
+            ? -transaction.amount  // Gelir silinirse bakiye azalır
+            : transaction.amount;  // Gider silinirse bakiye artar
+
+          const newBalance = (account.current_balance || 0) + balanceChange;
+          
+          await supabase
+            .from('bank_accounts')
+            .update({ current_balance: newBalance })
+            .eq('id', id);
+        }
+      }
+    },
+    onSuccess: () => {
+      toast.success("İşlem başarıyla silindi");
+      queryClient.invalidateQueries({ queryKey: ['bank-account-transactions', id] });
+      queryClient.invalidateQueries({ queryKey: ['bank-account', id] });
+      refetchTransactions();
+    },
+    onError: (error: any) => {
+      toast.error("İşlem silinirken hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    }
+  });
+
+  const handleDelete = (transaction: any) => {
+    setTransactionToDelete(transaction);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!transactionToDelete) return;
+    deleteTransactionMutation.mutate(transactionToDelete);
+    setIsDeleteDialogOpen(false);
+    setTransactionToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setTransactionToDelete(null);
   };
 
   if (loading) {
@@ -379,6 +455,8 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
               onAddIncome={() => setIsIncomeModalOpen(true)}
               onAddExpense={() => setIsExpenseModalOpen(true)}
               initialBalance={account?.available_balance || 0}
+              onDelete={handleDelete}
+              isDeleting={deleteTransactionMutation.isPending}
             />
           </div>
         </div>
@@ -412,8 +490,21 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
           onClose={() => setIsTransferModalOpen(false)}
           onSuccess={() => {
             setIsTransferModalOpen(false);
-            window.location.reload();
+            queryClient.invalidateQueries({ queryKey: ['bank-account', id] });
+            queryClient.invalidateQueries({ queryKey: ['bank-account-transactions', id] });
+            queryClient.invalidateQueries({ queryKey: ['cash-account'] });
+            queryClient.invalidateQueries({ queryKey: ['credit-card'] });
+            refetchTransactions();
           }}
+        />
+        <ConfirmationDialogComponent
+          isOpen={isDeleteDialogOpen}
+          onClose={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          title="İşlemi Sil"
+          description={`${transactionToDelete?.description || 'Bu işlem'} işlemini silmek istediğinizden emin misiniz?`}
+          confirmText="Sil"
+          cancelText="İptal"
         />
       </div>
     </div>

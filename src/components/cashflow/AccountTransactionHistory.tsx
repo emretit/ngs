@@ -50,6 +50,7 @@ interface AccountTransactionHistoryProps {
   totalExpense?: number;
   hideUsdColumns?: boolean;
   isDeleting?: boolean;
+  hideHeader?: boolean;
 }
 
 export const AccountTransactionHistory = ({
@@ -69,7 +70,8 @@ export const AccountTransactionHistory = ({
   totalIncome,
   totalExpense,
   hideUsdColumns = false,
-  isDeleting = false
+  isDeleting = false,
+  hideHeader = false
 }: AccountTransactionHistoryProps) => {
   const { exchangeRates, convertCurrency } = useExchangeRates();
   
@@ -171,127 +173,14 @@ export const AccountTransactionHistory = ({
     return { balance, income, expense };
   }, [currentBalance, totalIncome, totalExpense, transactions, transactionsWithBalance, initialBalance]);
 
-  if (transactions.length === 0) {
-    return (
-      <div className="space-y-4">
-        {/* Header */}
-        {showHeader && (
-          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center gap-4 flex-1 min-w-0">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">İşlem Geçmişi</h3>
-              </div>
-              <div className="h-8 w-px bg-gray-300" />
-              <div className="flex items-center gap-4 flex-wrap">
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-500">Mevcut Bakiye</span>
-                  <span className={`text-sm font-semibold ${
-                    stats.balance >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {showBalances ? formatCurrency(stats.balance, currency) : "••••••"}
-                  </span>
-                </div>
-                <div className="h-8 w-px bg-gray-300" />
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-500">Toplam Gelir</span>
-                  <span className="text-sm font-semibold text-green-600">
-                    {showBalances ? formatCurrency(stats.income, currency) : "••••••"}
-                  </span>
-                </div>
-                <div className="h-8 w-px bg-gray-300" />
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-500">Toplam Gider</span>
-                  <span className="text-sm font-semibold text-red-600">
-                    {showBalances ? formatCurrency(stats.expense, currency) : "••••••"}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Select value={filterType} onValueChange={onFilterTypeChange}>
-                <SelectTrigger className="w-[160px] h-9">
-                  <Filter className="h-3.5 w-3.5 mr-2" />
-                  <SelectValue placeholder="Filtrele" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tüm İşlemler</SelectItem>
-                  <SelectItem value="income">Gelir</SelectItem>
-                  <SelectItem value="expense">Gider</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" className="h-9">
-                <Download className="h-4 w-4 mr-2" />
-                Ekstre
-              </Button>
-            </div>
-          </div>
-        )}
+  // Header component - hem veri varken hem yokken kullanılacak
+  const renderHeader = () => {
+    if (hideHeader) {
+      return null;
+    }
 
-        {/* Header (showHeader false ise) */}
-        {!showHeader && (
-          <div className="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600">
-                <FileText className="h-5 w-5 text-white" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900">Hesap Hareketleri</h3>
-            </div>
-            <Select value={filterType} onValueChange={onFilterTypeChange}>
-              <SelectTrigger className="w-[160px] h-10">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tümü</SelectItem>
-                <SelectItem value="income">Gelir</SelectItem>
-                <SelectItem value="expense">Gider</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* Empty State */}
-        <div className="bg-white border border-gray-200 rounded-lg">
-          <div className="text-center py-16">
-            <div className="p-4 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-lg">
-              <FileText className="h-10 w-10 text-indigo-600" />
-            </div>
-            <h3 className="text-lg font-bold text-gray-800 mb-2">{emptyStateTitle}</h3>
-            <p className="text-sm text-gray-600 mb-4">{emptyStateDescription}</p>
-            {(onAddIncome || onAddExpense) && (
-              <div className="flex gap-3 justify-center">
-                {onAddIncome && (
-                  <Button
-                    onClick={onAddIncome}
-                    size="sm"
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105 transition-all duration-300 rounded-xl"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Gelir Ekle
-                  </Button>
-                )}
-                {onAddExpense && (
-                  <Button
-                    onClick={onAddExpense}
-                    size="sm"
-                    className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-lg shadow-red-500/30 hover:shadow-xl hover:scale-105 transition-all duration-300 rounded-xl"
-                  >
-                    <Minus className="h-4 w-4 mr-2" />
-                    Gider Ekle
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      {/* Header */}
-      {showHeader && (
+    if (showHeader) {
+      return (
         <div className="flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center gap-4 flex-1 min-w-0">
             <div>
@@ -341,7 +230,78 @@ export const AccountTransactionHistory = ({
             </Button>
           </div>
         </div>
-      )}
+      );
+    }
+
+    return (
+      <div className="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600">
+            <FileText className="h-5 w-5 text-white" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900">Hesap Hareketleri</h3>
+        </div>
+        <Select value={filterType} onValueChange={onFilterTypeChange}>
+          <SelectTrigger className="w-[160px] h-10">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tümü</SelectItem>
+            <SelectItem value="income">Gelir</SelectItem>
+            <SelectItem value="expense">Gider</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  };
+
+  if (transactions.length === 0) {
+    return (
+      <div className="space-y-4">
+        {renderHeader()}
+
+        {/* Empty State */}
+        <div className="bg-white border border-gray-200 rounded-lg">
+          <div className="text-center py-16">
+            <div className="p-4 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-lg">
+              <FileText className="h-10 w-10 text-indigo-600" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">{emptyStateTitle}</h3>
+            <p className="text-sm text-gray-600 mb-4">{emptyStateDescription}</p>
+            {(onAddIncome || onAddExpense) && (
+              <div className="flex gap-3 justify-center">
+                {onAddIncome && (
+                  <Button
+                    onClick={onAddIncome}
+                    size="sm"
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105 transition-all duration-300 rounded-xl"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Gelir Ekle
+                  </Button>
+                )}
+                {onAddExpense && (
+                  <Button
+                    onClick={onAddExpense}
+                    size="sm"
+                    className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-lg shadow-red-500/30 hover:shadow-xl hover:scale-105 transition-all duration-300 rounded-xl"
+                  >
+                    <Minus className="h-4 w-4 mr-2" />
+                    Gider Ekle
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {renderHeader()}
 
       {/* Table */}
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">

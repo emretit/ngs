@@ -99,9 +99,17 @@ const CreditCardIncomeModal = ({ isOpen, onClose, onSuccess, cardId, cardName, c
       });
 
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding income:', error);
-      toast.error("Ödeme işlemi eklenirken bir hata oluştu");
+      
+      // Özel hata mesajlarını kontrol et
+      if (error?.message?.includes('Available limit cannot exceed credit limit')) {
+        toast.error("Ödeme tutarı çok büyük. Kullanılabilir limit, kredi limitini aşamaz. Lütfen daha küçük bir tutar girin veya kredi limitini artırın.");
+      } else if (error?.message) {
+        toast.error(`Hata: ${error.message}`);
+      } else {
+        toast.error("Ödeme işlemi eklenirken bir hata oluştu");
+      }
     } finally {
       setIsLoading(false);
     }

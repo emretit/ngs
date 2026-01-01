@@ -542,7 +542,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} />
           <UnifiedDialogActionButton
-            onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)}
+            type="submit"
             disabled={isLoading || isPrefilling}
             loading={isLoading || isPrefilling}
             variant="primary"

@@ -48,10 +48,8 @@ export const TopBar = ({ onMenuClick }: TopBarProps) => {
   };
 
   const changeLanguage = (langCode: string) => {
-    i18n.changeLanguage(langCode).then(() => {
-      // Dil değişikliğinden sonra sayfayı yenile
-      window.location.reload();
-    });
+    i18n.changeLanguage(langCode);
+    // i18n.changeLanguage() zaten tüm component'leri re-render ediyor, reload'a gerek yok
   };
 
   const currentDate = format(new Date(), "dd MMM", { locale: i18n.language === 'en' ? enUS : tr });

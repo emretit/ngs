@@ -122,13 +122,11 @@ export const useSwitchCompany = () => {
         );
       }});
       
-      // Tüm query cache'ini temizle ve sayfayı yenile
+      // Tüm query cache'ini temizle - component'ler otomatik olarak yeniden fetch yapacak
       queryClient.clear();
       
-      // Kısa bir gecikme sonrası sayfayı yenile (cache temizleme işleminin tamamlanması için)
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
+      // Company değişikliği sonrası tüm query'ler otomatik olarak yeniden fetch edilecek
+      // window.location.reload() yerine React Query'nin otomatik refetch mekanizması kullanılıyor
     },
   });
 };
@@ -204,13 +202,11 @@ export const useCreateUserCompany = () => {
         );
       }});
       
-      // Tüm query cache'ini temizle ve sayfayı yenile
+      // Tüm query cache'ini temizle - component'ler otomatik olarak yeniden fetch yapacak
       queryClient.clear();
       
-      // Kısa bir gecikme sonrası sayfayı yenile (cache temizleme işleminin tamamlanması için)
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
+      // Company değişikliği sonrası tüm query'ler otomatik olarak yeniden fetch edilecek
+      // window.location.reload() yerine React Query'nin otomatik refetch mekanizması kullanılıyor
     },
   });
 };

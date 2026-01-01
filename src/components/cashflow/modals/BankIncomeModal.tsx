@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -105,7 +104,7 @@ const BankIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
       if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
 
       // Banka hesabına gelir ekle
-      const { error: transactionError } = await supabase
+      const { data: transactionData, error: transactionError } = await supabase
         .from('bank_transactions')
         .insert({
           account_id: accountId,
@@ -116,9 +115,22 @@ const BankIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
           reference: formData.reference,
           transaction_date: formData.transaction_date?.toISOString(),
           company_id: profile.company_id
-        });
+        })
+        .select()
+        .single();
 
       if (transactionError) throw transactionError;
+
+      // Audit log ekle
+      if (transactionData?.id) {
+        await supabase.from('audit_logs').insert({
+          entity_type: 'bank_transactions',
+          entity_id: transactionData.id,
+          action: 'create',
+          user_id: user.id,
+          company_id: profile.company_id
+        });
+      }
 
       // Banka hesabı bakiyesini güncelle
       const { error: balanceError } = await supabase.rpc('update_bank_account_balance', {
@@ -150,14 +162,14 @@ const BankIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Banka Hesabına Gelir Ekle</DialogTitle>
-          <p className="text-sm text-gray-600">Hesap: {accountName}</p>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <UnifiedDialog
+      isOpen={isOpen}
+      onClose={(open) => !open && onClose()}
+      title={`Banka Hesabına Gelir Ekle - ${accountName}`}
+      headerColor="green"
+      maxWidth="2xl"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Tutar ({currency}) *</Label>
@@ -221,17 +233,16 @@ const BankIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <UnifiedDialogFooter>
+            <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading}>
               İptal
-            </Button>
-            <Button type="submit" disabled={isLoading}>
+            </UnifiedDialogCancelButton>
+            <UnifiedDialogActionButton type="submit" disabled={isLoading}>
               {isLoading ? "Ekleniyor..." : "Gelir Ekle"}
-            </Button>
-          </DialogFooter>
+            </UnifiedDialogActionButton>
+          </UnifiedDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+    </UnifiedDialog>
   );
 };
 

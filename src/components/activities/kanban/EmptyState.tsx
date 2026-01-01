@@ -1,18 +1,3 @@
-
-import React from "react";
-
-interface EmptyStateProps {
-  message?: string;
-}
-
-const EmptyState: React.FC<EmptyStateProps> = ({ 
-  message = "No tasks found. Create your first task!" 
-}) => {
-  return (
-    <div className="flex items-center justify-center h-[500px]">
-      <div className="text-gray-500">{message}</div>
-    </div>
-  );
-};
-
-export default EmptyState;
+// Re-export from common components for backward compatibility
+// TODO: Gradually migrate imports to use @/components/common directly
+export { default } from "@/components/common/EmptyState";

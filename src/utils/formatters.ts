@@ -1,4 +1,3 @@
-
 /**
  * Normalizes currency code: TRY is the standard code
  * @param currency The currency code to normalize
@@ -37,9 +36,9 @@ export const capitalizeFirstLetter = (string: string): string => {
  * @param currency The currency code (default: 'TRY')
  * @returns The formatted currency string
  */
-export const formatCurrency = (amount: number, currency = 'TRY'): string => {
+export const formatCurrency = (amount: number | null | undefined, currency = 'TRY'): string => {
   // Handle NaN, undefined, null, or invalid numbers
-  const validAmount = isNaN(amount) || !isFinite(amount) ? 0 : amount;
+  const validAmount = (amount === null || amount === undefined || isNaN(amount) || !isFinite(amount)) ? 0 : amount;
   const currencyCode = normalizeCurrency(currency);
   return new Intl.NumberFormat('tr-TR', {
     style: 'currency',
@@ -50,11 +49,40 @@ export const formatCurrency = (amount: number, currency = 'TRY'): string => {
 };
 
 /**
+ * Formats a number with Turkish locale (no currency symbol)
+ * @param amount The amount to format
+ * @param decimals Number of decimal places (default: 2)
+ * @returns The formatted number string
+ */
+export const formatNumber = (amount: number | null | undefined, decimals = 2): string => {
+  const validAmount = (amount === null || amount === undefined || isNaN(amount) || !isFinite(amount)) ? 0 : amount;
+  return new Intl.NumberFormat('tr-TR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(validAmount);
+};
+
+/**
+ * Formats a number as percentage
+ * @param value The value to format (0.1 = 10%)
+ * @param decimals Number of decimal places (default: 0)
+ * @returns The formatted percentage string
+ */
+export const formatPercent = (value: number | null | undefined, decimals = 0): string => {
+  const validValue = (value === null || value === undefined || isNaN(value) || !isFinite(value)) ? 0 : value;
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'percent',
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(validValue);
+};
+
+/**
  * Get currency symbol for a given currency code
  * @param currency The currency code
  * @returns The currency symbol
  */
-export const getCurrencySymbol = (currency: string): string => {
+export const getCurrencySymbol = (currency: string | null | undefined): string => {
   const symbols: Record<string, string> = {
     TRY: '₺',
     TL: '₺', // Backward compatibility
@@ -64,7 +92,7 @@ export const getCurrencySymbol = (currency: string): string => {
   };
 
   const normalizedCurrency = normalizeCurrency(currency);
-  return symbols[normalizedCurrency] || currency;
+  return symbols[normalizedCurrency] || normalizedCurrency;
 };
 
 /**
@@ -73,9 +101,37 @@ export const getCurrencySymbol = (currency: string): string => {
  * @param currency The currency code
  * @returns Formatted string with currency symbol
  */
-export const addCurrencySymbol = (amount: number, currency: string): string => {
-  return `${amount.toLocaleString('tr-TR', {
+export const addCurrencySymbol = (amount: number | null | undefined, currency: string): string => {
+  const validAmount = (amount === null || amount === undefined || isNaN(amount) || !isFinite(amount)) ? 0 : amount;
+  return `${validAmount.toLocaleString('tr-TR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })} ${getCurrencySymbol(currency)}`;
+};
+
+/**
+ * Compact number formatting for large numbers (e.g., 1.2M, 5.3K)
+ * @param amount The amount to format
+ * @param currency Optional currency code
+ * @returns Compact formatted string
+ */
+export const formatCompact = (amount: number | null | undefined, currency?: string): string => {
+  const validAmount = (amount === null || amount === undefined || isNaN(amount) || !isFinite(amount)) ? 0 : amount;
+  const absAmount = Math.abs(validAmount);
+  
+  let formatted: string;
+  if (absAmount >= 1000000000) {
+    formatted = `${(validAmount / 1000000000).toFixed(1)}B`;
+  } else if (absAmount >= 1000000) {
+    formatted = `${(validAmount / 1000000).toFixed(1)}M`;
+  } else if (absAmount >= 1000) {
+    formatted = `${(validAmount / 1000).toFixed(1)}K`;
+  } else {
+    formatted = formatNumber(validAmount, 0);
+  }
+  
+  if (currency) {
+    return `${getCurrencySymbol(currency)}${formatted}`;
+  }
+  return formatted;
 };

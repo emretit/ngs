@@ -252,41 +252,41 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
       isOpen={isOpen}
       onClose={handleClose}
       title="Yeni Aktivite"
-      maxWidth="lg"
+      maxWidth="md"
       headerColor="blue"
     >
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
         <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 -mr-1">
-          <div className="space-y-3">
+          <div className="space-y-1.5">
           {/* Başlık ve Açıklama */}
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="title" className="text-sm font-medium text-gray-700">Başlık *</Label>
+          <div className="space-y-1">
+            <div className="space-y-0.5">
+              <Label htmlFor="title" className="text-xs font-medium text-gray-700">Başlık *</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Aktivite başlığını girin"
-                className="h-10"
+                className="h-10 text-xs"
                 required
               />
             </div>
-            
-            <div className="space-y-1.5">
-              <Label htmlFor="description" className="text-sm font-medium text-gray-700">Açıklama</Label>
+
+            <div className="space-y-0.5">
+              <Label htmlFor="description" className="text-xs font-medium text-gray-700">Açıklama</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Aktivite detaylarını girin"
-                rows={3}
-                className="resize-none min-h-[80px]"
+                rows={2}
+                className="resize-none min-h-[2.5rem] text-xs"
               />
             </div>
           </div>
 
-          {/* Hızlı Seçimler */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Fırsat ve Görevli */}
+          <div className="grid grid-cols-2 gap-1.5">
             <OpportunitySelector
               value={selectedOpportunityId}
               onChange={setSelectedOpportunityId}
@@ -310,134 +310,130 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           </div>
 
           {/* Müşteri ve Son Tarih */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <FormProvider {...partnerForm}>
-                <ProposalPartnerSelect 
-                  partnerType="customer" 
-                  placeholder="Müşteri seçin..."
-                  hideLabel={false}
-                />
-              </FormProvider>
-            </div>
-            <div className="space-y-1">
-              <UnifiedDatePicker
-                label="Son Tarih"
-                date={dueDate ? new Date(dueDate + 'T00:00:00') : undefined}
-                onSelect={(date) => {
-                  if (date) {
-                    // Timezone kaymasını önlemek için yerel tarih formatını kullan
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    setDueDate(`${year}-${month}-${day}`);
-                  } else {
-                    setDueDate("");
-                  }
-                }}
-                placeholder="Tarih seçin"
+          <div className="grid grid-cols-2 gap-1.5">
+            <FormProvider {...partnerForm}>
+              <ProposalPartnerSelect
+                partnerType="customer"
+                placeholder="Müşteri seçin..."
+                hideLabel={false}
               />
-            </div>
+            </FormProvider>
+
+            <UnifiedDatePicker
+              label="Son Tarih"
+              date={dueDate ? new Date(dueDate + 'T00:00:00') : undefined}
+              onSelect={(date) => {
+                if (date) {
+                  // Timezone kaymasını önlemek için yerel tarih formatını kullan
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  setDueDate(`${year}-${month}-${day}`);
+                } else {
+                  setDueDate("");
+                }
+              }}
+              placeholder="Tarih seçin"
+            />
           </div>
 
           {/* Durum ve Önem */}
-          <div className="p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-100">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-gray-600">Durum</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="h-9 bg-white border-gray-200 hover:border-primary/50 transition-colors w-full">
-                    <SelectValue placeholder="Durum seçin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todo">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-red-500" />
-                        <span>Yapılacak</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="in_progress">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                        <span>Devam Ediyor</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="completed">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500" />
-                        <span>Tamamlandı</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="cancelled">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-gray-400" />
-                        <span>İptal Edildi</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="space-y-0.5">
+              <Label className="text-xs font-medium text-gray-700">Durum</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="h-10 bg-white border-gray-200 hover:border-primary/50 transition-colors w-full text-xs">
+                  <SelectValue placeholder="Durum seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500" />
+                      <span>Yapılacak</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="in_progress">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                      <span>Devam Ediyor</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500" />
+                      <span>Tamamlandı</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="cancelled">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-gray-400" />
+                      <span>İptal Edildi</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-gray-600">Önem</Label>
-                <div className={cn(
-                  "flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-colors cursor-pointer h-9",
-                  isImportant 
-                    ? "bg-yellow-50 border-yellow-200" 
-                    : "bg-white border-gray-200 hover:border-yellow-300"
-                )}>
-                  <Label htmlFor="is_important" className="flex items-center gap-1.5 cursor-pointer text-sm font-medium flex-1">
-                    <Star className={cn(
-                      "h-4 w-4 transition-all duration-200",
-                      isImportant ? "text-yellow-500 fill-yellow-500 scale-110" : "text-gray-400"
-                    )} />
-                    <span className={isImportant ? "text-yellow-700" : "text-gray-600"}>Önemli</span>
-                  </Label>
-                  <Switch
-                    id="is_important"
-                    checked={isImportant}
-                    onCheckedChange={setIsImportant}
-                    className="scale-90"
-                  />
-                </div>
+            <div className="space-y-0.5">
+              <Label className="text-xs font-medium text-gray-700">Önem</Label>
+              <div className={cn(
+                "flex items-center gap-2 px-2.5 py-2 rounded-lg border transition-colors cursor-pointer h-10",
+                isImportant
+                  ? "bg-yellow-50 border-yellow-200"
+                  : "bg-white border-gray-200 hover:border-yellow-300"
+              )}>
+                <Label htmlFor="is_important" className="flex items-center gap-1.5 cursor-pointer text-xs font-medium flex-1">
+                  <Star className={cn(
+                    "h-3.5 w-3.5 transition-all duration-200",
+                    isImportant ? "text-yellow-500 fill-yellow-500 scale-110" : "text-gray-400"
+                  )} />
+                  <span className={isImportant ? "text-yellow-700" : "text-gray-600"}>Önemli</span>
+                </Label>
+                <Switch
+                  id="is_important"
+                  checked={isImportant}
+                  onCheckedChange={setIsImportant}
+                  className="scale-75"
+                />
               </div>
             </div>
           </div>
 
           {/* Tekrar Eden Görev */}
-          <div className="space-y-3">
-            <div 
+          <div className="space-y-1.5">
+            <div
               className={cn(
-                "flex items-center justify-between p-3 rounded-xl border transition-all duration-200",
-                isRecurring 
-                  ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200" 
+                "flex items-center justify-between p-2 rounded-lg border transition-all duration-200",
+                isRecurring
+                  ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200"
                   : "bg-gray-50 border-gray-100"
               )}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Switch
                   id="is_recurring"
                   checked={isRecurring}
                   onCheckedChange={setIsRecurring}
+                  className="scale-75"
                 />
-                <Label htmlFor="is_recurring" className="cursor-pointer text-sm font-medium text-gray-700">
+                <Label htmlFor="is_recurring" className="cursor-pointer text-xs font-medium text-gray-700">
                   Tekrar eden görev
                 </Label>
               </div>
               {isRecurring && (
-                <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-medium text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded-full">
                   Aktif
                 </span>
               )}
             </div>
 
             {isRecurring && (
-              <div className="p-4 bg-gradient-to-br from-blue-50/80 to-indigo-50/80 rounded-xl border border-blue-100 space-y-4 animate-in slide-in-from-top-2 duration-200">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
+              <div className="p-2.5 bg-gradient-to-br from-blue-50/80 to-indigo-50/80 rounded-lg border border-blue-100 space-y-2 animate-in slide-in-from-top-2 duration-200">
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div className="space-y-0.5">
                     <Label className="text-xs font-medium text-gray-600">Tekrar Türü</Label>
                     <Select value={recurrenceType} onValueChange={(value) => setRecurrenceType(value as any)}>
-                      <SelectTrigger className="h-9 bg-white border-gray-200">
+                      <SelectTrigger className="h-9 bg-white border-gray-200 text-xs">
                         <SelectValue placeholder="Tekrar türü seçin" />
                       </SelectTrigger>
                       <SelectContent>
@@ -451,20 +447,20 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                   </div>
 
                   {recurrenceType === 'custom' && (
-                    <div className="space-y-1.5">
+                    <div className="space-y-0.5">
                       <Label className="text-xs font-medium text-gray-600">Her kaç günde</Label>
                       <Input
                         type="number"
                         value={recurrenceInterval}
                         onChange={(e) => setRecurrenceInterval(parseInt(e.target.value) || 1)}
                         min={1}
-                        className="h-9 bg-white"
+                        className="h-9 bg-white text-xs"
                       />
                     </div>
                   )}
 
                   {recurrenceType === 'monthly' && (
-                    <div className="space-y-1.5">
+                    <div className="space-y-0.5">
                       <Label className="text-xs font-medium text-gray-600">Ayın günü</Label>
                       <Input
                         type="number"
@@ -472,16 +468,16 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                         onChange={(e) => setRecurrenceDayOfMonth(parseInt(e.target.value) || 1)}
                         min={1}
                         max={31}
-                        className="h-9 bg-white"
+                        className="h-9 bg-white text-xs"
                       />
                     </div>
                   )}
                 </div>
 
                 {recurrenceType === 'weekly' && (
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <Label className="text-xs font-medium text-gray-600">Haftanın günleri</Label>
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1">
                       {[
                         { key: 'monday', label: 'Pzt' },
                         { key: 'tuesday', label: 'Sal' },
@@ -502,9 +498,9 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                             }
                           }}
                           className={cn(
-                            "flex-1 py-2 text-xs font-medium rounded-lg transition-all duration-200",
+                            "flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all duration-200",
                             recurrenceDays.includes(key)
-                              ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                              ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
                               : "bg-white text-gray-600 border border-gray-200 hover:border-blue-300 hover:text-blue-600"
                           )}
                         >
@@ -515,7 +511,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                   </div>
                 )}
 
-                <div className="space-y-1.5">
+                <div className="space-y-0.5">
                   <UnifiedDatePicker
                     label="Bitiş Tarihi (opsiyonel)"
                     date={recurrenceEndDate ? new Date(recurrenceEndDate + 'T00:00:00') : undefined}
@@ -538,13 +534,13 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
 
           {/* İlişkili Öğe Bilgileri */}
           {(relatedItemId || relatedItemTitle) && (
-            <div className="p-2 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <h4 className="text-sm font-medium text-blue-900">İlişkili Öğe</h4>
+            <div className="p-1.5 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center space-x-1.5">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                <h4 className="text-xs font-medium text-blue-900">İlişkili Öğe</h4>
               </div>
               {relatedItemTitle && (
-                <p className="text-sm text-blue-700 mt-1">
+                <p className="text-xs text-blue-700 mt-0.5">
                   {relatedItemTitle}
                 </p>
               )}

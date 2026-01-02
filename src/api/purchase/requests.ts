@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PurchaseRequest, PurchaseRequestFormData, PurchaseRequestStatus } from "@/types/purchase";
 import { logger } from "@/utils/logger";
+import { validatePurchaseRequestArray, validateSupabaseSingle, isPurchaseRequest } from "@/utils/typeUtils";
 
 // Function to fetch purchase requests with filters
 export const fetchPurchaseRequests = async (filters: {
@@ -42,7 +43,7 @@ export const fetchPurchaseRequests = async (filters: {
     }
     
     logger.info(`Successfully fetched ${data?.length || 0} purchase requests`);
-    return (data as unknown as PurchaseRequest[]) || [];
+    return validatePurchaseRequestArray(data);
   } catch (error) {
     logger.error("Exception in fetchPurchaseRequests", error);
     toast.error("Satın alma talepleri yüklenirken beklenmeyen bir hata oluştu");
@@ -68,7 +69,11 @@ export const fetchPurchaseRequestById = async (id: string): Promise<PurchaseRequ
     }
 
     logger.info(`Successfully fetched purchase request ID ${id}`);
-    return data as unknown as PurchaseRequest;
+    const validated = validateSupabaseSingle(data, isPurchaseRequest, 'PurchaseRequest');
+    if (!validated) {
+      throw new Error('Invalid purchase request data received');
+    }
+    return validated;
   } catch (error) {
     logger.error(`Exception in fetchPurchaseRequestById for ID ${id}`, error);
     toast.error("Satın alma talebi yüklenirken beklenmeyen bir hata oluştu");

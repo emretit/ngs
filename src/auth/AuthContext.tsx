@@ -4,6 +4,7 @@ import { clearAuthTokens } from "@/lib/supabase-utils"
 import { User, Session } from '@supabase/supabase-js'
 import { isSessionExpired, updateActivity, clearActivity } from '@/lib/session-activity'
 import { useQueryClient } from '@tanstack/react-query'
+import { logger } from '@/utils/logger'
 
 interface AuthContextType {
   user: User | null
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await supabase.auth.signOut({ scope: 'global' })
     } catch (error) {
-      console.warn('SignOut warning:', error)
+      logger.warn('SignOut warning', error)
     } finally {
       // Always clear local auth state, tokens, and activity
       setSession(null)
@@ -47,7 +48,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // Tüm query cache'lerini temizle (farklı firma verilerinin görünmemesi için)
       queryClient.clear()
-      console.log('Query cache cleared on signout')
+      logger.info('Query cache cleared on signout')
     }
   }, [queryClient])
 
@@ -59,7 +60,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!mounted) return;
       
       if (error) {
-        console.error('Error getting session:', error);
+        logger.error('Error getting session', error);
         setLoading(false);
         return;
       }
@@ -74,7 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         // Then check for inactivity - but only if we had a previous activity timestamp
         if (isSessionExpired()) {
-          console.log('Session expired due to inactivity (init)')
+          logger.info('Session expired due to inactivity (init)')
           signOut()
           return
         }
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               .update({ last_login: new Date().toISOString() })
               .eq('id', session.user.id)
               .then(({ error }) => {
-                if (error) console.warn('Failed to update last login:', error)
+                if (error) logger.warn('Failed to update last login', error)
               })
           }
         }, 0)
@@ -120,7 +121,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             .update({ last_login: new Date().toISOString() })
             .eq('id', session.user.id)
             .then(({ error }) => {
-              if (error) console.warn('Failed to update last login:', error)
+              if (error) logger.warn('Failed to update last login', error)
             })
           }
         }, 0)
@@ -130,7 +131,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Periodic session check (every 5 minutes)
     const checkInterval = setInterval(() => {
       if (isSessionExpired()) {
-        console.log('Session expired due to inactivity')
+        logger.info('Session expired due to inactivity')
         signOut()
       }
     }, 5 * 60 * 1000) // 5 minutes
@@ -195,12 +196,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       if (error) {
-        console.error('Signup function error:', error);
+        logger.error('Signup function error', error);
         return { user: null, error };
       }
 
     if (data?.error) {
-      console.error('Register function error:', data.error);
+      logger.error('Register function error', data.error);
       // Include details if available for better error messages
       const errorMessage = data.details || data.error;
       return { user: null, error: { message: errorMessage } };
@@ -209,7 +210,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Return success - user needs to confirm email
       return { user: data?.user || null, error: null };
     } catch (error) {
-      console.error('SignUp error:', error)
+      logger.error('SignUp error', error)
       return { user: null, error: error as any }
     }
   }
@@ -263,7 +264,7 @@ export function useAuth(): AuthContextType {
   const context = useContext(AuthContext)
   if (context === undefined) {
     // Hot reload sırasında context kaybolabilir, bu durumda fallback değer döndür
-    console.warn('useAuth called outside AuthProvider, returning fallback values')
+    logger.warn('useAuth called outside AuthProvider, returning fallback values')
     return {
       user: null,
       session: null,

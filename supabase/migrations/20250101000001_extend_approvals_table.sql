@@ -17,3 +17,4 @@ ADD COLUMN IF NOT EXISTS auto_approved BOOLEAN DEFAULT false;
 ALTER TABLE public.approvals
 ADD COLUMN IF NOT EXISTS skipped_reason TEXT;
 
+

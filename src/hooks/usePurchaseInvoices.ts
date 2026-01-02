@@ -6,6 +6,7 @@ import { PurchaseInvoice, InvoiceStatus } from "@/types/purchase";
 import { toast } from "sonner";
 import { useInfiniteScroll } from "./useInfiniteScroll";
 import { useCurrentUser } from "./useCurrentUser";
+import { logger } from "@/utils/logger";
 
 export const usePurchaseInvoices = () => {
   const queryClient = useQueryClient();
@@ -104,7 +105,7 @@ export const usePurchaseInvoices = () => {
         .single();
       
       if (supplierFetchError) {
-        console.error('❌ Error fetching supplier balance:', supplierFetchError);
+        logger.error("Error fetching supplier balance", supplierFetchError);
         // Hata olsa bile devam et, sadece logla
       } else if (supplierData) {
         const newSupplierBalance = (supplierData.balance || 0) - invoiceData.total_amount;
@@ -114,10 +115,10 @@ export const usePurchaseInvoices = () => {
           .eq('id', invoiceData.supplier_id);
         
         if (supplierUpdateError) {
-          console.error('❌ Error updating supplier balance:', supplierUpdateError);
+          logger.error("Error updating supplier balance", supplierUpdateError);
           // Hata olsa bile devam et, sadece logla
         } else {
-          console.log('✅ Supplier balance updated:', newSupplierBalance);
+          logger.info("Supplier balance updated", newSupplierBalance);
         }
       }
     }
@@ -221,7 +222,7 @@ export const usePurchaseInvoices = () => {
     // 1. Bu faturaya ait stok hareketlerini bul ve stokları geri al
     // NOT: Aynı fatura numarasıyla birden fazla stok hareketi olabilir (fatura silinip tekrar eklenmiş)
     // Bu yüzden TÜM stok hareketlerini bulup silmeliyiz
-    console.log(`🔍 Fatura siliniyor. Invoice Number: "${invoice.invoice_number}", Invoice ID: ${id}`);
+    logger.info(`Deleting invoice. Number: ${invoice.invoice_number}, ID: ${id}`);
     
     const { data: stockTransactions, error: stockTransactionsError } = await supabase
       .from("inventory_transactions")
@@ -240,14 +241,14 @@ export const usePurchaseInvoices = () => {
       .eq("transaction_type", "giris");
 
     if (stockTransactionsError) {
-      console.error("❌ Stok hareketleri bulunurken hata:", stockTransactionsError);
+      logger.error("Error finding stock transactions", stockTransactionsError);
       // Hata olsa bile devam et, sadece logla
     }
 
-    console.log(`📊 Bulunan stok hareketleri:`, stockTransactions?.length || 0);
+    logger.info("Found stock transactions", stockTransactions?.length || 0);
     if (stockTransactions && stockTransactions.length > 0) {
-      console.log(`🗑️ ${stockTransactions.length} adet stok hareketi bulundu, siliniyor...`);
-      console.log(`📋 Transaction ID'leri:`, stockTransactions.map((t: any) => ({ id: t.id, transaction_number: t.transaction_number, reference_number: t.reference_number })));
+      logger.info(`Found ${stockTransactions.length} stock transactions, deleting...`);
+      logger.debug("Transaction IDs", stockTransactions.map((t: any) => ({ id: t.id, transaction_number: t.transaction_number, reference_number: t.reference_number })));
       
       // Her transaction için stokları geri al
       for (const transaction of stockTransactions) {
@@ -267,7 +268,7 @@ export const usePurchaseInvoices = () => {
                 const newQuantity = (existingStock.quantity || 0) - Number(item.quantity || 0);
                 // Negatif stok kontrolü
                 if (newQuantity < 0) {
-                  console.warn(`⚠️ Stok negatif olacak, 0'a ayarlanıyor. Ürün: ${item.product_id}`);
+                  logger.warn(`Stock would be negative, setting to 0. Product: ${item.product_id}`);
                   await supabase
                     .from("warehouse_stock")
                     .update({
@@ -293,7 +294,7 @@ export const usePurchaseInvoices = () => {
       // Stok hareketlerini sil (TÜMÜNÜ - aynı reference_number ile olan tüm hareketler)
       const transactionIds = stockTransactions.map((t: any) => t.id);
       if (transactionIds.length > 0) {
-        console.log(`🗑️ ${transactionIds.length} adet transaction item siliniyor...`);
+        logger.info(`Deleting ${transactionIds.length} transaction items...`);
         
         // Önce transaction items'ları sil (CASCADE ile otomatik silinebilir ama manuel de silelim)
         const { error: itemsDeleteError, data: deletedItems } = await supabase
@@ -303,10 +304,10 @@ export const usePurchaseInvoices = () => {
           .select("id");
 
         if (itemsDeleteError) {
-          console.error("❌ Stok hareketi kalemleri silinirken hata:", itemsDeleteError);
+          logger.error("Error deleting transaction items", itemsDeleteError);
           // Hata olsa bile devam et, belki CASCADE ile silinecek
         } else {
-          console.log(`✅ ${deletedItems?.length || 0} adet transaction item silindi`);
+          logger.info(`Deleted ${deletedItems?.length || 0} transaction items`);
         }
 
         // Sonra transaction'ları sil - .select() OLMADAN
@@ -317,17 +318,17 @@ export const usePurchaseInvoices = () => {
           .select("id");
 
         if (transactionsDeleteError) {
-          console.error("❌ Stok hareketleri silinirken hata:", transactionsDeleteError);
-          console.error("❌ Hata detayları:", JSON.stringify(transactionsDeleteError, null, 2));
+          logger.error("Error deleting stock transactions", transactionsDeleteError);
+          logger.error("Error details", JSON.stringify(transactionsDeleteError, null, 2));
           throw new Error(`Stok hareketleri silinirken hata oluştu: ${transactionsDeleteError.message}`);
         }
         
         const deletedCount = deletedTransactions?.length || 0;
-        console.log(`✅ ${deletedCount} adet transaction silindi (beklenen: ${transactionIds.length})`);
+        logger.info(`Deleted ${deletedCount} transactions (expected: ${transactionIds.length})`);
 
         // Silme işleminin başarılı olduğunu doğrula
         if (deletedCount < transactionIds.length) {
-          console.warn(`⚠️ UYARI: Sadece ${deletedCount}/${transactionIds.length} transaction silindi!`);
+          logger.warn(`WARNING: Only ${deletedCount}/${transactionIds.length} transactions deleted!`);
           
           // Kalan transaction'ları bul
           const { data: verifyTransactions, error: verifyError } = await supabase
@@ -336,13 +337,13 @@ export const usePurchaseInvoices = () => {
             .in("id", transactionIds);
 
           if (verifyError) {
-            console.error("❌ Doğrulama hatası:", verifyError);
+            logger.error("Verification error", verifyError);
           } else if (verifyTransactions && verifyTransactions.length > 0) {
-            console.warn(`⚠️ ${verifyTransactions.length} adet transaction hala mevcut!`);
-            console.warn(`⚠️ Kalan transaction'lar:`, verifyTransactions);
+            logger.warn(`${verifyTransactions.length} transactions still exist!`);
+            logger.warn("Remaining transactions", verifyTransactions);
             
             // RLS veya başka bir sorun olabilir, tek tek silmeyi dene
-            console.log(`🔄 Tek tek silme denemesi yapılıyor...`);
+            logger.info("Attempting individual delete...");
             for (const transactionId of transactionIds) {
               const { error: singleDeleteError, data: singleDeleted } = await supabase
                 .from("inventory_transactions")
@@ -351,20 +352,20 @@ export const usePurchaseInvoices = () => {
                 .select("id");
               
               if (singleDeleteError) {
-                console.error(`❌ Transaction ${transactionId} silinemedi:`, singleDeleteError);
+                logger.error(`Transaction ${transactionId} could not be deleted`, singleDeleteError);
               } else if (singleDeleted && singleDeleted.length > 0) {
-                console.log(`✅ Transaction ${transactionId} silindi`);
+                logger.info(`Transaction ${transactionId} deleted`);
               }
             }
           } else {
-            console.log(`✅ Doğrulama başarılı: Tüm transaction'lar silindi`);
+            logger.info("Verification successful: All transactions deleted");
           }
         } else {
-          console.log(`✅ Doğrulama başarılı: Tüm transaction'lar silindi`);
+          logger.info("Verification successful: All transactions deleted");
         }
       }
     } else {
-      console.log(`ℹ️ Bu faturaya ait stok hareketi bulunamadı (reference_number: "${invoice.invoice_number}")`);
+      logger.info(`No stock transactions found for this invoice (reference_number: "${invoice.invoice_number}")`);
       
       // Alternatif olarak, tüm reference_number'ları kontrol et
       const { data: allTransactions } = await supabase
@@ -374,7 +375,7 @@ export const usePurchaseInvoices = () => {
         .eq("transaction_type", "giris")
         .limit(10);
       
-      console.log(`🔍 Son 10 stok hareketi (örnek):`, allTransactions?.map((t: any) => ({ 
+      logger.debug("Last 10 stock transactions (sample)", allTransactions?.map((t: any) => ({ 
         transaction_number: t.transaction_number, 
         reference_number: t.reference_number 
       })));
@@ -453,7 +454,7 @@ export const usePurchaseInvoices = () => {
             filter: `company_id=eq.${profile.company_id}`
           },
           (payload) => {
-            console.log('🔄 Purchase invoice changed:', payload.eventType, payload.new || payload.old);
+            logger.info("Purchase invoice changed", payload.eventType, payload.new || payload.old);
             // Invalidate queries to refetch data
             queryClient.invalidateQueries({ queryKey: ['purchaseInvoices'] });
             queryClient.invalidateQueries({ queryKey: ['purchase-invoices-infinite'] });
@@ -584,7 +585,7 @@ export const usePurchaseInvoicesInfiniteScroll = (filters?: PurchaseInvoiceFilte
       .range(from, to);
 
     if (error) {
-      console.error("Error fetching purchase invoices:", error);
+      logger.error("Error fetching purchase invoices", error);
       throw error;
     }
 

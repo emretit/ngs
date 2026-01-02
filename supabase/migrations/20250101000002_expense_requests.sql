@@ -79,3 +79,4 @@ CREATE INDEX IF NOT EXISTS idx_expense_requests_requester_id ON public.expense_r
 CREATE INDEX IF NOT EXISTS idx_expense_requests_status ON public.expense_requests(status);
 CREATE INDEX IF NOT EXISTS idx_expense_requests_created_at ON public.expense_requests(created_at);
 
+

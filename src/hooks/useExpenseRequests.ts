@@ -1,61 +1,52 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 import { useCompany } from "@/hooks/useCompany";
 import { ExpenseRequest } from "@/types/expense";
+import {
+  fetchExpenseRequests,
+  createExpenseRequest,
+  submitExpenseRequest,
+} from "@/api/expense";
 
+/**
+ * Hook for managing expense requests
+ *
+ * Migrated to use expense API layer instead of direct Supabase queries
+ *
+ * @see Phase 2.4 of PAFTA Refactoring Plan
+ */
 export const useExpenseRequests = () => {
   const { companyId } = useCompany();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const { data: expenses, isLoading } = useQuery({
     queryKey: ["expense-requests", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("expense_requests")
-        .select("*")
-        .eq("company_id", companyId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data as ExpenseRequest[];
+      if (!companyId) {
+        throw new Error("Company ID is required");
+      }
+      return fetchExpenseRequests(companyId);
     },
     enabled: !!companyId,
   });
 
   const createExpense = useMutation({
     mutationFn: async (expense: Partial<ExpenseRequest>) => {
-      const { data, error } = await supabase
-        .from("expense_requests")
-        .insert({ ...expense, company_id: companyId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      if (!companyId) {
+        throw new Error("Company ID is required");
+      }
+      return createExpenseRequest(expense, companyId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expense-requests"] });
-      toast({ title: "Başarılı", description: "Harcama talebi oluşturuldu" });
     },
   });
 
   const submitExpense = useMutation({
     mutationFn: async (expenseId: string) => {
-      const { data, error } = await supabase
-        .from("expense_requests")
-        .update({ status: "submitted" })
-        .eq("id", expenseId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return submitExpenseRequest(expenseId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expense-requests"] });
-      toast({ title: "Başarılı", description: "Harcama talebi onaya gönderildi" });
     },
   });
 

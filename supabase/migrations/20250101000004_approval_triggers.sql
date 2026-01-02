@@ -92,3 +92,4 @@ ON public.purchase_requests
 FOR EACH ROW
 EXECUTE FUNCTION trigger_pr_hierarchical_approval();
 
+

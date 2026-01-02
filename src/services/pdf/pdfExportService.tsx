@@ -6,6 +6,7 @@ import { validatePdfData } from '@/utils/pdfHelpers';
 import { ServicePdfData, ServicePdfTemplate, ServiceTemplateSchema, defaultServiceTemplateSchema } from '@/types/service-template';
 import ServicePdfRenderer from '@/components/pdf/ServicePdfRenderer';
 import type { ServiceRequest } from '@/hooks/service/types';
+import { logger } from '@/utils/logger';
 
 export class PdfExportService {
   /**
@@ -31,7 +32,7 @@ export class PdfExportService {
 
       return profile.company_id;
     } catch (error) {
-      console.error('Error fetching company_id:', error);
+      logger.error("Error fetching company_id", error);
       return null;
     }
   }
@@ -171,7 +172,7 @@ export class PdfExportService {
           .single();
 
         if (error) {
-          console.error(`Error creating default ${template.type} template:`, error);
+          logger.error(`Error creating default ${template.type} template`, error);
         } else {
           results.push(data);
         }
@@ -348,7 +349,7 @@ export class PdfExportService {
                     productImageMap.set(product.id, product.image_url);
                   }
                 } catch (imgError) {
-                  console.warn(`Görsel yüklenemedi (${product.id}):`, imgError);
+                  logger.warn(`Image could not be loaded (${product.id})`, imgError);
                   // Hata durumunda URL'i olduğu gibi kullan
                   productImageMap.set(product.id, product.image_url);
                 }
@@ -365,7 +366,7 @@ export class PdfExportService {
             await Promise.all(imagePromises);
           }
         } catch (error) {
-          console.warn('Ürün bilgileri çekilirken hata oluştu:', error);
+          logger.warn("Error fetching product information", error);
         }
       }
 
@@ -466,7 +467,7 @@ export class PdfExportService {
                 imageUrl = item.image_url; // Fallback: URL'i olduğu gibi kullan
               }
             } catch (imgError) {
-              console.warn(`Item görseli yüklenemedi (${item.id}):`, imgError);
+              logger.warn(`Item image could not be loaded (${item.id})`, imgError);
               imageUrl = item.image_url; // Fallback: URL'i olduğu gibi kullan
             }
           }
@@ -517,7 +518,7 @@ export class PdfExportService {
 
       return quoteData;
     } catch (error) {
-      console.error('Error transforming proposal for PDF:', error);
+      logger.error("Error transforming proposal for PDF", error);
       throw new Error('Teklif PDF formatına dönüştürülürken hata oluştu: ' + (error as Error).message);
     }
   }
@@ -544,7 +545,7 @@ export class PdfExportService {
       .order('name');
 
     if (error) {
-      console.error('Error fetching templates:', error);
+      logger.error("Error fetching templates", error);
       throw new Error('Şablonlar yüklenirken hata oluştu: ' + error.message);
     }
 
@@ -590,7 +591,7 @@ export class PdfExportService {
     const { data, error } = await query.maybeSingle();
 
     if (error || !data) {
-      console.error('Error fetching template:', error);
+      logger.error("Error fetching template", error);
       throw new Error('Şablon bulunamadı. Lütfen önce bir şablon oluşturun.');
     }
 
@@ -608,7 +609,7 @@ export class PdfExportService {
       .single();
 
     if (error) {
-      console.error('Error fetching template:', error);
+      logger.error("Error fetching template", error);
       throw new Error('Şablon bulunamadı: ' + error.message);
     }
 
@@ -646,7 +647,7 @@ export class PdfExportService {
     }
 
     if (error) {
-      console.error('Error saving template:', error);
+      logger.error("Error saving template", error);
       throw new Error('Şablon kaydedilirken hata oluştu: ' + error.message);
     }
 
@@ -664,7 +665,7 @@ export class PdfExportService {
       .eq('id', templateId);
 
     if (error) {
-      console.error('Error deleting template:', error);
+      logger.error("Error deleting template", error);
       throw new Error('Şablon silinirken hata oluştu: ' + error.message);
     }
 
@@ -734,11 +735,11 @@ export class PdfExportService {
                 align: 'center'
               });
             }
-            console.log('Added product_image column to template schema for backward compatibility');
+            logger.debug("Added product_image column to template schema for backward compatibility");
           }
         }
 
-        console.log('Generating PDF with data:', {
+        logger.debug("Generating PDF with data", {
           dataKeys: Object.keys(quoteData),
           customerName: quoteData.customer?.name,
           customerCompany: quoteData.customer?.company,
@@ -765,11 +766,11 @@ export class PdfExportService {
         const blob = await pdf(pdfElement).toBlob();
         return blob;
       } catch (pdfError) {
-        console.error('PDF generation error:', pdfError);
+        logger.error("PDF generation error", pdfError);
         throw new Error('PDF oluşturulamadı: ' + (pdfError as Error).message);
       }
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      logger.error("Error generating PDF", error);
       throw new Error('PDF oluşturulurken hata oluştu: ' + (error as Error).message);
     }
   }
@@ -807,7 +808,7 @@ export class PdfExportService {
         URL.revokeObjectURL(url);
       }, 1000);
     } catch (error) {
-      console.error('Error opening PDF:', error);
+      logger.error("Error opening PDF", error);
       throw new Error('PDF açılırken hata oluştu: ' + (error as Error).message);
     }
   }
@@ -838,7 +839,7 @@ export class PdfExportService {
 
       return { success: true };
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      logger.error("Error downloading PDF", error);
       throw error;
     }
   }
@@ -870,7 +871,7 @@ export class PdfExportService {
         });
 
       if (error) {
-        console.error('Error uploading PDF:', error);
+        logger.error("Error uploading PDF", error);
         throw new Error('PDF yüklenirken hata oluştu: ' + error.message);
       }
 
@@ -885,7 +886,7 @@ export class PdfExportService {
         url: urlData.publicUrl
       };
     } catch (error) {
-      console.error('Error uploading PDF to storage:', error);
+      logger.error("Error uploading PDF to storage", error);
       throw error;
     }
   }
@@ -894,7 +895,7 @@ export class PdfExportService {
    * Transform proposal data to QuoteData format
    */
   static transformProposalToQuoteData(proposal: any, companySettings?: any): QuoteData {
-    console.log('Transforming proposal to QuoteData:', {
+    logger.debug("Transforming proposal to QuoteData", {
       proposalKeys: Object.keys(proposal),
       proposalId: proposal.id,
       proposalNumber: proposal.number || proposal.proposal_number,
@@ -1038,12 +1039,12 @@ export class PdfExportService {
     default_prepared_by?: string;
   }> {
     try {
-      console.log('getCompanySettings: Starting...'); // Debug
+      logger.debug("getCompanySettings: Starting");
       const companyId = await this.getCurrentCompanyId();
-      console.log('getCompanySettings: companyId =', companyId); // Debug
+      logger.debug("getCompanySettings: companyId", { companyId });
       
       if (!companyId) {
-        console.warn('No company_id found for current user');
+        logger.warn("No company_id found for current user");
         return {};
       }
 
@@ -1054,15 +1055,15 @@ export class PdfExportService {
         .eq('is_active', true)
         .maybeSingle();
 
-      console.log('getCompanySettings: Supabase query result:', { data, error }); // Debug
+      logger.debug("getCompanySettings: Supabase query result", { data, error });
 
       if (error) {
-        console.error('Error fetching company settings:', error);
+        logger.error("Error fetching company settings", error);
         return {};
       }
 
       if (!data) {
-        console.warn('No active company found for companyId:', companyId);
+        logger.warn("No active company found for companyId", companyId);
         return {};
       }
 
@@ -1089,10 +1090,10 @@ export class PdfExportService {
         default_prepared_by: '', // Can be set from user profile if needed
       };
       
-      console.log('getCompanySettings: Mapped data:', mappedData); // Debug
+      logger.debug("getCompanySettings: Mapped data", { mappedData });
       return mappedData;
     } catch (error) {
-      console.error('Error in getCompanySettings:', error);
+      logger.error("Error in getCompanySettings", error);
       return {};
     }
   }
@@ -1175,7 +1176,7 @@ export class PdfExportService {
           }));
         }
       } catch (error) {
-        console.warn('Service items fetch error, using fallback:', error);
+        logger.warn("Service items fetch error, using fallback", error);
       }
 
       // Fallback to service_details if service_items is empty
@@ -1216,7 +1217,7 @@ export class PdfExportService {
           }
         }
       } catch (error) {
-        console.warn('Service signatures fetch error, using fallback:', error);
+        logger.warn("Service signatures fetch error, using fallback", error);
         // Fallback to service object if service_signatures table query fails
         const techSig = (service as any).technician_signature;
         const custSig = (service as any).customer_signature;
@@ -1275,7 +1276,7 @@ export class PdfExportService {
         createdAt: service.created_at || new Date().toISOString(),
       };
     } catch (error) {
-      console.error('Error transforming service for PDF:', error);
+      logger.error("Error transforming service for PDF", error);
       throw new Error('Servis verisi PDF formatına dönüştürülemedi: ' + (error as Error).message);
     }
   }
@@ -1286,10 +1287,10 @@ export class PdfExportService {
   static async getServiceTemplates(): Promise<ServicePdfTemplate[]> {
     const companyId = await this.getCurrentCompanyId();
     
-    console.log('[PdfExportService.getServiceTemplates] companyId:', companyId);
+    logger.debug("[PdfExportService.getServiceTemplates] companyId", companyId);
     
     if (!companyId) {
-      console.warn('[PdfExportService.getServiceTemplates] companyId bulunamadı');
+      logger.warn("[PdfExportService.getServiceTemplates] companyId not found");
       return [];
     }
 
@@ -1304,7 +1305,7 @@ export class PdfExportService {
 
     let { data, error } = await query;
 
-    console.log('[PdfExportService.getServiceTemplates] Query sonucu:', { 
+    logger.debug("[PdfExportService.getServiceTemplates] Query result", { 
       dataCount: data?.length || 0, 
       error: error?.message,
       templateNames: data?.map((t: any) => t.name) || []
@@ -1312,7 +1313,7 @@ export class PdfExportService {
 
     // If service_templates doesn't exist or error, return empty array
     if (error) {
-      console.error('[PdfExportService.getServiceTemplates] Error fetching service PDF templates:', error);
+      logger.error("[PdfExportService.getServiceTemplates] Error fetching service PDF templates", error);
       // Return empty array instead of throwing error - user can create templates later
       return [];
     }
@@ -1422,7 +1423,7 @@ export class PdfExportService {
       const blob = await pdf(pdfElement).toBlob();
       return blob;
     } catch (error) {
-      console.error('Error generating service PDF:', error);
+      logger.error("Error generating service PDF", error);
       throw new Error('Servis PDF oluşturulamadı: ' + (error as Error).message);
     }
   }
@@ -1454,7 +1455,7 @@ export class PdfExportService {
         URL.revokeObjectURL(url);
       }, 1000);
     } catch (error) {
-      console.error('Error opening service PDF:', error);
+      logger.error("Error opening service PDF", error);
       throw new Error('Servis PDF açılırken hata oluştu: ' + (error as Error).message);
     }
   }
@@ -1499,7 +1500,7 @@ export class PdfExportService {
 
       return serviceData;
     } catch (error) {
-      console.error('Error transforming service slip for PDF:', error);
+      logger.error("Error transforming service slip for PDF", error);
       throw new Error('Servis fişi PDF formatına dönüştürülemedi: ' + (error as Error).message);
     }
   }

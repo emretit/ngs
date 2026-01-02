@@ -52,3 +52,4 @@ ON public.employees
 FOR EACH ROW
 EXECUTE FUNCTION check_manager_circular_reference();
 
+

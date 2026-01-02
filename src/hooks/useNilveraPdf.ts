@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 export const useNilveraPdf = () => {
   const [isDownloading, setIsDownloading] = useState(false);
@@ -9,9 +10,9 @@ export const useNilveraPdf = () => {
     setIsDownloading(true);
 
     try {
-      console.log('📄 Starting PDF download:', { invoiceId, invoiceType });
-      console.log('🔍 Invoice UUID:', invoiceId);
-      console.log('📋 Invoice Type:', invoiceType);
+      logger.info("Starting PDF download", { invoiceId, invoiceType });
+      logger.debug("Invoice UUID", invoiceId);
+      logger.debug("Invoice Type", invoiceType);
 
       const { data, error } = await supabase.functions.invoke('nilvera-invoice-pdf', {
         body: {
@@ -20,11 +21,11 @@ export const useNilveraPdf = () => {
         }
       });
 
-      console.log('📡 Supabase function response:', { data, error });
+      logger.debug("Supabase function response", { data, error });
 
       if (error) {
-        console.error('❌ Supabase function error:', error);
-        console.error('❌ Error details:', {
+        logger.error("Supabase function error", error);
+        logger.error("Error details", {
           message: error.message,
           context: error.context,
           status: error.status
@@ -37,17 +38,17 @@ export const useNilveraPdf = () => {
         if (error.context instanceof Response) {
           try {
             const errorData = await error.context.json();
-            console.error('❌ Parsed error response:', errorData);
+            logger.error("Parsed error response", errorData);
             errorMessage = errorData.error || errorData.message || errorMessage;
           } catch (parseError) {
-            console.error('❌ Failed to parse error response:', parseError);
+            logger.error("Failed to parse error response", parseError);
             // Response'u text olarak oku
             try {
               const errorText = await error.context.text();
-              console.error('❌ Error response text:', errorText);
+              logger.error("Error response text", errorText);
               errorMessage = errorText || errorMessage;
             } catch (textError) {
-              console.error('❌ Failed to read error response as text:', textError);
+              logger.error("Failed to read error response as text", textError);
             }
           }
         }
@@ -56,19 +57,19 @@ export const useNilveraPdf = () => {
       }
 
       if (!data) {
-        console.error('❌ No data received from function');
+        logger.error("No data received from function");
         throw new Error('Sunucudan yanıt alınamadı. Edge function yanıt vermedi.');
       }
 
       if (!data.success) {
-        console.error('❌ Function returned error:', data);
+        logger.error("Function returned error", data);
         const errorMessage = data.error || data.message || 'PDF indirme başarısız';
-        console.error('❌ Error details:', data.details);
+        logger.error("Error details", data.details);
         throw new Error(errorMessage);
       }
 
-      console.log('✅ PDF downloaded successfully');
-      console.log('📊 PDF metadata:', {
+      logger.info("PDF downloaded successfully");
+      logger.debug("PDF metadata", {
         size: data.size,
         mimeType: data.mimeType,
         hasPdfData: !!data.pdfData,
@@ -76,16 +77,16 @@ export const useNilveraPdf = () => {
       });
 
       if (!data.pdfData) {
-        console.error('❌ PDF verisi yok!', data);
+        logger.error("PDF data missing", data);
         throw new Error('PDF verisi alınamadı - Nilvera API boş yanıt döndü');
       }
 
       // Base64 string'i temizle (boşluk, yeni satır karakterleri vs.)
       const base64Data = data.pdfData.replace(/[\s\n\r]/g, '');
 
-      console.log('✅ Base64 data cleaned, length:', base64Data.length);
-      console.log('🔍 Base64 preview (first 100 chars):', base64Data.substring(0, 100));
-      console.log('🔍 Base64 preview (last 100 chars):', base64Data.substring(Math.max(0, base64Data.length - 100)));
+      logger.debug("Base64 data cleaned, length", base64Data.length);
+      logger.debug("Base64 preview (first 100 chars)", base64Data.substring(0, 100));
+      logger.debug("Base64 preview (last 100 chars)", base64Data.substring(Math.max(0, base64Data.length - 100)));
 
       // Base64'in geçerli olup olmadığını kontrol et
       if (base64Data.length === 0) {
@@ -95,15 +96,15 @@ export const useNilveraPdf = () => {
       // Base64 format kontrolü
       const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
       if (!base64Regex.test(base64Data)) {
-        console.error('❌ Geçersiz Base64 formatı!');
+        logger.error("Invalid Base64 format");
         throw new Error('PDF verisi geçersiz Base64 formatında');
       }
 
       // Base64'i binary'ye dönüştür ve blob oluştur
       try {
-        console.log('🔄 Converting Base64 to binary...');
+        logger.debug("Converting Base64 to binary");
         const binaryString = atob(base64Data);
-        console.log('✅ Base64 decoded to binary, length:', binaryString.length, 'bytes');
+        logger.debug("Base64 decoded to binary, length", binaryString.length, 'bytes');
 
         const bytes = new Uint8Array(binaryString.length);
 
@@ -113,19 +114,19 @@ export const useNilveraPdf = () => {
 
         // PDF magic number kontrolü (%PDF)
         const pdfHeader = String.fromCharCode(...bytes.slice(0, 4));
-        console.log('🔍 PDF Header check:', pdfHeader);
+        logger.debug("PDF Header check", pdfHeader);
 
         if (pdfHeader !== '%PDF') {
-          console.error('❌ PDF header kontrolü başarısız!');
-          console.error('❌ Beklenen: %PDF');
-          console.error('❌ Gelen:', pdfHeader);
+          logger.error("PDF header check failed");
+          logger.error("Expected: %PDF");
+          logger.error("Received", pdfHeader);
           const previewText = String.fromCharCode(...bytes.slice(0, 100));
-          console.error('❌ İçerik önizlemesi:', previewText);
+          logger.error("Content preview", previewText);
           throw new Error(`Geçersiz PDF dosyası. Dosya başlığı '%PDF' değil. Nilvera'dan gelen yanıt PDF değil.`);
         }
 
         const blob = new Blob([bytes], { type: 'application/pdf' });
-        console.log('✅ Blob created, size:', blob.size, 'bytes');
+        logger.debug("Blob created, size", blob.size, 'bytes');
 
         if (blob.size === 0) {
           throw new Error('Blob boyutu sıfır - PDF verisi geçersiz');
@@ -133,7 +134,7 @@ export const useNilveraPdf = () => {
 
         // Blob URL oluştur
         const blobUrl = URL.createObjectURL(blob);
-        console.log('✅ Blob URL created:', blobUrl);
+        logger.debug("Blob URL created", blobUrl);
 
         // Yeni sekmede aç - sadece link yöntemini kullan (daha güvenilir, popup blocker sorunları olmaz)
         const link = document.createElement('a');
@@ -143,18 +144,18 @@ export const useNilveraPdf = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        console.log('✅ PDF opened in new tab via link click');
+        logger.info("PDF opened in new tab via link click");
 
         // URL'yi daha uzun bir süre sonra temizle (PDF viewer loading time için)
         setTimeout(() => {
           URL.revokeObjectURL(blobUrl);
-          console.log('🧹 Blob URL cleaned up');
+          logger.debug("Blob URL cleaned up");
         }, 30000); // 30 saniye
 
         toast.success(`${invoiceType === 'e-fatura' ? 'E-Fatura' : 'E-Arşiv'} PDF'i yeni sekmede açıldı`);
         return { success: true, url: blobUrl };
       } catch (decodeError) {
-        console.error('❌ Base64 decode/blob hatası:', decodeError);
+        logger.error("Base64 decode/blob error", decodeError);
 
         if (decodeError instanceof Error && decodeError.message.includes('invalid character')) {
           throw new Error('PDF verisi bozuk Base64 formatında - Nilvera API hatası');
@@ -164,7 +165,7 @@ export const useNilveraPdf = () => {
       }
 
     } catch (error) {
-      console.error('❌ PDF download and open error:', error);
+      logger.error("PDF download and open error", error);
       const errorMessage = error instanceof Error ? error.message : 'PDF açma hatası';
       
       toast.error(errorMessage);

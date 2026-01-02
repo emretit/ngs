@@ -67,3 +67,4 @@ CREATE INDEX IF NOT EXISTS idx_approval_workflows_company_id ON public.approval_
 CREATE INDEX IF NOT EXISTS idx_approval_workflows_object_type ON public.approval_workflows(object_type);
 CREATE INDEX IF NOT EXISTS idx_approval_workflows_is_active ON public.approval_workflows(is_active);
 
+

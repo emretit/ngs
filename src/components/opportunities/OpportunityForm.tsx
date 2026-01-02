@@ -205,6 +205,8 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log("handleSubmit çağrıldı", formData);
+    
     if (!formData.title.trim()) {
       toast.error("Fırsat başlığı gereklidir");
       return;
@@ -213,7 +215,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
     setIsSubmitting(true);
     
     try {
-      
+      console.log("Fırsat oluşturuluyor...", formData);
 
       const { error } = await supabase
         .from("opportunities")
@@ -230,7 +232,12 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
           employee_id: formData.employee_id || null
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Fırsat oluşturma hatası:", error);
+        throw error;
+      }
+
+      console.log("Fırsat başarıyla oluşturuldu");
 
       // Refresh opportunities data
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
@@ -272,11 +279,11 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
       maxWidth="lg"
       headerColor="blue"
     >
-      <form onSubmit={handleSubmit} className="flex flex-col h-full">
+      <form onSubmit={handleSubmit} className="flex flex-col h-full -m-3 p-2">
         <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 -mr-1">
-          <div className="space-y-3">
-          {/* Başlık ve Açıklama */}
           <div className="space-y-2">
+          {/* Başlık ve Açıklama */}
+          <div className="space-y-1.5">
             <div className="space-y-1">
               <Label htmlFor="title" className="text-sm font-medium text-gray-700">Fırsat Başlığı *</Label>
               <Input 
@@ -285,7 +292,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                 value={formData.title} 
                 onChange={handleChange} 
                 placeholder="Fırsat başlığını girin"
-                className="h-8"
+                className="h-10"
                 required 
               />
             </div>
@@ -299,7 +306,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                 onChange={handleChange} 
                 placeholder="Fırsat detaylarını girin"
                 rows={2}
-                className="resize-none h-8"
+                className="resize-none min-h-[2.5rem]"
               />
             </div>
           </div>
@@ -325,6 +332,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                 searchPlaceholder="Çalışan ara..."
                 noResultsText="Çalışan bulunamadı"
                 showLabel={true}
+                triggerClassName="h-10"
               />
             </div>
           </div>
@@ -341,7 +349,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                 value={formData.value} 
                 onChange={handleChange} 
                 placeholder="0.00"
-                className="h-8"
+                className="h-10"
               />
             </div>
             <div className="space-y-1">
@@ -350,7 +358,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                 value={formData.currency} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}
               >
-                <SelectTrigger id="currency" className="h-8">
+                <SelectTrigger id="currency" className="h-10">
                   <SelectValue placeholder="Para birimi seçin" />
                 </SelectTrigger>
                 <SelectContent>
@@ -371,7 +379,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                 value={formData.priority} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
               >
-                <SelectTrigger id="priority" className="h-8">
+                <SelectTrigger id="priority" className="h-10">
                   <SelectValue placeholder="Öncelik seçin" />
                 </SelectTrigger>
                 <SelectContent>
@@ -396,7 +404,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                   }
                 }}
               >
-                <SelectTrigger id="opportunity_type" className="w-full h-8 bg-background border-border hover:border-primary transition-colors">
+                <SelectTrigger id="opportunity_type" className="w-full h-10 bg-background border-border hover:border-primary transition-colors">
                   <SelectValue placeholder="Fırsat tipi seçin" />
                 </SelectTrigger>
                 <SelectContent className="bg-background border border-border shadow-xl z-[100] max-h-[300px] overflow-y-auto">
@@ -530,10 +538,10 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
           </div>
           </div>
         </div>
-        <UnifiedDialogFooter>
+        <UnifiedDialogFooter className="pt-2">
           <UnifiedDialogCancelButton onClick={onClose} disabled={isSubmitting} />
           <UnifiedDialogActionButton
-            onClick={() => {}}
+            type="submit"
             variant="primary"
             disabled={isSubmitting}
             loading={isSubmitting}

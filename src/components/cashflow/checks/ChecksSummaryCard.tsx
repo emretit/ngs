@@ -134,15 +134,12 @@ export const ChecksSummaryCard = ({
           />
 
           <ChecksTable
-            checks={checks}
-            checkType={checkType}
+            checks={checks.slice(0, 5)}
             onEdit={onEdit}
             onDelete={onDelete}
             onQuickAction={onQuickAction}
-            quickActionLabel={quickActionLabel}
             showPayee={checkType === "outgoing"}
-            limit={5}
-            emptyMessage={emptyMessage}
+            showCheckType={false}
           />
 
           {checks.length > 5 && (

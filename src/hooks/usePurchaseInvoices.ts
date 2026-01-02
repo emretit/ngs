@@ -454,7 +454,7 @@ export const usePurchaseInvoices = () => {
             filter: `company_id=eq.${profile.company_id}`
           },
           (payload) => {
-            logger.info("Purchase invoice changed", payload.eventType, payload.new || payload.old);
+            logger.info("Purchase invoice changed", { eventType: payload.eventType, data: payload.new || payload.old });
             // Invalidate queries to refetch data
             queryClient.invalidateQueries({ queryKey: ['purchaseInvoices'] });
             queryClient.invalidateQueries({ queryKey: ['purchase-invoices-infinite'] });

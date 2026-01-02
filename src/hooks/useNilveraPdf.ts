@@ -104,7 +104,7 @@ export const useNilveraPdf = () => {
       try {
         logger.debug("Converting Base64 to binary");
         const binaryString = atob(base64Data);
-        logger.debug("Base64 decoded to binary, length", binaryString.length, 'bytes');
+        logger.debug("Base64 decoded to binary", { length: binaryString.length, unit: 'bytes' });
 
         const bytes = new Uint8Array(binaryString.length);
 
@@ -126,7 +126,7 @@ export const useNilveraPdf = () => {
         }
 
         const blob = new Blob([bytes], { type: 'application/pdf' });
-        logger.debug("Blob created, size", blob.size, 'bytes');
+        logger.debug("Blob created", { size: blob.size, unit: 'bytes' });
 
         if (blob.size === 0) {
           throw new Error('Blob boyutu sıfır - PDF verisi geçersiz');

@@ -59,7 +59,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
     is_einvoice_mukellef: false,
   });
 
-  const { data: customer, isLoading: isLoadingCustomer, error: customerError } = useQuery({
+  const { data: customer, isLoading: isLoadingCustomer, error: customerError } = useQuery<any>({
     queryKey: ['customer', id],
     queryFn: async () => {
       if (!id) {

@@ -69,7 +69,7 @@ export const useSupplierForm = () => {
     einvoice_document_type: "",
   });
 
-  const { data: supplier, isLoading: isLoadingSupplier, error: supplierError } = useQuery({
+  const { data: supplier, isLoading: isLoadingSupplier, error: supplierError } = useQuery<any>({
     queryKey: ['supplier', id],
     queryFn: async () => {
       if (!id) {

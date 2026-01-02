@@ -9,7 +9,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { CreditCard, FileText, Receipt, MoreHorizontal, Edit, FileSpreadsheet, ArrowLeftRight } from "lucide-react";
-import CheckCreateDialog from "./CheckCreateDialog";
+import IncomingCheckDialog from "@/components/cashflow/checks/IncomingCheckDialog";
+import OutgoingCheckDialog from "@/components/cashflow/checks/OutgoingCheckDialog";
 import BalanceAdjustmentDialog from "./BalanceAdjustmentDialog";
 import ReceiptVoucherDialog from "./ReceiptVoucherDialog";
 import CariVirmanDialog from "./CariVirmanDialog";
@@ -82,12 +83,11 @@ const balanceActions: PaymentMethod[] = [
 
 export function PaymentMethodSelector({ onMethodSelect, disabled = false, customerId, supplierId, calculatedBalance }: PaymentMethodSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [checkDialogOpen, setCheckDialogOpen] = useState(false);
+  const [incomingCheckDialogOpen, setIncomingCheckDialogOpen] = useState(false);
+  const [outgoingCheckDialogOpen, setOutgoingCheckDialogOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
   const [voucherDialogOpen, setVoucherDialogOpen] = useState(false);
   const [cariVirmanDialogOpen, setCariVirmanDialogOpen] = useState(false);
-  const [prefilledCustomerId, setPrefilledCustomerId] = useState<string | undefined>(undefined);
-  const [prefilledSupplierId, setPrefilledSupplierId] = useState<string | undefined>(undefined);
 
   // Müşteri bilgilerini çek
   const { data: customerData } = useQuery({
@@ -124,15 +124,15 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false, custom
   const handleMethodSelect = (method: PaymentMethod) => {
     // Çek seçildiğinde dialog aç
     if (method.type === "cek") {
-      // Müşteri veya tedarikçi ID'sini ayarla
+      // Müşteri varsa gelen çek, tedarikçi varsa giden çek
       if (customerId) {
-        setPrefilledCustomerId(customerId);
-        setPrefilledSupplierId(undefined);
+        setIncomingCheckDialogOpen(true);
       } else if (supplierId) {
-        setPrefilledSupplierId(supplierId);
-        setPrefilledCustomerId(undefined);
+        setOutgoingCheckDialogOpen(true);
+      } else {
+        // Varsayılan olarak gelen çek
+        setIncomingCheckDialogOpen(true);
       }
-      setCheckDialogOpen(true);
       setOpen(false);
       return;
     }
@@ -225,20 +225,23 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false, custom
       </DropdownMenuContent>
     </DropdownMenu>
 
-    {/* Çek Ekleme Dialogu */}
-    <CheckCreateDialog
-      open={checkDialogOpen}
-      onOpenChange={setCheckDialogOpen}
-      defaultCustomerId={prefilledCustomerId}
-      defaultSupplierId={prefilledSupplierId}
-      defaultCheckType={prefilledCustomerId ? "incoming" : prefilledSupplierId ? "outgoing" : "incoming"}
+    {/* Gelen Çek Dialogu */}
+    <IncomingCheckDialog
+      open={incomingCheckDialogOpen}
+      onOpenChange={setIncomingCheckDialogOpen}
+      defaultCustomerId={customerId}
       onSaved={() => {
-        setCheckDialogOpen(false);
-        // Formu temizle
-        setPrefilledCustomerId(undefined);
-        setPrefilledSupplierId(undefined);
-        // Çek kaydedildikten sonra PaymentDialog açılmasın
-        // onMethodSelect çağrılmıyor
+        setIncomingCheckDialogOpen(false);
+      }}
+    />
+
+    {/* Giden Çek Dialogu */}
+    <OutgoingCheckDialog
+      open={outgoingCheckDialogOpen}
+      onOpenChange={setOutgoingCheckDialogOpen}
+      defaultSupplierId={supplierId}
+      onSaved={() => {
+        setOutgoingCheckDialogOpen(false);
       }}
     />
 

@@ -1,8 +1,10 @@
 
+import { useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,11 +30,26 @@ interface TaskTableRowProps {
 
 const TaskTableRow = ({ 
   task, 
-  onSelectTask, 
-  onStatusChange, 
-  onDeleteTask 
+  onSelectTask,
+  onStatusChange,
+  onDeleteTask
 }: TaskTableRowProps) => {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    onDeleteTask(task.id);
+    setIsDeleteDialogOpen(false);
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+  };
   return (
+    <>
     <TableRow 
       key={task.id}
       className="cursor-pointer hover:bg-gray-50 h-16"
@@ -118,11 +135,7 @@ const TaskTableRow = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem 
-                onClick={() => {
-                  if (confirm('Are you sure you want to delete this task?')) {
-                    onDeleteTask(task.id);
-                  }
-                }}
+                onClick={handleDeleteClick}
                 className="text-red-600"
               >
                 Delete
@@ -132,6 +145,20 @@ const TaskTableRow = ({
         </div>
       </TableCell>
     </TableRow>
+
+    {/* Confirmation Dialog */}
+    <ConfirmationDialogComponent
+      open={isDeleteDialogOpen}
+      onOpenChange={setIsDeleteDialogOpen}
+      title="Görevi Sil"
+      description={`"${task.title}" görevini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+      confirmText="Sil"
+      cancelText="İptal"
+      variant="destructive"
+      onConfirm={handleDeleteConfirm}
+      onCancel={handleDeleteCancel}
+    />
+    </>
   );
 };
 

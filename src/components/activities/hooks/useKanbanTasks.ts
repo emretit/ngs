@@ -121,9 +121,9 @@ export const useKanbanTasks = ({
   }, [tasks, searchQuery, selectedEmployee, selectedType, selectedStatus, isLoading, isMyDay, userData?.employee_id]);
 
 
-  useEffect(() => {
-    // Group filtered tasks by status
-    const groupedTasks: KanbanTasks = {
+  // Memoized grouping - optimize with useMemo instead of useEffect
+  const groupedTasks = useMemo(() => {
+    const groups: KanbanTasks = {
       todo: [],
       in_progress: [],
       completed: [],
@@ -132,16 +132,21 @@ export const useKanbanTasks = ({
 
     // If status filter is active, only show that status column with filtered tasks
     if (selectedStatus && selectedStatus !== "all") {
-      groupedTasks[selectedStatus as TaskStatus] = filteredTasks.filter(task => task.status === selectedStatus);
+      groups[selectedStatus as TaskStatus] = filteredTasks.filter(task => task.status === selectedStatus);
     } else {
       // Otherwise, organize all filtered tasks by their status
       filteredTasks.forEach(task => {
-        groupedTasks[task.status].push(task);
+        groups[task.status].push(task);
       });
     }
 
-    setTasksState(groupedTasks);
+    return groups;
   }, [filteredTasks, selectedStatus]);
+
+  // Update state when grouped tasks change
+  useEffect(() => {
+    setTasksState(groupedTasks);
+  }, [groupedTasks]);
 
   return {
     tasks: tasksState,

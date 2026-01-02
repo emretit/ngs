@@ -8,6 +8,7 @@ import ProductDetailsModal from "@/components/proposals/form/ProductDetailsModal
 import ProductSearchDialog from "@/components/proposals/form/items/product-dialog/ProductSearchDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface InvoiceItem {
   id: string;
@@ -51,6 +52,8 @@ const PurchaseInvoiceLineItems: React.FC<PurchaseInvoiceLineItemsProps> = ({
   const [productSearchOpen, setProductSearchOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ index: number; item: InvoiceItem } | null>(null);
 
   // Calculate stock changes for each item
   const getStockChange = (item: InvoiceItem): number => {
@@ -107,11 +110,23 @@ const PurchaseInvoiceLineItems: React.FC<PurchaseInvoiceLineItemsProps> = ({
 
   const handleRemoveItem = (index: number) => {
     const item = items[index];
-    if (window.confirm(`"${item.product_name}" ürünü silinsin mi? Stoktan ${item.quantity} ${formatUnit(item.unit)} düşecek.`)) {
-      const newItems = items.filter((_, i) => i !== index);
+    setItemToDelete({ index, item });
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (itemToDelete) {
+      const newItems = items.filter((_, i) => i !== itemToDelete.index);
       onItemsChange(newItems);
       toast.success("Ürün silindi");
+      setIsDeleteDialogOpen(false);
+      setItemToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setItemToDelete(null);
   };
 
   const handleQuantityChange = (index: number, value: string) => {
@@ -347,6 +362,23 @@ const PurchaseInvoiceLineItems: React.FC<PurchaseInvoiceLineItemsProps> = ({
         onAddToProposal={handleAddToInvoice}
         currency={currency}
         existingData={null}
+      />
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Ürünü Sil"
+        description={
+          itemToDelete
+            ? `"${itemToDelete.item.product_name}" ürünü silinsin mi? Stoktan ${itemToDelete.item.quantity} ${formatUnit(itemToDelete.item.unit)} düşecek.`
+            : "Bu ürünü silmek istediğinizden emin misiniz?"
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
       />
     </div>
   );

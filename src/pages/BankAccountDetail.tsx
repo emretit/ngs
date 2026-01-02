@@ -34,7 +34,7 @@ import {
   Award,
   Search
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 import { toast } from "sonner";
 import { useBankAccountDetail, useBankAccountTransactions } from "@/hooks/useAccountDetail";
 import { Skeleton } from "@/components/ui/skeleton";

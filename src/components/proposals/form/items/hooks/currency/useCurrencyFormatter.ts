@@ -1,28 +1,19 @@
+import { formatCurrency as formatCurrencyUtil, getCurrencySymbol as getCurrencySymbolUtil } from "@/utils/formatters";
 
-import { getCurrencySymbol } from "../../utils/currencyUtils";
-
+/**
+ * Hook for currency formatting
+ * @deprecated Consider using formatCurrency and getCurrencySymbol directly from @/utils/formatters
+ * This hook is kept for backward compatibility
+ */
 export const useCurrencyFormatter = () => {
-  // Format currency
+  // Format currency using centralized utility
   const formatCurrency = (amount: number, currency: string = "TRY") => {
-    // Ensure currency is not empty to avoid Intl.NumberFormat errors
-    if (!currency) currency = "TRY";
-    
-    // Convert TL to TRY directly
-    const currencyCode = currency === 'TL' ? 'TRY' : currency;
-    
-    const formatter = new Intl.NumberFormat('tr-TR', {
-      style: 'currency',
-      currency: currencyCode,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-    
-    return formatter.format(amount);
+    return formatCurrencyUtil(amount, currency);
   };
 
-  // Get currency symbol
+  // Get currency symbol using centralized utility
   const getCurrencySymbolValue = (currency: string = "TRY") => {
-    return getCurrencySymbol(currency);
+    return getCurrencySymbolUtil(currency);
   };
 
   return {

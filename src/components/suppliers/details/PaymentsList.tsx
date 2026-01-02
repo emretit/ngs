@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface PaymentsListProps {
   supplier: Supplier;
@@ -60,6 +61,8 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     return yearStart;
   });
   const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
   const { exchangeRates, convertCurrency } = useExchangeRates();
   const { userData, loading: userLoading } = useCurrentUser();
 
@@ -822,14 +825,27 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Ödeme silinirken bir hata oluştu");
+      setIsDeleteDialogOpen(false);
+      setPaymentToDelete(null);
     }
   });
 
   const handleDeletePayment = (payment: Payment) => {
-    const paymentTypeLabel = payment.payment_type === 'fis' ? 'fiş' : 'ödeme';
-    if (window.confirm(`Bu ${paymentTypeLabel}i silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-      deletePaymentMutation.mutate(payment);
+    setPaymentToDelete(payment);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (paymentToDelete) {
+      deletePaymentMutation.mutate(paymentToDelete);
+      setIsDeleteDialogOpen(false);
+      setPaymentToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setPaymentToDelete(null);
   };
 
   // İstatistik bilgilerini hesapla - hesaplanan bakiyeyi kullan
@@ -1106,6 +1122,24 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Ödemeyi Sil"
+        description={
+          paymentToDelete
+            ? `Bu ${paymentToDelete.payment_type === 'fis' ? 'fiş' : 'ödeme'}i silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu ödemeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deletePaymentMutation.isPending}
+      />
     </div>
   );
 };

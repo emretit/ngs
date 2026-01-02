@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { usePurchaseRequest, useApprovals, useSubmitPurchaseRequest, useConvertPRToRFQ, useConvertPRToPO } from "@/hooks/usePurchasing";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/utils/dateUtils";
 import { PRItemsTab } from "@/components/purchasing/PRItemsTab";
 import { PRApprovalsTab } from "@/components/purchasing/PRApprovalsTab";
 import { AttachmentsTab } from "@/components/purchasing/AttachmentsTab";

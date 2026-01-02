@@ -12,6 +12,7 @@ import { Plus, Edit, Trash2, Save, X, Download, Upload, RotateCcw } from 'lucide
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { ConfirmationDialogComponent } from '@/components/ui/confirmation-dialog';
 
 interface SystemParametersManagerProps {
   category?: string;
@@ -26,6 +27,8 @@ export const SystemParametersManager: React.FC<SystemParametersManagerProps> = (
   const { user } = useAuth();
   const [editingParam, setEditingParam] = useState<SystemParameter | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [parameterToDelete, setParameterToDelete] = useState<SystemParameter | null>(null);
   const [formData, setFormData] = useState({
     parameter_key: '',
     parameter_value: '',
@@ -113,20 +116,33 @@ export const SystemParametersManager: React.FC<SystemParametersManagerProps> = (
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     const param = parameters.find(p => p.id === id);
     if (!param) return;
+    setParameterToDelete(param);
+    setIsDeleteDialogOpen(true);
+  };
 
-    if (!confirm('Bu parametreyi silmek istediğinizden emin misiniz?')) return;
+  const handleDeleteConfirm = async () => {
+    if (!parameterToDelete) return;
 
     try {
-      await logParameterChange('delete', param.parameter_key, param.parameter_value, null, param.company_id);
-      await deleteParameter(id);
+      await logParameterChange('delete', parameterToDelete.parameter_key, parameterToDelete.parameter_value, null, parameterToDelete.company_id);
+      await deleteParameter(parameterToDelete.id);
       toast.success('Parametre başarıyla silindi');
+      setIsDeleteDialogOpen(false);
+      setParameterToDelete(null);
     } catch (error) {
       console.error('Error deleting parameter:', error);
       toast.error('Parametre silinirken hata oluştu');
+      setIsDeleteDialogOpen(false);
+      setParameterToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setParameterToDelete(null);
   };
 
   const startEditing = (param: SystemParameter) => {
@@ -389,6 +405,23 @@ export const SystemParametersManager: React.FC<SystemParametersManagerProps> = (
           Henüz parametre bulunmuyor.
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Parametreyi Sil"
+        description={
+          parameterToDelete
+            ? `"${parameterToDelete.parameter_key}" parametresini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu parametreyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
     </div>
   );
 };

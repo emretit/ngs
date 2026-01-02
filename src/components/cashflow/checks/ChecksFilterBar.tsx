@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Search, Calendar, Filter } from "lucide-react";
 
 interface ChecksFilterBarProps {
@@ -14,6 +14,8 @@ interface ChecksFilterBarProps {
   onEndDateChange: (date: Date | undefined) => void;
   searchPlaceholder: string;
   statusOptions: { value: string; label: string }[];
+  checkTypeFilter?: string;
+  onCheckTypeChange?: (value: string) => void;
 }
 
 export const ChecksFilterBar = ({
@@ -27,21 +29,36 @@ export const ChecksFilterBar = ({
   onEndDateChange,
   searchPlaceholder,
   statusOptions,
+  checkTypeFilter,
+  onCheckTypeChange,
 }: ChecksFilterBarProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200 mb-4">
-      <div className="relative min-w-[200px] flex-1">
+    <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+      <div className="relative min-w-[250px] flex-1">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
           placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10 w-full h-8 text-sm"
+          className="pl-10 w-full"
         />
       </div>
 
+      {checkTypeFilter !== undefined && onCheckTypeChange && (
+        <Select value={checkTypeFilter} onValueChange={onCheckTypeChange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Çek Tipi" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tümü</SelectItem>
+            <SelectItem value="incoming">📥 Gelen</SelectItem>
+            <SelectItem value="outgoing">📤 Giden</SelectItem>
+          </SelectContent>
+        </Select>
+      )}
+
       <Select value={statusFilter} onValueChange={onStatusChange}>
-        <SelectTrigger className="w-[140px] h-8 text-sm">
+        <SelectTrigger className="w-[180px]">
           <Filter className="mr-2 h-4 w-4" />
           <SelectValue placeholder="Durum" />
         </SelectTrigger>
@@ -54,22 +71,22 @@ export const ChecksFilterBar = ({
         </SelectContent>
       </Select>
 
+      {onStartDateChange && onEndDateChange && (
       <div className="flex items-center gap-2">
         <Calendar className="h-4 w-4 text-muted-foreground" />
-        <EnhancedDatePicker
+          <DatePicker
           date={startDate}
-          onSelect={(newDate) => newDate && onStartDateChange(newDate)}
+            onSelect={onStartDateChange}
           placeholder="Başlangıç"
-          className="w-32 text-xs h-8"
         />
         <span className="text-muted-foreground text-sm">-</span>
-        <EnhancedDatePicker
+          <DatePicker
           date={endDate}
-          onSelect={(newDate) => newDate && onEndDateChange(newDate)}
+            onSelect={onEndDateChange}
           placeholder="Bitiş"
-          className="w-32 text-xs h-8"
         />
       </div>
+      )}
     </div>
   );
 };

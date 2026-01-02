@@ -22,6 +22,7 @@ import { formatCurrency } from '@/utils/formatters';
 import ProductSelector from '@/components/proposals/form/ProductSelector';
 import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 import EInvoiceProductDetailsDialog from '@/components/einvoice/EInvoiceProductDetailsDialog';
+import { logger } from '@/utils/logger';
 interface ParsedProduct {
   name: string;
   sku: string | null;
@@ -169,8 +170,10 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
       }
       if (data && data.success) {
         const products = data.xmlParsed || [];
-        console.log('✅ Parse edilen ürünler:', products.length);
-        console.log('🎯 İlk ürün örneği:', products[0]);
+        logger.info('Products parsed successfully', {
+          count: products.length,
+          firstProduct: products[0]
+        });
         setParsedProducts(products);
         // Otomatik eşleştirme önerileri oluştur
         const mappings = products.map((product: ParsedProduct) => {
@@ -194,18 +197,18 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
           } as ProductMapping;
         });
         setProductMappings(mappings);
-        console.log('✅ Eşleştirme önerileri oluşturuldu:', mappings.length);
+        logger.info('Product mapping suggestions created', { count: mappings.length });
         if (products.length === 0) {
           toast.warning("Faturada ürün bilgisi bulunamadı");
         } else {
           toast.success(`${products.length} ürün başarıyla parse edildi`);
         }
       } else {
-        console.error('❌ XML Parse başarısız:', data);
+        logger.error('XML parse failed', new Error(data?.message || 'XML işlenemedi'), { data });
         throw new Error(data?.message || 'XML işlenemedi');
       }
     } catch (error: any) {
-      console.error('❌ Veri yükleme hatası:', error);
+      logger.error('Data loading error', error, { invoiceId });
       toast.error(error.message || "Veriler yüklenirken hata oluştu");
     } finally {
       setIsLoading(false);

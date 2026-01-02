@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 import { History, FileText, ShoppingCart, TrendingUp, Search, X, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";

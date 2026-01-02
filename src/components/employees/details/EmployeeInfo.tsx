@@ -4,7 +4,7 @@ import { Mail, Phone, Building, MapPin, FileText, User, Users, Globe, Calendar, 
 import { Employee } from "@/types/employee";
 import { formatPhoneNumber } from "@/utils/phoneFormatter";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { formatDate } from "./utils/formatDate";
+import { formatDate } from "@/utils/dateUtils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";

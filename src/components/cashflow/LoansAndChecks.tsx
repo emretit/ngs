@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface Loan {
   id: string;
@@ -48,6 +49,10 @@ export function LoansAndChecks() {
   const [activeTab, setActiveTab] = useState("loans");
   const [loanDialog, setLoanDialog] = useState(false);
   const [checkDialog, setCheckDialog] = useState(false);
+  const [isDeleteLoanDialogOpen, setIsDeleteLoanDialogOpen] = useState(false);
+  const [isDeleteCheckDialogOpen, setIsDeleteCheckDialogOpen] = useState(false);
+  const [loanToDelete, setLoanToDelete] = useState<Loan | null>(null);
+  const [checkToDelete, setCheckToDelete] = useState<Check | null>(null);
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [editingCheck, setEditingCheck] = useState<Check | null>(null);
   const [loanFilters, setLoanFilters] = useState({ status: "all", dateRange: "" });
@@ -178,6 +183,12 @@ export function LoansAndChecks() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["loans"] });
       toast.success("Kredi silindi");
+      setIsDeleteLoanDialogOpen(false);
+      setLoanToDelete(null);
+    },
+    onError: () => {
+      setIsDeleteLoanDialogOpen(false);
+      setLoanToDelete(null);
     },
   });
 
@@ -189,8 +200,46 @@ export function LoansAndChecks() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["checks"] });
       toast.success("Çek silindi");
+      setIsDeleteCheckDialogOpen(false);
+      setCheckToDelete(null);
+    },
+    onError: () => {
+      setIsDeleteCheckDialogOpen(false);
+      setCheckToDelete(null);
     },
   });
+
+  const handleDeleteLoanClick = (loan: Loan) => {
+    setLoanToDelete(loan);
+    setIsDeleteLoanDialogOpen(true);
+  };
+
+  const handleDeleteLoanConfirm = async () => {
+    if (loanToDelete) {
+      deleteLoanMutation.mutate(loanToDelete.id);
+    }
+  };
+
+  const handleDeleteLoanCancel = () => {
+    setIsDeleteLoanDialogOpen(false);
+    setLoanToDelete(null);
+  };
+
+  const handleDeleteCheckClick = (check: Check) => {
+    setCheckToDelete(check);
+    setIsDeleteCheckDialogOpen(true);
+  };
+
+  const handleDeleteCheckConfirm = async () => {
+    if (checkToDelete) {
+      deleteCheckMutation.mutate(checkToDelete.id);
+    }
+  };
+
+  const handleDeleteCheckCancel = () => {
+    setIsDeleteCheckDialogOpen(false);
+    setCheckToDelete(null);
+  };
 
   // Calculate summary data
   const totalLoanDebt = loans.reduce((sum, loan) => sum + loan.remaining_debt, 0);
@@ -678,7 +727,7 @@ export function LoansAndChecks() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => deleteLoanMutation.mutate(loan.id)}
+                                onClick={() => handleDeleteLoanClick(loan)}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -774,7 +823,7 @@ export function LoansAndChecks() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => deleteCheckMutation.mutate(check.id)}
+                                onClick={() => handleDeleteCheckClick(check)}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -789,6 +838,42 @@ export function LoansAndChecks() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Delete Loan Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteLoanDialogOpen}
+        onOpenChange={setIsDeleteLoanDialogOpen}
+        title="Krediyi Sil"
+        description={
+          loanToDelete
+            ? `"${loanToDelete.loan_name}" kredisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu krediyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteLoanConfirm}
+        onCancel={handleDeleteLoanCancel}
+        isLoading={deleteLoanMutation.isPending}
+      />
+
+      {/* Delete Check Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteCheckDialogOpen}
+        onOpenChange={setIsDeleteCheckDialogOpen}
+        title="Çeki Sil"
+        description={
+          checkToDelete
+            ? `"${checkToDelete.check_number}" numaralı çeki silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu çeki silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteCheckConfirm}
+        onCancel={handleDeleteCheckCancel}
+        isLoading={deleteCheckMutation.isPending}
+      />
     </div>
   );
 }

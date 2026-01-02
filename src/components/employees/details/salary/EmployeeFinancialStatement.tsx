@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 import { format } from "date-fns";
 import { AccountTransactionHistory } from "@/components/cashflow/AccountTransactionHistory";
 

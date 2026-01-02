@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomerFormData } from "@/types/customer";
+import { withErrorHandling } from "@/utils/supabaseErrorHandler";
+import { logger } from "@/utils/logger";
 
 export const useCustomerForm = (einvoiceMukellefData?: any) => {
   const { id } = useParams();
@@ -74,24 +76,26 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
 
       const companyId = profile?.company_id;
       if (!companyId) {
-        console.error('❌ No company_id found for user');
+        logger.error('No company_id found for user', new Error('Şirket bilgisi bulunamadı'));
         throw new Error('Şirket bilgisi bulunamadı');
       }
       
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('id', id)
-        .eq('company_id', companyId)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('❌ Error fetching customer:', error);
-        throw error;
-      }
+      const data = await withErrorHandling(
+        () => supabase
+          .from('customers')
+          .select('*')
+          .eq('id', id)
+          .eq('company_id', companyId)
+          .maybeSingle(),
+        {
+          operation: 'Müşteri bilgileri yükleme',
+          table: 'customers',
+          showToast: false, // React Query zaten error handling yapıyor
+          logError: true
+        }
+      );
 
       if (!data) {
-        console.error('❌ No customer found with ID:', id);
         throw new Error('Müşteri bulunamadı');
       }
 

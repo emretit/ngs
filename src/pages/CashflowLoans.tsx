@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface Loan {
   id: string;
@@ -37,6 +38,8 @@ const CashflowLoans = () => {
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [loanFilters, setLoanFilters] = useState({ status: "all", dateRange: "" });
   const [loanStatus, setLoanStatus] = useState("odenecek");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [loanToDelete, setLoanToDelete] = useState<Loan | null>(null);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -104,8 +107,30 @@ const CashflowLoans = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["loans"] });
       toast({ title: "Başarılı", description: "Kredi silindi" });
+      setIsDeleteDialogOpen(false);
+      setLoanToDelete(null);
+    },
+    onError: () => {
+      setIsDeleteDialogOpen(false);
+      setLoanToDelete(null);
     },
   });
+
+  const handleDeleteClick = (loan: Loan) => {
+    setLoanToDelete(loan);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (loanToDelete) {
+      deleteLoanMutation.mutate(loanToDelete.id);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setLoanToDelete(null);
+  };
 
   // Calculate summary data
   const totalLoanDebt = loans.reduce((sum, loan) => sum + loan.remaining_debt, 0);
@@ -484,7 +509,7 @@ const CashflowLoans = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => deleteLoanMutation.mutate(loan.id)}
+                              onClick={() => handleDeleteClick(loan)}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -498,6 +523,24 @@ const CashflowLoans = () => {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Krediyi Sil"
+        description={
+          loanToDelete
+            ? `"${loanToDelete.loan_name}" kredisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu krediyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deleteLoanMutation.isPending}
+      />
     </div>
   );
 };

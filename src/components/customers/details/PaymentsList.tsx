@@ -15,6 +15,7 @@ import { usePaymentStats } from "./payments/hooks/usePaymentStats";
 import { useDeletePayment } from "./payments/hooks/useDeletePayment";
 import { usePaymentsRealtime } from "./payments/hooks/usePaymentsRealtime";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface PaymentsListProps {
   customer: Customer;
@@ -30,6 +31,8 @@ export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
     return yearStart;
   });
   const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
 
   // Customer balance
   const currentBalance = useCustomerBalance(customer);
@@ -96,10 +99,21 @@ export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
   const deletePaymentMutation = useDeletePayment(customer);
 
   const handleDeletePayment = (payment: Payment) => {
-    const paymentTypeLabel = payment.payment_type === 'fis' ? 'fiş' : 'ödeme';
-    if (window.confirm(`Bu ${paymentTypeLabel}i silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-      deletePaymentMutation.mutate(payment);
+    setPaymentToDelete(payment);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (paymentToDelete) {
+      deletePaymentMutation.mutate(paymentToDelete);
+      setIsDeleteDialogOpen(false);
+      setPaymentToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setPaymentToDelete(null);
   };
 
   return (
@@ -130,6 +144,24 @@ export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Ödemeyi Sil"
+        description={
+          paymentToDelete
+            ? `Bu ${paymentToDelete.payment_type === 'fis' ? 'fiş' : 'ödeme'}i silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu ödemeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deletePaymentMutation.isPending}
+      />
     </div>
   );
 };

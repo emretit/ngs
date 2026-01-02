@@ -10,12 +10,15 @@ import { Search, Plus, FileText, TrendingUp, Edit, Trash2, Copy } from 'lucide-r
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
+import { ConfirmationDialogComponent } from '@/components/ui/confirmation-dialog';
 
 export const ServiceTemplateLibrary: React.FC = () => {
   const { userData } = useCurrentUser();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<ServiceTemplate | null>(null);
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ['service-templates', userData?.company_id],
@@ -33,11 +36,31 @@ export const ServiceTemplateLibrary: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-templates'] });
       toast.success('Şablon silindi.');
+      setIsDeleteDialogOpen(false);
+      setTemplateToDelete(null);
     },
     onError: (error: any) => {
       toast.error(error.message || 'Şablon silinirken bir hata oluştu.');
+      setIsDeleteDialogOpen(false);
+      setTemplateToDelete(null);
     },
   });
+
+  const handleDeleteClick = (template: ServiceTemplate) => {
+    setTemplateToDelete(template);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (templateToDelete) {
+      deleteMutation.mutate(templateToDelete.id);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setTemplateToDelete(null);
+  };
 
   const createFromTemplateMutation = useMutation({
     mutationFn: async (templateId: string) => {
@@ -196,11 +219,7 @@ export const ServiceTemplateLibrary: React.FC = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      if (confirm('Bu şablonu silmek istediğinizden emin misiniz?')) {
-                        deleteMutation.mutate(template.id);
-                      }
-                    }}
+                    onClick={() => handleDeleteClick(template)}
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -228,6 +247,24 @@ export const ServiceTemplateLibrary: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Şablonu Sil"
+        description={
+          templateToDelete
+            ? `"${templateToDelete.name}" şablonunu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu şablonu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 };

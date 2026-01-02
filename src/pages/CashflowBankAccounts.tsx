@@ -8,7 +8,7 @@ import CreditCardModal from "@/components/cashflow/modals/CreditCardModal";
 import PartnerAccountModal from "@/components/cashflow/modals/PartnerAccountModal";
 import { Building, Eye, EyeOff, Wallet, CreditCard, Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 import { useState, memo } from "react";
 import { useAllAccounts } from "@/hooks/useAccountsData";
 import { Skeleton } from "@/components/ui/skeleton";

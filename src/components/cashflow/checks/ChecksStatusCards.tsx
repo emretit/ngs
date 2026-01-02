@@ -1,4 +1,4 @@
-import { formatCurrency } from "@/utils/cashflowUtils";
+import { formatCurrency } from "@/utils/formatters";
 
 interface Check {
   id: string;

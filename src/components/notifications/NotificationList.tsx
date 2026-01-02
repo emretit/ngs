@@ -13,6 +13,8 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { tr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { useState } from "react";
 
 interface Notification {
   id: string;
@@ -27,6 +29,8 @@ interface Notification {
 const NotificationList = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
 
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications"],
@@ -77,8 +81,30 @@ const NotificationList = () => {
         title: "Bildirim silindi",
         description: "Bildirim başarıyla silindi",
       });
+      setIsDeleteDialogOpen(false);
+      setNotificationToDelete(null);
+    },
+    onError: () => {
+      setIsDeleteDialogOpen(false);
+      setNotificationToDelete(null);
     },
   });
+
+  const handleDeleteClick = (notification: Notification) => {
+    setNotificationToDelete(notification);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (notificationToDelete) {
+      deleteNotificationMutation.mutate(notificationToDelete.id);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setNotificationToDelete(null);
+  };
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
@@ -202,7 +228,7 @@ const NotificationList = () => {
                 className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
-                  deleteNotificationMutation.mutate(notification.id);
+                  handleDeleteClick(notification);
                 }}
               >
                 <X className="h-4 w-4" />
@@ -211,6 +237,24 @@ const NotificationList = () => {
           </div>
         ))}
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Bildirimi Sil"
+        description={
+          notificationToDelete
+            ? `"${notificationToDelete.title}" bildirimini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu bildirimi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deleteNotificationMutation.isPending}
+      />
     </div>
   );
 };

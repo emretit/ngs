@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SupplierFormData } from "@/types/supplier";
+import { withErrorHandling } from "@/utils/supabaseErrorHandler";
+import { logger } from "@/utils/logger";
 
 export const useSupplierForm = () => {
   const { id } = useParams();
@@ -71,11 +73,11 @@ export const useSupplierForm = () => {
     queryKey: ['supplier', id],
     queryFn: async () => {
       if (!id) {
-        console.log('No ID provided, skipping supplier fetch');
+        logger.debug('No ID provided, skipping supplier fetch');
         return null;
       }
       
-      console.log('🔍 Fetching supplier data for ID:', id);
+      logger.debug('Fetching supplier data', { supplierId: id });
       
       // Önce company_id'yi al
       const { data: { user } } = await supabase.auth.getUser();
@@ -87,28 +89,30 @@ export const useSupplierForm = () => {
 
       const companyId = profile?.company_id;
       if (!companyId) {
-        console.error('❌ No company_id found for user');
+        logger.error('No company_id found for user', new Error('Şirket bilgisi bulunamadı'));
         throw new Error('Şirket bilgisi bulunamadı');
       }
       
-      const { data, error } = await supabase
-        .from('suppliers')
-        .select('*')
-        .eq('id', id)
-        .eq('company_id', companyId)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('❌ Error fetching supplier:', error);
-        throw error;
-      }
+      const data = await withErrorHandling(
+        () => supabase
+          .from('suppliers')
+          .select('*')
+          .eq('id', id)
+          .eq('company_id', companyId)
+          .maybeSingle(),
+        {
+          operation: 'Tedarikçi bilgileri yükleme',
+          table: 'suppliers',
+          showToast: false, // React Query zaten error handling yapıyor
+          logError: true
+        }
+      );
 
       if (!data) {
-        console.error('❌ No supplier found with ID:', id);
         throw new Error('Tedarikçi bulunamadı');
       }
 
-      console.log('✅ Retrieved supplier data:', data);
+      logger.debug('Retrieved supplier data', { supplierId: id });
       return data;
     },
     enabled: !!id,

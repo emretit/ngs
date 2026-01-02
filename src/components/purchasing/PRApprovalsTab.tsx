@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Check, X } from "lucide-react";
 import { useState } from "react";
 import { useDecideApproval } from "@/hooks/usePurchasing";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/utils/dateUtils";
 
 interface PRApprovalsTabProps {
   approvals: Array<{

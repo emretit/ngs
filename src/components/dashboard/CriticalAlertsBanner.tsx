@@ -10,7 +10,7 @@ import {
   X,
   BanknoteIcon
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { format } from "date-fns";

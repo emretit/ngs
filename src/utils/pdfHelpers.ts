@@ -1,12 +1,14 @@
-import { format } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { formatDate as formatDateUtil } from './dateUtils';
+import { formatCurrency as formatCurrencyUtil } from './formatters';
 
 /**
- * Format money value to Turkish format
+ * Format money value to Turkish format for PDF
+ * Uses centralized formatCurrency utility
  */
-export const formatMoney = (amount: number | null | undefined, currency = '₺'): string => {
+export const formatMoney = (amount: number | null | undefined, currency = 'TRY'): string => {
+  // Use centralized formatCurrency but extract symbol for PDF-specific formatting
   if (amount === null || amount === undefined || isNaN(amount)) {
-    return `0,00 ${currency}`;
+    return `0,00 ${currency === 'TRY' ? '₺' : currency}`;
   }
   
   const formatted = new Intl.NumberFormat('tr-TR', {
@@ -20,14 +22,15 @@ export const formatMoney = (amount: number | null | undefined, currency = '₺')
 };
 
 /**
- * Format date to Turkish format
+ * Format date to Turkish format for PDF (dd.MM.yyyy)
+ * Uses centralized dateUtils with PDF-specific format
  */
 export const formatDate = (date: string | Date | null | undefined): string => {
   if (!date) return '-';
   
   try {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return format(dateObj, 'dd.MM.yyyy', { locale: tr });
+    // Use centralized dateUtils with PDF-specific format
+    return formatDateUtil(date, 'dd.MM.yyyy') || '-';
   } catch (error) {
     console.error('Date formatting error:', error);
     return '-';

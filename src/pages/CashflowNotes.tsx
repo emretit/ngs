@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { NotesFilterBar } from "@/components/cashflow/notes/NotesFilterBar";
 import { NotesTable } from "@/components/cashflow/notes/NotesTable";
 import { NoteFormDialog } from "@/components/cashflow/notes/NoteFormDialog";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface FinancialInstrument {
   id: string;
@@ -33,6 +34,8 @@ const CashflowNotes = () => {
   const [editingNote, setEditingNote] = useState<FinancialInstrument | null>(null);
   const [noteFilters, setNoteFilters] = useState({ status: "all", dateRange: "" });
   const [noteStatus, setNoteStatus] = useState("pending");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<FinancialInstrument | null>(null);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -102,8 +105,33 @@ const CashflowNotes = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["financial_instruments"] });
       toast({ title: "Başarılı", description: "Senet silindi" });
+      setIsDeleteDialogOpen(false);
+      setNoteToDelete(null);
+    },
+    onError: () => {
+      setIsDeleteDialogOpen(false);
+      setNoteToDelete(null);
     },
   });
+
+  const handleDeleteClick = (id: string) => {
+    const note = notes.find(n => n.id === id);
+    if (note) {
+      setNoteToDelete(note);
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (noteToDelete) {
+      deleteNoteMutation.mutate(noteToDelete.id);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setNoteToDelete(null);
+  };
 
 
   const filteredNotes = notes.filter(
@@ -136,7 +164,7 @@ const CashflowNotes = () => {
           setNoteStatus(note.status);
           setNoteDialog(true);
         }}
-        onDelete={(id) => deleteNoteMutation.mutate(id)}
+        onDelete={handleDeleteClick}
       />
 
       <NoteFormDialog
@@ -148,6 +176,24 @@ const CashflowNotes = () => {
         }}
         noteStatus={noteStatus}
         onNoteStatusChange={setNoteStatus}
+      />
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Seneti Sil"
+        description={
+          noteToDelete
+            ? `"${noteToDelete.instrument_number}" numaralı seneti silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu seneti silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deleteNoteMutation.isPending}
       />
     </div>
   );

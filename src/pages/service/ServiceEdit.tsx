@@ -29,6 +29,7 @@ import ServiceAttachmentsNotesCard from '@/components/service/cards/ServiceAttac
 import ProductDetailsModal from '@/components/proposals/form/ProductDetailsModal';
 import { ServiceSlipTemplateSelector } from '@/components/service/ServiceSlipTemplateSelector';
 import { PdfExportService } from '@/services/pdf/pdfExportService';
+import { logger } from '@/utils/logger';
 
 interface ServiceRequestFormData {
   service_title: string;
@@ -89,15 +90,18 @@ const priorityConfig = {
 };
 
 const ServiceEdit = () => {
-  console.log('[ServiceEdit] Component render başladı');
+  logger.debug('[ServiceEdit] Component render started');
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
-  console.log('[ServiceEdit] userData:', userData?.id);
+  logger.debug('[ServiceEdit] User data loaded', { userId: userData?.id });
   
   const { customers, suppliers, isLoading: partnersLoading } = useCustomerSelect();
-  console.log('[ServiceEdit] customers length:', customers?.length, 'suppliers length:', suppliers?.length);
+  logger.debug('[ServiceEdit] Partners loaded', {
+    customersCount: customers?.length,
+    suppliersCount: suppliers?.length
+  });
 
   // Teknisyenleri getir
   const { data: technicians = [] } = useQuery({

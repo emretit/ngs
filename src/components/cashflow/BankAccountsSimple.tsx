@@ -8,7 +8,7 @@ import {
   Trash2,
   ExternalLink
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 import { useNavigate } from "react-router-dom";
 import BankAccountModal from "./modals/BankAccountModal";
 import { useBankAccounts } from "@/hooks/useAccountsData";

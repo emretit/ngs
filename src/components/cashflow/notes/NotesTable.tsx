@@ -2,7 +2,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2 } from "lucide-react";
-import { formatCurrency, getStatusConfig } from "@/utils/cashflowUtils";
+import { formatCurrency } from "@/utils/formatters";
+import { getStatusConfig } from "@/utils/cashflowUtils";
 import { format } from "date-fns";
 
 interface FinancialInstrument {

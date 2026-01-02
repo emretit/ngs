@@ -12,7 +12,7 @@ import {
   Edit,
   Trash2
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 import { useBankAccounts, useCreditCards } from "@/hooks/useAccountsData";
 import AccountsSkeleton from "./AccountsSkeleton";
 

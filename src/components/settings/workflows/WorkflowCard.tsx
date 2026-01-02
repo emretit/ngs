@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Settings } from "lucide-react";
 import { ApprovalWorkflow } from "@/types/approval";
 import { useApprovalWorkflows } from "@/hooks/useApprovalWorkflows";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface WorkflowCardProps {
   workflow: ApprovalWorkflow;
@@ -16,6 +17,20 @@ export const WorkflowCard: React.FC<WorkflowCardProps> = ({
   onEdit
 }) => {
   const { deleteWorkflow } = useApprovalWorkflows();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    deleteWorkflow(workflow.id);
+    setIsDeleteDialogOpen(false);
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+  };
 
   const getObjectTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -111,16 +126,25 @@ export const WorkflowCard: React.FC<WorkflowCardProps> = ({
             variant="outline"
             size="sm"
             className="text-destructive hover:text-destructive"
-            onClick={() => {
-              if (confirm("Bu onay sürecini silmek istediğinizden emin misiniz?")) {
-                deleteWorkflow(workflow.id);
-              }
-            }}
+            onClick={handleDeleteClick}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </CardContent>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Onay Sürecini Sil"
+        description="Bu onay sürecini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
     </Card>
   );
 };

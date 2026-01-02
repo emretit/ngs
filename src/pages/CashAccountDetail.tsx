@@ -23,7 +23,7 @@ import {
   DollarSign,
   Search
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { 

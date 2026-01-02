@@ -287,7 +287,7 @@ export const UnifiedDatePicker: React.FC<UnifiedDatePickerProps> = ({
         onSelect={onSelect}
         placeholder={placeholder}
         disabled={disabled}
-        className="w-full"
+        className="w-full h-10"
       />
     </div>
   );

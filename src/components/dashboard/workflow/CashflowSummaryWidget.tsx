@@ -12,7 +12,7 @@ import {
   ArrowDownCircle,
   Minus
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 
 export const CashflowSummaryWidget = () => {

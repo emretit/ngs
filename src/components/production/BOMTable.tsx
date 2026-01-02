@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, memo } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BOM } from "@/types/production";
@@ -161,4 +161,4 @@ const BOMTable = ({
   );
 };
 
-export default BOMTable;
+export default memo(BOMTable);

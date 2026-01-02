@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { User, Building2, Plus, Phone, Mail, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
@@ -24,9 +25,10 @@ interface ProposalPartnerSelectProps {
   hideLabel?: boolean;
   required?: boolean;
   disabled?: boolean;
+  className?: string;
 }
 
-const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, required, disabled = false }: ProposalPartnerSelectProps) => {
+const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, required, disabled = false, className }: ProposalPartnerSelectProps) => {
   const navigate = useNavigate();
   const { setValue, watch } = useFormContext();
   const [isOpen, setIsOpen] = useState(false);
@@ -218,7 +220,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
               role="combobox"
               aria-expanded={isOpen}
               disabled={disabled}
-              className="w-full justify-between mt-0.5 h-8 text-xs"
+              className={cn("w-full justify-between mt-0.5 h-10 text-xs", className)}
             >
               <div className="flex items-center min-w-0 flex-1">
                 {partnerType === "customer" ? (

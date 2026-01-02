@@ -26,6 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, MoreHorizontal, X, Loader2 } from "lucide-react";
 import LeaveTypeDetailSheet from "@/components/leaves/LeaveTypeDetailSheet";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface LeaveType {
   id: string;
@@ -55,6 +56,8 @@ export const LeaveTypesManagement = () => {
   const [isCreateRuleDialogOpen, setIsCreateRuleDialogOpen] = useState(false);
   const [isLeaveTypeDetailSheetOpen, setIsLeaveTypeDetailSheetOpen] = useState(false);
   const [selectedLeaveType, setSelectedLeaveType] = useState<LeaveType | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [leaveTypeToDelete, setLeaveTypeToDelete] = useState<LeaveType | null>(null);
   const [newLeaveTypeData, setNewLeaveTypeData] = useState({
     name: "",
     description: "",
@@ -212,11 +215,31 @@ export const LeaveTypesManagement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leave-types"] });
       toast.success("İzin türü silindi");
+      setIsDeleteDialogOpen(false);
+      setLeaveTypeToDelete(null);
     },
     onError: (error: any) => {
       toast.error("İzin türü silinemedi: " + (error.message || "Bilinmeyen hata"));
+      setIsDeleteDialogOpen(false);
+      setLeaveTypeToDelete(null);
     },
   });
+
+  const handleDeleteClick = (leaveType: LeaveType) => {
+    setLeaveTypeToDelete(leaveType);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (leaveTypeToDelete) {
+      deleteLeaveTypeMutation.mutate(leaveTypeToDelete.id);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setLeaveTypeToDelete(null);
+  };
 
   // Filter leave types by search
   const filteredLeaveTypes = leaveTypes.filter((leaveType) =>
@@ -390,7 +413,7 @@ export const LeaveTypesManagement = () => {
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteLeaveTypeMutation.mutate(leaveType.id);
+                                handleDeleteClick(leaveType);
                               }}
                             >
                               Sil
@@ -624,6 +647,24 @@ export const LeaveTypesManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="İzin Türünü Sil"
+        description={
+          leaveTypeToDelete
+            ? `"${leaveTypeToDelete.name}" izin türünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu izin türünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deleteLeaveTypeMutation.isPending}
+      />
     </div>
   );
 };

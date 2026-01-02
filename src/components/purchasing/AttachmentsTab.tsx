@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Upload, File, Trash2, Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/utils/dateUtils";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface Attachment {

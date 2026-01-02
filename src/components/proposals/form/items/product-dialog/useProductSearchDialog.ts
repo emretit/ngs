@@ -3,7 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
-import { formatCurrencyValue, convertCurrency } from "../utils/currencyUtils";
+import { formatCurrency } from "@/utils/formatters";
+import { convertCurrency } from "../utils/currencyUtils";
 
 export interface EditingRowValues {
   productId?: string;
@@ -149,11 +150,7 @@ export const useProductSearchDialog = (
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const formatCurrency = (amount: number, currency: string = "TRY") => {
-    // Ensure currency is not empty to avoid Intl.NumberFormat errors
-    if (!currency) currency = "TRY";
-    return formatCurrencyValue(amount, currency);
-  };
+  // formatCurrency is now imported from @/utils/formatters
 
   const openProductDetails = (product: Product) => {
     setSelectedProduct(product);

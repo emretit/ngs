@@ -10,7 +10,7 @@ import { ChevronRight, Calendar, FileText, BarChart3, ShoppingCart, Plus, Users,
 import { useState } from "react";
 import NewActivityDialog from "@/components/activities/NewActivityDialog";
 import OpportunityForm from "@/components/opportunities/OpportunityForm";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 
 const MONTHS = [
   { value: "all", label: "Tüm Aylar" },

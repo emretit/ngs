@@ -202,28 +202,32 @@ const OpexMatrix = () => {
     fetchExpenseData();
   }, [fetchPersonnelData, fetchExpenseData, selectedYear]);
 
-  // Toggle category expansion
-  const toggleCategory = (categoryName: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryName)) {
-      newExpanded.delete(categoryName);
-    } else {
-      newExpanded.add(categoryName);
-    }
-    setExpandedCategories(newExpanded);
-  };
+  // Toggle category expansion - memoized with useCallback
+  const toggleCategory = useCallback((categoryName: string) => {
+    setExpandedCategories(prev => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(categoryName)) {
+        newExpanded.delete(categoryName);
+      } else {
+        newExpanded.add(categoryName);
+      }
+      return newExpanded;
+    });
+  }, []);
 
-  // Toggle subcategory expansion
-  const toggleSubcategory = (categoryName: string, subcategory: string) => {
+  // Toggle subcategory expansion - memoized with useCallback
+  const toggleSubcategory = useCallback((categoryName: string, subcategory: string) => {
     const key = `${categoryName}|${subcategory}`;
-    const newExpanded = new Set(expandedSubcategories);
-    if (newExpanded.has(key)) {
-      newExpanded.delete(key);
-    } else {
-      newExpanded.add(key);
-    }
-    setExpandedSubcategories(newExpanded);
-  };
+    setExpandedSubcategories(prev => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(key)) {
+        newExpanded.delete(key);
+      } else {
+        newExpanded.add(key);
+      }
+      return newExpanded;
+    });
+  }, []);
 
 
   // Get cell value
@@ -292,14 +296,14 @@ const OpexMatrix = () => {
     }, 0);
   };
 
-  // Format currency
-  const formatCurrency = (amount: number): string => {
+  // Format currency - memoized with useCallback
+  const formatCurrency = useCallback((amount: number): string => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: 'TRY',
       minimumFractionDigits: 0
     }).format(amount);
-  };
+  }, []);
 
   // Export to Excel
   const exportToExcel = () => {

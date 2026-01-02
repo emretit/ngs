@@ -4,7 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Filter, Plus, Minus, Download, FileText } from "lucide-react";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
+import { cn } from "@/lib/utils";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import TransactionTableHeader from "./table/TransactionTableHeader";
 import { TransactionTableRow } from "./table/TransactionTableRow";

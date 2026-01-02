@@ -17,24 +17,29 @@ interface Check {
 
 interface UseChecksFiltersProps {
   checks: Check[];
-  checkType: "incoming" | "outgoing";
+  checkType?: "incoming" | "outgoing";
 }
 
 export const useChecksFilters = ({ checks, checkType }: UseChecksFiltersProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [checkTypeFilter, setCheckTypeFilter] = useState<string>("all");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   const filteredChecks = useMemo(() => {
     return checks.filter((check) => {
+      // Check type filter (if checkType prop is not provided, use checkTypeFilter state)
+      const effectiveCheckType = checkType || checkTypeFilter;
+      const matchesCheckType = 
+        effectiveCheckType === "all" || 
+        check.check_type === effectiveCheckType;
+      
       // Search filter
       const matchesSearch = !searchQuery || 
         check.check_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (checkType === "incoming" 
-          ? check.issuer_name?.toLowerCase().includes(searchQuery.toLowerCase()) || false
-          : check.payee.toLowerCase().includes(searchQuery.toLowerCase())
-        ) ||
+        check.issuer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        check.payee?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         check.bank.toLowerCase().includes(searchQuery.toLowerCase());
       
       // Status filter
@@ -56,15 +61,17 @@ export const useChecksFilters = ({ checks, checkType }: UseChecksFiltersProps) =
         }
       }
       
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesCheckType && matchesSearch && matchesStatus && matchesDate;
     });
-  }, [checks, searchQuery, statusFilter, startDate, endDate, checkType]);
+  }, [checks, searchQuery, statusFilter, startDate, endDate, checkType, checkTypeFilter]);
 
   return {
     searchQuery,
     setSearchQuery,
     statusFilter,
     setStatusFilter,
+    checkTypeFilter,
+    setCheckTypeFilter,
     startDate,
     setStartDate,
     endDate,

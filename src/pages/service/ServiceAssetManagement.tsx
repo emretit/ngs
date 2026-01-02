@@ -15,6 +15,7 @@ import { useServiceWarranties, ServiceWarranty } from '@/hooks/useServiceWarrant
 import { formatDate } from '@/utils/dateUtils';
 import { EquipmentDialog } from '@/components/service/dialogs/EquipmentDialog';
 import { WarrantyDialog } from '@/components/service/dialogs/WarrantyDialog';
+import { ConfirmationDialogComponent } from '@/components/ui/confirmation-dialog';
 
 export default function ServiceAssetManagement() {
   const { userData } = useCurrentUser();
@@ -28,6 +29,10 @@ export default function ServiceAssetManagement() {
   const [warrantyDialogOpen, setWarrantyDialogOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<ServiceEquipment | null>(null);
   const [selectedWarranty, setSelectedWarranty] = useState<ServiceWarranty | null>(null);
+  const [isDeleteEquipmentDialogOpen, setIsDeleteEquipmentDialogOpen] = useState(false);
+  const [isDeleteWarrantyDialogOpen, setIsDeleteWarrantyDialogOpen] = useState(false);
+  const [equipmentToDelete, setEquipmentToDelete] = useState<ServiceEquipment | null>(null);
+  const [warrantyToDelete, setWarrantyToDelete] = useState<ServiceWarranty | null>(null);
 
   // Parts kullanım raporu için tarih filtreleri
   const [startDate, setStartDate] = useState<Date | undefined>(
@@ -135,10 +140,22 @@ export default function ServiceAssetManagement() {
     setEquipmentDialogOpen(true);
   };
 
-  const handleDeleteEquipment = (id: string) => {
-    if (confirm('Bu cihazı silmek istediğinizden emin misiniz?')) {
-      deleteEquipment.mutate(id);
+  const handleDeleteEquipment = (eq: ServiceEquipment) => {
+    setEquipmentToDelete(eq);
+    setIsDeleteEquipmentDialogOpen(true);
+  };
+
+  const handleDeleteEquipmentConfirm = async () => {
+    if (equipmentToDelete) {
+      deleteEquipment.mutate(equipmentToDelete.id);
+      setIsDeleteEquipmentDialogOpen(false);
+      setEquipmentToDelete(null);
     }
+  };
+
+  const handleDeleteEquipmentCancel = () => {
+    setIsDeleteEquipmentDialogOpen(false);
+    setEquipmentToDelete(null);
   };
 
   const handleAddWarranty = () => {
@@ -151,10 +168,22 @@ export default function ServiceAssetManagement() {
     setWarrantyDialogOpen(true);
   };
 
-  const handleDeleteWarranty = (id: string) => {
-    if (confirm('Bu garanti kaydını silmek istediğinizden emin misiniz?')) {
-      deleteWarranty.mutate(id);
+  const handleDeleteWarranty = (warranty: ServiceWarranty) => {
+    setWarrantyToDelete(warranty);
+    setIsDeleteWarrantyDialogOpen(true);
+  };
+
+  const handleDeleteWarrantyConfirm = async () => {
+    if (warrantyToDelete) {
+      deleteWarranty.mutate(warrantyToDelete.id);
+      setIsDeleteWarrantyDialogOpen(false);
+      setWarrantyToDelete(null);
     }
+  };
+
+  const handleDeleteWarrantyCancel = () => {
+    setIsDeleteWarrantyDialogOpen(false);
+    setWarrantyToDelete(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -325,7 +354,7 @@ export default function ServiceAssetManagement() {
                                 <Button variant="ghost" size="icon" onClick={() => handleEditEquipment(eq)}>
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" onClick={() => handleDeleteEquipment(eq.id)} className="text-red-500">
+                                <Button variant="ghost" size="icon" onClick={() => handleDeleteEquipment(eq)} className="text-red-500">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -425,7 +454,7 @@ export default function ServiceAssetManagement() {
                                 <Button variant="ghost" size="icon" onClick={() => handleEditWarranty(warranty)}>
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" onClick={() => handleDeleteWarranty(warranty.id)} className="text-red-500">
+                                <Button variant="ghost" size="icon" onClick={() => handleDeleteWarranty(warranty)} className="text-red-500">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -532,6 +561,42 @@ export default function ServiceAssetManagement() {
         onOpenChange={setWarrantyDialogOpen}
         warranty={selectedWarranty}
         equipment={equipment}
+      />
+
+      {/* Delete Equipment Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteEquipmentDialogOpen}
+        onOpenChange={setIsDeleteEquipmentDialogOpen}
+        title="Cihazı Sil"
+        description={
+          equipmentToDelete
+            ? `"${equipmentToDelete.equipment_name}" cihazını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu cihazı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteEquipmentConfirm}
+        onCancel={handleDeleteEquipmentCancel}
+        isLoading={deleteEquipment.isPending}
+      />
+
+      {/* Delete Warranty Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteWarrantyDialogOpen}
+        onOpenChange={setIsDeleteWarrantyDialogOpen}
+        title="Garanti Kaydını Sil"
+        description={
+          warrantyToDelete
+            ? `"${warrantyToDelete.service_equipment?.equipment_name}" cihazının garanti kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu garanti kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteWarrantyConfirm}
+        onCancel={handleDeleteWarrantyCancel}
+        isLoading={deleteWarranty.isPending}
       />
     </div>
   );

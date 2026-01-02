@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { formatCurrency } from "@/utils/cashflowUtils";
+import { formatCurrency } from "@/utils/formatters";
 import { ChecksStatusCards } from "./ChecksStatusCards";
 import { ChecksFilterBar } from "./ChecksFilterBar";
 import { ChecksTable } from "./ChecksTable";

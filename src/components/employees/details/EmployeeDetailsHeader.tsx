@@ -2,7 +2,7 @@
 import { Employee } from "@/types/employee";
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
-import { formatDate } from "./utils/formatDate";
+import { formatDate } from "@/utils/dateUtils";
 
 interface EmployeeDetailsHeaderProps {
   employee: Employee;

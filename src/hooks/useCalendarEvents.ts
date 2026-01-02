@@ -2,30 +2,30 @@ import { useMemo } from 'react';
 import { CalendarEvent, EventType, EventTypeFilter } from '@/components/calendar/types';
 
 interface UseCalendarEventsProps {
-  activities: any[];
-  orders: any[];
-  deliveries: any[];
-  proposals: any[];
-  salesInvoices: any[];
-  purchaseInvoices: any[];
-  workOrders: any[];
-  serviceRequests: any[];
-  opportunities: any[];
-  payments: any[];
-  expenses: any[];
-  checks: any[];
-  purchaseOrders: any[];
-  employeeLeaves: any[];
-  vehicleMaintenance: any[];
-  vehicleDocuments: any[];
-  vehicleIncidents: any[];
-  events: any[];
-  grns: any[];
-  rfqs: any[];
-  purchaseRequests: any[];
-  vendorInvoices: any[];
-  inventoryTransactions: any[];
-  serviceSlips: any[];
+  activities: unknown[];
+  orders: unknown[];
+  deliveries: unknown[];
+  proposals: unknown[];
+  salesInvoices: unknown[];
+  purchaseInvoices: unknown[];
+  workOrders: unknown[];
+  serviceRequests: unknown[];
+  opportunities: unknown[];
+  payments: unknown[];
+  expenses: unknown[];
+  checks: unknown[];
+  purchaseOrders: unknown[];
+  employeeLeaves: unknown[];
+  vehicleMaintenance: unknown[];
+  vehicleDocuments: unknown[];
+  vehicleIncidents: unknown[];
+  events: unknown[];
+  grns: unknown[];
+  rfqs: unknown[];
+  purchaseRequests: unknown[];
+  vendorInvoices: unknown[];
+  inventoryTransactions: unknown[];
+  serviceSlips: unknown[];
   eventFilters: Record<EventType, EventTypeFilter>;
 }
 
@@ -71,7 +71,7 @@ export const useCalendarEvents = ({
 
     // Activities
     if (eventFilters.activity.enabled) {
-      activities.forEach((activity: any) => {
+      activities.forEach((activity: unknown) => {
         if (activity.due_date) {
           events.push({
             id: `activity-${activity.id}`,
@@ -90,7 +90,7 @@ export const useCalendarEvents = ({
 
     // Orders
     if (eventFilters.order.enabled) {
-      orders.forEach((order: any) => {
+      orders.forEach((order: unknown) => {
         if (order.order_date) {
           events.push({
             id: `order-date-${order.id}`,
@@ -135,7 +135,7 @@ export const useCalendarEvents = ({
 
     // Deliveries
     if (eventFilters.delivery.enabled) {
-      deliveries.forEach((delivery: any) => {
+      deliveries.forEach((delivery: unknown) => {
         if (delivery.planned_delivery_date) {
           events.push({
             id: `delivery-planned-${delivery.id}`,
@@ -167,7 +167,7 @@ export const useCalendarEvents = ({
 
     // Proposals
     if (eventFilters.proposal.enabled) {
-      proposals.forEach((proposal: any) => {
+      proposals.forEach((proposal: unknown) => {
         if (proposal.offer_date) {
           events.push({
             id: `proposal-${proposal.id}`,
@@ -199,7 +199,7 @@ export const useCalendarEvents = ({
 
     // Sales Invoices
     if (eventFilters.sales_invoice.enabled) {
-      salesInvoices.forEach((invoice: any) => {
+      salesInvoices.forEach((invoice: unknown) => {
         if (invoice.fatura_tarihi) {
           events.push({
             id: `sales-invoice-${invoice.id}`,
@@ -231,7 +231,7 @@ export const useCalendarEvents = ({
 
     // Purchase Invoices
     if (eventFilters.purchase_invoice.enabled) {
-      purchaseInvoices.forEach((invoice: any) => {
+      purchaseInvoices.forEach((invoice: unknown) => {
         if (invoice.invoice_date) {
           events.push({
             id: `purchase-invoice-${invoice.id}`,
@@ -263,7 +263,7 @@ export const useCalendarEvents = ({
 
     // Work Orders
     if (eventFilters.work_order.enabled) {
-      workOrders.forEach((wo: any) => {
+      workOrders.forEach((wo: unknown) => {
         if (wo.scheduled_start) {
           events.push({
             id: `work-order-start-${wo.id}`,
@@ -308,7 +308,7 @@ export const useCalendarEvents = ({
 
     // Service Requests
     if (eventFilters.service_request.enabled) {
-      serviceRequests.forEach((sr: any) => {
+      serviceRequests.forEach((sr: unknown) => {
         if (sr.service_due_date) {
           events.push({
             id: `service-request-${sr.id}`,
@@ -340,7 +340,7 @@ export const useCalendarEvents = ({
 
     // Opportunities
     if (eventFilters.opportunity.enabled) {
-      opportunities.forEach((opp: any) => {
+      opportunities.forEach((opp: unknown) => {
         if (opp.expected_close_date) {
           events.push({
             id: `opportunity-${opp.id}`,
@@ -359,7 +359,7 @@ export const useCalendarEvents = ({
 
     // Payments
     if (eventFilters.payment.enabled) {
-      payments.forEach((payment: any) => {
+      payments.forEach((payment: unknown) => {
         if (payment.payment_date) {
           events.push({
             id: `payment-${payment.id}`,
@@ -378,7 +378,7 @@ export const useCalendarEvents = ({
 
     // Expenses
     if (eventFilters.expense.enabled) {
-      expenses.forEach((expense: any) => {
+      expenses.forEach((expense: unknown) => {
         if (expense.date) {
           events.push({
             id: `expense-${expense.id}`,
@@ -397,7 +397,7 @@ export const useCalendarEvents = ({
 
     // Checks
     if (eventFilters.check.enabled) {
-      checks.forEach((check: any) => {
+      checks.forEach((check: unknown) => {
         if (check.due_date) {
           events.push({
             id: `check-due-${check.id}`,
@@ -429,7 +429,7 @@ export const useCalendarEvents = ({
 
     // Purchase Orders
     if (eventFilters.purchase_order.enabled) {
-      purchaseOrders.forEach((po: any) => {
+      purchaseOrders.forEach((po: unknown) => {
         if (po.order_date) {
           events.push({
             id: `purchase-order-${po.id}`,
@@ -461,7 +461,7 @@ export const useCalendarEvents = ({
 
     // Employee Leaves
     if (eventFilters.employee_leave.enabled) {
-      employeeLeaves.forEach((leave: any) => {
+      employeeLeaves.forEach((leave: unknown) => {
         if (leave.start_date && leave.end_date) {
           events.push({
             id: `employee-leave-${leave.id}`,
@@ -480,7 +480,7 @@ export const useCalendarEvents = ({
 
     // Vehicle Maintenance
     if (eventFilters.vehicle_maintenance.enabled) {
-      vehicleMaintenance.forEach((maintenance: any) => {
+      vehicleMaintenance.forEach((maintenance: unknown) => {
         if (maintenance.maintenance_date) {
           events.push({
             id: `vehicle-maintenance-${maintenance.id}`,
@@ -512,7 +512,7 @@ export const useCalendarEvents = ({
 
     // Vehicle Documents
     if (eventFilters.vehicle_document.enabled) {
-      vehicleDocuments.forEach((doc: any) => {
+      vehicleDocuments.forEach((doc: unknown) => {
         if (doc.expiry_date) {
           events.push({
             id: `vehicle-document-${doc.id}`,
@@ -531,7 +531,7 @@ export const useCalendarEvents = ({
 
     // Vehicle Incidents
     if (eventFilters.vehicle_incident.enabled) {
-      vehicleIncidents.forEach((incident: any) => {
+      vehicleIncidents.forEach((incident: unknown) => {
         if (incident.incident_date) {
           events.push({
             id: `vehicle-incident-${incident.id}`,
@@ -550,7 +550,7 @@ export const useCalendarEvents = ({
 
     // Events
     if (eventFilters.event.enabled) {
-      calendarEventsData.forEach((event: any) => {
+      calendarEventsData.forEach((event: unknown) => {
         if (event.start_time) {
           const endTime = event.end_time ? new Date(event.end_time) : new Date(event.start_time);
           events.push({

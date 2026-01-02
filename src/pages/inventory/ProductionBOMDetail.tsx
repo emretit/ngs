@@ -11,11 +11,13 @@ import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
 import { BOM, BOMItem } from "@/types/production";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 const ProductionBOMDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: bom, isLoading } = useQuery({
     queryKey: ["bom", id],
@@ -50,17 +52,27 @@ const ProductionBOMDetail = () => {
       toast.success("Reçete başarıyla silindi");
       queryClient.invalidateQueries({ queryKey: ["boms"] });
       navigate("/production/boms");
+      setIsDeleteDialogOpen(false);
     },
     onError: (error) => {
       console.error("Delete error:", error);
       toast.error("Silme işlemi başarısız oldu");
+      setIsDeleteDialogOpen(false);
     },
   });
 
   const handleDelete = () => {
-    if (window.confirm("Bu reçeteyi silmek istediğinize emin misiniz?")) {
-      if (id) deleteMutation.mutate(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (id) {
+      deleteMutation.mutate(id);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
   };
 
   if (isLoading) {
@@ -185,6 +197,24 @@ const ProductionBOMDetail = () => {
           </Card>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Reçeteyi Sil"
+        description={
+          bom
+            ? `"${bom.name}" reçetesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu reçeteyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 };

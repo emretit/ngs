@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, Building2, AlertCircle, User, DollarSign, Calendar, Settings, Edit2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/utils/dateUtils";
 
 interface PurchaseRequestTableProps {
   requests: any[];

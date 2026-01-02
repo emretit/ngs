@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Draggable } from "@hello-pangea/dnd";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,8 @@ import { CalendarIcon, MoreHorizontal, Edit, Trash2, FileText, User, ShoppingCar
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { Order } from "@/types/orders";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface OrderCardProps {
   order: Order;
@@ -35,6 +36,24 @@ const OrderCard = ({
   onConvertToService,
   onPrint
 }: OrderCardProps) => {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (onDelete) {
+      onDelete(order.id);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+  };
+
   const shortenText = (text: string, maxLength: number = 25) => {
     if (!text) return "";
     if (text.length <= maxLength) return text;
@@ -159,12 +178,7 @@ const OrderCard = ({
                     )}
                     {onDelete && (
                       <DropdownMenuItem 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm("Siparişi silmek istediğinize emin misiniz?")) {
-                            onDelete(order.id);
-                          }
-                        }}
+                        onClick={handleDeleteClick}
                         className="text-red-600 focus:text-red-600"
                       >
                         <Trash2 className="mr-2 h-3 w-3" />
@@ -236,6 +250,21 @@ const OrderCard = ({
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Confirmation Dialog */}
+      {onDelete && (
+        <ConfirmationDialogComponent
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="Siparişi Sil"
+          description={`"${order.order_number}" numaralı siparişi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+          confirmText="Sil"
+          cancelText="İptal"
+          variant="destructive"
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
       )}
     </Draggable>
   );

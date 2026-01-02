@@ -29,7 +29,6 @@ import {
   UserCheck,
   Calculator,
   Zap,
-  Zap as ZapIcon,
   FileEdit,
   Car,
   Fuel,

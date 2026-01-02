@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { BudgetFiltersState } from "@/pages/BudgetManagement";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 import { TrendingUp, TrendingDown, DollarSign, Percent, Target, AlertTriangle } from "lucide-react";
 import { useBudgetMatrix } from "@/hooks/useBudgetMatrix";
 import { useMemo } from "react";

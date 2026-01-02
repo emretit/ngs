@@ -23,6 +23,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { UseFormReturn } from "react-hook-form";
 import { ProductFormSchema } from "./ProductFormSchema";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface CategorySelectProps {
   form: UseFormReturn<ProductFormSchema>;
@@ -39,6 +40,8 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryDescription, setNewCategoryDescription] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch categories
@@ -112,25 +115,39 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
     });
   };
 
-  const handleDeleteCategory = async (categoryId: string) => {
-    if (!confirm("Bu kategoriyi silmek istediğinizden emin misiniz?")) {
-      return;
-    }
+  const handleDeleteCategory = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return;
+    setCategoryToDelete(category);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!categoryToDelete) return;
 
     try {
       const { error } = await supabase
         .from('product_categories')
         .update({ is_active: false })
-        .eq('id', categoryId);
+        .eq('id', categoryToDelete.id);
 
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["productCategories"] });
       toast.success("Kategori başarıyla silindi!");
+      setIsDeleteDialogOpen(false);
+      setCategoryToDelete(null);
     } catch (error) {
       console.error('Error deleting category:', error);
       toast.error("Kategori silinirken hata oluştu");
+      setIsDeleteDialogOpen(false);
+      setCategoryToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setCategoryToDelete(null);
   };
 
   const handleSelectChange = (value: string) => {
@@ -243,6 +260,23 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Kategoriyi Sil"
+        description={
+          categoryToDelete
+            ? `"${categoryToDelete.name}" kategorisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu kategoriyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
     </>
   );
 };

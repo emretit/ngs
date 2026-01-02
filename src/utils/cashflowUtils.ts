@@ -1,9 +1,4 @@
-export const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: "TRY"
-  }).format(amount);
-};
+// formatCurrency has been removed - use formatCurrency from @/utils/formatters directly
 
 export const getStatusConfig = (status: string) => {
   const statusConfig = {

@@ -1,6 +1,6 @@
 
 import { ExchangeRates } from "../../types/currencyTypes";
-import { normalizeCurrency } from "../../utils/currencyUtils";
+import { normalizeCurrency } from "@/utils/formatters";
 
 export const useCurrencyConverter = (exchangeRates: ExchangeRates) => {
   // Convert amount between currencies

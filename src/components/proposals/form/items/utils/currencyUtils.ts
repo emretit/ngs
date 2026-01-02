@@ -13,10 +13,7 @@ import {
 // Re-export for backward compatibility
 export { normalizeCurrency, areCurrenciesEqual };
 
-/**
- * @deprecated Use formatCurrency from @/utils/formatters instead
- */
-export const formatCurrencyValue = formatCurrency;
+// formatCurrencyValue has been removed - use formatCurrency from @/utils/formatters directly
 
 /**
  * @deprecated Use getCurrencySymbol from @/utils/formatters instead
@@ -33,9 +30,11 @@ export const addCurrencySymbol = (price: string, currency: string): string => {
   return addSymbol(isNaN(numPrice) ? 0 : numPrice, currency);
 };
 
+import { logger } from '@/utils/logger';
+
 // This function is deprecated - use useExchangeRates hook from dashboard instead
 export const fetchTCMBExchangeRates = async (): Promise<ExchangeRates> => {
-  console.warn("fetchTCMBExchangeRates is deprecated. Use useExchangeRates hook from dashboard instead.");
+  logger.warn("fetchTCMBExchangeRates is deprecated. Use useExchangeRates hook from dashboard instead.");
   // Return fallback rates as last resort
   return {
     TRY: 1,

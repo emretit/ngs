@@ -37,6 +37,11 @@ export interface CheckRecord {
   payment_account_id?: string | null;
 }
 
+/**
+ * @deprecated Bu dialog artık kullanılmıyor. 
+ * Gelen çekler için IncomingCheckDialog, giden çekler için OutgoingCheckDialog kullanın.
+ * Bu dosya geriye dönük uyumluluk için korunuyor.
+ */
 interface CheckCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -346,15 +351,6 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
         payload.payee_customer_id = cleanString(payeeCustomerId) || null;
       }
 
-      // Ciro edildi durumunda
-      if (status === "ciro_edildi") {
-        const supplierId = formData.get("transferred_to_supplier_id") as string;
-        const transferredDate = formData.get("transferred_date") as string;
-        if (supplierId) {
-          payload.transferred_to_supplier_id = supplierId;
-          payload.transferred_date = transferredDate || new Date().toISOString();
-        }
-      }
 
       // Tahsil Edildi durumunda hesap bilgileri (gelen çek) - sadece payments tablosunda kullanılacak
       let receiptAccountType: string | null = null;
@@ -755,7 +751,6 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
                       <SelectItem value="portfoyde">Portföyde</SelectItem>
                       <SelectItem value="bankaya_verildi">Bankaya Verildi</SelectItem>
                       <SelectItem value="tahsil_edildi">Tahsil Edildi</SelectItem>
-                      <SelectItem value="ciro_edildi">Ciro Edildi</SelectItem>
                       <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
                     </>
                   ) : (
@@ -830,25 +825,6 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
             </div>
           </div>
 
-          {/* Ciro Edildi - Sadece incoming ve ciro_edildi durumunda */}
-          {checkType === "incoming" && status === "ciro_edildi" && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Ciro Et</h3>
-              <div className="space-y-1">
-                <Label htmlFor="transferred_supplier" className="text-sm font-medium text-gray-700">
-                  Hangi Tedarikçiye Ciro Edildi?
-                </Label>
-                <FormProvider {...payeeForm}>
-                  <ProposalPartnerSelect partnerType="supplier" hideLabel placeholder="Tedarikçi seçin..." />
-                </FormProvider>
-                <input type="hidden" name="transferred_to_supplier_id" value={payeeSupplierId} />
-                <input type="hidden" name="transferred_date" value={new Date().toISOString()} />
-                <p className="text-xs text-gray-500 mt-1">
-                  Bu çek seçilen tedarikçiye ciro edilecek
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* Tahsil Edilen Hesap - Gelen çek ve tahsil_edildi durumunda */}
           {checkType === "incoming" && status === "tahsil_edildi" && (

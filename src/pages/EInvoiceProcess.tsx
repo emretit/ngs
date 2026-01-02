@@ -42,172 +42,11 @@ import { toast } from 'sonner';
 import { formatUnit } from '@/utils/unitConstants';
 import { formatCurrency } from '@/utils/formatters';
 import { ModernCategorySelect } from '@/components/budget/ModernCategorySelect';
-interface EInvoiceItem {
-  id: string;
-  line_number: number;
-  product_name: string;
-  product_code?: string;
-  quantity: number;
-  unit: string;
-  unit_price: number;
-  tax_rate: number;
-  discount_rate?: number;
-  line_total: number;
-  tax_amount?: number;
-  gtip_code?: string;
-  description?: string;
-}
-interface EInvoiceDetails {
-  id: string;
-  invoice_number: string;
-  supplier_name: string;
-  supplier_tax_number: string;
-  invoice_date: string;
-  due_date?: string;
-  currency: string;
-  subtotal: number;
-  tax_total: number;
-  total_amount: number;
-  items: EInvoiceItem[];
-  // Detaylı tedarikçi bilgileri
-  supplier_details?: {
-    company_name?: string;
-    tax_number?: string;
-    trade_registry_number?: string;
-    mersis_number?: string;
-    email?: string;
-    phone?: string;
-    website?: string;
-    fax?: string;
-    address?: {
-      street?: string;
-      district?: string;
-      city?: string;
-      postal_code?: string;
-      country?: string;
-    };
-    bank_info?: {
-      bank_name?: string;
-      iban?: string;
-      account_number?: string;
-    };
-  };
-}
+import { logger } from '@/utils/logger';
 import { Product } from "@/types/product";
-import { IntegratorService } from "@/services/integratorService";
-import { VeribanService } from "@/services/veribanService";
-
-interface ProductMatchingItem {
-  invoice_item: EInvoiceItem;
-  matched_product_id?: string;
-  notes?: string;
-}
-interface Supplier {
-  id: string;
-  name: string;
-  tax_number?: string;
-  email?: string;
-}
-
-// Memoized Table Row Component
-const MemoizedTableRow = React.memo(({ 
-  item, 
-  index, 
-  invoice, 
-  getMatchedProduct, 
-  handleProductSelect, 
-  handleCreateNewProduct, 
-  handleRemoveMatch,
-  formatUnit
-}: {
-  item: ProductMatchingItem;
-  index: number;
-  invoice: EInvoiceDetails;
-  getMatchedProduct: (productId?: string) => Product | undefined;
-  handleProductSelect: (itemIndex: number, product: Product) => void;
-  handleCreateNewProduct: (itemIndex: number) => void;
-  handleRemoveMatch: (itemIndex: number) => void;
-  formatUnit: (unit: string) => string;
-}) => {
-  const matchedProduct = getMatchedProduct(item.matched_product_id);
-  
-  return (
-    <TableRow className="hover:bg-gray-50/50 transition-colors border-gray-100">
-      <TableCell className="font-medium text-[10px] px-2 py-2">
-        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-semibold text-gray-600">
-          {item.invoice_item.line_number}
-        </div>
-      </TableCell>
-      <TableCell className="px-3 py-2">
-        <div className="min-w-80 max-w-none">
-          <p className="font-medium text-gray-900 text-xs mb-1 break-words">
-            {item.invoice_item.product_name}
-          </p>
-        </div>
-      </TableCell>
-      <TableCell className="text-right px-2 py-2">
-        <div className="font-mono text-xs font-semibold text-gray-700">
-          {item.invoice_item.quantity.toFixed(2)}
-        </div>
-      </TableCell>
-      <TableCell className="text-center px-2 py-2">
-        <div className="text-[10px] font-medium text-gray-600">
-          {formatUnit(item.invoice_item.unit)}
-        </div>
-      </TableCell>
-      <TableCell className="text-right text-xs font-medium px-2 py-2">
-        {formatCurrency(item.invoice_item.unit_price, invoice.currency)}
-      </TableCell>
-      <TableCell className="px-3 py-2">
-        <div className="space-y-1">
-          {matchedProduct ? (
-            <div className="p-1.5 bg-gradient-to-r from-green-50 to-green-100/50 border border-green-200 rounded-md shadow-sm">
-              <div className="flex items-start justify-between gap-1.5">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <CheckCircle2 className="h-3 w-3 text-green-600 flex-shrink-0" />
-                    <p className="font-semibold text-green-900 text-xs truncate">
-                      {matchedProduct.name}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-1 text-[10px] text-green-700">
-                    {matchedProduct.sku && (
-                      <span className="px-1.5 py-0.5 bg-green-200/50 rounded text-[10px]">SKU: {matchedProduct.sku}</span>
-                    )}
-                    <span>{formatCurrency(matchedProduct.price, invoice.currency)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-             <React.Suspense fallback={<div className="text-[10px] text-gray-500 p-1">Yükleniyor...</div>}>
-               <EInvoiceProductSelector
-                 value=""
-                 onChange={() => {}}
-                 onProductSelect={(product) => handleProductSelect(index, product)}
-                 onNewProduct={() => handleCreateNewProduct(index)}
-                 placeholder="Ürün ara..."
-                 className="text-xs"
-               />
-             </React.Suspense>
-          )}
-        </div>
-      </TableCell>
-      <TableCell className="text-center px-2 py-2">
-        {item.matched_product_id && (
-          <Button
-            onClick={() => handleRemoveMatch(index)}
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        )}
-      </TableCell>
-    </TableRow>
-  );
-});
+import { EInvoiceDetails, EInvoiceItem, ProductMatchingItem, Supplier } from "./einvoice/types";
+import { EInvoiceTableRow } from "./einvoice/components/EInvoiceTableRow";
+import { useEInvoiceData } from "./einvoice/hooks/useEInvoiceData";
 export default function EInvoiceProcess() {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const navigate = useNavigate();
@@ -234,370 +73,29 @@ export default function EInvoiceProcess() {
     project_id: '',
     expense_category_id: ''
   });
-  // React Query ile ürünleri yükle
-  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['products-for-einvoice'],
-    queryFn: async () => {
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('id, name, sku, price, unit, tax_rate, category_type')
-        .eq('is_active', true)
-        .order('name')
-        .limit(1000);
-      if (productsError) throw productsError;
-      return productsData || [];
-    },
-    staleTime: 10 * 60 * 1000, // 10 dakika cache
-    gcTime: 20 * 60 * 1000, // 20 dakika cache'de tut
-    refetchOnWindowFocus: false,
-  });
+  // Use custom hook for data fetching
+  const { 
+    products, 
+    isLoadingProducts, 
+    userCompanyId, 
+    suppliers, 
+    isLoadingSuppliers, 
+    loadInvoiceDetails: loadInvoiceDetailsFromHook 
+  } = useEInvoiceData(invoiceId);
 
-  // Kullanıcının company_id'sini al
-  const { data: userCompanyId } = useQuery({
-    queryKey: ['user-company-id'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Kullanıcı oturumu bulunamadı');
-      
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) throw error;
-      return profile?.company_id;
-    },
-    staleTime: Infinity, // Company ID değişmez
-  });
-
-  // React Query ile tedarikçileri yükle - company_id filtresi ile
-  const { data: suppliers = [], isLoading: isLoadingSuppliers } = useQuery({
-    queryKey: ['suppliers-for-einvoice', userCompanyId],
-    queryFn: async () => {
-      if (!userCompanyId) return [];
-      
-      const { data: suppliersData, error: suppliersError } = await supabase
-        .from('suppliers')
-        .select('id, name, tax_number, email, company_id')
-        .eq('status', 'aktif')
-        .eq('company_id', userCompanyId) // Sadece kullanıcının şirketinin tedarikçileri
-        .order('name')
-        .limit(500);
-      if (suppliersError) throw suppliersError;
-      return suppliersData || [];
-    },
-    enabled: !!userCompanyId, // company_id yoksa sorguyu çalıştırma
-    staleTime: 10 * 60 * 1000, // 10 dakika cache
-    gcTime: 20 * 60 * 1000, // 20 dakika cache'de tut
-    refetchOnWindowFocus: false,
-  });
-
-  // Load invoice details - MUST be defined before the useEffect that uses it
+  // Load invoice details - wrapper that sets state
   const loadInvoiceDetails = useCallback(async () => {
     try {
-      // Önce integrator'ü kontrol et
-      const integrator = await IntegratorService.getSelectedIntegrator();
-      console.log('🔄 Loading invoice details from', integrator, 'API for:', invoiceId);
-
-      let apiInvoiceDetails: any;
-
-      if (integrator === 'veriban') {
-        // Veriban API çağrısı
-        const result = await VeribanService.getInvoiceDetails({
-          invoiceUUID: invoiceId!
-        });
-
-        if (!result.success || !result.data) {
-          throw new Error(result.error || 'Veriban fatura detayları alınamadı');
-        }
-
-        console.log('✅ Veriban API Response:', result.data);
-        apiInvoiceDetails = result.data;
-      } else {
-        // Nilvera API çağrısı (varsayılan)
-        const { data: detailsData, error: detailsError } = await supabase.functions.invoke('nilvera-invoice-details', {
-          body: {
-            invoiceId: invoiceId,
-            envelopeUUID: invoiceId
-          }
-        });
-
-        if (detailsError) throw detailsError;
-        if (!detailsData?.success) {
-          throw new Error(detailsData?.error || 'Nilvera fatura detayları alınamadı');
-        }
-
-        console.log('✅ Nilvera API Response detailsData:', detailsData);
-        apiInvoiceDetails = detailsData.invoiceDetails;
-      }
-
-      // ========================================
-      // 🔍 FULL API RESPONSE DEBUG
-      // ========================================
-      console.log('\n' + '='.repeat(80));
-      console.log('🔍 FULL API RESPONSE FROM VERIBAN');
-      console.log('='.repeat(80));
-      console.log('🔍 Full invoice details:', apiInvoiceDetails);
-      console.log('🔍 Available keys:', apiInvoiceDetails ? Object.keys(apiInvoiceDetails) : 'null');
-      console.log('='.repeat(80) + '\n');
+      const invoiceDetails = await loadInvoiceDetailsFromHook();
       
-      // ========================================
-      // 📄 RAW XML (İLK 2000 KARAKTER)
-      // ========================================
-      if (apiInvoiceDetails?.rawXml) {
-        console.log('\n' + '📄'.repeat(40));
-        console.log('📄 RAW XML CONTENT (First 2000 chars):');
-        console.log('📄'.repeat(40));
-        console.log(apiInvoiceDetails.rawXml.substring(0, 2000));
-        console.log('...');
-        console.log('📄'.repeat(40) + '\n');
-      }
-      
-      // ========================================
-      // 📦 ITEMS KONTROLÜ
-      // ========================================
-      console.log('\n' + '📦'.repeat(40));
-      console.log('📦 ITEMS FROM API:');
-      console.log('📦'.repeat(40));
-      console.log('📦 Raw items from API:', apiInvoiceDetails?.items);
-      console.log('📦 Items count:', apiInvoiceDetails?.items?.length || 0);
-      if (apiInvoiceDetails?.items && apiInvoiceDetails.items.length > 0) {
-        console.log('📦 First raw item:', apiInvoiceDetails.items[0]);
-        console.log('📦 All items:');
-        apiInvoiceDetails.items.forEach((item: any, idx: number) => {
-          console.log(`  📦 Item ${idx + 1}:`, item);
-        });
-      } else {
-        console.warn('⚠️ NO ITEMS FOUND IN API RESPONSE!');
-      }
-      console.log('📦'.repeat(40) + '\n');
-
-      // ========================================
-      // 🔄 MAPPING ITEMS
-      // ========================================
-      console.log('\n' + '🔄'.repeat(40));
-      console.log('🔄 MAPPING ITEMS TO FRONTEND FORMAT:');
-      console.log('🔄'.repeat(40));
-      
-      const items: EInvoiceItem[] = apiInvoiceDetails?.items?.map((item: any, index: number) => {
-        console.log(`\n🔄 Mapping item ${index + 1}/${apiInvoiceDetails.items.length}:`);
-        console.log('  📥 Raw item:', item);
-        
-        const mappedItem = {
-          id: item.id || `item-${index}`,
-          line_number: item.lineNumber || item.line_number || index + 1,
-          product_name: item.description || item.product_name || 'Açıklama yok',
-          product_code: item.productCode || item.product_code,
-          quantity: item.quantity || 1,
-          unit: item.unit || 'adet',
-          unit_price: item.unitPrice || item.unit_price || 0,
-          tax_rate: item.vatRate || item.taxRate || item.tax_rate || 18,
-          discount_rate: item.discountRate || item.discount_rate || 0,
-          line_total: item.totalAmount || item.line_total || 0,
-          tax_amount: item.vatAmount || item.taxAmount || item.tax_amount || 0,
-          gtip_code: item.gtipCode || item.gtip_code,
-          description: item.description
-        };
-        
-        console.log('  📤 Mapped item:', mappedItem);
-        console.log('  ✅ Mapping complete!\n');
-        
-        return mappedItem;
-      }) || [];
-      
-      console.log('🔄'.repeat(40));
-      console.log('✅ Final items array:', items);
-      console.log('✅ Final items count:', items.length);
-      console.log('🔄'.repeat(40) + '\n');
-
-      // Detaylı tedarikçi bilgilerini çıkar - önce supplierInfo'dan, sonra fallback'ler
-      const supplierInfo = apiInvoiceDetails?.supplierInfo || {};
-      const accountingSupplierParty = apiInvoiceDetails?.AccountingSupplierParty || {};
-      
-      console.log('🔍 Raw supplierInfo from API:', supplierInfo);
-      console.log('🔍 AccountingSupplierParty from API:', accountingSupplierParty);
-      console.log('🔍 apiInvoiceDetails keys:', apiInvoiceDetails ? Object.keys(apiInvoiceDetails) : 'null');
-
-      // Tedarikçi adı için önce supplierInfo'dan, sonra fallback'ler
-      const supplierName =
-        supplierInfo?.companyName ||
-        apiInvoiceDetails?.supplierName || // Veriban
-        apiInvoiceDetails?.SenderName ||
-        accountingSupplierParty?.Party?.PartyName?.Name ||
-        accountingSupplierParty?.PartyName?.Name ||
-        'Tedarikçi';
-
-      // Tedarikçi VKN için önce supplierInfo'dan, sonra fallback'ler
-      const supplierTaxNumber =
-        supplierInfo?.taxNumber ||
-        apiInvoiceDetails?.supplierTaxNumber || // Veriban
-        apiInvoiceDetails?.SenderTaxNumber ||
-        apiInvoiceDetails?.SenderIdentifier ||
-        apiInvoiceDetails?.TaxNumber ||
-        accountingSupplierParty?.Party?.PartyIdentification?.ID ||
-        accountingSupplierParty?.PartyIdentification?.ID ||
-        accountingSupplierParty?.Party?.PartyTaxScheme?.TaxScheme?.ID ||
-        '';
-
-      console.log('✅ Extracted supplier info:', { supplierName, supplierTaxNumber });
-
-      // Fatura tutar bilgilerini doğru alanlardan çek
-      // Edge function'da hesaplanmış değerler kullanılıyor
-      const subtotal = parseFloat(
-        apiInvoiceDetails?.lineExtensionTotal || // Veriban yeni field
-        apiInvoiceDetails?.TaxExclusiveAmount || 
-        apiInvoiceDetails?.taxExclusiveAmount || 
-        '0'
-      );
-      const taxTotal = parseFloat(
-        apiInvoiceDetails?.taxTotalAmount || // Veriban yeni field
-        apiInvoiceDetails?.TaxTotalAmount || 
-        '0'
-      );
-      const totalAmount = parseFloat(
-        apiInvoiceDetails?.payableAmount || // Veriban yeni field
-        apiInvoiceDetails?.PayableAmount || 
-        apiInvoiceDetails?.TotalAmount || 
-        apiInvoiceDetails?.totalAmount || 
-        '0'
-      );
-      
-      console.log('💰 Invoice amounts:', { subtotal, taxTotal, totalAmount });
-
-      // Fatura tarihini doğru şekilde parse et
-      // Veriban'dan gelen tarih invoiceDate olarak gelir, Nilvera'dan IssueDate olarak gelir
-      // Integrator'a göre öncelik ver
-      let rawInvoiceDate: string | null = null;
-      if (integrator === 'veriban') {
-        // Veriban için önce invoiceDate kontrol et
-        rawInvoiceDate = apiInvoiceDetails?.invoiceDate || 
-                        apiInvoiceDetails?.InvoiceDate || 
-                        null;
-        console.log('📅 Veriban invoiceDate:', rawInvoiceDate);
-      } else {
-        // Nilvera için IssueDate kontrol et
-        rawInvoiceDate = apiInvoiceDetails?.IssueDate || 
-                        apiInvoiceDetails?.issueDate || 
-                        apiInvoiceDetails?.InvoiceDate || 
-                        null;
-        console.log('📅 Nilvera IssueDate:', rawInvoiceDate);
-      }
-      
-      // Fallback: Eğer integrator'a göre bulunamadıysa, tüm alanları kontrol et
-      if (!rawInvoiceDate) {
-        rawInvoiceDate = apiInvoiceDetails?.invoiceDate || 
-                        apiInvoiceDetails?.InvoiceDate || 
-                        apiInvoiceDetails?.IssueDate || 
-                        apiInvoiceDetails?.issueDate || 
-                        null;
-        console.log('📅 Fallback invoiceDate:', rawInvoiceDate);
-      }
-      
-      // Tarih formatını normalize et
-      let normalizedInvoiceDate: string;
-      if (rawInvoiceDate) {
-        console.log('📅 Raw invoice date value:', rawInvoiceDate, 'Type:', typeof rawInvoiceDate);
-        // Eğer tarih zaten ISO formatındaysa (örn: "2024-01-15T00:00:00Z")
-        if (rawInvoiceDate.includes('T')) {
-          normalizedInvoiceDate = rawInvoiceDate;
-          console.log('📅 Date is ISO format, using as-is');
-        } 
-        // Eğer tarih sadece tarih formatındaysa (örn: "2024-01-15")
-        else if (/^\d{4}-\d{2}-\d{2}$/.test(rawInvoiceDate)) {
-          normalizedInvoiceDate = `${rawInvoiceDate}T00:00:00Z`;
-          console.log('📅 Date is YYYY-MM-DD format, converting to ISO');
-        }
-        // Diğer formatlar için Date objesi kullan
-        else {
-          const parsedDate = new Date(rawInvoiceDate);
-          if (!isNaN(parsedDate.getTime())) {
-            normalizedInvoiceDate = parsedDate.toISOString();
-            console.log('📅 Date parsed successfully:', normalizedInvoiceDate);
-          } else {
-            console.warn('⚠️ Invalid date format, using current date as fallback');
-            normalizedInvoiceDate = new Date().toISOString();
-          }
-        }
-        console.log('✅ Normalized invoice date:', normalizedInvoiceDate);
-      } else {
-        console.warn('⚠️ No invoice date found in API response! Available keys:', Object.keys(apiInvoiceDetails || {}));
-        console.warn('⚠️ Using current date as fallback');
-        normalizedInvoiceDate = new Date().toISOString();
-      }
-
-      // Vade tarihini de aynı şekilde parse et
-      let rawDueDate: string | null = null;
-      if (integrator === 'veriban') {
-        rawDueDate = apiInvoiceDetails?.dueDate || 
-                    apiInvoiceDetails?.DueDate || 
-                    null;
-      } else {
-        rawDueDate = apiInvoiceDetails?.DueDate || 
-                    apiInvoiceDetails?.dueDate || 
-                    null;
-      }
-      
-      let normalizedDueDate: string | null = null;
-      if (rawDueDate) {
-        console.log('📅 Raw due date value:', rawDueDate);
-        if (rawDueDate.includes('T')) {
-          normalizedDueDate = rawDueDate;
-        } else if (/^\d{4}-\d{2}-\d{2}$/.test(rawDueDate)) {
-          normalizedDueDate = `${rawDueDate}T00:00:00Z`;
-        } else {
-          const parsedDate = new Date(rawDueDate);
-          if (!isNaN(parsedDate.getTime())) {
-            normalizedDueDate = parsedDate.toISOString();
-          }
-        }
-        console.log('✅ Normalized due date:', normalizedDueDate);
-      } else {
-        console.log('ℹ️ No due date found in API response');
-      }
-
-      const invoiceDetails: EInvoiceDetails = {
-        id: invoiceId,
-        invoice_number: apiInvoiceDetails?.InvoiceNumber || apiInvoiceDetails?.invoiceNumber || apiInvoiceDetails?.ID || invoiceId,
-        supplier_name: supplierName,
-        supplier_tax_number: supplierTaxNumber,
-        invoice_date: normalizedInvoiceDate,
-        due_date: normalizedDueDate,
-        currency: apiInvoiceDetails?.CurrencyCode || apiInvoiceDetails?.currency || 'TRY',
-        subtotal: subtotal,
-        tax_total: taxTotal,
-        total_amount: totalAmount,
-        items,
-        supplier_details: {
-          company_name: supplierName,
-          tax_number: supplierTaxNumber,
-          trade_registry_number: supplierInfo?.tradeRegistryNumber || null,
-          mersis_number: supplierInfo?.mersisNumber || null,
-          email: supplierInfo?.email || null,
-          phone: supplierInfo?.phone || null,
-          website: supplierInfo?.website || null,
-          fax: supplierInfo?.fax || null,
-          address: {
-            street: supplierInfo?.address?.street || null,
-            district: supplierInfo?.address?.district || null,
-            city: supplierInfo?.address?.city || null,
-            postal_code: supplierInfo?.address?.postalCode || supplierInfo?.address?.postal_code || null,
-            country: supplierInfo?.address?.country || 'Türkiye'
-          },
-          bank_info: {
-            bank_name: supplierInfo?.bankInfo?.bankName || null,
-            iban: supplierInfo?.bankInfo?.iban || null,
-            account_number: supplierInfo?.bankInfo?.accountNumber || null
-          }
-        }
-      };
       setInvoice(invoiceDetails);
+      
       // Set default form values - tarihi doğru formatta al
-      const invoiceDateForForm = normalizedInvoiceDate.includes('T') 
-        ? normalizedInvoiceDate.split('T')[0] 
-        : normalizedInvoiceDate.substring(0, 10);
-      const dueDateForForm = normalizedDueDate 
-        ? (normalizedDueDate.includes('T') ? normalizedDueDate.split('T')[0] : normalizedDueDate.substring(0, 10))
+      const invoiceDateForForm = invoiceDetails.invoice_date.includes('T') 
+        ? invoiceDetails.invoice_date.split('T')[0] 
+        : invoiceDetails.invoice_date.substring(0, 10);
+      const dueDateForForm = invoiceDetails.due_date 
+        ? (invoiceDetails.due_date.includes('T') ? invoiceDetails.due_date.split('T')[0] : invoiceDetails.due_date.substring(0, 10))
         : '';
       setFormData({
         invoice_date: invoiceDateForForm,
@@ -607,6 +105,7 @@ export default function EInvoiceProcess() {
         project_id: '',
         expense_category_id: ''
       });
+      
       // Initialize matching items
       const initialMatching: ProductMatchingItem[] = invoiceDetails.items.map(item => ({
         invoice_item: item
@@ -615,10 +114,9 @@ export default function EInvoiceProcess() {
       console.log('✅ Invoice details loaded:', invoiceDetails);
     } catch (error: any) {
       console.error('❌ Error in loadInvoiceDetails:', error);
-      // Hata zaten toast ile gösterildi, sadece tekrar fırlat
       throw error;
     }
-  }, [invoiceId, toast]);
+  }, [loadInvoiceDetailsFromHook]);
 
   useEffect(() => {
     if (invoiceId) {
@@ -1616,7 +1114,7 @@ export default function EInvoiceProcess() {
                       </TableHeader>
                       <TableBody>
                         {matchingItems.map((item, index) => (
-                          <MemoizedTableRow
+                          <EInvoiceTableRow
                             key={item.invoice_item.id}
                             item={item}
                             index={index}

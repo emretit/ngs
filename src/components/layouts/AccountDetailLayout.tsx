@@ -11,7 +11,7 @@ import {
   EyeOff,
   MoreHorizontal
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/formatters";
 
 interface AccountDetailLayoutProps {
   children: React.ReactNode;

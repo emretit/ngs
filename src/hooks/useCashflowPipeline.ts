@@ -62,23 +62,23 @@ export const useCashflowPipeline = () => {
         // Receivables - unpaid sales invoices
         supabase
           .from("sales_invoices")
-          .select("id, total_amount, due_date, payment_status")
+          .select("id, toplam_tutar, vade_tarihi, odeme_durumu")
           .eq("company_id", companyId)
-          .in("payment_status", ["unpaid", "partial"]),
+          .in("odeme_durumu", ["odenmedi", "kismi_odendi"]),
         
         // Payables - unpaid purchase invoices
         supabase
           .from("purchase_invoices")
-          .select("id, total_amount, due_date, payment_status")
+          .select("id, total_amount, due_date, status")
           .eq("company_id", companyId)
-          .in("payment_status", ["unpaid", "partial"]),
+          .neq("status", "paid"),
         
         // Checks
         supabase
           .from("checks")
           .select("id, amount, due_date, check_type, status")
           .eq("company_id", companyId)
-          .in("status", ["pending", "portfolio"]),
+          .in("status", ["odenecek", "portfoyde"]),
         
         // Bank accounts
         supabase
@@ -97,7 +97,7 @@ export const useCashflowPipeline = () => {
 
       // Process receivables
       const receivables = salesInvoicesRes.data || [];
-      const overdueReceivables = receivables.filter(r => r.due_date && r.due_date < today);
+      const overdueReceivables = receivables.filter(r => r.vade_tarihi && r.vade_tarihi < today);
       
       // Process payables
       const payables = purchaseInvoicesRes.data || [];
@@ -105,8 +105,8 @@ export const useCashflowPipeline = () => {
       
       // Process checks
       const checks = checksRes.data || [];
-      const receivableChecks = checks.filter(c => c.check_type === "received");
-      const payableChecks = checks.filter(c => c.check_type === "given");
+      const receivableChecks = checks.filter(c => c.check_type === "incoming");
+      const payableChecks = checks.filter(c => c.check_type === "outgoing");
       
       const dueSoonReceivableChecks = receivableChecks.filter(
         c => c.due_date && c.due_date >= today && c.due_date <= sevenDaysLater
@@ -127,9 +127,9 @@ export const useCashflowPipeline = () => {
       return {
         receivables: {
           count: receivables.length,
-          value: receivables.reduce((sum, r) => sum + (r.total_amount || 0), 0),
+          value: receivables.reduce((sum, r) => sum + (r.toplam_tutar || 0), 0),
           overdue: overdueReceivables.length,
-          overdueValue: overdueReceivables.reduce((sum, r) => sum + (r.total_amount || 0), 0)
+          overdueValue: overdueReceivables.reduce((sum, r) => sum + (r.toplam_tutar || 0), 0)
         },
         payables: {
           count: payables.length,

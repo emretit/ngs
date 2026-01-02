@@ -29,6 +29,23 @@ export function useConversations(userId: string, companyId: string) {
 }
 
 /**
+ * Hook to get all conversations for a user (alias)
+ */
+export function useUserConversations(userId: string | undefined, companyId: string | undefined) {
+  return useQuery({
+    queryKey: ['ai-conversations', userId, companyId],
+    queryFn: async () => {
+      if (!userId || !companyId) return [];
+      const { data, error } = await getConversations(userId, companyId);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId && !!companyId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
+/**
  * Hook to get a single conversation
  */
 export function useConversation(conversationId: string | null) {

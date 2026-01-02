@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 import { Separator } from "@/components/ui/separator";
@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TabProvider } from "@/components/tabs/TabContext";
 import TabBar from "@/components/tabs/TabBar";
 import TabNavigationHandler from "@/components/tabs/TabNavigationHandler";
+import { cn } from "@/lib/utils";
 
 // Inline skeleton for faster render
 const ContentSkeleton = () => (
@@ -41,6 +42,11 @@ const ProtectedLayout = () => {
 
   // Mobile sidebar state
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const location = useLocation();
+  
+  // Pages that should have no padding (full-screen)
+  const fullScreenPages = ['/ai-assistant'];
+  const isFullScreen = fullScreenPages.includes(location.pathname);
 
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed));
@@ -92,7 +98,7 @@ const ProtectedLayout = () => {
           <TabBar />
           <Separator />
           
-          <main className="p-3 sm:p-4 md:p-6">
+          <main className={cn(isFullScreen ? "" : "p-3 sm:p-4 md:p-6")}>
             <Suspense fallback={<ContentSkeleton />}>
               <Outlet />
             </Suspense>

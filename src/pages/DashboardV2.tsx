@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useState, useMemo, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,26 +28,28 @@ import { tr } from "date-fns/locale";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
-import { WorkStatusOverview } from "@/components/dashboard/v2/WorkStatusOverview";
-import { AdvancedFinancialCharts } from "@/components/dashboard/v2/AdvancedFinancialCharts";
-import { SmartTaskManagement } from "@/components/dashboard/v2/SmartTaskManagement";
-import { SalesPerformance } from "@/components/dashboard/v2/SalesPerformance";
-import { TeamPerformance } from "@/components/dashboard/v2/TeamPerformance";
-import { NotificationCenter } from "@/components/dashboard/v2/NotificationCenter";
 import { QuickStatsBar } from "@/components/dashboard/v2/QuickStatsBar";
-import { StockCriticalLevels } from "@/components/dashboard/v2/StockCriticalLevels";
-import { ServiceManagement } from "@/components/dashboard/v2/ServiceManagement";
-import { CashflowForecast } from "@/components/dashboard/v2/CashflowForecast";
-import { CalendarAppointments } from "@/components/dashboard/v2/CalendarAppointments";
-import { ConversionFunnel } from "@/components/dashboard/v2/ConversionFunnel";
-import { CustomerSatisfaction } from "@/components/dashboard/v2/CustomerSatisfaction";
-import { SupplierPerformance } from "@/components/dashboard/v2/SupplierPerformance";
-import { HrSummary } from "@/components/dashboard/v2/HrSummary";
-import { VehicleFleet } from "@/components/dashboard/v2/VehicleFleet";
-import { ProductionOverview } from "@/components/dashboard/v2/ProductionOverview";
-import { PurchasingOverview } from "@/components/dashboard/v2/PurchasingOverview";
-import { AIAgentAccordion } from "@/components/dashboard/v2/AIAgentAccordion";
 import { TimePeriodCard } from "@/components/dashboard/v2/TimePeriodCard";
+import { AIAgentAccordion } from "@/components/dashboard/v2/AIAgentAccordion";
+
+// Lazy load heavy dashboard components
+const WorkStatusOverview = lazy(() => import("@/components/dashboard/v2/WorkStatusOverview").then(m => ({ default: m.WorkStatusOverview })));
+const AdvancedFinancialCharts = lazy(() => import("@/components/dashboard/v2/AdvancedFinancialCharts").then(m => ({ default: m.AdvancedFinancialCharts })));
+const SmartTaskManagement = lazy(() => import("@/components/dashboard/v2/SmartTaskManagement").then(m => ({ default: m.SmartTaskManagement })));
+const SalesPerformance = lazy(() => import("@/components/dashboard/v2/SalesPerformance").then(m => ({ default: m.SalesPerformance })));
+const TeamPerformance = lazy(() => import("@/components/dashboard/v2/TeamPerformance").then(m => ({ default: m.TeamPerformance })));
+const NotificationCenter = lazy(() => import("@/components/dashboard/v2/NotificationCenter").then(m => ({ default: m.NotificationCenter })));
+const StockCriticalLevels = lazy(() => import("@/components/dashboard/v2/StockCriticalLevels").then(m => ({ default: m.StockCriticalLevels })));
+const ServiceManagement = lazy(() => import("@/components/dashboard/v2/ServiceManagement").then(m => ({ default: m.ServiceManagement })));
+const CashflowForecast = lazy(() => import("@/components/dashboard/v2/CashflowForecast").then(m => ({ default: m.CashflowForecast })));
+const CalendarAppointments = lazy(() => import("@/components/dashboard/v2/CalendarAppointments").then(m => ({ default: m.CalendarAppointments })));
+const ConversionFunnel = lazy(() => import("@/components/dashboard/v2/ConversionFunnel").then(m => ({ default: m.ConversionFunnel })));
+const CustomerSatisfaction = lazy(() => import("@/components/dashboard/v2/CustomerSatisfaction").then(m => ({ default: m.CustomerSatisfaction })));
+const SupplierPerformance = lazy(() => import("@/components/dashboard/v2/SupplierPerformance").then(m => ({ default: m.SupplierPerformance })));
+const HrSummary = lazy(() => import("@/components/dashboard/v2/HrSummary").then(m => ({ default: m.HrSummary })));
+const VehicleFleet = lazy(() => import("@/components/dashboard/v2/VehicleFleet").then(m => ({ default: m.VehicleFleet })));
+const ProductionOverview = lazy(() => import("@/components/dashboard/v2/ProductionOverview").then(m => ({ default: m.ProductionOverview })));
+const PurchasingOverview = lazy(() => import("@/components/dashboard/v2/PurchasingOverview").then(m => ({ default: m.PurchasingOverview })));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TEMA KONFİGÜRASYONU - Midnight Ocean Teması
@@ -171,32 +173,38 @@ const DashboardV2 = () => {
 
   const { exchangeRates, loading: ratesLoading } = useExchangeRates();
 
-  const getGreeting = () => {
+  // Memoized helper functions
+  const getGreeting = useCallback(() => {
     const hour = new Date().getHours();
     if (hour < 12) return "Günaydın";
     if (hour < 18) return "İyi günler";
     return "İyi akşamlar";
-  };
+  }, []);
 
-  // Döviz kuru format helper
-  const formatRate = (rate: number | null) => {
+  // Döviz kuru format helper - memoized
+  const formatRate = useCallback((rate: number | null) => {
     if (rate === null) return "-";
     return rate.toFixed(4);
-  };
+  }, []);
 
-  // Ana dövizleri filtrele
-  const mainCurrencies = exchangeRates.filter((rate) =>
-    ["USD", "EUR", "GBP"].includes(rate.currency_code)
+  // Ana dövizleri filtrele - memoized
+  const mainCurrencies = useMemo(() => 
+    exchangeRates.filter((rate) =>
+      ["USD", "EUR", "GBP"].includes(rate.currency_code)
+    ),
+    [exchangeRates]
   );
 
-  const quickActions = [
+  // Quick actions - memoized
+  const quickActions = useMemo(() => [
     { label: "Fırsat", icon: Target, gradient: THEME.gradients.accent, route: "/opportunities" },
     { label: "Teklif", icon: FileText, gradient: THEME.gradients.purple, route: "/proposals" },
     { label: "Sipariş", icon: ShoppingCart, gradient: THEME.gradients.warning, route: "/orders/list" },
     { label: "Aktivite", icon: Activity, gradient: THEME.gradients.success, route: "/activities?action=new" },
-  ];
+  ], []);
 
-  const kpiCards: KPICardProps[] = [
+  // KPI Cards - memoized
+  const kpiCards: KPICardProps[] = useMemo(() => [
     {
       title: "Aylık Ciro",
       value: `₺${monthlyTurnover.toLocaleString('tr-TR')}`,
@@ -251,7 +259,20 @@ const DashboardV2 = () => {
       colorKey: "indigo",
       onClick: () => navigate("/budget/approvals")
     }
-  ];
+  ], [monthlyTurnover, totalReceivables, monthlyExpenses, stockValue, navigate]);
+
+  // Navigation handlers - memoized
+  const handleTaskClick = useCallback((id: string) => {
+    navigate(`/activities?taskId=${id}`);
+  }, [navigate]);
+
+  const handleAddTask = useCallback(() => {
+    navigate('/activities?action=new');
+  }, [navigate]);
+
+  const handleNotificationAction = useCallback((id: string, route?: string) => {
+    if (route) navigate(route);
+  }, [navigate]);
 
   return (
     <div className="space-y-5 animate-in fade-in duration-500">
@@ -373,7 +394,7 @@ const DashboardV2 = () => {
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* KPI KARTLARI */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {widgetsLoading ? (
           Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-20 rounded-lg" />
@@ -388,74 +409,108 @@ const DashboardV2 = () => {
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* İŞ DURUMU PANELİ - Operasyonel Özet */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <WorkStatusOverview />
+      <Suspense fallback={<Skeleton className="h-[200px] w-full rounded-lg" />}>
+        <WorkStatusOverview />
+      </Suspense>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* FİNANSAL ANALİZ BÖLÜMÜ */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="space-y-5">
-        <AdvancedFinancialCharts />
-        <CashflowForecast />
+        <Suspense fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}>
+          <AdvancedFinancialCharts />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-[300px] w-full rounded-lg" />}>
+          <CashflowForecast />
+        </Suspense>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* OPERASYONEL WİDGET'LAR - ERP */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <StockCriticalLevels />
-        <ServiceManagement />
+        <Suspense fallback={<Skeleton className="h-[350px] w-full rounded-lg" />}>
+          <StockCriticalLevels />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-[350px] w-full rounded-lg" />}>
+          <ServiceManagement />
+        </Suspense>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <ProductionOverview />
-        <PurchasingOverview />
+        <Suspense fallback={<Skeleton className="h-[350px] w-full rounded-lg" />}>
+          <ProductionOverview />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-[350px] w-full rounded-lg" />}>
+          <PurchasingOverview />
+        </Suspense>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* CRM & SATIŞ PERFORMANSI */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <SalesPerformance />
-        <ConversionFunnel />
+        <Suspense fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}>
+          <SalesPerformance />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}>
+          <ConversionFunnel />
+        </Suspense>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <CustomerSatisfaction />
-        <SupplierPerformance />
+        <Suspense fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}>
+          <CustomerSatisfaction />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}>
+          <SupplierPerformance />
+        </Suspense>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* TAKVİM & RANDEVULAR */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <CalendarAppointments />
+      <Suspense fallback={<Skeleton className="h-[500px] w-full rounded-lg" />}>
+        <CalendarAppointments />
+      </Suspense>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* GÖREV YÖNETİMİ */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <SmartTaskManagement
-        onTaskClick={(id) => navigate(`/activities?taskId=${id}`)}
-        onAddTask={() => navigate('/activities?action=new')}
-      />
+      <Suspense fallback={<Skeleton className="h-[350px] w-full rounded-lg" />}>
+        <SmartTaskManagement
+          onTaskClick={handleTaskClick}
+          onAddTask={handleAddTask}
+        />
+      </Suspense>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* İK & OPERASYONEL KAYNAKLAR */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <HrSummary />
-        <VehicleFleet />
+        <Suspense fallback={<Skeleton className="h-[350px] w-full rounded-lg" />}>
+          <HrSummary />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-[350px] w-full rounded-lg" />}>
+          <VehicleFleet />
+        </Suspense>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* EKİP PERFORMANSI */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <TeamPerformance />
+      <Suspense fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}>
+        <TeamPerformance />
+      </Suspense>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* BİLDİRİM MERKEZİ */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <NotificationCenter
-        onAction={(id, route) => route && navigate(route)}
-      />
+      <Suspense fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}>
+        <NotificationCenter
+          onAction={handleNotificationAction}
+        />
+      </Suspense>
     </div>
   );
 };

@@ -240,6 +240,39 @@ export const chatWithAI = async (
 };
 
 /**
+ * Send a message to Gemini AI (simplified wrapper for chat interface)
+ */
+export const sendMessageToGemini = async (
+  userMessage: string,
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = []
+): Promise<string> => {
+  try {
+    // Convert conversation history to the format expected by chatWithAI
+    const messages = conversationHistory.map(msg => ({
+      role: msg.role as 'system' | 'user' | 'assistant',
+      content: msg.content
+    }));
+
+    // Add the new user message
+    messages.push({
+      role: 'user' as const,
+      content: userMessage
+    });
+
+    const response = await chatWithAI(messages);
+
+    if (response.error) {
+      throw new Error(response.error);
+    }
+
+    return response.content || 'Üzgünüm, yanıt oluşturulamadı.';
+  } catch (err: any) {
+    console.error('sendMessageToGemini error:', err);
+    throw new Error(err.message || 'AI yanıt verirken bir hata oluştu');
+  }
+};
+
+/**
  * Generate report with data analysis and visualization
  */
 export const generateReport = async (

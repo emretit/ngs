@@ -32,12 +32,12 @@ export function useWorkflowPipeline() {
         deliveriesResult,
         invoicesResult
       ] = await Promise.all([
-        // Active opportunities
+        // Active opportunities - 'stage' sütunu yok, 'status' kullanılıyor
         supabase
           .from("opportunities")
-          .select("id, amount, expected_close_date")
+          .select("id, value, expected_close_date")
           .eq("company_id", companyId)
-          .in("stage", ["lead", "qualified", "proposal_sent", "negotiation"]),
+          .in("status", ["new", "contacted", "qualified", "negotiation"]),
         
         // Pending proposals
         supabase
@@ -58,14 +58,14 @@ export function useWorkflowPipeline() {
           .from("deliveries")
           .select("id, planned_delivery_date")
           .eq("company_id", companyId)
-          .in("status", ["pending", "in_transit"]),
+          .in("status", ["pending", "prepared", "shipped"]),
         
         // Unpaid invoices
         supabase
           .from("sales_invoices")
-          .select("id, total_amount, due_date")
+          .select("id, toplam_tutar, vade_tarihi")
           .eq("company_id", companyId)
-          .neq("status", "paid")
+          .neq("odeme_durumu", "odendi")
       ]);
 
       // Calculate urgent counts
@@ -92,7 +92,7 @@ export function useWorkflowPipeline() {
       ).length;
 
       const urgentInvoices = invoices.filter(
-        i => i.due_date && i.due_date <= today
+        i => i.vade_tarihi && i.vade_tarihi <= today
       ).length;
 
       return [
@@ -101,7 +101,7 @@ export function useWorkflowPipeline() {
           label: 'Fırsatlar',
           icon: Target,
           count: opportunities.length,
-          value: opportunities.reduce((sum, o) => sum + (o.amount || 0), 0),
+          value: opportunities.reduce((sum, o) => sum + (o.value || 0), 0),
           urgent: urgentOpportunities,
           color: 'bg-purple-500',
           bgColor: 'from-purple-50 to-purple-100/50'
@@ -141,7 +141,7 @@ export function useWorkflowPipeline() {
           label: 'Faturalar',
           icon: Receipt,
           count: invoices.length,
-          value: invoices.reduce((sum, i) => sum + (i.total_amount || 0), 0),
+          value: invoices.reduce((sum, i) => sum + (i.toplam_tutar || 0), 0),
           urgent: urgentInvoices,
           color: 'bg-emerald-500',
           bgColor: 'from-emerald-50 to-emerald-100/50'

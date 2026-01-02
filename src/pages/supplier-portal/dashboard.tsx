@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { memo, useMemo, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   FileText, 
   ShoppingCart, 
@@ -16,37 +17,61 @@ import { usePortalDashboardStats, usePortalRFQs, usePortalOrders } from '@/hooks
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
-export default function SupplierPortalDashboard() {
+// Status Badge Component - Memoized
+const StatusBadge = memo(({ status }: { status: string }) => {
+  const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = useMemo(() => ({
+    invited: { label: 'Yanıt Bekliyor', variant: 'default' },
+    quoted: { label: 'Teklif Verildi', variant: 'secondary' },
+    sent: { label: 'Gönderildi', variant: 'default' },
+    received: { label: 'Alındı', variant: 'secondary' },
+    closed: { label: 'Kapatıldı', variant: 'outline' },
+  }), []);
+  
+  const config = statusConfig[status] || { label: status, variant: 'outline' };
+  return <Badge variant={config.variant}>{config.label}</Badge>;
+});
+
+StatusBadge.displayName = 'StatusBadge';
+
+// Order Status Badge Component - Memoized
+const OrderStatusBadge = memo(({ status }: { status: string }) => {
+  const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = useMemo(() => ({
+    submitted: { label: 'Gönderildi', variant: 'default' },
+    confirmed: { label: 'Onaylandı', variant: 'secondary' },
+    shipped: { label: 'Sevk Edildi', variant: 'default' },
+    received: { label: 'Teslim Alındı', variant: 'secondary' },
+    completed: { label: 'Tamamlandı', variant: 'outline' },
+  }), []);
+  
+  const config = statusConfig[status] || { label: status, variant: 'outline' };
+  return <Badge variant={config.variant}>{config.label}</Badge>;
+});
+
+OrderStatusBadge.displayName = 'OrderStatusBadge';
+
+const SupplierPortalDashboard = () => {
   const { data: stats, isLoading: statsLoading } = usePortalDashboardStats();
   const { data: rfqs, isLoading: rfqsLoading } = usePortalRFQs();
   const { data: orders, isLoading: ordersLoading } = usePortalOrders();
 
-  const pendingRFQs = rfqs?.filter(r => r.vendor_status === 'invited') || [];
-  const recentOrders = orders?.slice(0, 5) || [];
+  // Memoized filtered data
+  const pendingRFQs = useMemo(() => 
+    rfqs?.filter(r => r.vendor_status === 'invited') || [], 
+    [rfqs]
+  );
+  
+  const recentOrders = useMemo(() => 
+    orders?.slice(0, 5) || [], 
+    [orders]
+  );
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-      invited: { label: 'Yanıt Bekliyor', variant: 'default' },
-      quoted: { label: 'Teklif Verildi', variant: 'secondary' },
-      sent: { label: 'Gönderildi', variant: 'default' },
-      received: { label: 'Alındı', variant: 'secondary' },
-      closed: { label: 'Kapatıldı', variant: 'outline' },
-    };
-    const config = statusConfig[status] || { label: status, variant: 'outline' };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
+  const getStatusBadge = useCallback((status: string) => {
+    return <StatusBadge status={status} />;
+  }, []);
 
-  const getOrderStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-      submitted: { label: 'Gönderildi', variant: 'default' },
-      confirmed: { label: 'Onaylandı', variant: 'secondary' },
-      shipped: { label: 'Sevk Edildi', variant: 'default' },
-      received: { label: 'Teslim Alındı', variant: 'secondary' },
-      completed: { label: 'Tamamlandı', variant: 'outline' },
-    };
-    const config = statusConfig[status] || { label: status, variant: 'outline' };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
+  const getOrderStatusBadge = useCallback((status: string) => {
+    return <OrderStatusBadge status={status} />;
+  }, []);
 
   return (
     <SupplierPortalLayout>
@@ -213,5 +238,7 @@ export default function SupplierPortalDashboard() {
       </div>
     </SupplierPortalLayout>
   );
-}
+};
+
+export default memo(SupplierPortalDashboard);
 

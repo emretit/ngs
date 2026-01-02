@@ -31,11 +31,11 @@ export const useCriticalAlerts = () => {
       // 1. Overdue receivables (unpaid invoices past due date)
       const { data: overdueInvoices } = await supabase
         .from("sales_invoices")
-        .select("id, invoice_number, customer_name, total_amount, due_date")
+        .select("id, fatura_no, customer_id, toplam_tutar, vade_tarihi")
         .eq("company_id", companyId)
-        .eq("payment_status", "unpaid")
-        .lt("due_date", today)
-        .order("due_date", { ascending: true })
+        .eq("odeme_durumu", "odenmedi")
+        .lt("vade_tarihi", today)
+        .order("vade_tarihi", { ascending: true })
         .limit(5);
 
       overdueInvoices?.forEach((invoice) => {
@@ -43,10 +43,10 @@ export const useCriticalAlerts = () => {
           id: `invoice-${invoice.id}`,
           type: "overdue_receivable",
           title: "Vadesi Geçmiş Alacak",
-          description: `${invoice.customer_name} - ${invoice.invoice_number}`,
+          description: `Fatura No: ${invoice.fatura_no}`,
           severity: "critical",
-          amount: invoice.total_amount,
-          dueDate: invoice.due_date,
+          amount: invoice.toplam_tutar,
+          dueDate: invoice.vade_tarihi,
           link: `/sales/invoices/${invoice.id}`,
         });
       });

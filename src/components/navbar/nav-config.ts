@@ -52,7 +52,8 @@ import {
   CheckCircle,
   PieChart,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Bot
 } from "lucide-react";
 
 export const navItems = [
@@ -69,6 +70,13 @@ export const navItems = [
     icon: LayoutDashboard,
     label: "Gösterge Paneli 2",
     translationKey: "nav.dashboardV2",
+  },
+  // 1.7. AI Asistan
+  {
+    path: "/ai-assistant",
+    icon: Bot,
+    label: "AI Asistan",
+    translationKey: "nav.aiAssistant",
   },
   // 2. Müşteriler
   {

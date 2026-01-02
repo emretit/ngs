@@ -291,6 +291,8 @@
   },
   "nav": {
     "dashboard": "Dashboard",
+    "dashboardV2": "Dashboard V2",
+    "aiAssistant": "AI Assistant",
     "customers": "Customers",
     "suppliers": "Suppliers",
     "salesManagement": "Sales Management",

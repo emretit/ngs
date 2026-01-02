@@ -119,7 +119,7 @@ export const QuickStatsBar = memo(({ data, isLoading, selectedTimePeriod = 'mont
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 animate-pulse">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 animate-pulse">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className="h-20 bg-muted rounded-lg" />
         ))}
@@ -128,7 +128,7 @@ export const QuickStatsBar = memo(({ data, isLoading, selectedTimePeriod = 'mont
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         const isPositive = stat.change >= 0;

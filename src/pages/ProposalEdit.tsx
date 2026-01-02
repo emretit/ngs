@@ -13,13 +13,14 @@ import { Separator } from "@/components/ui/separator";
 import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download, MoreHorizontal, Save, FileDown, Eye, ArrowRight, Building2, CalendarDays, XCircle, Printer, Receipt, GitBranch, Copy, Users, UserPlus } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
-import { formatCurrency } from "@/utils/formatters";
+import { formatCurrency, normalizeCurrency } from "@/utils/formatters";
 import { formatDateToLocalString } from "@/utils/dateUtils";
 import { useProposalEdit } from "@/hooks/useProposalEdit";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { FormProvider, useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProposalItem } from "@/types/proposal";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -59,6 +60,43 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   const queryClient = useQueryClient();
   const { proposal, loading, saving, handleBack, handleSave, refetchProposal } = useProposalEdit();
   const { customers } = useCustomerSelect();
+  const { exchangeRates: dashboardRates } = useExchangeRates();
+  
+  // Convert exchange rates to simple map format
+  const exchangeRatesMap = React.useMemo(() => {
+    const map: Record<string, number> = { TRY: 1 };
+    dashboardRates.forEach(rate => {
+      if (rate.currency_code && rate.forex_selling) {
+        map[rate.currency_code] = rate.forex_selling;
+      }
+    });
+    // Fallback values
+    if (!map.USD) map.USD = 32.5;
+    if (!map.EUR) map.EUR = 35.2;
+    if (!map.GBP) map.GBP = 41.3;
+    return map;
+  }, [dashboardRates]);
+  
+  // Currency conversion function
+  const convertCurrency = React.useCallback((amount: number, fromCurrency: string, toCurrency: string): number => {
+    const normalizedFrom = normalizeCurrency(fromCurrency);
+    const normalizedTo = normalizeCurrency(toCurrency);
+    
+    if (normalizedFrom === normalizedTo) return amount;
+    
+    // Convert to TRY first (base currency)
+    const amountInTRY = normalizedFrom === "TRY" 
+      ? amount 
+      : amount * (exchangeRatesMap[normalizedFrom] || 1);
+    
+    // Then convert from TRY to target currency
+    const result = normalizedTo === "TRY" 
+      ? amountInTRY 
+      : amountInTRY / (exchangeRatesMap[normalizedTo] || 1);
+    
+    // Round to 4 decimal places
+    return Math.round(result * 10000) / 10000;
+  }, [exchangeRatesMap]);
   
   // Form object for FormProvider
   const form = useForm({
@@ -235,6 +273,23 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
       });
       setProposalLoaded(true);
 
+      // Initialize global discount from proposal
+      if (proposal.total_discount !== undefined && proposal.total_discount > 0) {
+        // If subtotal exists, calculate percentage, otherwise use amount
+        if (proposal.subtotal && proposal.subtotal > 0) {
+          const discountPercentage = (proposal.total_discount / proposal.subtotal) * 100;
+          setGlobalDiscountType('percentage');
+          setGlobalDiscountValue(discountPercentage);
+        } else {
+          // Use amount directly
+          setGlobalDiscountType('amount');
+          setGlobalDiscountValue(proposal.total_discount);
+        }
+      } else {
+        setGlobalDiscountType('percentage');
+        setGlobalDiscountValue(0);
+      }
+
       // Initialize items from proposal
       if (proposal.items && proposal.items.length > 0) {
         const initialItems = proposal.items.map((item, index) => ({
@@ -258,6 +313,10 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           currency: proposal.currency || "TRY"
         }]);
       }
+      
+      // Initialize prevCurrencyRef and prevExchangeRateRef
+      prevCurrencyRef.current = proposal.currency || "TRY";
+      prevExchangeRateRef.current = proposal.exchange_rate;
     }
   }, [proposal]);
 
@@ -293,11 +352,106 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     fetchRevisions();
   }, [proposal?.id]);
 
+  // Track previous currency and exchange rate to detect changes
+  const prevCurrencyRef = React.useRef<string>(formData.currency);
+  const prevExchangeRateRef = React.useRef<number | undefined>(formData.exchange_rate);
+  const [currencyConversionDialog, setCurrencyConversionDialog] = React.useState<{
+    open: boolean;
+    oldCurrency: string;
+    newCurrency: string;
+    oldRate?: number;
+    newRate?: number;
+    pendingValue?: any;
+    pendingField?: string;
+  }>({
+    open: false,
+    oldCurrency: '',
+    newCurrency: ''
+  });
+  
+  // Convert all items using a specific exchange rate
+  const convertAllItemsWithRate = useCallback((fromCurrency: string, toCurrency: string, customRate?: number) => {
+    setItems(prevItems => {
+      return prevItems.map(item => {
+        const itemCurrency = item.currency || fromCurrency;
+        let convertedPrice: number;
+        
+        if (customRate && fromCurrency !== "TRY") {
+          // Custom rate provided - use it for conversion from fromCurrency to TRY
+          // First, convert item to TRY
+          let amountInTRY: number;
+          
+          if (itemCurrency === "TRY") {
+            // Item is already in TRY
+            amountInTRY = item.unit_price;
+          } else if (itemCurrency === fromCurrency) {
+            // Item is in the same currency as fromCurrency, use custom rate
+            amountInTRY = item.unit_price * customRate;
+          } else {
+            // Item is in a different currency, convert to TRY first using market rate
+            const itemRate = exchangeRatesMap[itemCurrency] || 1;
+            amountInTRY = item.unit_price * itemRate;
+          }
+          
+          // Now convert from TRY to target currency
+          if (toCurrency === "TRY") {
+            convertedPrice = amountInTRY;
+          } else {
+            // Use market rate for target currency
+            const targetRate = exchangeRatesMap[toCurrency] || 1;
+            convertedPrice = amountInTRY / targetRate;
+          }
+        } else {
+          // Use standard conversion
+          convertedPrice = convertCurrency(item.unit_price, itemCurrency, toCurrency);
+        }
+        
+        return {
+          ...item,
+          unit_price: convertedPrice,
+          currency: toCurrency,
+          total_price: item.quantity * convertedPrice
+        };
+      });
+    });
+  }, [convertCurrency, exchangeRatesMap]);
+  
   // Track changes
   const handleFieldChange = useCallback((field: string, value: any) => {
     // Skip undefined values to prevent unnecessary updates
     if (value === undefined) {
       return;
+    }
+    
+    // Handle currency change - show confirmation dialog
+    if (field === 'currency' && value !== prevCurrencyRef.current) {
+      const oldCurrency = prevCurrencyRef.current;
+      const newCurrency = value;
+      
+      // Get exchange rates - use custom rate from input if available, otherwise use market rate
+      const oldCustomRate = formData.exchange_rate;
+      const oldMarketRate = oldCurrency === "TRY" ? 1 : (exchangeRatesMap[oldCurrency] || 1);
+      const oldRate = oldCustomRate && oldCurrency !== "TRY" ? oldCustomRate : oldMarketRate;
+      
+      const newMarketRate = newCurrency === "TRY" ? 1 : (exchangeRatesMap[newCurrency] || 1);
+      const newRate = newMarketRate; // New currency will use market rate initially
+      
+      setCurrencyConversionDialog({
+        open: true,
+        oldCurrency,
+        newCurrency,
+        oldRate,
+        newRate,
+        pendingValue: value,
+        pendingField: field
+      });
+      return; // Don't update yet, wait for confirmation
+    }
+    
+    // Handle exchange_rate change - just update, no dialog
+    // Dialog only shows when currency (dropdown) changes
+    if (field === 'exchange_rate') {
+      prevExchangeRateRef.current = value;
     }
     
     setFormData(prev => ({
@@ -315,7 +469,62 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
       form.setValue('employee_id', value);
     }
     setHasChanges(true);
-  }, [form]);
+  }, [form, convertCurrency, exchangeRatesMap, formData.currency]);
+  
+  // Handle currency conversion confirmation
+  const handleCurrencyConversionConfirm = useCallback(() => {
+    const { oldCurrency, newCurrency, oldRate, newRate, pendingValue, pendingField } = currencyConversionDialog;
+    
+    if (pendingField === 'currency') {
+      // Currency change - convert all items using the old rate (custom or market)
+      // oldRate already contains the custom rate if it was set in the input
+      // Check if oldRate is different from market rate (meaning it's a custom rate)
+      const marketRate = oldCurrency === "TRY" ? 1 : (exchangeRatesMap[oldCurrency] || 1);
+      const isCustomRate = oldRate && oldRate !== marketRate;
+      
+      // Use oldRate (which is the custom rate if available, otherwise market rate)
+      const rateToUse = oldRate || marketRate;
+      
+      // Convert all items using the custom rate if it's different from market rate
+      convertAllItemsWithRate(oldCurrency, newCurrency, isCustomRate ? rateToUse : undefined);
+      prevCurrencyRef.current = newCurrency;
+      
+      // Show success message with rate info
+      if (oldCurrency !== "TRY" && isCustomRate && oldRate) {
+        toast.success(`Tüm kalemler ${oldCurrency} (${oldRate.toFixed(4)} kurundan) ${newCurrency} para birimine dönüştürüldü`);
+      } else {
+        toast.success(`Tüm kalemler ${oldCurrency} para biriminden ${newCurrency} para birimine dönüştürüldü`);
+      }
+    } else if (pendingField === 'exchange_rate' && newRate) {
+      // Exchange rate change - convert all items using the new rate
+      convertAllItemsWithRate(oldCurrency, newCurrency, newRate);
+      prevExchangeRateRef.current = newRate;
+      toast.success(`Tüm kalemler yeni döviz kuru (${newRate.toFixed(4)}) ile dönüştürüldü`);
+    }
+    
+    // Update the field value
+    if (pendingField && pendingValue !== undefined) {
+      setFormData(prev => ({
+        ...prev,
+        [pendingField]: pendingValue
+      }));
+      setHasChanges(true);
+    }
+    
+    // Update refs
+    if (pendingField === 'currency') {
+      prevCurrencyRef.current = newCurrency;
+    } else if (pendingField === 'exchange_rate' && newRate) {
+      prevExchangeRateRef.current = newRate;
+    }
+    
+    setCurrencyConversionDialog({ open: false, oldCurrency: '', newCurrency: '' });
+  }, [currencyConversionDialog, convertAllItemsWithRate, exchangeRatesMap]);
+  
+  // Handle currency conversion cancellation
+  const handleCurrencyConversionCancel = useCallback(() => {
+    setCurrencyConversionDialog({ open: false, oldCurrency: '', newCurrency: '' });
+  }, []);
 
   // Calculate totals by currency (modern approach like NewProposalCreate)
   const calculateTotalsByCurrency = () => {
@@ -1275,26 +1484,35 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           onItemChange={handleItemChange}
           onProductModalSelect={(product, itemIndex) => {
             if (itemIndex !== undefined) {
-              // Editing existing item - always use current item data from items array
+              // Editing existing item
               setSelectedProduct(product); // product'ı set et, null yapma
               setEditingItemIndex(itemIndex);
-              // Get current item data from items array to ensure we have the latest values
-              const currentItem = items[itemIndex];
-              if (currentItem) {
-                setEditingItemData({
-                  name: currentItem.name,
-                  description: currentItem.description || "",
-                  quantity: currentItem.quantity || 1,
-                  unit: currentItem.unit || "adet",
-                  unit_price: currentItem.unit_price || 0,
-                  vat_rate: currentItem.tax_rate || 20,
-                  discount_rate: currentItem.discount_rate || 0,
-                  currency: currentItem.currency || formData.currency,
-                  product_id: currentItem.product_id
-                });
+              
+              // Check if this is from ProductSelector (new product selection) or Edit button
+              // If product has existingData property (object), it means Edit button was clicked
+              // Otherwise, it's a new product selection from ProductSelector
+              if (product?.existingData && typeof product.existingData === 'object') {
+                // Edit button clicked - use current item data from items array
+                const currentItem = items[itemIndex];
+                if (currentItem) {
+                  setEditingItemData({
+                    name: currentItem.name,
+                    description: currentItem.description || "",
+                    quantity: currentItem.quantity || 1,
+                    unit: currentItem.unit || "adet",
+                    unit_price: currentItem.unit_price || 0,
+                    vat_rate: currentItem.tax_rate || 20,
+                    discount_rate: currentItem.discount_rate || 0,
+                    currency: currentItem.currency || formData.currency,
+                    product_id: currentItem.product_id
+                  });
+                } else {
+                  // Fallback to product existingData if item not found
+                  setEditingItemData(product.existingData);
+                }
               } else {
-                // Fallback to product data if item not found
-                setEditingItemData(product?.existingData || product);
+                // ProductSelector'dan yeni ürün seçildi - existingData null olmalı
+                setEditingItemData(null);
               }
               setProductModalOpen(true);
             } else {
@@ -1356,6 +1574,49 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           onAddToProposal={(productData) => handleAddProductToProposal(productData, editingItemIndex)}
           currency={formData.currency}
           existingData={editingItemData}
+        />
+
+        {/* Currency Conversion Confirmation Dialog */}
+        <ConfirmationDialogComponent
+          open={currencyConversionDialog.open}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleCurrencyConversionCancel();
+            }
+          }}
+          title="Para Birimi / Döviz Kuru Değişikliği"
+          description={
+            currencyConversionDialog.pendingField === 'currency'
+              ? (() => {
+                  const marketRate = currencyConversionDialog.oldCurrency === "TRY" 
+                    ? 1 
+                    : (exchangeRatesMap[currencyConversionDialog.oldCurrency] || 1);
+                  const isCustomRate = currencyConversionDialog.oldRate && 
+                    currencyConversionDialog.oldRate !== marketRate;
+                  
+                  return `Tüm kalemler ${currencyConversionDialog.oldCurrency} para biriminden ${currencyConversionDialog.newCurrency} para birimine dönüştürülecek.\n\n` +
+                    (currencyConversionDialog.oldCurrency !== "TRY"
+                      ? `Kullanılacak kur: 1 ${currencyConversionDialog.oldCurrency} = ${currencyConversionDialog.oldRate?.toFixed(4) || 'N/A'} TRY` +
+                        (isCustomRate
+                          ? `\n(Girilen özel kur kullanılacak)`
+                          : '') +
+                        `\n\n`
+                      : '') +
+                    (currencyConversionDialog.newCurrency !== "TRY" && currencyConversionDialog.newRate
+                      ? `Hedef kur: 1 ${currencyConversionDialog.newCurrency} = ${currencyConversionDialog.newRate.toFixed(4)} TRY\n\n`
+                      : '') +
+                    `Bu işlem geri alınamaz. Devam etmek istiyor musunuz?`;
+                })()
+              : `Tüm kalemler yeni döviz kuru ile dönüştürülecek.\n\n` +
+                `Eski kur: 1 ${currencyConversionDialog.oldCurrency} = ${currencyConversionDialog.oldRate?.toFixed(4) || 'N/A'} TRY\n` +
+                `Yeni kur: 1 ${currencyConversionDialog.newCurrency} = ${currencyConversionDialog.newRate?.toFixed(4) || 'N/A'} TRY\n\n` +
+                `Bu işlem geri alınamaz. Devam etmek istiyor musunuz?`
+          }
+          confirmText="Evet, Dönüştür"
+          cancelText="İptal"
+          variant="default"
+          onConfirm={handleCurrencyConversionConfirm}
+          onCancel={handleCurrencyConversionCancel}
         />
 
         {/* Müşteri Seçim Dialog - Farklı Müşteri İçin Kopyalama */}

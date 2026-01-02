@@ -32,6 +32,16 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
 }) => {
   // Exchange rates management
   const { exchangeRates, loading: isLoadingRates, refreshExchangeRates } = useExchangeRates();
+  const [localExchangeRate, setLocalExchangeRate] = React.useState<string>(
+    formData.exchange_rate?.toString() || ""
+  );
+  
+  // Sync localExchangeRate with formData.exchange_rate
+  React.useEffect(() => {
+    if (formData.exchange_rate !== undefined) {
+      setLocalExchangeRate(formData.exchange_rate.toString());
+    }
+  }, [formData.exchange_rate]);
 
   // Get exchange rate for selected currency
   const getCurrentExchangeRate = (): number | null => {
@@ -198,10 +208,16 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
                   type="number"
                   step="0.0001"
                   min="0"
-                  value={formData.currency === "TRY" ? "1.0000" : (formData.exchange_rate || "")}
+                  value={formData.currency === "TRY" ? "1.0000" : localExchangeRate}
                   onChange={(e) => {
                     if (formData.currency !== "TRY") {
-                      handleFieldChange('exchange_rate', parseFloat(e.target.value) || 1);
+                      const value = e.target.value;
+                      setLocalExchangeRate(value);
+                      // Only trigger handleFieldChange if value is valid
+                      const numValue = parseFloat(value);
+                      if (!isNaN(numValue) && numValue > 0) {
+                        handleFieldChange('exchange_rate', numValue);
+                      }
                     }
                   }}
                   disabled={formData.currency === "TRY"}
@@ -215,7 +231,14 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
               {currentRate && formData.currency !== "TRY" && (
                 <button
                   type="button"
-                  onClick={() => handleFieldChange('exchange_rate', currentRate)}
+                  onClick={() => {
+                    // Just update the input value without triggering conversion dialog
+                    const newRate = currentRate;
+                    setLocalExchangeRate(newRate.toFixed(4));
+                    // Update formData directly without showing dialog
+                    // We'll use a special flag or just update if the change is minimal
+                    handleFieldChange('exchange_rate', newRate);
+                  }}
                   className="px-3 h-8 text-xs border rounded-md hover:bg-muted whitespace-nowrap flex items-center justify-center gap-1"
                   title="Güncel kuru uygula"
                 >

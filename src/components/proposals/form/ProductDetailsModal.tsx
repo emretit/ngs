@@ -87,6 +87,11 @@ const ProductDetailsModal = ({
 
   // Track previous currency to handle bidirectional conversion
   const prevCurrencyRef = React.useRef<string>(originalCurrency);
+  // Track previous product/existingData to detect changes
+  const prevProductRef = React.useRef<Product | null>(product);
+  const prevExistingDataRef = React.useRef<any>(existingData);
+  // Flag to prevent currency conversion when initializing from existingData
+  const isInitializingFromExistingDataRef = React.useRef<boolean>(false);
   
   // Initialize form data when dialog opens with product or existingData
   useEffect(() => {
@@ -100,16 +105,51 @@ const ProductDetailsModal = ({
       setUnit("adet");
       setIsManualPriceEdit(false);
       setManualExchangeRate(null);
+      setSelectedDepo("");
+      // Reset refs
+      prevProductRef.current = null;
+      prevExistingDataRef.current = null;
+      prevCurrencyRef.current = originalCurrency;
       return;
+    }
+    
+    // Check if product or existingData changed - if so, reset everything first
+    const productChanged = prevProductRef.current?.id !== product?.id;
+    const existingDataChanged = prevExistingDataRef.current !== existingData;
+    
+    if (productChanged || existingDataChanged) {
+      // Reset all states first when switching to a different product/item
+      setQuantity(1);
+      setUnitPrice(0);
+      setVatRate(20);
+      setDiscountRate(0);
+      setDescription("");
+      setUnit("adet");
+      setIsManualPriceEdit(false);
+      setManualExchangeRate(null);
+      setSelectedDepo("");
     }
     
     // Edit modu öncelikli - existingData varsa onu kullan
     if (existingData) {
       // We're editing an existing line item
       console.log('ProductDetailsModal - Edit mode, existingData:', existingData);
-      console.log('ProductDetailsModal - quantity:', existingData.quantity, 'unit_price:', existingData.unit_price, 'vat_rate:', existingData.vat_rate, 'discount_rate:', existingData.discount_rate);
+      console.log('ProductDetailsModal - quantity:', existingData.quantity, 'unit_price:', existingData.unit_price, 'vat_rate:', existingData.vat_rate, 'discount_rate:', existingData.discount_rate, 'currency:', existingData.currency);
+      
+      // Set flag to prevent currency conversion during initialization
+      isInitializingFromExistingDataRef.current = true;
+      
+      // Reset currency to existingData currency FIRST, before setting price
+      // This prevents unwanted currency conversion
+      const existingCurrency = existingData.currency || originalCurrency;
+      
+      // Set prevCurrencyRef to existingCurrency BEFORE setting selectedCurrency
+      // This ensures that currency conversion useEffect won't trigger incorrectly
+      prevCurrencyRef.current = existingCurrency;
+      setSelectedCurrency(existingCurrency);
       
       // Tüm değerleri mevcut existingData'dan al
+      // unit_price is already in the correct currency (existingData.currency)
       setQuantity(existingData.quantity ?? 1);
       setUnitPrice(existingData.unit_price ?? 0);
       setVatRate(existingData.vat_rate ?? 20);
@@ -118,10 +158,14 @@ const ProductDetailsModal = ({
       setUnit(existingData.unit || "adet");
       setIsManualPriceEdit(true);
       
-      // Reset currency to existingData currency
-      const existingCurrency = existingData.currency || originalCurrency;
-      setSelectedCurrency(existingCurrency);
-      prevCurrencyRef.current = existingCurrency;
+      // Update refs
+      prevExistingDataRef.current = existingData;
+      prevProductRef.current = product;
+      
+      // Reset flag after a short delay to allow state updates to complete
+      setTimeout(() => {
+        isInitializingFromExistingDataRef.current = false;
+      }, 100);
     } else if (product) {
       // We're adding a new product
       console.log('ProductDetailsModal - New mode, product:', product);
@@ -137,6 +181,10 @@ const ProductDetailsModal = ({
       const productCurrency = product.currency || currency || originalCurrency;
       setSelectedCurrency(productCurrency);
       prevCurrencyRef.current = productCurrency;
+      
+      // Update refs
+      prevProductRef.current = product;
+      prevExistingDataRef.current = null;
     }
   }, [open, product, existingData, originalCurrency, currency, setSelectedCurrency]);
   
@@ -152,6 +200,12 @@ const ProductDetailsModal = ({
     // Skip if currency hasn't actually changed
     if (prevCurrencyRef.current === selectedCurrency) return;
     
+    // Skip conversion if we're initializing from existingData
+    if (isInitializingFromExistingDataRef.current) {
+      prevCurrencyRef.current = selectedCurrency;
+      return;
+    }
+    
     // Skip if no price or exchange rates
     if (unitPrice <= 0 || !exchangeRates) {
       prevCurrencyRef.current = selectedCurrency;
@@ -166,7 +220,7 @@ const ProductDetailsModal = ({
     
     // Update previous currency reference
     prevCurrencyRef.current = selectedCurrency;
-  }, [selectedCurrency, exchangeRates, convertAmount]);
+  }, [selectedCurrency, exchangeRates, convertAmount, unitPrice]);
 
   // Get current exchange rate (manual or from rates)
   const currentExchangeRate = exchangeRates

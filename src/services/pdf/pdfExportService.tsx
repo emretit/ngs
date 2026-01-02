@@ -370,28 +370,49 @@ export class PdfExportService {
         }
       }
 
-      // Totalleri hesapla - null güvenliği ile
-      const subtotal = (items || []).reduce((sum: number, item: any) => {
-        if (!item) return sum;
-        const total = Number(item.total) || (Number(item.quantity || 0) * Number(item.unit_price || 0));
-        return sum + (Number(total) || 0);
-      }, 0);
+      // Totalleri hesapla - önce proposal'dan al, yoksa items'tan hesapla
+      // Proposal'dan direkt değerleri al (global discount dahil)
+      let subtotal = Number(proposal?.subtotal) || 0;
+      let total_discount = Number(proposal?.total_discount) || 0;
+      let total_tax = Number(proposal?.total_tax) || 0;
+      let total_amount = Number(proposal?.total_amount) || 0;
 
-      const totalTax = (items || []).reduce((sum: number, item: any) => {
-        if (!item) return sum;
-        const itemTotal = Number(item.total) || (Number(item.quantity || 0) * Number(item.unit_price || 0));
-        const taxRate = Number(item.tax_rate) || 0;
-        return sum + ((Number(itemTotal) || 0) * taxRate / 100);
-      }, 0);
+      // Eğer proposal'da değerler yoksa veya 0 ise items'tan hesapla
+      if (subtotal === 0 && items && items.length > 0) {
+        subtotal = items.reduce((sum: number, item: any) => {
+          if (!item) return sum;
+          const total = Number(item.total) || (Number(item.quantity || 0) * Number(item.unit_price || 0));
+          return sum + (Number(total) || 0);
+        }, 0);
+      }
 
-      const totalDiscount = (items || []).reduce((sum: number, item: any) => {
-        if (!item) return sum;
-        const itemTotal = Number(item.total) || (Number(item.quantity || 0) * Number(item.unit_price || 0));
-        const discountRate = Number(item.discount_rate) || 0;
-        return sum + ((Number(itemTotal) || 0) * discountRate / 100);
-      }, 0);
+      // Global discount proposal'dan geliyor, eğer yoksa item-level discount'ları hesapla
+      if (total_discount === 0 && items && items.length > 0) {
+        total_discount = items.reduce((sum: number, item: any) => {
+          if (!item) return sum;
+          const itemTotal = Number(item.total) || (Number(item.quantity || 0) * Number(item.unit_price || 0));
+          const discountRate = Number(item.discount_rate) || 0;
+          return sum + ((Number(itemTotal) || 0) * discountRate / 100);
+        }, 0);
+      }
 
-      const totalAmount = subtotal + totalTax - totalDiscount;
+      // KDV hesaplama - proposal'dan al, yoksa items'tan hesapla
+      if (total_tax === 0 && items && items.length > 0) {
+        total_tax = items.reduce((sum: number, item: any) => {
+          if (!item) return sum;
+          const itemTotal = Number(item.total) || (Number(item.quantity || 0) * Number(item.unit_price || 0));
+          const discountRate = Number(item.discount_rate) || 0;
+          const itemDiscount = (itemTotal * discountRate) / 100;
+          const netAmount = itemTotal - itemDiscount;
+          const taxRate = Number(item.tax_rate) || 0;
+          return sum + ((netAmount || 0) * taxRate / 100);
+        }, 0);
+      }
+
+      // Genel toplam - proposal'dan al, yoksa hesapla
+      if (total_amount === 0) {
+        total_amount = subtotal - total_discount + total_tax;
+      }
 
       // QuoteData formatına dönüştür
       const quoteData: QuoteData = {
@@ -502,9 +523,9 @@ export class PdfExportService {
           };
         })),
         subtotal: Number(subtotal) || 0,
-        total_discount: Number(totalDiscount) || 0,
-        total_tax: Number(totalTax) || 0,
-        total_amount: Number(totalAmount) || 0,
+        total_discount: Number(total_discount) || 0,
+        total_tax: Number(total_tax) || 0,
+        total_amount: Number(total_amount) || 0,
         currency: proposal?.currency || 'TRY',
         valid_until: proposal?.valid_until || undefined,
         payment_terms: proposal?.payment_terms || undefined,
@@ -954,19 +975,21 @@ export class PdfExportService {
       }
     ];
 
-    // Calculate totals from items if not provided in proposal
+    // Calculate totals - önce proposal'dan al (global discount dahil), yoksa items'tan hesapla
+    // Proposal'dan direkt değerleri al (global discount dahil)
     let subtotal = Number(proposal.subtotal) || 0;
-    let total_discount = Number(proposal.total_discount) || 0;
+    let total_discount = Number(proposal.total_discount) || 0; // Global discount dahil
     let total_tax = Number(proposal.total_tax) || 0;
     let total_amount = Number(proposal.total_amount) || 0;
 
-    // If totals are not available, calculate them from items
+    // Eğer proposal'da değerler yoksa veya 0 ise items'tan hesapla
     if (subtotal === 0 && lines.length > 0) {
       subtotal = lines.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
     }
 
+    // Global discount proposal'dan geliyor, eğer yoksa item-level discount'ları hesapla
     if (total_discount === 0 && lines.length > 0) {
-      // Calculate total discount from items if available
+      // Calculate total discount from items if available (only item-level discounts)
       total_discount = lines.reduce((sum, item) => {
         const itemTotal = item.quantity * item.unit_price;
         const itemDiscount = (itemTotal * item.discount_rate) / 100;

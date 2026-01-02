@@ -190,6 +190,9 @@ export async function createProposal(proposal: Partial<Proposal>) {
       terms?: string;
       currency: string;
       exchange_rate?: number;
+      subtotal?: number;
+      total_discount?: number;
+      total_tax?: number;
       total_amount: number;
       contact_name?: string;
       attachments?: Json;
@@ -225,6 +228,9 @@ export async function createProposal(proposal: Partial<Proposal>) {
       terms: proposal.terms,
       currency: proposal.currency || 'TRY',
       exchange_rate: proposal.exchange_rate || null,
+      subtotal: proposal.subtotal || 0,
+      total_discount: proposal.total_discount || 0,
+      total_tax: proposal.total_tax || 0,
       total_amount: proposal.total_amount || 0,
       contact_name: proposal.contact_name || null,
       history: JSON.stringify([historyEntry]) as unknown as Json,
@@ -472,6 +478,9 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
       terms?: string;
       currency?: string;
       exchange_rate?: number;
+      subtotal?: number;
+      total_discount?: number;
+      total_tax?: number;
       total_amount?: number;
       contact_name?: string;
       attachments?: Json;
@@ -500,6 +509,9 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
     if (proposal.terms !== undefined) updateData.terms = proposal.terms;
     if (proposal.currency !== undefined) updateData.currency = proposal.currency;
     if (proposal.exchange_rate !== undefined) updateData.exchange_rate = proposal.exchange_rate;
+    if (proposal.subtotal !== undefined) updateData.subtotal = proposal.subtotal;
+    if (proposal.total_discount !== undefined) updateData.total_discount = proposal.total_discount;
+    if (proposal.total_tax !== undefined) updateData.total_tax = proposal.total_tax;
     if (proposal.total_amount !== undefined) updateData.total_amount = proposal.total_amount;
     if (proposal.contact_name !== undefined) updateData.contact_name = proposal.contact_name;
     

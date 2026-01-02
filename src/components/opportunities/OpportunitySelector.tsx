@@ -13,7 +13,8 @@ import {
   Search,
   Target,
   Loader2,
-  User
+  User,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -104,6 +105,12 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
     setOpen(false);
   };
 
+  const handleClearSelection = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange("");
+    setOpen(false);
+  };
+
   const getCurrencySymbol = (currency?: string) => {
     switch (currency?.toUpperCase()) {
       case 'USD':
@@ -179,7 +186,7 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
               error && error.trim() && "border-red-500"
             )}
           >
-            <div className="flex items-center">
+            <div className="flex items-center flex-1 min-w-0">
               <Target className="mr-1.5 h-3 w-3 shrink-0 opacity-50" />
               <span className="truncate">
                 {selectedOpportunity 
@@ -188,7 +195,19 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
                 }
               </span>
             </div>
-            <Search className="ml-1.5 h-3 w-3 shrink-0 opacity-50" />
+            <div className="flex items-center gap-1 shrink-0">
+              {value && !disabled && (
+                <button
+                  type="button"
+                  onClick={handleClearSelection}
+                  className="p-0.5 rounded hover:bg-muted transition-colors"
+                  aria-label="Fırsat seçimini temizle"
+                >
+                  <X className="h-3 w-3 opacity-50 hover:opacity-100" />
+                </button>
+              )}
+              <Search className="ml-1.5 h-3 w-3 shrink-0 opacity-50" />
+            </div>
           </Button>
         </PopoverTrigger>
         <PopoverContent 
@@ -208,6 +227,18 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
           </div>
           
           <ScrollArea className="h-[200px]">
+            {value && (
+              <div className="p-1 border-b">
+                <button
+                  type="button"
+                  onClick={handleClearSelection}
+                  className="w-full flex items-center gap-2 py-1.5 px-1.5 text-xs text-muted-foreground hover:bg-muted/50 rounded-md transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                  <span>Fırsat Seçimini Temizle</span>
+                </button>
+              </div>
+            )}
             {filteredOpportunities.length === 0 ? (
               <div className="p-3 text-center text-muted-foreground text-xs">
                 {searchQuery 

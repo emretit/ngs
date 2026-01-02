@@ -76,29 +76,46 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
     }
   });
 
+  // Fırsattan müşteri bilgisini çeken yardımcı fonksiyon
+  const fetchCustomerFromOpportunity = async (oppId: string) => {
+    const { data: opportunityData } = await supabase
+      .from('opportunities')
+      .select('customer_id, customer:customer_id(id, name, company)')
+      .eq('id', oppId)
+      .single();
+    
+    if (opportunityData?.customer_id && opportunityData.customer) {
+      const customer = opportunityData.customer as { id: string; name: string; company?: string };
+      setSelectedCustomerId(customer.id);
+      setSelectedCustomerName(customer.name || "");
+      setSelectedCompanyName(customer.company || customer.name || "");
+      partnerForm.setValue("customer_id", customer.id);
+      setIsCustomerFromOpportunity(true);
+    }
+  };
+
+  // Başlangıçta opportunityId prop'u varsa müşteri bilgisini otomatik doldur
+  useEffect(() => {
+    if (isOpen && opportunityId) {
+      fetchCustomerFromOpportunity(opportunityId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, opportunityId]);
+
   // Fırsat seçildiğinde müşteri bilgisini otomatik doldur
   const handleOpportunityChange = async (opportunityId: string) => {
     setSelectedOpportunityId(opportunityId);
     
     if (opportunityId) {
-      // Fırsattaki müşteri bilgisini çek
-      const { data: opportunityData } = await supabase
-        .from('opportunities')
-        .select('customer_id, customer:customer_id(id, name, company)')
-        .eq('id', opportunityId)
-        .single();
-      
-      if (opportunityData?.customer_id && opportunityData.customer) {
-        const customer = opportunityData.customer as { id: string; name: string; company?: string };
-        setSelectedCustomerId(customer.id);
-        setSelectedCustomerName(customer.name || "");
-        setSelectedCompanyName(customer.company || customer.name || "");
-        partnerForm.setValue("customer_id", customer.id);
-        setIsCustomerFromOpportunity(true);
-      }
+      await fetchCustomerFromOpportunity(opportunityId);
     } else {
-      // Fırsat temizlendiğinde müşteri kilidini aç
+      // Fırsat temizlendiğinde müşteri kilidini aç ve müşteri bilgisini temizle
       setIsCustomerFromOpportunity(false);
+      // Eğer müşteri sadece fırsattan geliyorsa, müşteri bilgisini de temizle
+      setSelectedCustomerId("");
+      setSelectedCustomerName("");
+      setSelectedCompanyName("");
+      partnerForm.setValue("customer_id", "");
     }
   };
 
@@ -250,8 +267,14 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
   };
 
   // Watch form changes for customer_id and fetch customer details
+  // Ancak fırsattan gelen müşteri seçimini override etme
   const watchedCustomerId = partnerForm.watch("customer_id");
   useEffect(() => {
+    // Eğer müşteri fırsattan geliyorsa, form değişikliklerini ignore et
+    if (isCustomerFromOpportunity) {
+      return;
+    }
+    
     if (watchedCustomerId && watchedCustomerId !== selectedCustomerId) {
       setSelectedCustomerId(watchedCustomerId);
       // Fetch customer details
@@ -268,12 +291,12 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
         }
       };
       fetchCustomerDetails();
-    } else if (!watchedCustomerId && selectedCustomerId) {
+    } else if (!watchedCustomerId && selectedCustomerId && !isCustomerFromOpportunity) {
       setSelectedCustomerId("");
       setSelectedCustomerName("");
       setSelectedCompanyName("");
     }
-  }, [watchedCustomerId]);
+  }, [watchedCustomerId, isCustomerFromOpportunity]);
 
   return (
     <UnifiedDialog

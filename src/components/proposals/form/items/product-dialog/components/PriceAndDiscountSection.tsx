@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
-import { getCurrencyOptions, fetchTCMBExchangeRates } from "../../utils/currencyUtils";
-import { toast } from "sonner";
+import { getCurrencyOptions } from "../../utils/currencyUtils";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,39 +33,24 @@ const PriceAndDiscountSection: React.FC<PriceAndDiscountSectionProps> = ({
   // Always use the product's original price and currency
   const [localPrice, setLocalPrice] = useState<number | string>(customPrice ?? convertedPrice);
   const [localDiscountRate, setLocalDiscountRate] = useState(discountRate);
-  const [exchangeRates, setExchangeRates] = useState({
-    TRY: 1,
-    USD: 32.5,
-    EUR: 35.2,
-    GBP: 41.3
-  });
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Fetch exchange rates when component mounts
-  useEffect(() => {
-    const getExchangeRates = async () => {
-      setIsLoading(true);
-      try {
-        const rates = await fetchTCMBExchangeRates();
-        // Ensure all required currencies exist in the rates object
-        const completeRates = {
-          TRY: rates.TRY || 1,
-          USD: rates.USD || 32.5,
-          EUR: rates.EUR || 35.2,
-          GBP: rates.GBP || 41.3
-        };
-        setExchangeRates(completeRates);
-        console.log("Exchange rates updated:", completeRates);
-      } catch (error) {
-        console.error("Failed to fetch exchange rates:", error);
-        toast.error("Güncel döviz kurları alınamadı, varsayılan değerler kullanılıyor");
-      } finally {
-        setIsLoading(false);
+  
+  // Use centralized exchange rates hook instead of deprecated fetchTCMBExchangeRates
+  const { exchangeRates: dashboardRates } = useExchangeRates();
+  
+  // Convert dashboard format to simple object format
+  const exchangeRates = React.useMemo(() => {
+    const rates: Record<string, number> = { TRY: 1 };
+    dashboardRates.forEach(rate => {
+      if (rate.currency_code && rate.forex_selling) {
+        rates[rate.currency_code] = rate.forex_selling;
       }
-    };
-
-    getExchangeRates();
-  }, []);
+    });
+    // Fallback values if rates not available
+    if (!rates.USD) rates.USD = 32.5;
+    if (!rates.EUR) rates.EUR = 35.2;
+    if (!rates.GBP) rates.GBP = 41.3;
+    return rates;
+  }, [dashboardRates]);
 
   // Sync local state with props - always sync when props change
   useEffect(() => {

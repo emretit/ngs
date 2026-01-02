@@ -240,9 +240,18 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
         isCompleted && "opacity-60"
       )}>
         {task.related_item_title ? (
-          <span className="inline-flex items-center">
-            {task.related_item_title}
-          </span>
+          <div className="flex flex-col gap-0.5">
+            <span className="inline-flex items-center">
+              {task.related_item_title}
+            </span>
+            {/* Fırsat seçildiyse müşteri bilgisini göster */}
+            {task.opportunity?.customer && (
+              <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                <User className="h-2.5 w-2.5" />
+                {task.opportunity.customer.company || task.opportunity.customer.name}
+              </span>
+            )}
+          </div>
         ) : (
           "-"
         )}

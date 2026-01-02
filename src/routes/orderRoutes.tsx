@@ -7,6 +7,7 @@ const OrdersList = React.lazy(() => import("@/pages/OrdersList"));
 const PurchaseManagement = React.lazy(() => import("@/pages/PurchaseManagement"));
 const NewOrderCreate = React.lazy(() => import("@/pages/NewOrderCreate"));
 const ProposalToOrderCreate = React.lazy(() => import("@/pages/ProposalToOrderCreate"));
+const OrderEdit = React.lazy(() => import("@/pages/OrderEdit"));
 
 // Define order routes
 export const orderRoutes: RouteConfig[] = [
@@ -14,5 +15,7 @@ export const orderRoutes: RouteConfig[] = [
   { path: "/orders/purchase/edit/:id", component: Orders, protected: true },
   { path: "/orders/create", component: ProposalToOrderCreate, protected: true }, // Yeni - tekliften sipariş oluşturma (modern UI)
   { path: "/orders/new", component: NewOrderCreate, protected: true }, // Yeni - doğrudan sipariş oluşturma
+  { path: "/orders/:id", component: OrderEdit, protected: true }, // Sipariş detay/düzenleme sayfası (hem /orders/:id hem /orders/edit/:id için)
+  { path: "/orders/edit/:id", component: OrderEdit, protected: true }, // Sipariş düzenleme sayfası (alternatif route)
   { path: "/orders/list", component: OrdersList, protected: true },
 ];

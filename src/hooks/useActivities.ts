@@ -59,6 +59,15 @@ export const useActivities = (filters: UseActivitiesFilters = {}) => {
             title,
             completed,
             created_at
+          ),
+          opportunity:opportunity_id(
+            id,
+            title,
+            customer:customer_id(
+              id,
+              name,
+              company
+            )
           )
         `,
           { count: "exact" }
@@ -131,6 +140,15 @@ export const useActivities = (filters: UseActivitiesFilters = {}) => {
                 title,
                 completed,
                 created_at
+              ),
+              opportunity:opportunity_id(
+                id,
+                title,
+                customer:customer_id(
+                  id,
+                  name,
+                  company
+                )
               )
             `)
             .eq("company_id", userData.company_id)

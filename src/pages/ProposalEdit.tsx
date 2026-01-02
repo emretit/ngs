@@ -1275,11 +1275,27 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           onItemChange={handleItemChange}
           onProductModalSelect={(product, itemIndex) => {
             if (itemIndex !== undefined) {
-              // Editing existing item
+              // Editing existing item - always use current item data from items array
               setSelectedProduct(product); // product'ı set et, null yapma
               setEditingItemIndex(itemIndex);
-              // Eğer product'ta existingData varsa onu kullan, yoksa product'ı kullan
-              setEditingItemData(product?.existingData || product);
+              // Get current item data from items array to ensure we have the latest values
+              const currentItem = items[itemIndex];
+              if (currentItem) {
+                setEditingItemData({
+                  name: currentItem.name,
+                  description: currentItem.description || "",
+                  quantity: currentItem.quantity || 1,
+                  unit: currentItem.unit || "adet",
+                  unit_price: currentItem.unit_price || 0,
+                  vat_rate: currentItem.tax_rate || 20,
+                  discount_rate: currentItem.discount_rate || 0,
+                  currency: currentItem.currency || formData.currency,
+                  product_id: currentItem.product_id
+                });
+              } else {
+                // Fallback to product data if item not found
+                setEditingItemData(product?.existingData || product);
+              }
               setProductModalOpen(true);
             } else {
               // Adding new item

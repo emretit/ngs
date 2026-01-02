@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { getCurrencyOptions } from "../../utils/currencyUtils";
 import { toast } from "sonner";
 
@@ -8,6 +8,12 @@ export const useCurrencyState = (defaultCurrency?: string) => {
   const normalizedDefault = defaultCurrency === "TL" ? "TRY" : (defaultCurrency || "TRY");
   const [selectedCurrency, setSelectedCurrency] = useState<string>(normalizedDefault);
   const currencyOptions = getCurrencyOptions();
+
+  // Reset selectedCurrency when defaultCurrency changes (e.g., when dialog opens with new product)
+  useEffect(() => {
+    const normalized = defaultCurrency === "TL" ? "TRY" : (defaultCurrency || "TRY");
+    setSelectedCurrency(normalized);
+  }, [defaultCurrency]);
 
   const handleCurrencyChange = useCallback((newCurrency: string) => {
     console.log(`Currency changed to ${newCurrency}`);

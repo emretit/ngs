@@ -24,6 +24,15 @@ export interface Task {
   related_item_type?: string;
   related_item_title?: string;
   opportunity_id?: string;
+  opportunity?: {
+    id: string;
+    title: string;
+    customer?: {
+      id: string;
+      name: string;
+      company?: string;
+    };
+  };
   subtasks?: SubTask[];
 
   // Recurring task fields

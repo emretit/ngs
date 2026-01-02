@@ -65,6 +65,13 @@ const ProductDetailsModal = ({
   const [manualExchangeRate, setManualExchangeRate] = useState<number | null>(null);
   const [priceHistoryOpen, setPriceHistoryOpen] = useState(false);
 
+  // Determine initial currency: existingData currency > product currency > proposal currency
+  const initialCurrency = React.useMemo(() => {
+    if (existingData?.currency) return existingData.currency;
+    if (product?.currency) return product.currency;
+    return currency;
+  }, [existingData?.currency, product?.currency, currency]);
+
   // Currency management
   const {
     selectedCurrency,
@@ -76,14 +83,25 @@ const ProductDetailsModal = ({
     currencyOptions,
     convertAmount,
     handleCurrencyChange
-  } = useCurrencyManagement(currency, product, isManualPriceEdit);
+  } = useCurrencyManagement(initialCurrency, product, isManualPriceEdit);
 
   // Track previous currency to handle bidirectional conversion
   const prevCurrencyRef = React.useRef<string>(originalCurrency);
   
   // Initialize form data when dialog opens with product or existingData
   useEffect(() => {
-    if (!open) return; // Dialog kapalıysa state'leri değiştirme
+    if (!open) {
+      // Dialog kapalıysa state'leri resetle
+      setQuantity(1);
+      setUnitPrice(0);
+      setVatRate(20);
+      setDiscountRate(0);
+      setDescription("");
+      setUnit("adet");
+      setIsManualPriceEdit(false);
+      setManualExchangeRate(null);
+      return;
+    }
     
     // Edit modu öncelikli - existingData varsa onu kullan
     if (existingData) {
@@ -99,8 +117,11 @@ const ProductDetailsModal = ({
       setDescription(existingData.description || "");
       setUnit(existingData.unit || "adet");
       setIsManualPriceEdit(true);
-      // Reset currency ref to original currency
-      prevCurrencyRef.current = existingData.currency || originalCurrency;
+      
+      // Reset currency to existingData currency
+      const existingCurrency = existingData.currency || originalCurrency;
+      setSelectedCurrency(existingCurrency);
+      prevCurrencyRef.current = existingCurrency;
     } else if (product) {
       // We're adding a new product
       console.log('ProductDetailsModal - New mode, product:', product);
@@ -111,10 +132,13 @@ const ProductDetailsModal = ({
       setDescription(product.description || "");
       setUnit(product.unit || "adet");
       setIsManualPriceEdit(false);
-      // Reset currency ref to original currency
-      prevCurrencyRef.current = originalCurrency;
+      
+      // Reset currency to product's original currency or proposal currency
+      const productCurrency = product.currency || currency || originalCurrency;
+      setSelectedCurrency(productCurrency);
+      prevCurrencyRef.current = productCurrency;
     }
-  }, [open, product, existingData, originalCurrency]);
+  }, [open, product, existingData, originalCurrency, currency, setSelectedCurrency]);
   
   // Reset manual exchange rate when currency changes
   useEffect(() => {

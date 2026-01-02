@@ -55,8 +55,7 @@ const OrdersContent = ({
   };
 
   const handleEditOrder = (order: Order) => {
-    // TODO: Navigate to edit page
-    console.log("Edit order:", order);
+    navigate(`/orders/edit/${order.id}`);
   };
 
   const handleDeleteOrder = (orderId: string) => {

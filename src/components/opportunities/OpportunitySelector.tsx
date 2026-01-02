@@ -9,10 +9,11 @@ import {
   PopoverContent, 
   PopoverTrigger 
 } from "@/components/ui/popover";
-import { 
-  Search, 
-  Target, 
-  Loader2
+import {
+  Search,
+  Target,
+  Loader2,
+  User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -23,6 +24,12 @@ interface Opportunity {
   title: string;
   status: string;
   value?: number;
+  currency?: string;
+  customer?: {
+    id: string;
+    name: string;
+    company?: string;
+  };
 }
 
 interface OpportunitySelectorProps {
@@ -66,10 +73,10 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
       
       const { data, error } = await supabase
         .from("opportunities")
-        .select("id, title, status, value")
+        .select("id, title, status, value, currency, customer:customer_id(id, name, company)")
         .eq("company_id", targetCompanyId)
         .order("created_at", { ascending: false });
-      
+
       if (error) throw error;
       return data as Opportunity[] || [];
     },
@@ -79,11 +86,13 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
   // Filter opportunities based on search query
   const filteredOpportunities = useMemo(() => {
     return opportunities.filter(opportunity => {
-      const matchesSearch = 
-        searchQuery === "" || 
+      const customerName = opportunity.customer?.company || opportunity.customer?.name || '';
+      const matchesSearch =
+        searchQuery === "" ||
         opportunity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        opportunity.status.toLowerCase().includes(searchQuery.toLowerCase());
-      
+        opportunity.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customerName.toLowerCase().includes(searchQuery.toLowerCase());
+
       return matchesSearch;
     });
   }, [opportunities, searchQuery]);
@@ -93,6 +102,20 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
   const handleSelectOpportunity = (opportunity: Opportunity) => {
     onChange(opportunity.id);
     setOpen(false);
+  };
+
+  const getCurrencySymbol = (currency?: string) => {
+    switch (currency?.toUpperCase()) {
+      case 'USD':
+        return '$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'TRY':
+      default:
+        return '₺';
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -211,6 +234,12 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
                           {opportunity.title}
                         </p>
                       </div>
+                      {opportunity.customer && (
+                        <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
+                          <User className="h-2 w-2 mr-0.5 shrink-0" />
+                          <span className="truncate">{opportunity.customer.company || opportunity.customer.name}</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className={cn(
                           "px-1 py-0.5 text-[9px] rounded",
@@ -220,7 +249,7 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
                         </span>
                         {opportunity.value && (
                           <span className="text-[10px] text-muted-foreground">
-                            {opportunity.value.toLocaleString('tr-TR')} ₺
+                            {opportunity.value.toLocaleString('tr-TR')} {getCurrencySymbol(opportunity.currency)}
                           </span>
                         )}
                       </div>

@@ -66,6 +66,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
   const [selectedCustomerName, setSelectedCustomerName] = useState("");
   const [selectedCompanyName, setSelectedCompanyName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCustomerFromOpportunity, setIsCustomerFromOpportunity] = useState(false);
 
   // Form context for ProposalPartnerSelect
   const partnerForm = useForm({
@@ -74,6 +75,32 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
       supplier_id: ""
     }
   });
+
+  // Fırsat seçildiğinde müşteri bilgisini otomatik doldur
+  const handleOpportunityChange = async (opportunityId: string) => {
+    setSelectedOpportunityId(opportunityId);
+    
+    if (opportunityId) {
+      // Fırsattaki müşteri bilgisini çek
+      const { data: opportunityData } = await supabase
+        .from('opportunities')
+        .select('customer_id, customer:customer_id(id, name, company)')
+        .eq('id', opportunityId)
+        .single();
+      
+      if (opportunityData?.customer_id && opportunityData.customer) {
+        const customer = opportunityData.customer as { id: string; name: string; company?: string };
+        setSelectedCustomerId(customer.id);
+        setSelectedCustomerName(customer.name || "");
+        setSelectedCompanyName(customer.company || customer.name || "");
+        partnerForm.setValue("customer_id", customer.id);
+        setIsCustomerFromOpportunity(true);
+      }
+    } else {
+      // Fırsat temizlendiğinde müşteri kilidini aç
+      setIsCustomerFromOpportunity(false);
+    }
+  };
 
 
 
@@ -202,6 +229,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
     setSelectedCustomerId("");
     setSelectedCustomerName("");
     setSelectedCompanyName("");
+    setIsCustomerFromOpportunity(false);
     // Reset recurring fields
     setIsRecurring(false);
     setRecurrenceType('none');
@@ -289,7 +317,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           <div className="grid grid-cols-2 gap-1.5">
             <OpportunitySelector
               value={selectedOpportunityId}
-              onChange={setSelectedOpportunityId}
+              onChange={handleOpportunityChange}
               label="Fırsat"
               placeholder="Fırsat seçin..."
               searchPlaceholder="Fırsat ara..."
@@ -314,8 +342,9 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
             <FormProvider {...partnerForm}>
               <ProposalPartnerSelect
                 partnerType="customer"
-                placeholder="Müşteri seçin..."
+                placeholder={isCustomerFromOpportunity ? selectedCompanyName || selectedCustomerName : "Müşteri seçin..."}
                 hideLabel={false}
+                disabled={isCustomerFromOpportunity}
               />
             </FormProvider>
 

@@ -99,8 +99,8 @@ export async function createProposal(proposal: Partial<Proposal>) {
   }
 
   // Create history entry for new proposal
-  const isRevision = !!(proposal as any).parent_proposal_id;
-  const revNum = (proposal as any).revision_number;
+  const isRevision = !!proposal.parent_proposal_id;
+  const revNum = proposal.revision_number;
   
   const historyEntry = {
     type: isRevision ? 'revision_created' : 'created',
@@ -114,7 +114,7 @@ export async function createProposal(proposal: Partial<Proposal>) {
   };
   try {
     // Get current user's company_id if not provided
-    let companyId = (proposal as any).company_id;
+    let companyId = proposal.company_id;
     if (!companyId) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -140,8 +140,8 @@ export async function createProposal(proposal: Partial<Proposal>) {
 
     // Generate proposal number
     // Eğer bu bir revizyon ise, numarayı farklı formatla (örn: TKF-001-R1)
-    const parentProposalId = (proposal as any).parent_proposal_id;
-    const revisionNumber = (proposal as any).revision_number;
+    const parentProposalId = proposal.parent_proposal_id;
+    const revisionNumber = proposal.revision_number;
     
     let proposalNumber: string;
     if (parentProposalId && revisionNumber) {
@@ -202,31 +202,31 @@ export async function createProposal(proposal: Partial<Proposal>) {
     } = {
       title: proposal.title || "Untitled Proposal",
       description: proposal.description,
-      subject: (proposal as any).subject || null,
+      subject: proposal.subject || null,
       customer_id: proposal.customer_id,
       employee_id: proposal.employee_id,
       opportunity_id: proposal.opportunity_id,
       company_id: companyId || null,
       number: proposalNumber,
       status: proposal.status || 'draft',
-      offer_date: (proposal as any).offer_date ? (proposal as any).offer_date : null,
+      offer_date: proposal.offer_date || null,
       valid_until: proposal.valid_until || null,
       payment_terms: proposal.payment_terms,
       delivery_terms: proposal.delivery_terms,
       warranty_terms: proposal.warranty_terms,
       price_terms: proposal.price_terms,
       other_terms: proposal.other_terms,
-      selected_payment_terms: (proposal as any).selected_payment_terms || [],
-      selected_delivery_terms: (proposal as any).selected_delivery_terms || [],
-      selected_warranty_terms: (proposal as any).selected_warranty_terms || [],
-      selected_pricing_terms: (proposal as any).selected_pricing_terms || [],
-      selected_other_terms: (proposal as any).selected_other_terms || [],
+      selected_payment_terms: proposal.selected_payment_terms || [],
+      selected_delivery_terms: proposal.selected_delivery_terms || [],
+      selected_warranty_terms: proposal.selected_warranty_terms || [],
+      selected_pricing_terms: proposal.selected_pricing_terms || [],
+      selected_other_terms: proposal.selected_other_terms || [],
       notes: proposal.notes,
       terms: proposal.terms,
       currency: proposal.currency || 'TRY',
-      exchange_rate: (proposal as any).exchange_rate || null,
+      exchange_rate: proposal.exchange_rate || null,
       total_amount: proposal.total_amount || 0,
-      contact_name: (proposal as any).contact_name || null,
+      contact_name: proposal.contact_name || null,
       history: JSON.stringify([historyEntry]) as unknown as Json,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -357,7 +357,7 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
 
     // Her alan için değişiklik kontrolü
     Object.keys(fieldLabels).forEach(key => {
-      const newValue = (proposal as any)[key];
+      const newValue = proposal[key];
       if (newValue !== undefined && newValue !== currentProposal[key]) {
         // Özel işleme: employee_id ve customer_id için isimleri kullan
         if (key === 'employee_id') {
@@ -484,12 +484,12 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
     // Copy simple properties
     if (proposal.title !== undefined) updateData.title = proposal.title;
     if (proposal.description !== undefined) updateData.description = proposal.description;
-    if ((proposal as any).subject !== undefined) updateData.subject = (proposal as any).subject;
+    if (proposal.subject !== undefined) updateData.subject = proposal.subject;
     if (proposal.customer_id !== undefined) updateData.customer_id = proposal.customer_id;
     if (proposal.employee_id !== undefined) updateData.employee_id = proposal.employee_id;
     if (proposal.opportunity_id !== undefined) updateData.opportunity_id = proposal.opportunity_id;
     if (proposal.status !== undefined) updateData.status = proposal.status;
-    if ((proposal as any).offer_date !== undefined) updateData.offer_date = (proposal as any).offer_date;
+    if (proposal.offer_date !== undefined) updateData.offer_date = proposal.offer_date;
     if (proposal.valid_until !== undefined) updateData.valid_until = proposal.valid_until;
     if (proposal.payment_terms !== undefined) updateData.payment_terms = proposal.payment_terms;
     if (proposal.delivery_terms !== undefined) updateData.delivery_terms = proposal.delivery_terms;
@@ -499,9 +499,9 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
     if (proposal.notes !== undefined) updateData.notes = proposal.notes;
     if (proposal.terms !== undefined) updateData.terms = proposal.terms;
     if (proposal.currency !== undefined) updateData.currency = proposal.currency;
-    if ((proposal as any).exchange_rate !== undefined) updateData.exchange_rate = (proposal as any).exchange_rate;
+    if (proposal.exchange_rate !== undefined) updateData.exchange_rate = proposal.exchange_rate;
     if (proposal.total_amount !== undefined) updateData.total_amount = proposal.total_amount;
-    if ((proposal as any).contact_name !== undefined) updateData.contact_name = (proposal as any).contact_name;
+    if (proposal.contact_name !== undefined) updateData.contact_name = proposal.contact_name;
     
     // Handle complex types with proper serialization
     if (proposal.attachments !== undefined) {

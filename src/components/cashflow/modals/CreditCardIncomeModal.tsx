@@ -167,11 +167,7 @@ const CreditCardIncomeModal = ({ isOpen, onClose, onSuccess, cardId, cardName, c
             İptal
           </UnifiedDialogCancelButton>
           <UnifiedDialogActionButton
-            onClick={() => {
-              if (formRef.current) {
-                formRef.current.requestSubmit();
-              }
-            }}
+            type="submit"
             loading={isLoading}
             variant="primary"
             className="bg-green-600 hover:bg-green-700"

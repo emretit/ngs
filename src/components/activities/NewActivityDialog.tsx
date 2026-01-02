@@ -555,7 +555,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={handleClose} disabled={isLoading} />
           <UnifiedDialogActionButton
-            onClick={() => {}}
+            type="submit"
             variant="primary"
             disabled={isLoading}
             loading={isLoading}

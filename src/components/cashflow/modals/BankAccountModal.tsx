@@ -325,7 +325,7 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', account
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} />
           <UnifiedDialogActionButton
-            onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)}
+            type="submit"
             disabled={isLoading || isPrefilling}
             loading={isLoading || isPrefilling}
             variant="primary"

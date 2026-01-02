@@ -151,7 +151,7 @@ export const OpportunityDetailSheet = ({
 
       <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()} modal={false}>
         <SheetContent className="sm:max-w-xl md:max-w-2xl overflow-hidden p-0 flex flex-col border-l border-gray-200 bg-white">
-        <SheetHeader className="text-left border-b pb-3 mb-0 px-3 pt-3 flex-shrink-0">
+        <SheetHeader className="text-left border-b pb-1.5 mb-0 px-1.5 pt-1.5 flex-shrink-0">
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 rounded-full bg-blue-500"></div>
             <SheetTitle className="text-lg font-semibold text-gray-900">Fırsat Detayları</SheetTitle>
@@ -159,24 +159,24 @@ export const OpportunityDetailSheet = ({
         </SheetHeader>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide p-2">
+        <div className="flex-1 overflow-y-auto scrollbar-hide p-1.5">
           <div className="flex flex-col h-full">
             <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 -mr-1">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {/* Başlık ve Açıklama */}
-                <div className="space-y-2">
-                  <div className="space-y-1">
+                <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <Label htmlFor="title" className="text-xs font-medium text-gray-700">Başlık *</Label>
                     <Input
                       id="title"
                       value={editingValues.title || ""}
                       onChange={(e) => handleInputChange("title", e.target.value)}
                       placeholder="Fırsat başlığını girin"
-                      className="h-8 text-xs"
+                      className="h-10 text-xs"
                     />
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <Label htmlFor="description" className="text-xs font-medium text-gray-700">Açıklama</Label>
                     <Textarea
                       id="description"
@@ -184,14 +184,14 @@ export const OpportunityDetailSheet = ({
                       onChange={(e) => handleInputChange("description", e.target.value)}
                       placeholder="Fırsat detaylarını girin"
                       rows={2}
-                      className="resize-none text-xs"
+                      className="resize-none min-h-[2.5rem] text-xs"
                     />
                   </div>
                 </div>
 
                 {/* Müşteri ve Sorumlu */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1.5">
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div className="space-y-1">
                     <FormProvider {...partnerForm}>
                       <ProposalPartnerSelect
                         partnerType="customer"
@@ -202,7 +202,7 @@ export const OpportunityDetailSheet = ({
                       />
                     </FormProvider>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <EmployeeSelector
                       value={editingValues.employee_id || opportunity.employee_id || ""}
                       onChange={handleEmployeeChange}
@@ -211,21 +211,22 @@ export const OpportunityDetailSheet = ({
                       searchPlaceholder="Çalışan ara..."
                       noResultsText="Çalışan bulunamadı"
                       showLabel={true}
+                      triggerClassName="h-10"
                     />
                   </div>
                 </div>
 
                 {/* Durum ve Öncelik */}
-                <div className="p-1.5 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-100">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1.5">
+                <div className="p-1 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-100">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="space-y-1">
                       <Label className="text-xs font-medium text-gray-600">Durum</Label>
                       <Select
                         value={currentStatus || opportunity.status}
                         onValueChange={handleStatusChange}
                         disabled={updateOpportunityMutation.isPending}
                       >
-                        <SelectTrigger className="h-9 bg-white border-gray-200 hover:border-primary/50 transition-colors w-full text-xs">
+                        <SelectTrigger className="h-10 bg-white border-gray-200 hover:border-primary/50 transition-colors w-full text-xs">
                           <SelectValue placeholder="Durum seçin" />
                         </SelectTrigger>
                         <SelectContent>
@@ -238,13 +239,13 @@ export const OpportunityDetailSheet = ({
                       </Select>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label className="text-xs font-medium text-gray-600">Öncelik</Label>
                       <Select
                         value={editingValues.priority || opportunity.priority}
                         onValueChange={(val) => handleInputChange("priority", val)}
                       >
-                        <SelectTrigger className="h-9 bg-white border-gray-200 hover:border-primary/50 transition-colors w-full text-xs">
+                        <SelectTrigger className="h-10 bg-white border-gray-200 hover:border-primary/50 transition-colors w-full text-xs">
                           <SelectValue placeholder="Öncelik seçin" />
                         </SelectTrigger>
                         <SelectContent>
@@ -258,23 +259,23 @@ export const OpportunityDetailSheet = ({
                 </div>
 
                 {/* Değer ve Para Birimi */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div className="space-y-0.5">
                     <Label className="text-xs font-medium text-gray-700">Tahmini Değer</Label>
                     <Input
                       type="number"
                       value={editingValues.value ?? opportunity.value}
                       onChange={(e) => handleInputChange("value", parseFloat(e.target.value))}
-                      className="h-8 text-xs"
+                      className="h-10 text-xs"
                     />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <Label className="text-xs font-medium text-gray-700">Para Birimi</Label>
                     <Select
                       value={editingValues.currency || opportunity.currency || "TRY"}
                       onValueChange={(val) => handleInputChange("currency", val)}
                     >
-                      <SelectTrigger className="h-8 border-gray-200 text-xs">
+                      <SelectTrigger className="h-10 border-gray-200 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -288,30 +289,30 @@ export const OpportunityDetailSheet = ({
                 </div>
 
                 {/* Kapanış Tarihi */}
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <Label className="text-xs font-medium text-gray-700">Beklenen Kapanış Tarihi</Label>
                   <Input
                     type="date"
                     value={editingValues.expected_close_date?.split('T')[0] || ""}
                     onChange={(e) => handleInputChange("expected_close_date", e.target.value)}
-                    className="h-8 text-xs"
+                    className="h-10 text-xs"
                   />
                 </div>
 
                 {/* Aktiviteler */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
                     <Label className="text-xs font-medium text-gray-700">Aktiviteler</Label>
                     <Button
                       onClick={() => setIsNewActivityDialogOpen(true)}
                       size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 text-white h-8"
+                      className="bg-blue-600 hover:bg-blue-700 text-white h-10"
                     >
                       <Plus className="h-3 w-3 mr-1" />
                       Yeni
                     </Button>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {contactHistory.length === 0 ? (
                       <p className="text-center text-gray-500 py-8 text-sm">Henüz aktivite yok</p>
                     ) : (
@@ -347,9 +348,9 @@ export const OpportunityDetailSheet = ({
                 </div>
 
                 {/* Fırsat Geçmişi */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-gray-700">Fırsat Geçmişi</Label>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <div className="flex items-start space-x-2 p-1 bg-gray-50 rounded-lg">
                       <div className="p-1 rounded-full bg-green-100">
                         <CheckCircle2 className="h-3 w-3 text-green-600" />
@@ -424,7 +425,7 @@ export const OpportunityDetailSheet = ({
         </div>
 
         {/* Footer */}
-        <SheetFooter className="flex justify-end gap-2 pt-2 px-3 pb-3 mt-auto border-t flex-shrink-0">
+        <SheetFooter className="flex justify-end gap-1.5 pt-1.5 px-1.5 pb-1.5 mt-auto border-t flex-shrink-0">
           <Button
             onClick={onClose}
             variant="outline"

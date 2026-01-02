@@ -322,22 +322,26 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
         throw new Error("Vade tarihi zorunludur");
       }
       
+      // Ciro edildi durumunda çek tipi giden olmalı
+      const finalStatus = formData.get("status") as string || "pending";
+      const finalCheckType = finalStatus === "ciro_edildi" ? "outgoing" : checkType;
+      
       const payload: any = {
         check_number: checkNumber,
         issue_date: issueDateValue,
         due_date: dueDateValue,
         amount: amount,
         bank: bank,
-        issuer_name: checkType === "outgoing" ? cleanString(companyName) : cleanString(issuerName),
+        issuer_name: finalCheckType === "outgoing" ? cleanString(companyName) : cleanString(issuerName),
         payee: payeeValue, // Zorunlu alan, boş olamaz
-        status: formData.get("status") as string || "pending",
+        status: finalStatus,
         notes: cleanString(formData.get("notes") as string),
-        check_type: checkType,
+        check_type: finalCheckType,
         company_id: userData?.company_id || null,
       };
 
       // Müşteri/tedarikçi ID'lerini ekle
-      if (checkType === "incoming") {
+      if (finalCheckType === "incoming") {
         // Gelen çek: keşideci müşteri/tedarikçi olabilir
         const issuerCustomerId = formData.get("issuer_customer_id") as string;
         const issuerSupplierId = formData.get("issuer_supplier_id") as string;
@@ -355,7 +359,7 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
       // Tahsil Edildi durumunda hesap bilgileri (gelen çek) - sadece payments tablosunda kullanılacak
       let receiptAccountType: string | null = null;
       let receiptAccountId: string | null = null;
-      if (status === "tahsil_edildi") {
+      if (finalStatus === "tahsil_edildi") {
         receiptAccountType = formData.get("receipt_account_type") as string;
         receiptAccountId = formData.get("receipt_account_id") as string;
         // Bu alanlar checks tablosunda değil, sadece payments tablosunda kullanılacak
@@ -364,7 +368,7 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
       // Ödendi durumunda hesap bilgileri (giden çek) - sadece payments tablosunda kullanılacak
       let paymentAccountType: string | null = null;
       let paymentAccountId: string | null = null;
-      if (status === "odendi") {
+      if (finalStatus === "odendi") {
         paymentAccountType = formData.get("payment_account_type") as string;
         paymentAccountId = formData.get("payment_account_id") as string;
         // Bu alanlar checks tablosunda değil, sadece payments tablosunda kullanılacak
@@ -393,14 +397,14 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
       // 2. Payment kaydı oluştur (her yeni çek için)
       // Yeni çek oluşturulduğunda her zaman payments tablosuna kayıt ekle
       if (!editingCheck?.id && insertedCheckId) {
-        const paymentDirection = checkType === "incoming" ? "incoming" : "outgoing";
-        const accountType = checkType === "incoming" ? receiptAccountType : paymentAccountType;
-        const accountId = checkType === "incoming" ? receiptAccountId : paymentAccountId;
+        const paymentDirection = finalCheckType === "incoming" ? "incoming" : "outgoing";
+        const accountType = finalCheckType === "incoming" ? receiptAccountType : paymentAccountType;
+        const accountId = finalCheckType === "incoming" ? receiptAccountId : paymentAccountId;
 
         // Müşteri veya tedarikçi ID'sini al
-        const customerId = checkType === "incoming" ?
+        const customerId = finalCheckType === "incoming" ?
           (formData.get("issuer_customer_id") as string || null) : null;
-        const supplierId = checkType === "outgoing" ?
+        const supplierId = finalCheckType === "outgoing" ?
           (formData.get("payee_supplier_id") as string || null) : null;
 
         // Payment kaydı oluştur
@@ -428,17 +432,17 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
       }
 
       // 3. Bakiye güncellemeleri yap (sadece tahsil_edildi veya ödendi durumlarında)
-      const shouldUpdateBalances = status === "tahsil_edildi" || status === "odendi";
+      const shouldUpdateBalances = finalStatus === "tahsil_edildi" || finalStatus === "odendi";
 
       if (shouldUpdateBalances && !editingCheck?.id) {
-        const paymentDirection = checkType === "incoming" ? "incoming" : "outgoing";
-        const accountType = checkType === "incoming" ? receiptAccountType : paymentAccountType;
-        const accountId = checkType === "incoming" ? receiptAccountId : paymentAccountId;
+        const paymentDirection = finalCheckType === "incoming" ? "incoming" : "outgoing";
+        const accountType = finalCheckType === "incoming" ? receiptAccountType : paymentAccountType;
+        const accountId = finalCheckType === "incoming" ? receiptAccountId : paymentAccountId;
 
         // Müşteri veya tedarikçi ID'sini al
-        const customerId = checkType === "incoming" ?
+        const customerId = finalCheckType === "incoming" ?
           (formData.get("issuer_customer_id") as string || null) : null;
-        const supplierId = checkType === "outgoing" ?
+        const supplierId = finalCheckType === "outgoing" ?
           (formData.get("payee_supplier_id") as string || null) : null;
 
         // 4. Hesap bakiyesini güncelle (eğer hesap seçildiyse)
@@ -748,15 +752,51 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
                 <SelectContent>
                   {checkType === "incoming" ? (
                     <>
-                      <SelectItem value="portfoyde">Portföyde</SelectItem>
-                      <SelectItem value="bankaya_verildi">Bankaya Verildi</SelectItem>
-                      <SelectItem value="tahsil_edildi">Tahsil Edildi</SelectItem>
-                      <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
+                      <SelectItem value="portfoyde">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">📄</span>
+                          <span>Portföyde</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="bankaya_verildi">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">🏦</span>
+                          <span>Bankaya Verildi</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="tahsil_edildi">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">✅</span>
+                          <span>Tahsil Edildi</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="karsilik_yok">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">❌</span>
+                          <span>Karşılıksız</span>
+                        </div>
+                      </SelectItem>
                     </>
                   ) : (
                     <>
-                      <SelectItem value="odenecek">Ödenecek</SelectItem>
-                      <SelectItem value="odendi">Ödendi</SelectItem>
+                      <SelectItem value="odenecek">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">⏳</span>
+                          <span>Ödenecek</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="odendi">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">✅</span>
+                          <span>Ödendi</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="ciro_edildi">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">🔄</span>
+                          <span>Ciro Edildi</span>
+                        </div>
+                      </SelectItem>
                     </>
                   )}
                 </SelectContent>
@@ -975,7 +1015,7 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} disabled={saveMutation.isPending} />
           <UnifiedDialogActionButton
-            onClick={() => {}}
+            type="submit"
             variant="primary"
             disabled={saveMutation.isPending}
             loading={saveMutation.isPending}

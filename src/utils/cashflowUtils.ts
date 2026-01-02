@@ -1,6 +1,9 @@
 // formatCurrency has been removed - use formatCurrency from @/utils/formatters directly
 
 export const getStatusConfig = (status: string) => {
+  // Eski "tedarikciye_verildi" durumunu "ciro_edildi" olarak map et
+  const normalizedStatus = status === "tedarikciye_verildi" ? "ciro_edildi" : status;
+  
   const statusConfig = {
     portfoyde: { label: "Portföyde", variant: "secondary" as const },
     bankaya_verildi: { label: "Bankaya Verildi", variant: "outline" as const },
@@ -14,6 +17,6 @@ export const getStatusConfig = (status: string) => {
     bounced: { label: "Karşılıksız", variant: "destructive" as const },
   };
   
-  return statusConfig[status as keyof typeof statusConfig] || { label: status, variant: "secondary" as const };
+  return statusConfig[normalizedStatus as keyof typeof statusConfig] || { label: status, variant: "secondary" as const };
 };
 

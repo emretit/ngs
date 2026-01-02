@@ -306,6 +306,7 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
       headerColor="green"
     >
         <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
         <div 
           className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-1"
           onKeyDown={(e) => {
@@ -503,7 +504,7 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
             <UnifiedDialogFooter>
               <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} />
               <UnifiedDialogActionButton 
-                onClick={form.handleSubmit(onSubmit)}
+                type="submit"
                 variant="primary"
               >
                 Kaydet
@@ -511,6 +512,7 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
             </UnifiedDialogFooter>
           </div>
             </div>
+        </form>
         </Form>
     </UnifiedDialog>
   );

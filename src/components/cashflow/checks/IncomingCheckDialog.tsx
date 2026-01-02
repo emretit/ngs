@@ -433,25 +433,25 @@ export default function IncomingCheckDialog({
                   <SelectContent>
                     <SelectItem value="portfoyde">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-orange-500" />
+                        <span className="text-sm">📄</span>
                         <span>Portföyde</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="bankaya_verildi">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                        <span className="text-sm">🏦</span>
                         <span>Bankaya Verildi</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="tahsil_edildi">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                        <span className="text-sm">✅</span>
                         <span>Tahsil Edildi</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="karsilik_yok">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-red-500" />
+                        <span className="text-sm">❌</span>
                         <span>Karşılıksız</span>
                       </div>
                     </SelectItem>
@@ -573,7 +573,7 @@ export default function IncomingCheckDialog({
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} disabled={saveMutation.isPending} />
           <UnifiedDialogActionButton
-            onClick={() => {}}
+            type="submit"
             variant="primary"
             disabled={saveMutation.isPending}
             loading={saveMutation.isPending}

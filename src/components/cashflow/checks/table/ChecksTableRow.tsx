@@ -49,7 +49,8 @@ export const ChecksTableRow: React.FC<ChecksTableRowProps> = ({
     );
   }
 
-  const checkTypeValue = check.check_type || "incoming";
+  // Ciro edildi durumunda çek tipi her zaman giden olmalı
+  const checkTypeValue = check.status === "ciro_edildi" ? "outgoing" : (check.check_type || "incoming");
   const statusConfig = getStatusConfig(check.status);
 
   const handleEdit = (e: React.MouseEvent) => {

@@ -724,7 +724,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               {/* Left Section - Logo and Company Info */}
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                 {/* Logo */}
-                {schema.header.showLogo && (schema.header as any).logoUrl && (
+                {schema.header.showLogo && schema.header.logoUrl && (
                   <View style={{ 
                     marginRight: 8, 
                     padding: 0, 
@@ -733,7 +733,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                   }}>
                     <Image
                       style={styles.logo}
-                      src={(schema.header as any).logoUrl}
+                      src={schema.header.logoUrl}
                     />
                   </View>
                 )}
@@ -822,17 +822,17 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
           {schema.header.logoPosition === 'center' && (
             <>
               {/* Logo */}
-              {schema.header.showLogo && (schema.header as any).logoUrl && (
-                <View style={{ 
-                  marginBottom: 15, 
-                  alignItems: 'center', 
-                  padding: 0, 
+              {schema.header.showLogo && schema.header.logoUrl && (
+                <View style={{
+                  marginBottom: 15,
+                  alignItems: 'center',
+                  padding: 0,
                   alignSelf: 'center',
                   flexShrink: 0
                 }}>
                   <Image
                     style={styles.logo}
-                    src={(schema.header as any).logoUrl}
+                    src={schema.header.logoUrl}
                   />
                 </View>
               )}
@@ -999,7 +999,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                 )}
                 
                 {/* Logo */}
-                {schema.header.showLogo && (schema.header as any).logoUrl && (
+                {schema.header.showLogo && schema.header.logoUrl && (
                   <View style={{ 
                     padding: 0, 
                     alignSelf: 'flex-start',
@@ -1007,7 +1007,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                   }}>
                     <Image
                       style={styles.logo}
-                      src={(schema.header as any).logoUrl}
+                      src={schema.header.logoUrl}
                     />
                   </View>
                 )}
@@ -1142,16 +1142,16 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                 .map(col => {
                   // Product Image Column - Special handling
                   if (col.key === 'product_image') {
-                    const imageUrl = (item as any).image_url || (item as any).product?.image_url;
+                    const imageUrl = item.image_url || item.product?.image_url;
                     // Debug: image_url durumunu logla (sadece development'ta)
                     if (process.env.NODE_ENV === 'development' && index === 0) {
                       console.log('PDF Render - Product Image Debug:', {
                         itemIndex: index,
-                        itemId: (item as any).id,
-                        productId: (item as any).product_id,
+                        itemId: item.id,
+                        productId: item.product_id,
                         hasImageUrl: !!imageUrl,
                         imageUrl: imageUrl,
-                        itemKeys: Object.keys(item as any),
+                        itemKeys: Object.keys(item),
                       });
                     }
                     return (
@@ -1354,8 +1354,8 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               {/* Technician Signature */}
               {schema.signatures.showTechnician && (
                 <View style={styles.signatureBox}>
-                  {(data as any).technicianSignature ? (
-                    <Image src={(data as any).technicianSignature} style={styles.signatureImage} />
+                  {data.technicianSignature ? (
+                    <Image src={data.technicianSignature} style={styles.signatureImage} />
                   ) : (
                     <View style={styles.signatureImage} />
                   )}
@@ -1373,8 +1373,8 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               {/* Customer Signature */}
               {schema.signatures.showCustomer && (
                 <View style={styles.signatureBox}>
-                  {(data as any).customerSignature ? (
-                    <Image src={(data as any).customerSignature} style={styles.signatureImage} />
+                  {data.customerSignature ? (
+                    <Image src={data.customerSignature} style={styles.signatureImage} />
                   ) : (
                     <View style={styles.signatureImage} />
                   )}
@@ -1393,7 +1393,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
         )}
 
         {/* Footer */}
-        {(schema.notes.footer && schema.notes.footer.trim() !== '') || (schema.notes.showFooterLogo && (schema.header as any).logoUrl) ? (
+        {(schema.notes.footer && schema.notes.footer.trim() !== '') || (schema.notes.showFooterLogo && schema.header.logoUrl) ? (
           <View fixed wrap={false} style={[
             styles.footer,
             {
@@ -1403,7 +1403,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
             }
           ]}>
             {/* Footer Logo - Header'daki logoyu kullanır */}
-            {schema.notes.showFooterLogo && (schema.header as any).logoUrl && (
+            {schema.notes.showFooterLogo && schema.header.logoUrl && (
               <View style={{
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -1417,7 +1417,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     maxHeight: 44,
                     objectFit: 'contain',
                   }}
-                  src={(schema.header as any).logoUrl}
+                  src={schema.header.logoUrl}
                 />
               </View>
             )}

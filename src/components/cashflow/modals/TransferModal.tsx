@@ -504,11 +504,7 @@ const TransferModal = ({
         <UnifiedDialogFooter className="gap-2">
           <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} className="flex-1" />
           <UnifiedDialogActionButton
-            onClick={() => {
-              if (formRef.current) {
-                formRef.current.requestSubmit();
-              }
-            }}
+            type="submit"
             variant="primary"
             disabled={isLoading}
             loading={isLoading}

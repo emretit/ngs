@@ -454,7 +454,7 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({ orderId, salesInvoiceId, on
           <UnifiedDialogCancelButton onClick={onClose}>
             İptal
           </UnifiedDialogCancelButton>
-          <UnifiedDialogActionButton onClick={() => {}} disabled={isLoading}>
+          <UnifiedDialogActionButton type="submit" disabled={isLoading}>
             {isLoading ? "Oluşturuluyor..." : "Oluştur"}
           </UnifiedDialogActionButton>
         </UnifiedDialogFooter>

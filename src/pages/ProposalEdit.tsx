@@ -205,13 +205,13 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         contact_title: "",
         offer_date: proposal.offer_date ? new Date(proposal.offer_date) : undefined,
         offer_number: proposal.number || "",
-        revision_number: (proposal as any).revision_number ?? 0, // Revizyon numarası
+        revision_number: proposal.revision_number ?? 0, // Revizyon numarası
         validity_date: proposal.valid_until ? new Date(proposal.valid_until) : undefined,
         prepared_by: initialPreparedBy,
         notes: proposal.notes || "",
-        subject: (proposal as any).subject || "", // Teklif konusu
+        subject: proposal.subject || "", // Teklif konusu
         currency: proposal.currency || "TRY",
-        exchange_rate: (proposal as any).exchange_rate || undefined, // Döviz kuru
+        exchange_rate: proposal.exchange_rate || undefined, // Döviz kuru
         discount_percentage: 0,
         vat_percentage: 20,
         payment_terms: proposal.payment_terms || "Siparişle birlikte %50 avans, teslimde kalan tutar ödenecektir.",
@@ -241,8 +241,8 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           ...item,
           id: item.id || crypto.randomUUID(),
           row_number: index + 1,
-          name: item.name || (item as any).product_name || item.description || '', // Ensure name field exists
-          description: item.description || item.name || (item as any).product_name || '', // Ensure description field exists
+          name: item.name || item.description || '', // Ensure name field exists
+          description: item.description || item.name || '', // Ensure description field exists
         }));
         setItems(initialItems);
       } else {
@@ -270,7 +270,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         const { supabase } = await import('@/integrations/supabase/client');
 
         // Orijinal proposal ID'yi belirle
-        const originalProposalId = (proposal as any).parent_proposal_id || proposal.id;
+        const originalProposalId = proposal.parent_proposal_id || proposal.id;
 
         // Tüm revizyonları getir (parent + tüm revisions)
         const { data, error } = await supabase
@@ -778,7 +778,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
       toast.loading("Revizyon oluşturuluyor...", { id: 'revision' });
 
       // Orijinal teklifi belirle (bu zaten bir revizyon mu?)
-      const originalProposalId = (proposal as any).parent_proposal_id || proposal.id;
+      const originalProposalId = proposal.parent_proposal_id || proposal.id;
 
       // Mevcut revizyonların sayısını al
       const { supabase } = await import('@/integrations/supabase/client');
@@ -791,7 +791,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
 
       const revisionData = {
         title: proposal.title,
-        subject: (proposal as any).subject,
+        subject: proposal.subject,
         description: proposal.description,
         customer_id: proposal.customer_id,
         employee_id: proposal.employee_id,
@@ -808,7 +808,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         notes: proposal.notes,
         terms: proposal.terms,
         currency: proposal.currency || 'TRY',
-        exchange_rate: (proposal as any).exchange_rate,
+        exchange_rate: proposal.exchange_rate,
         total_amount: proposal.total_amount,
         subtotal: proposal.subtotal,
         total_discount: proposal.total_discount,
@@ -821,7 +821,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         revision_number: nextRevisionNumber,
       };
 
-      const { data: newProposal, error } = await createProposal(revisionData as any);
+      const { data: newProposal, error } = await createProposal(revisionData);
 
       if (error) {
         throw error;
@@ -874,7 +874,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         notes: fullProposal.notes,
         terms: fullProposal.terms,
         currency: fullProposal.currency || 'TRY',
-        exchange_rate: (fullProposal as any).exchange_rate,
+        exchange_rate: fullProposal.exchange_rate,
         total_amount: fullProposal.total_amount,
         items: fullProposal.items?.map(item => ({
           ...item,
@@ -882,7 +882,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         })) || [],
       };
 
-      const { data: newProposal, error } = await createProposal(copyData as any);
+      const { data: newProposal, error } = await createProposal(copyData);
       
       if (error) throw error;
 
@@ -944,7 +944,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         notes: fullProposal.notes,
         terms: fullProposal.terms,
         currency: fullProposal.currency || 'TRY',
-        exchange_rate: (fullProposal as any).exchange_rate,
+        exchange_rate: fullProposal.exchange_rate,
         total_amount: fullProposal.total_amount,
         items: fullProposal.items?.map(item => ({
           ...item,
@@ -952,7 +952,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         })) || [],
       };
 
-      const { data: newProposal, error } = await createProposal(copyData as any);
+      const { data: newProposal, error } = await createProposal(copyData);
       
       if (error) throw error;
 
@@ -1005,16 +1005,16 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                   <Badge className={`${proposalStatusColors[proposal.status]} text-xs`}>
                     {proposalStatusLabels[proposal.status]}
                   </Badge>
-                  {(proposal as any).revision_number && (
-                    <Badge 
-                      variant="outline" 
+                  {proposal.revision_number && (
+                    <Badge
+                      variant="outline"
                       className={`text-[10px] px-1.5 py-0 ${
-                        (proposal as any).revision_number 
+                        proposal.revision_number
                           ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-700'
                           : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700'
                       }`}
                     >
-                      R{(proposal as any).revision_number || 0}
+                      R{proposal.revision_number || 0}
                     </Badge>
                   )}
                 </div>

@@ -194,11 +194,21 @@ export function LoansAndChecks() {
 
   const deleteCheckMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Önce ilişkili payment kayıtlarını sil
+      const { error: paymentError } = await supabase
+        .from("payments")
+        .delete()
+        .eq("check_id", id);
+
+      if (paymentError) throw paymentError;
+
+      // Sonra çek kaydını sil
       const { error } = await supabase.from("checks").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["checks"] });
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
       toast.success("Çek silindi");
       setIsDeleteCheckDialogOpen(false);
       setCheckToDelete(null);

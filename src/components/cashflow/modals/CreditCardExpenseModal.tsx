@@ -159,11 +159,7 @@ const CreditCardExpenseModal = ({ isOpen, onClose, onSuccess, cardId, cardName, 
             İptal
           </UnifiedDialogCancelButton>
           <UnifiedDialogActionButton
-            onClick={() => {
-              if (formRef.current) {
-                formRef.current.requestSubmit();
-              }
-            }}
+            type="submit"
             loading={isLoading}
             variant="primary"
             className="bg-red-600 hover:bg-red-700"

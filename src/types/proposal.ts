@@ -100,6 +100,7 @@ export interface Proposal extends Record<string, unknown> {
   employee_name?: string;
   opportunity_id?: string;
   opportunity_title?: string;
+  company_id?: string; // Company ID
   offer_date?: string; // Teklif tarihi
   valid_until?: string;
   payment_terms?: string;
@@ -117,20 +118,28 @@ export interface Proposal extends Record<string, unknown> {
   total_amount: number;
   currency?: string; // Currency
   exchange_rate?: number; // Döviz kuru
+  contact_name?: string; // Contact person name
   items?: ProposalItem[];
   attachments?: ProposalAttachment[];
-  
+
+  // Selected terms arrays
+  selected_payment_terms?: string[];
+  selected_delivery_terms?: string[];
+  selected_warranty_terms?: string[];
+  selected_pricing_terms?: string[];
+  selected_other_terms?: string[];
+
   // Additional fields used in various components
   proposal_number?: string; // Backward compatibility field
   total_value?: number; // Backward compatibility field for total_amount
   internal_notes?: string;
   discounts?: number;
   additional_charges?: number;
-  
+
   // Relations
   customer?: Customer;
   employee?: Employee;
-  
+
   // Revizyon sistemi
   parent_proposal_id?: string; // Orijinal teklif ID'si (bu bir revizyon ise)
   revision_number?: number; // Revizyon numarası (1, 2, 3...) - orijinal için null

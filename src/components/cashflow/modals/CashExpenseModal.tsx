@@ -248,7 +248,7 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} />
           <UnifiedDialogActionButton
-            onClick={() => {}}
+            type="submit"
             variant="destructive"
             disabled={isLoading}
             loading={isLoading}

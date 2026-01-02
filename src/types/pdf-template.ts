@@ -172,6 +172,7 @@ export interface QuoteData extends Record<string, unknown> {
     discount_rate?: number;
     total: number;
     image_url?: string;
+    product_id?: string;
     product?: {
       image_url?: string;
     };
@@ -189,6 +190,8 @@ export interface QuoteData extends Record<string, unknown> {
   other_terms?: string;
   notes?: string;
   created_at: string;
+  technicianSignature?: string;
+  customerSignature?: string;
 }
 
 export interface PdfExportOptions {

@@ -301,7 +301,7 @@ export default function ReceiptVoucherDialog({
           <UnifiedDialogFooter>
             <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} />
             <UnifiedDialogActionButton
-              onClick={form.handleSubmit(onSubmit)}
+              type="submit"
               variant="primary"
               disabled={saveMutation.isPending}
               loading={saveMutation.isPending}

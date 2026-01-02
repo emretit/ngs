@@ -319,7 +319,7 @@ const WorkOrderForm: React.FC<WorkOrderFormProps> = ({ workOrderId, onClose }) =
           <UnifiedDialogCancelButton onClick={onClose}>
             İptal
           </UnifiedDialogCancelButton>
-          <UnifiedDialogActionButton onClick={handleSubmit} disabled={isLoading}>
+          <UnifiedDialogActionButton type="submit" disabled={isLoading}>
             {isLoading ? "Kaydediliyor..." : workOrderId ? "Güncelle" : "Oluştur"}
           </UnifiedDialogActionButton>
         </UnifiedDialogFooter>

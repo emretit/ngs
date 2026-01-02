@@ -65,8 +65,10 @@ export default function CheckTransferDialog({
       if (!transferDate) throw new Error("Lütfen ciro tarihi seçin");
 
       // Çek kaydını güncelle
+      // Ciro edildi durumunda çek tipi giden olmalı
       const updateData = {
-        status: "tedarikciye_verildi",
+        status: "ciro_edildi",
+        check_type: "outgoing",
         transferred_to_supplier_id: selectedSupplierId,
         transferred_date: format(transferDate, "yyyy-MM-dd")
       };
@@ -84,10 +86,50 @@ export default function CheckTransferDialog({
         throw new Error(updateError.message || "Çek güncellenirken hata oluştu");
       }
 
+      // Payment kaydı oluştur - Ciro edilen tedarikçiye ödeme yapılmış demektir
+      const paymentDate = new Date(transferDate).toISOString();
+
+      const paymentData: any = {
+        amount: check.amount,
+        payment_type: "cek",
+        description: `Çek Ciro - Çek No: ${check.check_number} - ${check.bank}`,
+        payment_date: paymentDate,
+        supplier_id: selectedSupplierId,
+        payment_direction: "outgoing",
+        currency: "TRY",
+        company_id: check.company_id || null,
+        reference_note: `Ciro - ${check.check_number}`,
+        check_id: check.id,
+      };
+
+      const { error: paymentError } = await supabase.from("payments").insert(paymentData);
+      if (paymentError) {
+        console.error("Payment error:", paymentError);
+        throw new Error(paymentError.message || "Ödeme kaydı oluşturulurken hata oluştu");
+      }
+
+      // Tedarikçi bakiyesini güncelle - Ciro edilen tedarikçiye borç ödenmiş olur
+      const { data: supplierData } = await supabase
+        .from("suppliers")
+        .select("balance")
+        .eq("id", selectedSupplierId)
+        .single();
+
+      if (supplierData) {
+        await supabase
+          .from("suppliers")
+          .update({
+            balance: supplierData.balance + check.amount,
+          })
+          .eq("id", selectedSupplierId);
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["checks"] });
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
       toast.success("Çek başarıyla ciro edildi", { duration: 2000 });
       onOpenChange(false);
       onSuccess?.();

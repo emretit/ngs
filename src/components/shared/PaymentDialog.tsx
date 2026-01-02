@@ -334,7 +334,7 @@ export function PaymentDialog({ open, onOpenChange, contact, contactType }: Paym
           <UnifiedDialogFooter>
             <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} />
             <UnifiedDialogActionButton
-              onClick={() => form.handleSubmit(onSubmit)()}
+              type="submit"
               variant="primary"
               disabled={form.formState.isSubmitting}
               loading={form.formState.isSubmitting}

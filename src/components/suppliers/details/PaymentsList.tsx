@@ -54,15 +54,12 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [typeFilter, setTypeFilter] = useState<TransactionType | 'all'>('all');
-  // Bulunduğu yılın başı için varsayılan tarih filtresi
-  const [startDate, setStartDate] = useState<Date | undefined>(() => {
-    const now = new Date();
-    const yearStart = new Date(now.getFullYear(), 0, 1); // Yılın ilk günü (1 Ocak)
-    return yearStart;
-  });
-  const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
+  // Tarih filtresi başlangıçta boş - kullanıcı isterse filtreler
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
+  const [visibleCount, setVisibleCount] = useState(20); // Infinite scroll için
   const { exchangeRates, convertCurrency } = useExchangeRates();
   const { userData, loading: userLoading } = useCurrentUser();
 
@@ -279,6 +276,51 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
           // Supplier bilgileri (özellikle balance) güncellendiğinde query'leri invalidate et
           if (supplier.id) {
             queryClient.invalidateQueries({ queryKey: ['supplier', supplier.id] });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'checks',
+          filter: `issuer_supplier_id=eq.${supplier.id}`
+        },
+        () => {
+          // Tedarikçinin issuer olduğu çekler değiştiğinde query'leri invalidate et
+          if (supplier.id) {
+            queryClient.invalidateQueries({ queryKey: ['supplier-payments', supplier.id, userData?.company_id] });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'checks',
+          filter: `payee_supplier_id=eq.${supplier.id}`
+        },
+        () => {
+          // Tedarikçinin payee olduğu çekler değiştiğinde query'leri invalidate et
+          if (supplier.id) {
+            queryClient.invalidateQueries({ queryKey: ['supplier-payments', supplier.id, userData?.company_id] });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'checks',
+          filter: `transferred_to_supplier_id=eq.${supplier.id}`
+        },
+        () => {
+          // Tedarikçiye transfer edilen çekler değiştiğinde query'leri invalidate et
+          if (supplier.id) {
+            queryClient.invalidateQueries({ queryKey: ['supplier-payments', supplier.id, userData?.company_id] });
           }
         }
       )
@@ -540,7 +582,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
   }, [getUsdAmount]);
 
   // Kümülatif bakiye hesapla - Gerçek bakiye her zaman tüm işlemlere göre hesaplanır (filtreden bağımsız)
-  const transactionsWithBalance = useMemo(() => {
+  const allTransactionsWithBalance = useMemo(() => {
     // ADIM 1: Tüm işlemleri tarihe göre sırala (en eski en önce)
     const allSortedTransactions = [...allTransactions].sort((a, b) => {
       const dateA = new Date(a.date).getTime();
@@ -639,6 +681,19 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     // ADIM 5: En yeni en üstte olacak şekilde ters çevir
     return result.reverse();
   }, [filteredTransactions, allTransactions, currentBalance, getCreditDebit]);
+
+  // Görüntülenen işlemler (infinite scroll için)
+  const transactionsWithBalance = useMemo(() => {
+    return allTransactionsWithBalance.slice(0, visibleCount);
+  }, [allTransactionsWithBalance, visibleCount]);
+
+  // Daha fazla yüklenebilir mi?
+  const hasMore = allTransactionsWithBalance.length > visibleCount;
+
+  // Daha fazla yükle
+  const loadMore = useCallback(() => {
+    setVisibleCount(prev => prev + 20);
+  }, []);
 
   // Gerçek bakiye: Tüm işlemlerdeki en son (en yeni) işlemin bakiyesi
   const calculatedBalance = useMemo(() => {
@@ -1121,6 +1176,19 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
             </div>
           </div>
         </div>
+        
+        {/* Daha Fazla Yükle Butonu */}
+        {hasMore && (
+          <div className="flex justify-center py-4 border-t border-gray-200">
+            <Button
+              variant="outline"
+              onClick={loadMore}
+              className="text-sm"
+            >
+              Daha Fazla Yükle ({allTransactionsWithBalance.length - visibleCount} işlem kaldı)
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Confirmation Dialog */}

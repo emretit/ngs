@@ -3,6 +3,7 @@ import { RouteConfig } from "./types";
 
 // Lazy load all service pages
 const NewServiceRequest = React.lazy(() => import("@/pages/service/NewServiceRequest"));
+const OrderToServiceCreate = React.lazy(() => import("@/pages/service/OrderToServiceCreate"));
 const ServiceEdit = React.lazy(() => import("@/pages/service/ServiceEdit"));
 const ServiceDetail = React.lazy(() => import("@/pages/service/ServiceDetail"));
 const ServiceReports = React.lazy(() => import("@/pages/service/ServiceReports"));
@@ -51,6 +52,7 @@ export const serviceRoutes: RouteConfig[] = [
   
   // CRUD İşlemleri
   { path: "/service/new", component: NewServiceRequest, protected: true },
+  { path: "/service/create-from-order", component: OrderToServiceCreate, protected: true },
   { path: "/service/detail/:id", component: ServiceDetail, protected: true },
   { path: "/service/edit/:id", component: ServiceEdit, protected: true },
   

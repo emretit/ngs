@@ -78,8 +78,11 @@ export const usePaymentsRealtime = (customer: Customer) => {
         },
         () => {
           // Müşterinin issuer olduğu çekler değiştiğinde query'leri invalidate et
+          // Çek eklendiğinde payments tablosuna da kayıt oluşuyor, bu yüzden payments query'lerini de invalidate et
           if (customer.id) {
+            queryClient.invalidateQueries({ queryKey: ['customer-payments', customer.id, userData?.company_id] });
             queryClient.invalidateQueries({ queryKey: ['customer-checks', customer.id, userData?.company_id] });
+            queryClient.invalidateQueries({ queryKey: ['customer', customer.id] });
           }
         }
       )
@@ -93,8 +96,11 @@ export const usePaymentsRealtime = (customer: Customer) => {
         },
         () => {
           // Müşterinin payee olduğu çekler değiştiğinde query'leri invalidate et
+          // Çek eklendiğinde payments tablosuna da kayıt oluşuyor, bu yüzden payments query'lerini de invalidate et
           if (customer.id) {
+            queryClient.invalidateQueries({ queryKey: ['customer-payments', customer.id, userData?.company_id] });
             queryClient.invalidateQueries({ queryKey: ['customer-checks', customer.id, userData?.company_id] });
+            queryClient.invalidateQueries({ queryKey: ['customer', customer.id] });
           }
         }
       )

@@ -7,6 +7,7 @@ export type OrderStatus =
   | 'shipped'      // Kargoda
   | 'delivered'    // Teslim Edildi
   | 'completed'    // Tamamlandı
+  | 'serviced'     // Servise Çevrildi
   | 'cancelled';   // İptal Edildi
 
 export interface OrderItem {
@@ -168,6 +169,7 @@ export interface OrderStats {
   shipped: number;
   delivered: number;
   completed: number;
+  serviced: number;
   cancelled: number;
   total_value: number;
 }

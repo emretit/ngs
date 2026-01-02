@@ -69,8 +69,8 @@ const OrdersContent = ({
   };
 
   const handleConvertToService = (order: Order) => {
-    // TODO: Navigate to service creation
-    console.log("Convert to service:", order);
+    // Navigate to service creation page with order ID
+    navigate(`/service/create-from-order?orderId=${order.id}`);
   };
 
   const handlePrintOrder = (order: Order) => {

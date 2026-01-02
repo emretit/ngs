@@ -7,14 +7,18 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CreditCard, FileText, Receipt, MoreHorizontal, Edit, FileSpreadsheet, ArrowLeftRight } from "lucide-react";
+import { CreditCard, FileText, Receipt, MoreHorizontal, Edit, FileSpreadsheet, ArrowLeftRight, ChevronRight } from "lucide-react";
 import IncomingCheckDialog from "@/components/cashflow/checks/IncomingCheckDialog";
 import OutgoingCheckDialog from "@/components/cashflow/checks/OutgoingCheckDialog";
+import CheckTransferDialog from "@/components/cashflow/checks/CheckTransferDialog";
 import BalanceAdjustmentDialog from "./BalanceAdjustmentDialog";
 import ReceiptVoucherDialog from "./ReceiptVoucherDialog";
 import CariVirmanDialog from "./CariVirmanDialog";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentMethod {
@@ -85,9 +89,11 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false, custom
   const [open, setOpen] = useState(false);
   const [incomingCheckDialogOpen, setIncomingCheckDialogOpen] = useState(false);
   const [outgoingCheckDialogOpen, setOutgoingCheckDialogOpen] = useState(false);
+  const [checkTransferDialogOpen, setCheckTransferDialogOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
   const [voucherDialogOpen, setVoucherDialogOpen] = useState(false);
   const [cariVirmanDialogOpen, setCariVirmanDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   // Müşteri bilgilerini çek
   const { data: customerData } = useQuery({
@@ -122,18 +128,9 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false, custom
   });
 
   const handleMethodSelect = (method: PaymentMethod) => {
-    // Çek seçildiğinde dialog aç
+    // Çek seçildiğinde - alt menü gösterilecek, bu fonksiyon kullanılmayacak
     if (method.type === "cek") {
-      // Müşteri varsa gelen çek, tedarikçi varsa giden çek
-      if (customerId) {
-        setIncomingCheckDialogOpen(true);
-      } else if (supplierId) {
-        setOutgoingCheckDialogOpen(true);
-      } else {
-        // Varsayılan olarak gelen çek
-        setIncomingCheckDialogOpen(true);
-      }
-      setOpen(false);
+      // Alt menüden gelecek
       return;
     }
 
@@ -163,6 +160,17 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false, custom
     setOpen(false);
   };
 
+  const handleCheckSubMenuSelect = (type: "incoming" | "outgoing" | "portfolio") => {
+    if (type === "incoming") {
+      setIncomingCheckDialogOpen(true);
+    } else if (type === "outgoing") {
+      setOutgoingCheckDialogOpen(true);
+    } else if (type === "portfolio") {
+      setCheckTransferDialogOpen(true);
+    }
+    setOpen(false);
+  };
+
   return (
     <>
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -180,25 +188,67 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false, custom
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Ödeme Türü</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {paymentMethods.map((method) => (
-          <DropdownMenuItem
-            key={method.id}
-            onClick={() => handleMethodSelect(method)}
-            className="gap-2 cursor-pointer"
-          >
-            <div className="flex-shrink-0">
-              {method.icon}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm">
-                {method.id === "hesap" 
-                  ? method.description
-                  : method.label
-                }
+        {paymentMethods.map((method) => {
+          // Çek için alt menü göster
+          if (method.type === "cek") {
+            return (
+              <DropdownMenuSub key={method.id}>
+                <DropdownMenuSubTrigger className="gap-2 cursor-pointer">
+                  <div className="flex-shrink-0">
+                    {method.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm">{method.label}</div>
+                  </div>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem
+                    onClick={() => handleCheckSubMenuSelect("incoming")}
+                    className="cursor-pointer"
+                  >
+                    <FileText className="h-4 w-4 mr-2 text-green-500" />
+                    Gelen Çek
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleCheckSubMenuSelect("outgoing")}
+                    className="cursor-pointer"
+                  >
+                    <FileText className="h-4 w-4 mr-2 text-red-500" />
+                    Giden Çek
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleCheckSubMenuSelect("portfolio")}
+                    className="cursor-pointer"
+                  >
+                    <FileText className="h-4 w-4 mr-2 text-blue-500" />
+                    Portföyden Çek
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            );
+          }
+
+          // Diğer seçenekler normal göster
+          return (
+            <DropdownMenuItem
+              key={method.id}
+              onClick={() => handleMethodSelect(method)}
+              className="gap-2 cursor-pointer"
+            >
+              <div className="flex-shrink-0">
+                {method.icon}
               </div>
-            </div>
-          </DropdownMenuItem>
-        ))}
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm">
+                  {method.id === "hesap" 
+                    ? method.description
+                    : method.label
+                  }
+                </div>
+              </div>
+            </DropdownMenuItem>
+          );
+        })}
 
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Bakiye</DropdownMenuLabel>
@@ -242,6 +292,26 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false, custom
       defaultSupplierId={supplierId}
       onSaved={() => {
         setOutgoingCheckDialogOpen(false);
+      }}
+    />
+
+    {/* Çek Ciro Dialogu - Portföyden çek seçimi */}
+    <CheckTransferDialog
+      open={checkTransferDialogOpen}
+      onOpenChange={setCheckTransferDialogOpen}
+      check={null}
+      allowCheckSelection={true}
+      defaultSupplierId={supplierId}
+      onSuccess={() => {
+        setCheckTransferDialogOpen(false);
+        queryClient.invalidateQueries({ queryKey: ["checks"] });
+        queryClient.invalidateQueries({ queryKey: ["payments"] });
+        if (customerId) {
+          queryClient.invalidateQueries({ queryKey: ["customer-payments", customerId] });
+        }
+        if (supplierId) {
+          queryClient.invalidateQueries({ queryKey: ["supplier-payments", supplierId] });
+        }
       }}
     />
 

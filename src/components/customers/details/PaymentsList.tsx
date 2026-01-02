@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Customer } from "@/types/customer";
 import { Payment } from "@/types/payment";
 import { TransactionType, getCreditDebit } from "./payments/utils/paymentUtils";
@@ -16,6 +16,7 @@ import { useDeletePayment } from "./payments/hooks/useDeletePayment";
 import { usePaymentsRealtime } from "./payments/hooks/usePaymentsRealtime";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { Button } from "@/components/ui/button";
 
 interface PaymentsListProps {
   customer: Customer;
@@ -24,15 +25,12 @@ interface PaymentsListProps {
 
 export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
   const [typeFilter, setTypeFilter] = useState<TransactionType | 'all'>('all');
-  // Bulunduğu yılın başı için varsayılan tarih filtresi
-  const [startDate, setStartDate] = useState<Date | undefined>(() => {
-    const now = new Date();
-    const yearStart = new Date(now.getFullYear(), 0, 1); // Yılın ilk günü (1 Ocak)
-    return yearStart;
-  });
-  const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
+  // Tarih filtresi başlangıçta boş - kullanıcı isterse filtreler
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
+  const [visibleCount, setVisibleCount] = useState(20); // Infinite scroll için
 
   // Customer balance
   const currentBalance = useCustomerBalance(customer);
@@ -65,11 +63,24 @@ export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
   });
 
   // Transactions with balance
-  const transactionsWithBalance = useTransactionsWithBalance({
+  const allTransactionsWithBalance = useTransactionsWithBalance({
     allTransactions,
     filteredTransactions,
     currentBalance,
   });
+
+  // Görüntülenen işlemler (infinite scroll için)
+  const transactionsWithBalance = useMemo(() => {
+    return allTransactionsWithBalance.slice(0, visibleCount);
+  }, [allTransactionsWithBalance, visibleCount]);
+
+  // Daha fazla yüklenebilir mi?
+  const hasMore = allTransactionsWithBalance.length > visibleCount;
+
+  // Daha fazla yükle
+  const loadMore = useCallback(() => {
+    setVisibleCount(prev => prev + 20);
+  }, []);
 
   // Gerçek bakiye: Tüm işlemlerdeki en son (en yeni) işlemin bakiyesi
   const calculatedBalance = useMemo(() => {
@@ -143,6 +154,19 @@ export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
             </div>
           </div>
         </div>
+        
+        {/* Daha Fazla Yükle Butonu */}
+        {hasMore && (
+          <div className="flex justify-center py-4 border-t border-gray-200">
+            <Button
+              variant="outline"
+              onClick={loadMore}
+              className="text-sm"
+            >
+              Daha Fazla Yükle ({allTransactionsWithBalance.length - visibleCount} işlem kaldı)
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Confirmation Dialog */}

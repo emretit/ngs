@@ -74,6 +74,8 @@ const OrderCard = ({
         return "bg-emerald-100 text-emerald-800";
       case "completed":
         return "bg-teal-100 text-teal-800";
+      case "serviced":
+        return "bg-indigo-100 text-indigo-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
       default:
@@ -95,6 +97,8 @@ const OrderCard = ({
         return "Teslim Edildi";
       case "completed":
         return "Tamamlandı";
+      case "serviced":
+        return "Servise Çevrildi";
       case "cancelled":
         return "İptal Edildi";
       default:

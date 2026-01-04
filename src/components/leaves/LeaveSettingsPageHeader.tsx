@@ -61,7 +61,7 @@ const LeaveSettingsPageHeader = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate("/employees/leaves")}
+          onClick={() => navigate(-1)}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />

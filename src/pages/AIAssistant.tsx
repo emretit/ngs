@@ -81,12 +81,12 @@ export default function AIAssistant() {
   
   const { toast } = useToast();
   const { user } = useAuth();
-  const { company } = useCompany();
+  const { companyId } = useCompany();
   
   const createConversation = useCreateConversation();
   const saveMessage = useSaveMessage();
   const autoTitle = useAutoTitleConversation();
-  const { data: conversations = [] } = useUserConversations(user?.id, company?.id);
+  const { data: conversations = [] } = useUserConversations(user?.id, companyId);
   const deleteConversation = useDeleteConversation();
 
   // Auto-scroll to bottom on new messages
@@ -106,7 +106,7 @@ export default function AIAssistant() {
     const text = messageText || input.trim();
     if (!text || isLoading) return;
 
-    if (!user?.id || !company?.id) {
+    if (!user?.id || !companyId) {
       toast({
         title: "Hata",
         description: "Kullanıcı oturumu bulunamadı",
@@ -133,7 +133,7 @@ export default function AIAssistant() {
       if (!conversationId) {
         const newConv = await createConversation.mutateAsync({
           userId: user.id,
-          companyId: company.id,
+          companyId: companyId,
           title: text.slice(0, 50)
         });
         conversationId = newConv.id;
@@ -199,7 +199,7 @@ export default function AIAssistant() {
 
         const assistantMessage: Message = {
           role: "assistant",
-          content: aiResponse.content || "Üzgünüm, bir yanıt oluşturamadım.",
+          content: aiResponse || "Üzgünüm, bir yanıt oluşturamadım.",
           timestamp: new Date()
         };
 
@@ -267,7 +267,7 @@ export default function AIAssistant() {
 
   const handleDownloadFile = async (file: GeneratedFile) => {
     try {
-      await downloadFile(file.url, file.filename);
+      downloadFile(file);
       toast({
         title: "Başarılı",
         description: "Dosya indiriliyor..."

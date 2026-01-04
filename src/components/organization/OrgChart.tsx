@@ -26,30 +26,9 @@ type ViewMode = 'tree' | 'list' | 'grid' | 'hierarchy' | 'table';
 type SortField = 'name' | 'position' | 'department' | 'email' | 'status';
 type SortOrder = 'asc' | 'desc';
 
-interface EmployeeNode {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email?: string;
-  position?: string;
-  department?: string;
-  department_id?: string | null;
-  manager_id?: string | null;
-  status?: string;
-  children?: EmployeeNode[];
-  avatar_url?: string | null;
-}
-
-interface DepartmentNode {
-  id: string;
-  name: string;
-  description?: string | null;
-  head_id?: string | null;
-  head?: EmployeeNode | null;
-  employees: EmployeeNode[];
-  parent_id?: string | null;
-  children?: DepartmentNode[];
-}
+// Local type aliases to avoid conflict with imported types
+type LocalEmployeeNode = EmployeeNode;
+type LocalDepartmentNode = DepartmentNode;
 
 interface OrgChartProps {
   searchQuery?: string;

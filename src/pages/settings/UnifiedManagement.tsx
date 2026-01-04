@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Shield, Workflow, Plus, Loader2, Receipt, Users2, FileCheck, ShoppingCart, ArrowRight } from "lucide-react";
+import { Users, Shield, Workflow, Plus, Loader2, Receipt, Users2, FileCheck, ShoppingCart, ArrowRight, Calendar } from "lucide-react";
 import { UserManagementNew } from "@/components/settings/users/UserManagementNew";
 import { RoleManagementPanel } from "@/components/settings/users/RoleManagementPanel";
 import { useQuery } from "@tanstack/react-query";

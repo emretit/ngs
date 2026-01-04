@@ -340,6 +340,7 @@ export const useOrders = () => {
         shipped: 0,
         delivered: 0,
         completed: 0,
+        serviced: 0,
         cancelled: 0,
         total_value: 0
       };
@@ -360,6 +361,7 @@ export const useOrders = () => {
         shipped: 0,
         delivered: 0,
         completed: 0,
+        serviced: 0,
         cancelled: 0,
         total_value: 0
       };
@@ -373,6 +375,7 @@ export const useOrders = () => {
       shipped: 0,
       delivered: 0,
       completed: 0,
+      serviced: 0,
       cancelled: 0,
       total_value: 0
     };

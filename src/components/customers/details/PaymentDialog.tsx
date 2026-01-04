@@ -287,7 +287,7 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
       // 5. Otomatik FIFO tahsis (sadece gelen ödemeler için)
       if (data.payment_direction === "incoming" && insertedPayment.id) {
         try {
-          await autoAllocatePayment.mutateAsync(insertedPayment.id, customer.id, undefined);
+          await autoAllocatePayment.mutateAsync({ paymentId: insertedPayment.id, customerId: customer.id });
         } catch (allocError) {
           // Tahsis hatası ödeme kaydını engellemez, sadece log'lar
           console.warn("Otomatik fatura tahsisinde hata:", allocError);

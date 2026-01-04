@@ -9,9 +9,9 @@ import { format } from "date-fns";
 interface ServiceDateInfoCardProps {
   formData: {
     service_reported_date: Date;
-    service_due_date: Date | null;
-    service_start_date: Date | null;
-    service_end_date: Date | null;
+    service_due_date?: Date | null;
+    service_start_date?: Date | null;
+    service_end_date?: Date | null;
   };
   handleInputChange: (field: string, value: any) => void;
   errors?: Record<string, string>;

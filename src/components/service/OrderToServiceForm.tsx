@@ -157,7 +157,7 @@ const OrderToServiceForm: React.FC<OrderToServiceFormProps> = ({ orderId, order 
   useEffect(() => {
     if (order) {
       // Parse items from order_items
-      const orderItems = order.order_items || [];
+      const orderItems = (order as any).order_items || order.items || [];
       const lineItems: LineItem[] = orderItems.map((item: any, index: number) => ({
         id: item.id || `item-${index}`,
         row_number: index + 1,
@@ -179,7 +179,7 @@ const OrderToServiceForm: React.FC<OrderToServiceFormProps> = ({ orderId, order 
       // Pre-populate service request data from order
       const customer = order.customer;
       setFormData({
-        service_title: order.subject || order.title || `${order.order_number} Servis Talebi`,
+        service_title: (order as any).subject || order.title || `${order.order_number} Servis Talebi`,
         service_request_description: order.description || order.notes || "",
         customer_id: order.customer_id || "",
         service_priority: 'medium',

@@ -228,10 +228,10 @@ export async function createProposal(proposal: Partial<Proposal>) {
       terms: proposal.terms,
       currency: proposal.currency || 'TRY',
       exchange_rate: proposal.exchange_rate || null,
-      subtotal: proposal.subtotal || 0,
-      total_discount: proposal.total_discount || 0,
-      total_tax: proposal.total_tax || 0,
-      total_amount: proposal.total_amount || 0,
+      subtotal: Number(proposal.subtotal) || 0,
+      total_discount: Number(proposal.total_discount) || 0,
+      total_tax: Number(proposal.total_tax) || 0,
+      total_amount: Number(proposal.total_amount) || 0,
       contact_name: proposal.contact_name || null,
       history: JSON.stringify([historyEntry]) as unknown as Json,
       created_at: new Date().toISOString(),
@@ -509,10 +509,10 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
     if (proposal.terms !== undefined) updateData.terms = proposal.terms;
     if (proposal.currency !== undefined) updateData.currency = proposal.currency;
     if (proposal.exchange_rate !== undefined) updateData.exchange_rate = proposal.exchange_rate;
-    if (proposal.subtotal !== undefined) updateData.subtotal = proposal.subtotal;
-    if (proposal.total_discount !== undefined) updateData.total_discount = proposal.total_discount;
-    if (proposal.total_tax !== undefined) updateData.total_tax = proposal.total_tax;
-    if (proposal.total_amount !== undefined) updateData.total_amount = proposal.total_amount;
+    if (proposal.subtotal !== undefined) updateData.subtotal = Number(proposal.subtotal);
+    if (proposal.total_discount !== undefined) updateData.total_discount = Number(proposal.total_discount);
+    if (proposal.total_tax !== undefined) updateData.total_tax = Number(proposal.total_tax);
+    if (proposal.total_amount !== undefined) updateData.total_amount = Number(proposal.total_amount);
     if (proposal.contact_name !== undefined) updateData.contact_name = proposal.contact_name;
     
     // Handle complex types with proper serialization

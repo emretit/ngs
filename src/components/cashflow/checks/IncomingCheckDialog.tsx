@@ -338,7 +338,7 @@ export default function IncomingCheckDialog({
     setAmount("");
     setIssueDate(undefined);
     setDueDate(undefined);
-    setPaymentAccountType("");
+    setPaymentAccountType("bank");
     setPaymentAccountId("");
     setNotes("");
     setPortfolio(true);

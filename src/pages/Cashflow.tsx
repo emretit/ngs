@@ -2,8 +2,7 @@ import { memo, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAllAccounts } from "@/hooks/useAccountsData";
 import { useCashflowCategories } from "@/hooks/useCashflowCategories";
-import { DollarSign, Building, Wallet, CreditCard, Receipt, Calculator, Plus, Calendar, TrendingUp, ArrowRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DollarSign, Building, Wallet, CreditCard, Receipt, Calculator, Plus, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency } from "@/utils/formatters";
@@ -384,62 +383,6 @@ const Cashflow = () => {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* İstatistik Kartları - Modernize edilmiş */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Total Accounts */}
-          <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Building className="h-4 w-4 text-blue-500" />
-                Toplam Hesaplar
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{stats.totalAccounts}</div>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <TrendingUp className="h-3 w-3 text-green-500" />
-                <span>Aktif hesap sayısı</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Total Balance */}
-          <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-green-500" />
-                Toplam Bakiye
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(stats.totalBalance, 'TRY')}
-              </div>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <DollarSign className="h-3 w-3 text-green-500" />
-                <span>Tüm hesaplardaki toplam</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Categories */}
-          <Card className="border-l-4 border-l-purple-500 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Receipt className="h-4 w-4 text-purple-500" />
-                Kategoriler
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-purple-600">{stats.totalCategories}</div>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <TrendingUp className="h-3 w-3 text-green-500" />
-                <span>{stats.incomeCategories} gelir, {stats.expenseCategories} gider</span>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </>

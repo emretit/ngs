@@ -403,10 +403,25 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      card_name: "",
+      bank_name: "",
+      card_number: "",
+      card_type: "kredi",
+      expiry_date: "",
+      expiry_date_date: undefined,
+      credit_limit: "",
+      currency: "TRY",
+      notes: ""
+    });
+  };
+
   return (
     <UnifiedDialog
       isOpen={isOpen}
       onClose={onClose}
+      onClosed={resetForm}
       title={mode === 'edit' ? "Kredi Kartını Düzenle" : "Yeni Kredi Kartı"}
       maxWidth="md"
       headerColor="purple"

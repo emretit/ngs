@@ -65,26 +65,68 @@ const ServicesTableHeader: React.FC<ServicesTableHeaderProps> = ({
             />
           </TableHead>
         )}
-        {renderSortableHeader("Servis No", "service_number", "🔢")}
-        {renderSortableHeader("Başlık", "service_title", "📋")}
-        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left w-[120px] cursor-pointer hover:bg-slate-200" onClick={() => handleSort && handleSort("service_number")}>
+          <div className="flex items-center gap-1">
+            <span className="text-lg mr-2">🔢</span>
+            <span>Servis No</span>
+            {getSortIcon("service_number")}
+          </div>
+        </TableHead>
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left max-w-[200px] cursor-pointer hover:bg-slate-200" onClick={() => handleSort && handleSort("service_title")}>
+          <div className="flex items-center gap-1">
+            <span className="text-lg mr-2">📋</span>
+            <span>Başlık</span>
+            {getSortIcon("service_title")}
+          </div>
+        </TableHead>
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left max-w-[180px]">
           <div className="flex items-center gap-1">
             <span className="text-lg mr-2">👤</span>
             <span>Müşteri</span>
           </div>
         </TableHead>
-        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left max-w-[150px]">
           <div className="flex items-center gap-1">
             <span className="text-lg mr-2">📍</span>
             <span>Konum</span>
           </div>
         </TableHead>
-        {renderSortableHeader("Durum", "service_status", "📊", "text-center")}
-        {renderSortableHeader("Öncelik", "service_priority", "⭐", "text-center")}
-        {renderSortableHeader("Teknisyen", "assigned_technician", "🔧")}
-        {renderSortableHeader("Servis Tarihi", "service_due_date", "📅", "text-center")}
-        {renderSortableHeader("Oluşturulma", "created_at", "📅", "text-center")}
-        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center w-[130px] cursor-pointer hover:bg-slate-200" onClick={() => handleSort && handleSort("service_status")}>
+          <div className="flex items-center gap-1 justify-center">
+            <span className="text-lg mr-2">📊</span>
+            <span>Durum</span>
+            {getSortIcon("service_status")}
+          </div>
+        </TableHead>
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center w-[100px] cursor-pointer hover:bg-slate-200" onClick={() => handleSort && handleSort("service_priority")}>
+          <div className="flex items-center gap-1 justify-center">
+            <span className="text-lg mr-2">⭐</span>
+            <span>Öncelik</span>
+            {getSortIcon("service_priority")}
+          </div>
+        </TableHead>
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left max-w-[140px] cursor-pointer hover:bg-slate-200" onClick={() => handleSort && handleSort("assigned_technician")}>
+          <div className="flex items-center gap-1">
+            <span className="text-lg mr-2">🔧</span>
+            <span>Teknisyen</span>
+            {getSortIcon("assigned_technician")}
+          </div>
+        </TableHead>
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center w-[120px] cursor-pointer hover:bg-slate-200" onClick={() => handleSort && handleSort("service_due_date")}>
+          <div className="flex items-center gap-1 justify-center">
+            <span className="text-lg mr-2">📅</span>
+            <span>Servis Tarihi</span>
+            {getSortIcon("service_due_date")}
+          </div>
+        </TableHead>
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center w-[120px] cursor-pointer hover:bg-slate-200" onClick={() => handleSort && handleSort("created_at")}>
+          <div className="flex items-center gap-1 justify-center">
+            <span className="text-lg mr-2">📅</span>
+            <span>Oluşturulma</span>
+            {getSortIcon("created_at")}
+          </div>
+        </TableHead>
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center w-[120px]">
           <div className="flex items-center justify-center gap-1">
             <span className="text-lg mr-2">⚙️</span>
             <span>İşlemler</span>

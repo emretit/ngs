@@ -44,25 +44,21 @@ const ServiceContent = ({
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="pb-6">
-        <div className="-mx-4">
-          <div className="px-4">
-            <ServicesTable
-              services={services}
-              isLoading={isLoading}
-              onSelectService={handleSelectService}
-              searchQuery={searchQuery}
-              selectedStatus={selectedStatus}
-              selectedPriority={selectedPriority}
-              selectedTechnician={selectedTechnician}
-              selectedServices={selectedServices}
-              onToggleServiceSelection={onToggleServiceSelection}
-              onSelectAll={onSelectAll}
-              technicians={technicians}
-              onDeleteService={onDeleteService}
-            />
-          </div>
-        </div>
+      <div className="overflow-x-auto">
+        <ServicesTable
+          services={services}
+          isLoading={isLoading}
+          onSelectService={handleSelectService}
+          searchQuery={searchQuery}
+          selectedStatus={selectedStatus}
+          selectedPriority={selectedPriority}
+          selectedTechnician={selectedTechnician}
+          selectedServices={selectedServices}
+          onToggleServiceSelection={onToggleServiceSelection}
+          onSelectAll={onSelectAll}
+          technicians={technicians}
+          onDeleteService={onDeleteService}
+        />
       </div>
     </div>
   );

@@ -49,10 +49,10 @@ export const usePurchaseRequests = () => {
       return data as PurchaseRequest[];
     },
     // Cache optimizasyonu
-    staleTime: 5 * 60 * 1000, // 5 dakika
-    gcTime: 10 * 60 * 1000, // 10 dakika
+    staleTime: 3 * 60 * 1000, // 3 dakika - veri bu süre içinde fresh sayılır
+    gcTime: 10 * 60 * 1000, // 10 dakika - cache'de kalma süresi
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true, // Her mount'ta veriyi kontrol et ve gerekirse yenile
   });
 };
 

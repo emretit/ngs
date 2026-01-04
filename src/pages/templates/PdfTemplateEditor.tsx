@@ -3,6 +3,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { templateFormSchema } from './config/templateFormSchema';
+import { defaultTemplateValues } from './utils/templateDefaults';
+import { usePdfCompanyInfo } from './hooks/usePdfCompanyInfo';
+import { usePdfTemplateActions } from './hooks/usePdfTemplateActions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,172 +41,15 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<PdfTemplate | null>(null);
   const [previewData, setPreviewData] = useState<QuoteData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
   const [isNewTemplate, setIsNewTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [companyInfoLoaded, setCompanyInfoLoaded] = useState(false);
-  const companyInfoLoadedRef = useRef(false);
   const footerTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const form = useForm<TemplateSchema>({
-    resolver: zodResolver(z.object({
-      page: z.object({
-        size: z.enum(['A4', 'A3', 'Letter']),
-        padding: z.object({
-          top: z.number().min(10).max(100),
-          right: z.number().min(10).max(100),
-          bottom: z.number().min(10).max(100),
-          left: z.number().min(10).max(100),
-        }),
-        fontSize: z.number().min(8).max(20),
-        fontFamily: z.enum(['Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Inter', 'Poppins', 'Nunito', 'Playfair Display', 'Merriweather', 'Source Sans Pro', 'Helvetica', 'Times-Roman', 'Courier']).optional(),
-        fontWeight: z.enum(['normal', 'bold']).optional(),
-        fontColor: z.string().optional(),
-        backgroundColor: z.string().optional(),
-        backgroundImage: z.string().optional(),
-        backgroundStyle: z.enum(['none', 'corner-wave', 'side-gradient', 'bottom-shapes', 'top-circles', 'diagonal-bands', 'corner-triangles', 'side-curves', 'custom']).optional(),
-        backgroundStyleColor: z.string().optional(),
-        backgroundOpacity: z.number().min(0).max(100).optional(),
-      }),
-      header: z.object({
-        showTitle: z.boolean().optional(),
-        title: z.string().min(1),
-        titleFontSize: z.number().min(8).max(30),
-        showLogo: z.boolean(),
-        logoUrl: z.string().optional(),
-        logoPosition: z.enum(['left', 'center', 'right']),
-        logoSize: z.number().min(20).max(150),
-        showValidity: z.boolean(),
-        showCompanyInfo: z.boolean(),
-        companyName: z.string().optional(),
-        companyAddress: z.string().optional(),
-        companyPhone: z.string().optional(),
-        companyEmail: z.string().optional(),
-        companyWebsite: z.string().optional(),
-        companyTaxNumber: z.string().optional(),
-        companyInfoFontSize: z.number().min(8).max(32),
-      }),
-
-      customer: z.object({
-        customerTitleFontSize: z.number().min(8).max(25).optional(),
-        customerInfoFontSize: z.number().min(8).max(32).optional(),
-      }).optional(),
-      lineTable: z.object({
-        columns: z.array(z.object({
-          key: z.string(),
-          show: z.boolean(),
-          label: z.string(),
-          align: z.enum(['left', 'center', 'right']),
-        })),
-        showRowNumber: z.boolean().optional(),
-      }),
-      totals: z.object({
-        showGross: z.boolean(),
-        showDiscount: z.boolean(),
-        showTax: z.boolean(),
-        showNet: z.boolean(),
-      }),
-      notes: z.object({
-        footer: z.string(),
-        footerFontSize: z.number().min(8).max(32),
-        showFooterLogo: z.boolean().optional(),
-        footerLogoSize: z.number().min(20).max(100).optional(),
-        termsSettings: z.object({
-          showPaymentTerms: z.boolean(),
-          showDeliveryTerms: z.boolean(),
-          showWarrantyTerms: z.boolean(),
-          showPriceTerms: z.boolean(),
-          showOtherTerms: z.boolean(),
-          titleAlign: z.enum(['left', 'center', 'right']).optional(),
-        }).optional(),
-      }),
-      signatures: z.object({
-        show: z.boolean().optional(),
-        showTechnician: z.boolean().optional(),
-        showCustomer: z.boolean().optional(),
-        technicianLabel: z.string().optional(),
-        customerLabel: z.string().optional(),
-        fontSize: z.number().min(8).max(14).optional(),
-      }).optional(),
-    })),
-    defaultValues: {
-      page: {
-        size: 'A4',
-        padding: { top: 40, right: 40, bottom: 40, left: 40 },
-        fontSize: 12,
-        fontFamily: 'Roboto',
-        fontWeight: 'normal',
-        fontColor: '#000000',
-        backgroundColor: '#FFFFFF',
-        backgroundImage: '',
-        backgroundStyle: 'none',
-        backgroundStyleColor: '#4F46E5',
-        backgroundOpacity: 5,
-      },
-      header: {
-        showTitle: true,
-        title: 'TEKLİF',
-        titleFontSize: 16,
-        showLogo: true,
-        logoUrl: undefined,
-        logoPosition: 'left',
-        logoSize: 80,
-        showValidity: true,
-        showCompanyInfo: true,
-        companyName: '',
-        companyAddress: '',
-        companyPhone: '',
-        companyEmail: '',
-        companyWebsite: '',
-        companyTaxNumber: '',
-        companyInfoFontSize: 10,
-      },
-
-      customer: {
-        customerTitleFontSize: 12,
-        customerInfoFontSize: 10,
-      },
-      lineTable: {
-        columns: [
-          { key: 'product_image', show: true, label: 'Görsel', align: 'center' },
-          { key: 'description', show: true, label: 'Açıklama', align: 'left' },
-          { key: 'quantity', show: true, label: 'Miktar', align: 'center' },
-          { key: 'unit_price', show: true, label: 'Birim Fiyat', align: 'right' },
-          { key: 'discount', show: true, label: 'İndirim', align: 'right' },
-          { key: 'total', show: true, label: 'Toplam', align: 'right' },
-        ],
-        showRowNumber: true,
-      },
-      totals: {
-        showGross: true,
-        showDiscount: true,
-        showTax: true,
-        showNet: true,
-      },
-      notes: {
-        footer: 'İyi çalışmalar dileriz.',
-        footerFontSize: 12,
-        showFooterLogo: true,
-        footerLogoSize: 40,
-        termsSettings: {
-          showPaymentTerms: true,
-          showDeliveryTerms: true,
-          showWarrantyTerms: true,
-          showPriceTerms: false,
-          showOtherTerms: false,
-          titleAlign: 'left',
-        },
-      },
-      signatures: {
-        show: true,
-        showTechnician: true,
-        showCustomer: true,
-        technicianLabel: 'Çalışan',
-        customerLabel: 'Müşteri',
-        fontSize: 10,
-      },
-    },
+    resolver: zodResolver(templateFormSchema),
+    defaultValues: defaultTemplateValues,
   });
 
   useEffect(() => {
@@ -210,78 +57,8 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
     loadSampleData();
   }, []);
 
-  // Load company info from companies table - optimized to only load when needed
-  const loadCompanyInfo = async (showToast = false) => {
-    // Prevent duplicate calls
-    if (companyInfoLoadedRef.current && showToast) {
-      return;
-    }
-    
-    try {
-      console.log('Loading company info...'); // Debug
-      const companySettings = await PdfExportService.getCompanySettings();
-      
-      console.log('Company settings loaded:', companySettings); // Debug
-      
-      if (companySettings && Object.keys(companySettings).length > 0) {
-        // Get current form values to preserve other fields
-        const currentValues = form.getValues();
-        const settings = companySettings as any; // Type assertion for company settings
-        
-        console.log('Current form values before update:', currentValues.header); // Debug
-        console.log('Company settings to apply:', {
-          company_name: settings.company_name,
-          company_address: settings.company_address,
-          company_phone: settings.company_phone,
-          company_email: settings.company_email,
-          company_website: settings.company_website,
-          company_tax_number: settings.company_tax_number,
-        }); // Debug
-        
-        // Update header with company info using form.reset for reliable update
-        const updatedValues = {
-          ...currentValues,
-          header: {
-            ...currentValues.header,
-            companyName: settings.company_name || '',
-            companyAddress: settings.company_address || '',
-            companyPhone: settings.company_phone || '',
-            companyEmail: settings.company_email || '',
-            companyWebsite: settings.company_website || '',
-            companyTaxNumber: settings.company_tax_number || '',
-            ...(settings.company_logo_url ? { logoUrl: settings.company_logo_url } : {})
-          }
-        };
-        
-        // Use form.reset to reliably update all values and trigger re-render
-        form.reset(updatedValues, {
-          keepDirty: false,
-          keepErrors: false,
-          keepIsSubmitted: false,
-          keepTouched: false,
-          keepIsValid: false,
-          keepSubmitCount: false
-        });
-        
-        console.log('Form values after reset:', form.getValues('header')); // Debug
-        
-        if (showToast && !companyInfoLoadedRef.current) {
-          companyInfoLoadedRef.current = true;
-          toast.success('Şirket bilgileri sistem ayarlarından yüklendi');
-        }
-      } else {
-        console.warn('No company settings found'); // Debug
-        if (showToast) {
-          toast.warning('Şirket bilgileri bulunamadı. Lütfen Sistem Ayarları sayfasından şirket bilgilerinizi kaydedin.');
-        }
-      }
-    } catch (error) {
-      console.error('Error loading company info:', error);
-      if (showToast) {
-        toast.error('Şirket bilgileri yüklenirken hata oluştu');
-      }
-    }
-  };
+  // Load company info hook
+  const { loadCompanyInfo, companyInfoLoadedRef } = usePdfCompanyInfo(form);
 
   useEffect(() => {
     console.log('useEffect triggered, templateId:', templateId, 'pathname:', location.pathname); // Debug
@@ -531,90 +308,16 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
     }
   };
 
-  const handleSave = async (data: TemplateSchema) => {
-    console.log('handleSave called with data:', data); // Debug
-    setIsLoading(true);
-    try {
-      // Get current form values to ensure logo URL is included
-      const currentFormData = form.getValues();
-      const currentLogoUrl = currentFormData.header?.logoUrl;
-      console.log('Current form data:', currentFormData); // Debug
-      
-      // Merge current form data with submitted data to ensure logo URL is preserved
-      const mergedData = {
-        ...data,
-        header: {
-          ...data.header,
-          logoUrl: currentLogoUrl || data.header?.logoUrl
-        }
-      };
-
-      if (isNewTemplate) {
-        // Create new template
-        const newTemplate: Omit<PdfTemplate, 'id' | 'created_at' | 'updated_at'> = {
-          name: templateName || 'Yeni Şablon',
-          type: 'quote',
-          locale: 'tr',
-          schema_json: mergedData,
-          version: 1,
-          is_default: false,
-          created_by: null, // Will be set by Supabase trigger or can be set manually
-        };
-        
-        const savedTemplate = await PdfExportService.saveTemplate(newTemplate);
-        toast.success('Şablon başarıyla oluşturuldu');
-        
-        // Navigate to edit mode
-        navigate(`/pdf-templates/edit/${savedTemplate.id}`);
-      } else if (selectedTemplate) {
-        // Update existing template
-        const updatedTemplate: Omit<PdfTemplate, 'id' | 'created_at' | 'updated_at'> = {
-          name: templateName || selectedTemplate.name,
-          type: selectedTemplate.type,
-          locale: selectedTemplate.locale,
-          schema_json: mergedData,
-          version: selectedTemplate.version + 1,
-          is_default: selectedTemplate.is_default,
-          created_by: selectedTemplate.created_by,
-        };
-        
-        // Pass the template ID for update
-        await PdfExportService.saveTemplate(updatedTemplate, selectedTemplate.id);
-        toast.success('Şablon başarıyla kaydedildi');
-        
-        // Update the selected template with the new schema to prevent reload issues
-        setSelectedTemplate(prev => prev ? { 
-          ...prev, 
-          name: templateName || prev.name,
-          schema_json: mergedData, 
-          version: prev.version + 1 
-        } : null);
-        
-        // Reload templates to refresh the list, but don't reset the form
-      }
-    } catch (error) {
-      console.error('Error saving template:', error);
-      toast.error('Şablon kaydedilirken hata oluştu');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDownloadPdf = async () => {
-    if (!previewData || !selectedTemplate) return;
-    
-    setIsLoading(true);
-    try {
-      await PdfExportService.downloadPdf(previewData, { templateId: selectedTemplate.id });
-      toast.success('PDF başarıyla indirildi');
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      toast.error('PDF indirilirken hata oluştu');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Template actions hook
+  const { handleSave, handleDownloadPdf, isLoading } = usePdfTemplateActions(
+    form,
+    isNewTemplate,
+    templateName,
+    selectedTemplate,
+    setSelectedTemplate,
+    previewData
+  );
+  
   const watchedValues = form.watch();
 
   // Rich text formatting functions for footer

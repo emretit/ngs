@@ -67,6 +67,15 @@ export default function ReceiptVoucherDialog({
     }
   }, [open, form]);
 
+  const resetDialog = () => {
+    form.reset({
+      voucher_type: "alacak",
+      amount: 0,
+      payment_date: new Date(),
+      description: "",
+    });
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (data: ReceiptVoucherFormData) => {
       if (!userData?.company_id) {
@@ -184,6 +193,7 @@ export default function ReceiptVoucherDialog({
     <UnifiedDialog
       isOpen={open}
       onClose={(isOpen) => onOpenChange(isOpen)}
+      onClosed={resetDialog}
       title="Borç-Alacak Fişleri"
       maxWidth="xl"
       headerColor="green"

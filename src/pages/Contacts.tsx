@@ -54,9 +54,9 @@ const Contacts = memo(() => {
   // Tüm müşteriler için istatistikleri çek (filtre olmadan)
   const { data: customerStatistics } = useQuery({
     queryKey: ["customer_statistics"],
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    staleTime: 3 * 60 * 1000, // 3 dakika cache
     refetchOnWindowFocus: false,
-    refetchOnMount: true,
+    refetchOnMount: true, // Her mount'ta kontrol et ve gerekirse yenile
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       const { data: profile } = await supabase

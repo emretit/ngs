@@ -128,11 +128,11 @@ export const useCustomersInfiniteScroll = (filters: UseCustomersFilters = {}) =>
     fetchCustomers,
     {
       pageSize: 20,
-      enabled: true,
+      enabled: !!userData?.company_id, // company_id yoksa sorgu yapma
       refetchOnWindowFocus: false,
-      refetchOnMount: false, // Cache'den veri varsa hiç fetch yapma
-      staleTime: 5 * 60 * 1000, // 5 minutes - bu süre içinde veri fresh sayılır
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      refetchOnMount: true, // Her mount'ta veriyi kontrol et ve gerekirse yenile
+      staleTime: 3 * 60 * 1000, // 3 dakika - bu süre içinde veri fresh sayılır (5 dakika çok uzun)
+      gcTime: 10 * 60 * 1000, // 10 dakika - cache'de kalma süresi
     }
   );
 };

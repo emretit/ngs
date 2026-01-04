@@ -1,0 +1,82 @@
+import { z } from 'zod';
+
+export const templateFormSchema = z.object({
+  page: z.object({
+    size: z.enum(['A4', 'A3', 'Letter']),
+    padding: z.object({
+      top: z.number().min(10).max(100),
+      right: z.number().min(10).max(100),
+      bottom: z.number().min(10).max(100),
+      left: z.number().min(10).max(100),
+    }),
+    fontSize: z.number().min(8).max(20),
+    fontFamily: z.enum(['Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Inter', 'Poppins', 'Nunito', 'Playfair Display', 'Merriweather', 'Source Sans Pro', 'Helvetica', 'Times-Roman', 'Courier']).optional(),
+    fontWeight: z.enum(['normal', 'bold']).optional(),
+    fontColor: z.string().optional(),
+    backgroundColor: z.string().optional(),
+    backgroundImage: z.string().optional(),
+    backgroundStyle: z.enum(['none', 'corner-wave', 'side-gradient', 'bottom-shapes', 'top-circles', 'diagonal-bands', 'corner-triangles', 'side-curves', 'custom']).optional(),
+    backgroundStyleColor: z.string().optional(),
+    backgroundOpacity: z.number().min(0).max(100).optional(),
+  }),
+  header: z.object({
+    showTitle: z.boolean().optional(),
+    title: z.string().min(1),
+    titleFontSize: z.number().min(8).max(30),
+    showLogo: z.boolean(),
+    logoUrl: z.string().optional(),
+    logoPosition: z.enum(['left', 'center', 'right']),
+    logoSize: z.number().min(20).max(150),
+    showValidity: z.boolean(),
+    showCompanyInfo: z.boolean(),
+    companyName: z.string().optional(),
+    companyAddress: z.string().optional(),
+    companyPhone: z.string().optional(),
+    companyEmail: z.string().optional(),
+    companyWebsite: z.string().optional(),
+    companyTaxNumber: z.string().optional(),
+    companyInfoFontSize: z.number().min(8).max(32),
+  }),
+  customer: z.object({
+    customerTitleFontSize: z.number().min(8).max(25).optional(),
+    customerInfoFontSize: z.number().min(8).max(32).optional(),
+  }).optional(),
+  lineTable: z.object({
+    columns: z.array(z.object({
+      key: z.string(),
+      show: z.boolean(),
+      label: z.string(),
+      align: z.enum(['left', 'center', 'right']),
+    })),
+    showRowNumber: z.boolean().optional(),
+  }),
+  totals: z.object({
+    showGross: z.boolean(),
+    showDiscount: z.boolean(),
+    showTax: z.boolean(),
+    showNet: z.boolean(),
+  }),
+  notes: z.object({
+    footer: z.string(),
+    footerFontSize: z.number().min(8).max(32),
+    showFooterLogo: z.boolean().optional(),
+    footerLogoSize: z.number().min(20).max(100).optional(),
+    termsSettings: z.object({
+      showPaymentTerms: z.boolean(),
+      showDeliveryTerms: z.boolean(),
+      showWarrantyTerms: z.boolean(),
+      showPriceTerms: z.boolean(),
+      showOtherTerms: z.boolean(),
+      titleAlign: z.enum(['left', 'center', 'right']).optional(),
+    }).optional(),
+  }),
+  signatures: z.object({
+    show: z.boolean().optional(),
+    showTechnician: z.boolean().optional(),
+    showCustomer: z.boolean().optional(),
+    technicianLabel: z.string().optional(),
+    customerLabel: z.string().optional(),
+    fontSize: z.number().min(8).max(14).optional(),
+  }).optional(),
+});
+

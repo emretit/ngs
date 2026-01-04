@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "./useCompany";
 import { format, isToday, isPast, addDays } from "date-fns";
+import { useOverdueBalances } from "./useOverdueBalances";
 
 export interface CriticalAlert {
   id: string;
@@ -16,9 +17,10 @@ export interface CriticalAlert {
 
 export const useCriticalAlerts = () => {
   const { companyId } = useCompany();
+  const { data: overdueBalances = [], isLoading: isLoadingBalances } = useOverdueBalances();
 
   return useQuery({
-    queryKey: ["critical-alerts", companyId],
+    queryKey: ["critical-alerts", companyId, overdueBalances.length],
     queryFn: async (): Promise<CriticalAlert[]> => {
       if (!companyId) {
         throw new Error("Company ID not found");
@@ -28,27 +30,20 @@ export const useCriticalAlerts = () => {
       const today = format(new Date(), "yyyy-MM-dd");
       const nextWeek = format(addDays(new Date(), 7), "yyyy-MM-dd");
 
-      // 1. Overdue receivables (unpaid invoices past due date)
-      const { data: overdueInvoices } = await supabase
-        .from("sales_invoices")
-        .select("id, fatura_no, customer_id, toplam_tutar, vade_tarihi")
-        .eq("company_id", companyId)
-        .eq("odeme_durumu", "odenmedi")
-        .lt("vade_tarihi", today)
-        .order("vade_tarihi", { ascending: true })
-        .limit(5);
-
-      overdueInvoices?.forEach((invoice) => {
+      // 1. Overdue receivables (müşteri bazında vadesi geçmiş bakiye)
+      overdueBalances.forEach((balance) => {
+        if (balance.overdueBalance > 0) {
         alerts.push({
-          id: `invoice-${invoice.id}`,
+            id: `customer-overdue-${balance.customerId}`,
           type: "overdue_receivable",
           title: "Vadesi Geçmiş Alacak",
-          description: `Fatura No: ${invoice.fatura_no}`,
+            description: `${balance.customerName} - Vadesi Geçmiş: ${balance.overdueBalance.toFixed(2)} ${balance.currency}`,
           severity: "critical",
-          amount: invoice.toplam_tutar,
-          dueDate: invoice.vade_tarihi,
-          link: `/sales/invoices/${invoice.id}`,
+            amount: balance.overdueBalance,
+            dueDate: balance.oldestOverdueDate,
+            link: `/customers/${balance.customerId}`,
         });
+        }
       });
 
       // 2. Checks due today or this week
@@ -138,7 +133,7 @@ export const useCriticalAlerts = () => {
         return 0;
       });
     },
-    enabled: !!companyId,
+    enabled: !!companyId && !isLoadingBalances,
     refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
   });
 };

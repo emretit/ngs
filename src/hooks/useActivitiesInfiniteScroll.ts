@@ -251,8 +251,10 @@ export const useActivitiesInfiniteScroll = (
     {
       pageSize,
       enabled: !!userData?.company_id,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      refetchOnWindowFocus: false,
+      refetchOnMount: true, // Her mount'ta veriyi kontrol et ve gerekirse yenile
+      staleTime: 3 * 60 * 1000, // 3 dakika - veri bu süre içinde fresh sayılır
+      gcTime: 10 * 60 * 1000, // 10 dakika - cache'de kalma süresi
     }
   );
 

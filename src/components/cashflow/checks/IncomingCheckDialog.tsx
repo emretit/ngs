@@ -83,13 +83,20 @@ export default function IncomingCheckDialog({
     },
   });
 
+  const [checkNumber, setCheckNumber] = useState<string>("");
   const [bankName, setBankName] = useState<string>("");
+  const [amount, setAmount] = useState<string>("");
   const [issueDate, setIssueDate] = useState<Date | undefined>(undefined);
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [status, setStatus] = useState<string>("portfoyde");
+  const [notes, setNotes] = useState<string>("");
+  const [portfolio, setPortfolio] = useState<boolean>(true);
   const [paymentAccountType, setPaymentAccountType] = useState<"cash" | "bank" | "credit_card" | "partner">("bank");
+  const [paymentAccountId, setPaymentAccountId] = useState<string>("");
   const [selectedPaymentAccountId, setSelectedPaymentAccountId] = useState<string>("");
 
+  const form = useForm();
+  
   const issuerForm = useForm({
     defaultValues: {
       customer_id: defaultCustomerId || "",
@@ -136,10 +143,13 @@ export default function IncomingCheckDialog({
   useEffect(() => {
     if (open) {
       if (editingCheck) {
+        setCheckNumber(editingCheck.check_number || "");
         setBankName(editingCheck.bank || "");
+        setAmount(editingCheck.amount?.toString() || "");
         setIssueDate(editingCheck.issue_date ? new Date(editingCheck.issue_date) : undefined);
         setDueDate(editingCheck.due_date ? new Date(editingCheck.due_date) : undefined);
         setStatus(editingCheck.status || "portfoyde");
+        setNotes(editingCheck.notes || "");
         setIssuerName(editingCheck.issuer_name || "");
         
         if (editingCheck.issuer_customer_id) {
@@ -149,10 +159,13 @@ export default function IncomingCheckDialog({
           issuerForm.setValue("supplier_id", editingCheck.issuer_supplier_id);
         }
       } else {
+        setCheckNumber("");
         setBankName(banks[0]?.name || "");
+        setAmount("");
         setIssueDate(undefined);
         setDueDate(undefined);
         setStatus("portfoyde");
+        setNotes("");
         setIssuerName("");
         if (defaultCustomerId) {
           issuerForm.setValue("customer_id", defaultCustomerId);
@@ -319,10 +332,24 @@ export default function IncomingCheckDialog({
     },
   });
 
+  const resetDialog = () => {
+    setCheckNumber("");
+    setBankName("");
+    setAmount("");
+    setIssueDate(undefined);
+    setDueDate(undefined);
+    setPaymentAccountType("");
+    setPaymentAccountId("");
+    setNotes("");
+    setPortfolio(true);
+    form.reset();
+  };
+
   return (
     <UnifiedDialog
       isOpen={open}
       onClose={() => onOpenChange(false)}
+      onClosed={resetDialog}
       title={editingCheck?.id ? "Gelen Çek Düzenle" : "Yeni Gelen Çek Ekle"}
       maxWidth="lg"
       headerColor="green"

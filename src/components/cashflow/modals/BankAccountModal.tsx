@@ -155,18 +155,6 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', account
 
       onSuccess();
       onClose();
-      setFormData({
-        account_name: "",
-        bank_name: "",
-        branch_name: "",
-        account_number: "",
-        iban: "",
-        swift_code: "",
-        account_type: "vadesiz",
-        currency: "TRY",
-        initial_balance: 0,
-        notes: ""
-      });
     } catch (error) {
       console.error('Error creating bank account:', error);
       toast.error("Banka hesabı oluşturulurken hata oluştu");
@@ -175,10 +163,26 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', account
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      account_name: "",
+      bank_name: "",
+      branch_name: "",
+      account_number: "",
+      iban: "",
+      swift_code: "",
+      account_type: "vadesiz",
+      currency: "TRY",
+      initial_balance: 0,
+      notes: ""
+    });
+  };
+
   return (
     <UnifiedDialog
       isOpen={isOpen}
       onClose={onClose}
+      onClosed={resetForm}
       title={mode === 'edit' ? "Banka Hesabını Düzenle" : "Yeni Banka Hesabı"}
       maxWidth="lg"
       headerColor="blue"

@@ -6,12 +6,15 @@ import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { UnifiedTransaction, getTransactionTypeLabel, getAccountName, getCreditDebit, getUsdAmount } from "./utils/paymentUtils";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { InvoicePaymentStatusBadge } from "@/components/invoices/InvoicePaymentStatusBadge";
 
 interface PaymentsTableRowProps {
   transaction: UnifiedTransaction;
   usdRate: number;
   onDelete?: (payment: any) => void;
   isDeleting?: boolean;
+  customerId?: string;
+  supplierId?: string;
 }
 
 export const PaymentsTableRow = ({
@@ -19,6 +22,8 @@ export const PaymentsTableRow = ({
   usdRate,
   onDelete,
   isDeleting = false,
+  customerId,
+  supplierId,
 }: PaymentsTableRowProps) => {
   const navigate = useNavigate();
   const { convertCurrency } = useExchangeRates();
@@ -39,6 +44,7 @@ export const PaymentsTableRow = ({
         <TableCell className="py-2 px-3 text-xs whitespace-nowrap" colSpan={3}>
           <span className="font-bold text-blue-800">{transaction.description}</span>
         </TableCell>
+        <TableCell className="py-2 px-3 text-xs whitespace-nowrap">-</TableCell>
         <TableCell className="py-2 px-3 text-xs whitespace-nowrap text-center">-</TableCell>
         <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
         <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
@@ -84,6 +90,26 @@ export const PaymentsTableRow = ({
           '-'
         )}
       </TableCell>
+      <TableCell className="py-2 px-3 text-xs whitespace-nowrap">
+        {transaction.dueDate ? (
+          <span className={(() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const dueDate = new Date(transaction.dueDate);
+            dueDate.setHours(0, 0, 0, 0);
+            if (dueDate < today) {
+              return "text-red-600 font-semibold";
+            } else if (dueDate.getTime() === today.getTime()) {
+              return "text-orange-600 font-semibold";
+            }
+            return "text-gray-600";
+          })()}>
+            {format(new Date(transaction.dueDate), "dd.MM.yyyy")}
+          </span>
+        ) : (
+          '-'
+        )}
+      </TableCell>
       <TableCell className="py-2 px-3 whitespace-nowrap">
         <Badge
           variant="outline"
@@ -119,6 +145,16 @@ export const PaymentsTableRow = ({
               Çek: {transaction.check.check_number} - {transaction.check.bank}
             </div>
           )}
+          {/* Fatura ödeme durumu badge'i */}
+          {(transaction.type === 'sales_invoice' || transaction.type === 'purchase_invoice') && (
+            <div className="mt-1">
+              <InvoicePaymentStatusBadge
+                invoiceId={transaction.id}
+                invoiceType={transaction.type === 'sales_invoice' ? 'sales' : 'purchase'}
+                showAmount={false}
+              />
+            </div>
+          )}
         </div>
       </TableCell>
       <TableCell className="py-2 px-3 text-right text-xs font-medium text-green-600 whitespace-nowrap">
@@ -143,6 +179,7 @@ export const PaymentsTableRow = ({
         {exchangeRate.toFixed(6)}
       </TableCell>
       <TableCell className="py-2 px-3 text-center">
+        {/* Silme butonu */}
         {transaction.type === 'payment' && transaction.payment && onDelete && (
           <Button
             variant="ghost"

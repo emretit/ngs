@@ -1,21 +1,15 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Download, Calculator } from "lucide-react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Textarea } from "@/components/ui/textarea";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import LoansHeader from "@/components/cashflow/loans/LoansHeader";
+import { LoansFilterBar } from "@/components/cashflow/loans/LoansFilterBar";
+import LoansContent from "@/components/cashflow/loans/LoansContent";
+import { LoanDialog } from "@/components/cashflow/loans/LoanDialog";
+import LoanDetailSheet from "@/components/cashflow/loans/LoanDetailSheet";
+import { useLoansFilters } from "@/hooks/cashflow/useLoansFilters";
 
 interface Loan {
   id: string;
@@ -36,16 +30,16 @@ const CashflowLoans = () => {
   const { t } = useTranslation();
   const [loanDialog, setLoanDialog] = useState(false);
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
-  const [loanFilters, setLoanFilters] = useState({ status: "all", dateRange: "" });
-  const [loanStatus, setLoanStatus] = useState("odenecek");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [loanToDelete, setLoanToDelete] = useState<Loan | null>(null);
+  const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Fetch loans
-  const { data: loans = [] } = useQuery({
+  const { data: loans = [], isLoading: loansLoading } = useQuery({
     queryKey: ["loans"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -58,37 +52,97 @@ const CashflowLoans = () => {
     },
   });
 
+  // Filtreleme hook'u
+  const filters = useLoansFilters({ loans });
+
+  // Tüm durum seçenekleri
+  const allStatusOptions = [
+    { value: "all", label: "Tüm Durumlar" },
+    { value: "odenecek", label: "⏳ Ödenecek" },
+    { value: "odendi", label: "✅ Ödendi" },
+  ];
+
   // Loan mutations
   const saveLoanMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const loanData = {
-        loan_name: formData.get("loan_name") as string,
-        bank: formData.get("bank") as string,
-        amount: parseFloat(formData.get("amount") as string),
-        start_date: formData.get("start_date") as string,
-        end_date: formData.get("end_date") as string,
-        interest_rate: parseFloat(formData.get("interest_rate") as string),
-        installment_amount: parseFloat(formData.get("installment_amount") as string),
-        remaining_debt: parseFloat(formData.get("remaining_debt") as string),
-        status: formData.get("status") as string,
-        notes: formData.get("notes") as string,
+    mutationFn: async (loanData: {
+      loan_name: string;
+      bank: string;
+      amount: number;
+      start_date: Date;
+      end_date: Date;
+      interest_rate: number;
+      installment_amount: number;
+      remaining_debt: number;
+      status: string;
+      notes?: string;
+      deposit_to_account?: boolean;
+      account_type?: string;
+      account_id?: string;
+    }) => {
+      const formattedData = {
+        loan_name: loanData.loan_name,
+        bank: loanData.bank,
+        amount: loanData.amount,
+        start_date: loanData.start_date.toISOString().split('T')[0],
+        end_date: loanData.end_date.toISOString().split('T')[0],
+        interest_rate: loanData.interest_rate,
+        installment_amount: loanData.installment_amount,
+        remaining_debt: loanData.remaining_debt,
+        status: loanData.status,
+        notes: loanData.notes,
       };
+
+      // Kullanıcı bilgisini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Kullanıcı bulunamadı");
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
 
       if (editingLoan) {
         const { error } = await supabase
           .from("loans")
-          .update(loanData)
+          .update(formattedData)
           .eq("id", editingLoan.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { data: insertedLoan, error } = await supabase
           .from("loans")
-          .insert([loanData]);
+          .insert([formattedData])
+          .select()
+          .single();
+        
         if (error) throw error;
+
+        // Eğer "Hesaba Yatır" seçiliyse, transaction ekle
+        if (loanData.deposit_to_account && loanData.account_id) {
+          const { error: transactionError } = await supabase
+            .from('transactions')
+            .insert({
+              company_id: profile.company_id,
+              account_id: loanData.account_id,
+              transaction_type: 'income',
+              amount: loanData.amount,
+              description: `Kredi: ${loanData.loan_name} - ${loanData.bank}`,
+              transaction_date: loanData.start_date.toISOString().split('T')[0],
+              category: 'Kredi',
+              reference_id: insertedLoan.id,
+              reference_type: 'loan',
+            });
+
+          if (transactionError) throw transactionError;
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["loans"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["account-balance"] });
       setLoanDialog(false);
       setEditingLoan(null);
       toast({ title: "Başarılı", description: "Kredi kaydedildi" });
@@ -132,397 +186,105 @@ const CashflowLoans = () => {
     setLoanToDelete(null);
   };
 
+  const handleLoanSelect = (loan: Loan) => {
+    setSelectedLoan(loan);
+    setDetailSheetOpen(true);
+  };
+
+  const handleDetailSheetClose = () => {
+    setDetailSheetOpen(false);
+    // Küçük bir gecikme ile selectedLoan'ı temizle (animasyon için)
+    setTimeout(() => setSelectedLoan(null), 300);
+  };
+
+  const handleEditFromSheet = (loan: Loan) => {
+    setDetailSheetOpen(false);
+    setEditingLoan(loan);
+    setLoanDialog(true);
+  };
+
   // Calculate summary data
-  const totalLoanDebt = loans.reduce((sum, loan) => sum + loan.remaining_debt, 0);
-  const totalLoanAmount = loans.reduce((sum, loan) => sum + loan.amount, 0);
-  const currentMonth = new Date().getMonth() + 1;
-  const currentYear = new Date().getFullYear();
-  const thisMonthPayments = loans.filter(loan => {
-    const endDate = new Date(loan.end_date);
-    return endDate.getMonth() + 1 === currentMonth && endDate.getFullYear() === currentYear;
-  }).reduce((sum, loan) => sum + loan.installment_amount, 0);
-  const activeLoanCount = loans.filter(loan => loan.status === "odenecek").length;
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("tr-TR", {
-      style: "currency",
-      currency: "TRY"
-    }).format(amount);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      odenecek: { label: t("cashflow.toBePaid"), variant: "destructive" as const },
-      odendi: { label: t("cashflow.paid"), variant: "default" as const },
-    };
+  const summaryData = useMemo(() => {
+    const totalLoanDebt = loans.reduce((sum, loan) => sum + loan.remaining_debt, 0);
+    const totalLoanAmount = loans.reduce((sum, loan) => sum + loan.amount, 0);
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    const thisMonthPayments = loans.filter(loan => {
+      const endDate = new Date(loan.end_date);
+      return endDate.getMonth() + 1 === currentMonth && endDate.getFullYear() === currentYear;
+    }).reduce((sum, loan) => sum + loan.installment_amount, 0);
+    const activeLoanCount = loans.filter(loan => loan.status === "odenecek").length;
     
-    const config = statusConfig[status as keyof typeof statusConfig];
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
-  const LoanForm = () => {
-    const currentLoanStatus = editingLoan?.status || "odenecek";
-    
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="loan_name">{t("cashflow.loanName")}</Label>
-            <Input
-              id="loan_name"
-              name="loan_name"
-              defaultValue={editingLoan?.loan_name || ""}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="bank">{t("cashflow.bank")}</Label>
-            <Input
-              id="bank"
-              name="bank"
-              defaultValue={editingLoan?.bank || ""}
-              required
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="amount">{t("cashflow.loanAmount")}</Label>
-            <Input
-              id="amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              defaultValue={editingLoan?.amount || ""}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="interest_rate">{t("cashflow.interestRate")}</Label>
-            <Input
-              id="interest_rate"
-              name="interest_rate"
-              type="number"
-              step="0.01"
-              defaultValue={editingLoan?.interest_rate || ""}
-              required
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="start_date">{t("cashflow.startDate")}</Label>
-            <Input
-              id="start_date"
-              name="start_date"
-              type="date"
-              defaultValue={editingLoan?.start_date || ""}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="end_date">Vade Sonu</Label>
-            <Input
-              id="end_date"
-              name="end_date"
-              type="date"
-              defaultValue={editingLoan?.end_date || ""}
-              required
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="installment_amount">Aylık Taksit</Label>
-            <Input
-              id="installment_amount"
-              name="installment_amount"
-              type="number"
-              step="0.01"
-              defaultValue={editingLoan?.installment_amount || ""}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="remaining_debt">Kalan Borç</Label>
-            <Input
-              id="remaining_debt"
-              name="remaining_debt"
-              type="number"
-              step="0.01"
-              defaultValue={editingLoan?.remaining_debt || ""}
-              required
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="status">Ödeme Durumu</Label>
-            <Select 
-              value={loanStatus} 
-              onValueChange={setLoanStatus}
-              defaultValue={currentLoanStatus}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Durum seçin" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="odenecek">Ödenecek</SelectItem>
-                <SelectItem value="odendi">Ödendi</SelectItem>
-              </SelectContent>
-            </Select>
-            <input type="hidden" name="status" value={loanStatus} />
-          </div>
-        </div>
-        <div>
-          <Label htmlFor="notes">Notlar</Label>
-          <Textarea
-            id="notes"
-            name="notes"
-            defaultValue={editingLoan?.notes || ""}
-            placeholder={t("forms.notes")}
-          />
-        </div>
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={() => setLoanDialog(false)}>
-            {t("common.cancel")}
-          </Button>
-          <Button
-            onClick={(e) => {
-              const form = e.currentTarget.closest("form") as HTMLFormElement;
-              const formData = new FormData(form);
-              saveLoanMutation.mutate(formData);
-            }}
-          >
-            {t("common.save")}
-          </Button>
-        </div>
-      </div>
-    );
-  };
+    return { totalLoanDebt, totalLoanAmount, thisMonthPayments, activeLoanCount };
+  }, [loans]);
 
   return (
-    <div className="w-full space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg text-white shadow-lg">
-            <Calculator className="h-5 w-5" />
+    <>
+      <div className="space-y-2">
+        {/* Header */}
+        <LoansHeader
+          activeLoansCount={summaryData.activeLoanCount}
+          totalLoanAmount={summaryData.totalLoanAmount}
+          totalDebt={summaryData.totalLoanDebt}
+          thisMonthPayment={summaryData.thisMonthPayments}
+          onAddNew={() => {
+            setEditingLoan(null);
+            setLoanDialog(true);
+          }}
+        />
+
+        {/* Filters */}
+        <LoansFilterBar
+          searchQuery={filters.searchQuery}
+          onSearchChange={filters.setSearchQuery}
+          statusFilter={filters.statusFilter}
+          onStatusChange={filters.setStatusFilter}
+          startDate={filters.startDate}
+          onStartDateChange={filters.setStartDate}
+          endDate={filters.endDate}
+          onEndDateChange={filters.setEndDate}
+          searchPlaceholder="Kredi adı, banka veya notlar ile ara..."
+          statusOptions={allStatusOptions}
+        />
+
+        {loansLoading ? (
+          <div className="flex items-center justify-center h-[400px]">
+            <div className="text-center space-y-4">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-muted-foreground">Krediler yükleniyor...</p>
+            </div>
           </div>
-          <div className="space-y-0.5">
-            <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-              Krediler
-            </h1>
-            <p className="text-xs text-muted-foreground/70">
-              Kredi işlemlerinizi yönetin.
-            </p>
-          </div>
-        </div>
+        ) : (
+          <LoansContent
+            loans={filters.filteredLoans}
+            isLoading={loansLoading}
+            error={null}
+            onSelect={handleLoanSelect}
+            onEdit={(loan) => {
+              setEditingLoan(loan);
+              setLoanDialog(true);
+            }}
+            onDelete={handleDeleteClick}
+          />
+        )}
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="group relative overflow-hidden bg-white border border-red-100 hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-rose-50"></div>
-          <div className="absolute top-4 right-4">
-            <div className="p-2 bg-red-500 rounded-lg shadow-lg">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-            </div>
-          </div>
-          <CardHeader className="relative pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-700">Toplam Kredi Borcu</CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <div className="text-2xl lg:text-3xl font-bold text-red-600 mb-2">
-              {formatCurrency(totalLoanDebt)}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="px-2 py-1 bg-red-100 rounded-full">
-                <span className="text-xs font-medium text-red-700">Kalan borç</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Loan Detail Sheet */}
+      <LoanDetailSheet
+        loan={selectedLoan}
+        open={detailSheetOpen}
+        onOpenChange={setDetailSheetOpen}
+        onEdit={handleEditFromSheet}
+      />
 
-        <Card className="group relative overflow-hidden bg-white border border-blue-100 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50"></div>
-          <div className="absolute top-4 right-4">
-            <div className="p-2 bg-blue-500 rounded-lg shadow-lg">
-              <Calculator className="w-5 h-5 text-white" />
-            </div>
-          </div>
-          <CardHeader className="relative pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-700">Toplam Kredi Tutarı</CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <div className="text-2xl lg:text-3xl font-bold text-blue-600 mb-2">
-              {formatCurrency(totalLoanAmount)}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="px-2 py-1 bg-blue-100 rounded-full">
-                <span className="text-xs font-medium text-blue-700">Toplam</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="group relative overflow-hidden bg-white border border-orange-100 hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50"></div>
-          <div className="absolute top-4 right-4">
-            <div className="p-2 bg-orange-500 rounded-lg shadow-lg">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          </div>
-          <CardHeader className="relative pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-700">Bu Ay Ödenecek</CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <div className="text-2xl lg:text-3xl font-bold text-orange-600 mb-2">
-              {formatCurrency(thisMonthPayments)}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="px-2 py-1 bg-orange-100 rounded-full">
-                <span className="text-xs font-medium text-orange-700">Bu ay</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="group relative overflow-hidden bg-white border border-green-100 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50"></div>
-          <div className="absolute top-4 right-4">
-            <div className="p-2 bg-green-500 rounded-lg shadow-lg">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-          <CardHeader className="relative pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-700">Aktif Kredi Sayısı</CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <div className="text-2xl lg:text-3xl font-bold text-green-600 mb-2">
-              {activeLoanCount}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="px-2 py-1 bg-green-100 rounded-full">
-                <span className="text-xs font-medium text-green-700">Aktif</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
-        <div className="p-6">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <div className="flex space-x-2">
-                <Select
-                  value={loanFilters.status}
-                  onValueChange={(value) => setLoanFilters({ ...loanFilters, status: value })}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Durum filtresi" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Hepsi</SelectItem>
-                    <SelectItem value="odenecek">Ödenecek</SelectItem>
-                    <SelectItem value="odendi">Ödendi</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-2" />
-                  Excel
-                </Button>
-              </div>
-              <Dialog open={loanDialog} onOpenChange={setLoanDialog}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => setEditingLoan(null)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Yeni Kredi
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {editingLoan ? "Kredi Düzenle" : "Yeni Kredi Ekle"}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <form>
-                    <LoanForm />
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Kredi Adı</TableHead>
-                    <TableHead>Banka</TableHead>
-                    <TableHead className="text-right">Tutar</TableHead>
-                    <TableHead>Vade Başlangıcı</TableHead>
-                    <TableHead>Vade Sonu</TableHead>
-                    <TableHead className="text-right">Faiz Oranı</TableHead>
-                    <TableHead className="text-right">Aylık Taksit</TableHead>
-                    <TableHead className="text-right">Kalan Borç</TableHead>
-                    <TableHead>Durum</TableHead>
-                    <TableHead className="text-center">İşlemler</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loans
-                    .filter(loan => loanFilters.status === "all" || loan.status === loanFilters.status)
-                    .map((loan) => (
-                      <TableRow key={loan.id}>
-                        <TableCell className="font-medium">{loan.loan_name}</TableCell>
-                        <TableCell>{loan.bank}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(loan.amount)}</TableCell>
-                        <TableCell>{format(new Date(loan.start_date), "dd/MM/yyyy")}</TableCell>
-                        <TableCell>{format(new Date(loan.end_date), "dd/MM/yyyy")}</TableCell>
-                        <TableCell className="text-right">%{loan.interest_rate}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(loan.installment_amount)}</TableCell>
-                        <TableCell className="text-right font-bold text-red-600">
-                          {formatCurrency(loan.remaining_debt)}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(loan.status)}</TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex justify-center space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditingLoan(loan);
-                                setLoanStatus(loan.status);
-                                setLoanDialog(true);
-                              }}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteClick(loan)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Loan Dialog */}
+      <LoanDialog
+        open={loanDialog}
+        onOpenChange={setLoanDialog}
+        editingLoan={editingLoan}
+        onSubmit={(data) => saveLoanMutation.mutate(data)}
+        isLoading={saveLoanMutation.isPending}
+      />
 
       {/* Confirmation Dialog */}
       <ConfirmationDialogComponent
@@ -541,7 +303,7 @@ const CashflowLoans = () => {
         onCancel={handleDeleteCancel}
         isLoading={deleteLoanMutation.isPending}
       />
-    </div>
+    </>
   );
 };
 

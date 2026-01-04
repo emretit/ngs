@@ -10,10 +10,11 @@ interface UnifiedDialogProps {
   title: string | React.ReactNode;
   children: React.ReactNode;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl";
-  headerColor?: "blue" | "green" | "red" | "yellow" | "purple" | "gray";
+  headerColor?: "blue" | "green" | "red" | "yellow" | "purple" | "gray" | "orange" | "indigo";
   showCloseButton?: boolean;
   className?: string;
   zIndex?: number;
+  onClosed?: () => void; // Dialog tamamen kapandığında çağrılır
 }
 
 const maxWidthClasses = {
@@ -31,7 +32,9 @@ const headerColorClasses = {
   red: "from-red-50 to-rose-50",
   yellow: "from-yellow-50 to-amber-50",
   purple: "from-purple-50 to-violet-50",
-  gray: "from-gray-50 to-slate-50"
+  gray: "from-gray-50 to-slate-50",
+  orange: "from-orange-50 to-orange-100",
+  indigo: "from-indigo-50 to-indigo-100"
 };
 
 const dotColorClasses = {
@@ -40,7 +43,9 @@ const dotColorClasses = {
   red: "bg-red-500", 
   yellow: "bg-yellow-500",
   purple: "bg-purple-500",
-  gray: "bg-gray-500"
+  gray: "bg-gray-500",
+  orange: "bg-orange-500",
+  indigo: "bg-indigo-500"
 };
 
 // Custom overlay component that works with modal={false}
@@ -89,8 +94,20 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
   headerColor = "blue",
   showCloseButton = true,
   className,
-  zIndex = 50
+  zIndex = 50,
+  onClosed
 }) => {
+  // Dialog kapandığında cache temizliği için useEffect
+  const prevIsOpenRef = React.useRef(isOpen);
+  
+  React.useEffect(() => {
+    // Dialog açıktan kapalıya geçtiğinde onClosed'u çağır
+    if (prevIsOpenRef.current && !isOpen && onClosed) {
+      onClosed();
+    }
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, onClosed]);
+
   const handleOpenChange = (open: boolean) => {
     if (onClose.length === 0) {
       // Eski kullanım: () => void

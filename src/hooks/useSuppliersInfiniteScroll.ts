@@ -102,8 +102,9 @@ export const useSuppliersInfiniteScroll = (filters: UseSuppliersFilters = {}) =>
       pageSize: 20,
       enabled: true,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      refetchOnMount: true, // Her mount'ta veriyi kontrol et ve gerekirse yenile
+      staleTime: 3 * 60 * 1000, // 3 dakika - veri bu süre içinde fresh sayılır
+      gcTime: 10 * 60 * 1000, // 10 dakika - cache'de kalma süresi
     }
   );
 };

@@ -124,12 +124,6 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', account
 
       onSuccess();
       onClose();
-      setFormData({
-        name: "",
-        description: "",
-        currency: "TRY",
-        initial_balance: 0
-      });
     } catch (error) {
       console.error('Error creating cash account:', error);
       toast.error("Nakit kasa hesabı oluşturulurken hata oluştu");
@@ -138,10 +132,20 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', account
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      description: "",
+      currency: "TRY",
+      initial_balance: 0
+    });
+  };
+
   return (
     <UnifiedDialog
       isOpen={isOpen}
       onClose={onClose}
+      onClosed={resetForm}
       title={mode === 'edit' ? "Nakit Kasa Hesabını Düzenle" : "Yeni Nakit Kasa Hesabı"}
       maxWidth="md"
       headerColor="green"

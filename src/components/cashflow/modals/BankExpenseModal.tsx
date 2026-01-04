@@ -141,16 +141,6 @@ const BankExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
       if (balanceError) throw balanceError;
 
       toast.success("Masraf işlemi eklendi");
-
-      // Formu sıfırla
-      setFormData({
-        amount: 0,
-        description: "",
-        category: "",
-        reference: "",
-        transaction_date: new Date()
-      });
-
       onSuccess();
     } catch (error) {
       console.error('Error adding expense:', error);
@@ -160,10 +150,21 @@ const BankExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      amount: 0,
+      description: "",
+      category: "",
+      reference: "",
+      transaction_date: new Date()
+    });
+  };
+
   return (
     <UnifiedDialog
       isOpen={isOpen}
       onClose={onClose}
+      onClosed={resetForm}
       title="Banka Hesabından Masraf Ekle"
       maxWidth="lg"
       headerColor="red"

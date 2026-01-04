@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Shield, Workflow, Calendar, Plus, Loader2, Receipt, Users2, FileCheck, ShoppingCart, ArrowRight } from "lucide-react";
+import { Users, Shield, Workflow, Plus, Loader2, Receipt, Users2, FileCheck, ShoppingCart, ArrowRight } from "lucide-react";
 import { UserManagementNew } from "@/components/settings/users/UserManagementNew";
 import { RoleManagementPanel } from "@/components/settings/users/RoleManagementPanel";
 import { useQuery } from "@tanstack/react-query";
@@ -19,8 +19,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { LeaveTypesManagement } from "@/components/settings/leaves/LeaveTypesManagement";
-import { useNavigate } from "react-router-dom";
 
 export default function UnifiedManagement() {
   const { userData } = useCurrentUser();
@@ -31,8 +29,15 @@ export default function UnifiedManagement() {
   // Update tab when URL changes
   useEffect(() => {
     const tab = searchParams.get("tab") || "users";
+    
+    // Redirect leave-types tab to the new location
+    if (tab === "leave-types") {
+      navigate("/employees/leaves?tab=settings&settingsTab=leave-types", { replace: true });
+      return;
+    }
+    
     setActiveTab(tab);
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   // Update URL when tab changes
   const handleTabChange = (value: string) => {
@@ -134,7 +139,7 @@ export default function UnifiedManagement() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Kullanıcı & Çalışan
@@ -146,10 +151,6 @@ export default function UnifiedManagement() {
           <TabsTrigger value="approvals" className="flex items-center gap-2">
             <Workflow className="h-4 w-4" />
             Onay Süreçleri
-          </TabsTrigger>
-          <TabsTrigger value="leave-types" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            İzin Türleri
           </TabsTrigger>
         </TabsList>
 
@@ -276,11 +277,6 @@ export default function UnifiedManagement() {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
-
-        {/* Tab 4: İzin Türleri & Kuralları */}
-        <TabsContent value="leave-types" className="space-y-6">
-          <LeaveTypesManagement />
         </TabsContent>
       </Tabs>
 

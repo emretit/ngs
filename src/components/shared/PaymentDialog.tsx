@@ -68,6 +68,13 @@ export function PaymentDialog({ open, onOpenChange, contact, contactType }: Paym
     }
   }, [open, form]);
 
+  const resetDialog = () => {
+    form.reset({
+      payment_date: new Date(),
+      payment_direction: contactType === "customer" ? "incoming" : "outgoing",
+    });
+  };
+
   async function onSubmit(data: PaymentFormData) {
     try {
       // 1. Önce mevcut bakiyeleri al
@@ -180,6 +187,7 @@ export function PaymentDialog({ open, onOpenChange, contact, contactType }: Paym
     <UnifiedDialog
       isOpen={open}
       onClose={() => onOpenChange(false)}
+      onClosed={resetDialog}
       title="Yeni Ödeme Ekle"
       maxWidth="md"
       headerColor="green"

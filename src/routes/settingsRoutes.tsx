@@ -21,6 +21,12 @@ const ApprovalWorkflowSettings = React.lazy(() => import("@/pages/settings/Appro
 const UnifiedManagement = React.lazy(() => import("@/pages/settings/UnifiedManagement"));
 import Redirect from "@/components/routes/Redirect";
 
+// Helper components for redirects (needed for Fast Refresh compatibility)
+const RedirectToUnifiedManagementApprovals = () => <Redirect to="/settings/unified-management?tab=approvals" />;
+const RedirectToPdfTemplatesQuoteNew = () => <Redirect to="/pdf-templates/quote/new" />;
+const RedirectToUnifiedManagementUsers = () => <Redirect to="/settings/unified-management?tab=users" />;
+const RedirectToUnifiedManagementRoles = () => <Redirect to="/settings/unified-management?tab=roles" />;
+
 // Define settings routes
 export const settingsRoutes: RouteConfig[] = [
   { path: "/settings", component: Settings, protected: true },
@@ -44,7 +50,7 @@ export const settingsRoutes: RouteConfig[] = [
   // Redirect approval-workflows to unified management
   { 
     path: "/settings/approval-workflows", 
-    component: () => <Redirect to="/settings/unified-management?tab=approvals" />, 
+    component: RedirectToUnifiedManagementApprovals, 
     protected: true 
   },
   // Backward compatibility routes (without /settings prefix)
@@ -65,7 +71,7 @@ export const settingsRoutes: RouteConfig[] = [
   // Legacy route redirect - redirect old /pdf-templates/new to /pdf-templates/quote/new
   { 
     path: "/pdf-templates/new", 
-    component: () => <Redirect to="/pdf-templates/quote/new" />, 
+    component: RedirectToPdfTemplatesQuoteNew, 
     protected: true 
   },
   { path: "/audit-logs", component: AuditLogs, protected: true },
@@ -73,12 +79,12 @@ export const settingsRoutes: RouteConfig[] = [
   // Redirect old routes to unified management
   { 
     path: "/settings/users", 
-    component: () => <Redirect to="/settings/unified-management?tab=users" />, 
+    component: RedirectToUnifiedManagementUsers, 
     protected: true 
   },
   { 
     path: "/settings/roles", 
-    component: () => <Redirect to="/settings/unified-management?tab=roles" />, 
+    component: RedirectToUnifiedManagementRoles, 
     protected: true 
   },
 ];

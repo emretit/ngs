@@ -1,48 +1,27 @@
-
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import BackButton from "@/components/ui/back-button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download, MoreHorizontal, Save, FileDown, Eye, ArrowRight, Building2, CalendarDays, XCircle, Printer, Receipt, GitBranch, Copy, Users, UserPlus } from "lucide-react";
-import { DatePicker } from "@/components/ui/date-picker";
+import React, { useState, useEffect, useMemo } from "react";
+import { useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { formatCurrency, normalizeCurrency } from "@/utils/formatters";
-import { formatDateToLocalString } from "@/utils/dateUtils";
+import { Button } from "@/components/ui/button";
+import { FormProvider } from "react-hook-form";
 import { useProposalEdit } from "@/hooks/useProposalEdit";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
-import { FormProvider, useForm } from "react-hook-form";
-import { useQueryClient } from "@tanstack/react-query";
-import { ProposalItem } from "@/types/proposal";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
-
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { proposalStatusColors, proposalStatusLabels, ProposalStatus } from "@/types/proposal";
-import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { handleProposalStatusChange } from "@/services/workflow/proposalWorkflow";
-import { PdfExportService } from "@/services/pdf/pdfExportService";
-import ProposalFormTerms from "@/components/proposals/form/ProposalFormTerms";
-import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
-import ContactPersonInput from "@/components/proposals/form/ContactPersonInput";
-import ProductSelector from "@/components/proposals/form/ProductSelector";
-import ProductDetailsModal from "@/components/proposals/form/ProductDetailsModal";
-import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
+import { ProposalItem } from "@/types/proposal";
 import CustomerInfoCard from "@/components/proposals/cards/CustomerInfoCard";
 import ProposalDetailsCard from "@/components/proposals/cards/ProposalDetailsCard";
 import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard";
 import TermsConditionsCard from "@/components/proposals/cards/TermsConditionsCard";
 import FinancialSummaryCard from "@/components/proposals/cards/FinancialSummaryCard";
+import ProductDetailsModal from "@/components/proposals/form/ProductDetailsModal";
+import { ProposalEditHeader } from "@/pages/proposals/components/ProposalEditHeader";
+import { ProposalEditDialogs } from "@/pages/proposals/components/ProposalEditDialogs";
+import { useProposalForm } from "@/pages/proposals/hooks/useProposalForm";
+import { useProposalCurrency } from "@/pages/proposals/hooks/useProposalCurrency";
+import { useProposalItems } from "@/pages/proposals/hooks/useProposalItems";
+import { useProposalRevisions } from "@/pages/proposals/hooks/useProposalRevisions";
+import { useProposalActions } from "@/pages/proposals/hooks/useProposalActions";
+import { calculateTotalsByCurrency, detectPrimaryCurrency } from "@/pages/proposals/utils/proposalEditHelpers";
+import { PdfExportService } from "@/services/pdf/pdfExportService";
 
 interface LineItem extends ProposalItem {
   row_number: number;
@@ -54,16 +33,13 @@ interface ProposalEditProps {
 }
 
 const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
-  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { proposal, loading, saving, handleBack, handleSave, refetchProposal } = useProposalEdit();
+  const { proposal, loading, handleBack, handleSave, refetchProposal } = useProposalEdit();
   const { customers } = useCustomerSelect();
   const { exchangeRates: dashboardRates } = useExchangeRates();
   
   // Convert exchange rates to simple map format
-  const exchangeRatesMap = React.useMemo(() => {
+  const exchangeRatesMap = useMemo(() => {
     const map: Record<string, number> = { TRY: 1 };
     dashboardRates.forEach(rate => {
       if (rate.currency_code && rate.forex_selling) {
@@ -76,524 +52,63 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     if (!map.GBP) map.GBP = 41.3;
     return map;
   }, [dashboardRates]);
-  
-  // Currency conversion function
-  const convertCurrency = React.useCallback((amount: number, fromCurrency: string, toCurrency: string): number => {
-    const normalizedFrom = normalizeCurrency(fromCurrency);
-    const normalizedTo = normalizeCurrency(toCurrency);
-    
-    if (normalizedFrom === normalizedTo) return amount;
-    
-    // Convert to TRY first (base currency)
-    const amountInTRY = normalizedFrom === "TRY" 
-      ? amount 
-      : amount * (exchangeRatesMap[normalizedFrom] || 1);
-    
-    // Then convert from TRY to target currency
-    const result = normalizedTo === "TRY" 
-      ? amountInTRY 
-      : amountInTRY / (exchangeRatesMap[normalizedTo] || 1);
-    
-    // Round to 4 decimal places
-    return Math.round(result * 10000) / 10000;
-  }, [exchangeRatesMap]);
-  
-  // Form object for FormProvider
-  const form = useForm({
-    defaultValues: {
-      customer_id: '',
-      contact_name: '',
-      prepared_by: '',
-      employee_id: '',
-    }
-  });
 
-  // Watch form context values and sync with formData (only when user changes, not on initial load)
-  const watchCustomerId = form.watch("customer_id");
-  const watchContactName = form.watch("contact_name");
-  const watchPreparedBy = form.watch("prepared_by");
-  const watchEmployeeId = form.watch("employee_id");
+  // Form state and initialization
+  const {
+    form,
+    formData,
+    setFormData,
+    items,
+    setItems,
+    hasChanges,
+    setHasChanges,
+    globalDiscountType,
+    setGlobalDiscountType,
+    globalDiscountValue,
+    setGlobalDiscountValue,
+    proposalLoaded
+  } = useProposalForm(proposal);
 
-  // Track if proposal has been loaded to prevent initial sync loops
-  const [proposalLoaded, setProposalLoaded] = useState(false);
+  // Currency management
+  const {
+    currencyConversionDialog,
+    setCurrencyConversionDialog,
+    handleCurrencyConversionConfirm,
+    handleCurrencyConversionCancel,
+    handleFieldChange: handleCurrencyFieldChange,
+    prevCurrencyRef,
+    prevExchangeRateRef
+  } = useProposalCurrency(
+    exchangeRatesMap,
+    items,
+    setItems,
+    formData.currency,
+    formData.exchange_rate
+  );
 
-  // Sync form context changes to formData (only after proposal is loaded)
-  useEffect(() => {
-    if (proposalLoaded && watchCustomerId !== undefined && watchCustomerId !== formData.customer_id) {
-      setFormData(prev => ({ ...prev, customer_id: watchCustomerId }));
-      setHasChanges(true);
-    }
-  }, [watchCustomerId, proposalLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Items management
+  const {
+    handleItemChange,
+    addItem,
+    removeItem,
+    moveItemUp,
+    moveItemDown
+  } = useProposalItems(items, setItems, setHasChanges, formData.currency);
 
-  useEffect(() => {
-    if (proposalLoaded && watchContactName !== undefined && watchContactName !== formData.contact_name) {
-      setFormData(prev => ({ ...prev, contact_name: watchContactName }));
-      setHasChanges(true);
-    }
-  }, [watchContactName, proposalLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Revisions
+  const { revisions } = useProposalRevisions(proposal?.id, proposal?.parent_proposal_id);
 
-  useEffect(() => {
-    if (proposalLoaded && watchPreparedBy !== undefined && watchPreparedBy !== formData.prepared_by) {
-      setFormData(prev => ({ ...prev, prepared_by: watchPreparedBy }));
-      setHasChanges(true);
-    }
-  }, [watchPreparedBy, proposalLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Calculate totals
+  const calculationsByCurrency = useMemo(() => 
+    calculateTotalsByCurrency(items, globalDiscountType, globalDiscountValue, formData.vat_percentage),
+    [items, globalDiscountType, globalDiscountValue, formData.vat_percentage]
+  );
 
-  useEffect(() => {
-    if (proposalLoaded && watchEmployeeId !== undefined && watchEmployeeId !== formData.employee_id) {
-      setFormData(prev => ({ ...prev, employee_id: watchEmployeeId }));
-      setHasChanges(true);
-    }
-  }, [watchEmployeeId, proposalLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [productModalOpen, setProductModalOpen] = useState(false);
-  const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
-  const [editingItemData, setEditingItemData] = useState<any>(null);
-  
-  // Global discount state
-  const [globalDiscountType, setGlobalDiscountType] = useState<'percentage' | 'amount'>('percentage');
-  const [globalDiscountValue, setGlobalDiscountValue] = useState<number>(0);
-  
-  // Confirmation dialog states
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  
-  // Copy states
-  const [isCopying, setIsCopying] = useState(false);
-  const [isCustomerSelectDialogOpen, setIsCustomerSelectDialogOpen] = useState(false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
-  const [customerSelectOpen, setCustomerSelectOpen] = useState(false);
+  const primaryCurrency = useMemo(() => 
+    detectPrimaryCurrency(calculationsByCurrency, formData.currency),
+    [calculationsByCurrency, formData.currency]
+  );
 
-  // Revision states
-  const [revisions, setRevisions] = useState<any[]>([]);
-
-  // Form state matching the proposal edit format
-  const [formData, setFormData] = useState({
-    // Customer Section
-    contact_name: "",
-    contact_title: "",
-    offer_date: undefined as Date | undefined,
-    offer_number: "",
-    revision_number: 0 as number | null, // Revizyon numarası - yeni teklif için 0
-    
-    // General Section
-    validity_date: undefined as Date | undefined,
-    prepared_by: "",
-    notes: "",
-    subject: "", // Teklif konusu
-
-    // Financial settings
-    currency: "TRY",
-    exchange_rate: undefined as number | undefined, // Döviz kuru
-    discount_percentage: 0,
-    vat_percentage: 20,
-    
-    // Terms
-    payment_terms: "",
-    delivery_terms: "",
-    warranty_terms: "",
-    price_terms: "",
-    other_terms: "",
-    
-    // Backend compatibility fields
-    title: "",
-    customer_id: "",
-    employee_id: "",
-    description: "",
-    status: "draft" as ProposalStatus
-  });
-
-  // Line items state
-  const [items, setItems] = useState<LineItem[]>([]);
-  
-  const [hasChanges, setHasChanges] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [templates, setTemplates] = useState<any[]>([]);
-
-  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
-
-  // Load templates when component mounts
-  useEffect(() => {
-    loadTemplates();
-  }, []);
-
-  const loadTemplates = async () => {
-    try {
-      setIsLoadingTemplates(true);
-      const data = await PdfExportService.getTemplates('quote');
-      setTemplates(data);
-    } catch (error) {
-      console.error('Error loading templates:', error);
-    } finally {
-      setIsLoadingTemplates(false);
-    }
-  };
-
-  // Initialize form data when proposal loads
-  useEffect(() => {
-    if (proposal) {
-      const initialCustomerId = proposal.customer_id || "";
-      const initialContactName = String(proposal.contact_name || "");
-      const initialPreparedBy = proposal.employee_id || "";
-      const initialEmployeeId = proposal.employee_id || "";
-
-      // Update formData first
-      setFormData({
-        contact_name: initialContactName,
-        contact_title: "",
-        offer_date: proposal.offer_date ? new Date(proposal.offer_date) : undefined,
-        offer_number: proposal.number || "",
-        revision_number: proposal.revision_number ?? 0, // Revizyon numarası
-        validity_date: proposal.valid_until ? new Date(proposal.valid_until) : undefined,
-        prepared_by: initialPreparedBy,
-        notes: proposal.notes || "",
-        subject: proposal.subject || "", // Teklif konusu
-        currency: proposal.currency || "TRY",
-        exchange_rate: proposal.exchange_rate || undefined, // Döviz kuru
-        discount_percentage: 0,
-        vat_percentage: 20,
-        payment_terms: proposal.payment_terms || "Siparişle birlikte %50 avans, teslimde kalan tutar ödenecektir.",
-        delivery_terms: proposal.delivery_terms || "Teslimat süresi: Sipariş tarihinden itibaren 15-20 iş günü",
-        warranty_terms: proposal.warranty_terms || "Ürünlerimiz 2 yıl garantilidir.",
-        price_terms: proposal.price_terms || "",
-        other_terms: proposal.other_terms || "",
-        title: proposal.title || "",
-        customer_id: initialCustomerId,
-        employee_id: initialEmployeeId,
-        description: proposal.description || "",
-        status: proposal.status as ProposalStatus
-      });
-
-      // Update form context immediately so ProposalPartnerSelect can display the customer
-      form.reset({
-        customer_id: initialCustomerId,
-        contact_name: initialContactName,
-        prepared_by: initialPreparedBy,
-        employee_id: initialEmployeeId,
-      });
-      setProposalLoaded(true);
-
-      // Initialize global discount from proposal
-      if (proposal.total_discount !== undefined && proposal.total_discount > 0) {
-        // If subtotal exists, calculate percentage, otherwise use amount
-        if (proposal.subtotal && proposal.subtotal > 0) {
-          const discountPercentage = (proposal.total_discount / proposal.subtotal) * 100;
-          setGlobalDiscountType('percentage');
-          setGlobalDiscountValue(discountPercentage);
-        } else {
-          // Use amount directly
-          setGlobalDiscountType('amount');
-          setGlobalDiscountValue(proposal.total_discount);
-        }
-      } else {
-        setGlobalDiscountType('percentage');
-        setGlobalDiscountValue(0);
-      }
-
-      // Initialize items from proposal
-      if (proposal.items && proposal.items.length > 0) {
-        const initialItems = proposal.items.map((item, index) => ({
-          ...item,
-          id: item.id || crypto.randomUUID(),
-          row_number: index + 1,
-          name: item.name || item.description || '', // Ensure name field exists
-          description: item.description || item.name || '', // Ensure description field exists
-        }));
-        setItems(initialItems);
-      } else {
-        setItems([{
-          id: "1",
-          row_number: 1,
-          name: "",
-          description: "",
-          quantity: 1,
-          unit: "adet",
-          unit_price: 0,
-          total_price: 0,
-          currency: proposal.currency || "TRY"
-        }]);
-      }
-      
-      // Initialize prevCurrencyRef and prevExchangeRateRef
-      prevCurrencyRef.current = proposal.currency || "TRY";
-      prevExchangeRateRef.current = proposal.exchange_rate;
-    }
-  }, [proposal]);
-
-  // Revizyonları getir
-  useEffect(() => {
-    const fetchRevisions = async () => {
-      if (!proposal?.id) return;
-
-      try {
-        const { supabase } = await import('@/integrations/supabase/client');
-
-        // Orijinal proposal ID'yi belirle
-        const originalProposalId = proposal.parent_proposal_id || proposal.id;
-
-        // Tüm revizyonları getir (parent + tüm revisions)
-        const { data, error } = await supabase
-          .from('proposals')
-          .select('id, number, revision_number, status, created_at, valid_until')
-          .or(`id.eq.${originalProposalId},parent_proposal_id.eq.${originalProposalId}`)
-          .order('revision_number', { ascending: true });
-
-        if (error) {
-          console.error('Error fetching revisions:', error);
-          return;
-        }
-
-        setRevisions(data || []);
-      } catch (error) {
-        console.error('Error fetching revisions:', error);
-      }
-    };
-
-    fetchRevisions();
-  }, [proposal?.id]);
-
-  // Track previous currency and exchange rate to detect changes
-  const prevCurrencyRef = React.useRef<string>(formData.currency);
-  const prevExchangeRateRef = React.useRef<number | undefined>(formData.exchange_rate);
-  const [currencyConversionDialog, setCurrencyConversionDialog] = React.useState<{
-    open: boolean;
-    oldCurrency: string;
-    newCurrency: string;
-    oldRate?: number;
-    newRate?: number;
-    pendingValue?: any;
-    pendingField?: string;
-  }>({
-    open: false,
-    oldCurrency: '',
-    newCurrency: ''
-  });
-  
-  // Convert all items using a specific exchange rate
-  const convertAllItemsWithRate = useCallback((fromCurrency: string, toCurrency: string, customRate?: number) => {
-    setItems(prevItems => {
-      return prevItems.map(item => {
-        const itemCurrency = item.currency || fromCurrency;
-        let convertedPrice: number;
-        
-        if (customRate && fromCurrency !== "TRY") {
-          // Custom rate provided - use it for conversion from fromCurrency to TRY
-          // First, convert item to TRY
-          let amountInTRY: number;
-          
-          if (itemCurrency === "TRY") {
-            // Item is already in TRY
-            amountInTRY = item.unit_price;
-          } else if (itemCurrency === fromCurrency) {
-            // Item is in the same currency as fromCurrency, use custom rate
-            amountInTRY = item.unit_price * customRate;
-          } else {
-            // Item is in a different currency, convert to TRY first using market rate
-            const itemRate = exchangeRatesMap[itemCurrency] || 1;
-            amountInTRY = item.unit_price * itemRate;
-          }
-          
-          // Now convert from TRY to target currency
-          if (toCurrency === "TRY") {
-            convertedPrice = amountInTRY;
-          } else {
-            // Use market rate for target currency
-            const targetRate = exchangeRatesMap[toCurrency] || 1;
-            convertedPrice = amountInTRY / targetRate;
-          }
-        } else {
-          // Use standard conversion
-          convertedPrice = convertCurrency(item.unit_price, itemCurrency, toCurrency);
-        }
-        
-        return {
-          ...item,
-          unit_price: convertedPrice,
-          currency: toCurrency,
-          total_price: item.quantity * convertedPrice
-        };
-      });
-    });
-  }, [convertCurrency, exchangeRatesMap]);
-  
-  // Track changes
-  const handleFieldChange = useCallback((field: string, value: any) => {
-    // Skip undefined values to prevent unnecessary updates
-    if (value === undefined) {
-      return;
-    }
-    
-    // Handle currency change - show confirmation dialog
-    if (field === 'currency' && value !== prevCurrencyRef.current) {
-      const oldCurrency = prevCurrencyRef.current;
-      const newCurrency = value;
-      
-      // Get exchange rates - use custom rate from input if available, otherwise use market rate
-      const oldCustomRate = formData.exchange_rate;
-      const oldMarketRate = oldCurrency === "TRY" ? 1 : (exchangeRatesMap[oldCurrency] || 1);
-      const oldRate = oldCustomRate && oldCurrency !== "TRY" ? oldCustomRate : oldMarketRate;
-      
-      const newMarketRate = newCurrency === "TRY" ? 1 : (exchangeRatesMap[newCurrency] || 1);
-      const newRate = newMarketRate; // New currency will use market rate initially
-      
-      setCurrencyConversionDialog({
-        open: true,
-        oldCurrency,
-        newCurrency,
-        oldRate,
-        newRate,
-        pendingValue: value,
-        pendingField: field
-      });
-      return; // Don't update yet, wait for confirmation
-    }
-    
-    // Handle exchange_rate change - just update, no dialog
-    // Dialog only shows when currency (dropdown) changes
-    if (field === 'exchange_rate') {
-      prevExchangeRateRef.current = value;
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    // Also update form context for fields that are in the form
-    if (field === 'customer_id') {
-      form.setValue('customer_id', value);
-    } else if (field === 'contact_name') {
-      form.setValue('contact_name', value);
-    } else if (field === 'prepared_by') {
-      form.setValue('prepared_by', value);
-    } else if (field === 'employee_id') {
-      form.setValue('employee_id', value);
-    }
-    setHasChanges(true);
-  }, [form, convertCurrency, exchangeRatesMap, formData.currency]);
-  
-  // Handle currency conversion confirmation
-  const handleCurrencyConversionConfirm = useCallback(() => {
-    const { oldCurrency, newCurrency, oldRate, newRate, pendingValue, pendingField } = currencyConversionDialog;
-    
-    if (pendingField === 'currency') {
-      // Currency change - convert all items using the old rate (custom or market)
-      // oldRate already contains the custom rate if it was set in the input
-      // Check if oldRate is different from market rate (meaning it's a custom rate)
-      const marketRate = oldCurrency === "TRY" ? 1 : (exchangeRatesMap[oldCurrency] || 1);
-      const isCustomRate = oldRate && oldRate !== marketRate;
-      
-      // Use oldRate (which is the custom rate if available, otherwise market rate)
-      const rateToUse = oldRate || marketRate;
-      
-      // Convert all items using the custom rate if it's different from market rate
-      convertAllItemsWithRate(oldCurrency, newCurrency, isCustomRate ? rateToUse : undefined);
-      prevCurrencyRef.current = newCurrency;
-      
-      // Show success message with rate info
-      if (oldCurrency !== "TRY" && isCustomRate && oldRate) {
-        toast.success(`Tüm kalemler ${oldCurrency} (${oldRate.toFixed(4)} kurundan) ${newCurrency} para birimine dönüştürüldü`);
-      } else {
-        toast.success(`Tüm kalemler ${oldCurrency} para biriminden ${newCurrency} para birimine dönüştürüldü`);
-      }
-    } else if (pendingField === 'exchange_rate' && newRate) {
-      // Exchange rate change - convert all items using the new rate
-      convertAllItemsWithRate(oldCurrency, newCurrency, newRate);
-      prevExchangeRateRef.current = newRate;
-      toast.success(`Tüm kalemler yeni döviz kuru (${newRate.toFixed(4)}) ile dönüştürüldü`);
-    }
-    
-    // Update the field value
-    if (pendingField && pendingValue !== undefined) {
-      setFormData(prev => ({
-        ...prev,
-        [pendingField]: pendingValue
-      }));
-      setHasChanges(true);
-    }
-    
-    // Update refs
-    if (pendingField === 'currency') {
-      prevCurrencyRef.current = newCurrency;
-    } else if (pendingField === 'exchange_rate' && newRate) {
-      prevExchangeRateRef.current = newRate;
-    }
-    
-    setCurrencyConversionDialog({ open: false, oldCurrency: '', newCurrency: '' });
-  }, [currencyConversionDialog, convertAllItemsWithRate, exchangeRatesMap]);
-  
-  // Handle currency conversion cancellation
-  const handleCurrencyConversionCancel = useCallback(() => {
-    setCurrencyConversionDialog({ open: false, oldCurrency: '', newCurrency: '' });
-  }, []);
-
-  // Calculate totals by currency (modern approach like NewProposalCreate)
-  const calculateTotalsByCurrency = () => {
-    const totals: Record<string, { gross: number; discount: number; net: number; vat: number; grand: number }> = {};
-    
-    // First, collect all currencies used in items
-    const usedCurrencies = new Set<string>();
-    items.forEach(item => {
-      const currency = item.currency || 'TRY';
-      usedCurrencies.add(currency);
-    });
-    
-    // Initialize totals for all used currencies
-    usedCurrencies.forEach(currency => {
-      totals[currency] = { gross: 0, discount: 0, net: 0, vat: 0, grand: 0 };
-    });
-
-
-    // Calculate gross totals
-    items.forEach(item => {
-      const currency = item.currency || 'TRY';
-      totals[currency].gross += item.quantity * item.unit_price;
-    });
-    
-    // Calculate total gross across all currencies for global discount
-    const totalGross = Object.values(totals).reduce((sum, total) => sum + total.gross, 0);
-    
-    // Apply global discount and VAT calculations for each currency
-    Object.keys(totals).forEach(currency => {
-      const gross = totals[currency].gross;
-      
-      // Calculate global discount proportionally for this currency
-      let globalDiscount = 0;
-      if (globalDiscountValue > 0 && totalGross > 0) {
-        const currencyProportion = gross / totalGross;
-        if (globalDiscountType === 'percentage') {
-          globalDiscount = (gross * globalDiscountValue) / 100;
-        } else {
-          // Amount discount distributed proportionally
-          globalDiscount = globalDiscountValue * currencyProportion;
-        }
-      }
-      
-      const net = gross - globalDiscount;
-      const vat = (net * (formData.vat_percentage || 0)) / 100;
-      const grand = net + vat;
-      
-      totals[currency] = {
-        gross,
-        discount: globalDiscount,
-        net,
-        vat,
-        grand
-      };
-    });
-    
-    return totals;
-  };
-
-  const calculationsByCurrency = calculateTotalsByCurrency();
-  
-  // Auto-detect primary currency from items (use the currency with highest total)
-  const currencyTotals = Object.entries(calculationsByCurrency);
-  const [detectedCurrency] = currencyTotals.length > 0
-    ? currencyTotals.reduce((max, current) => current[1].grand > max[1].grand ? current : max)
-    : ['TRY', { grand: 0 }];
-  
-  // Use detected currency or fallback to form currency
-  const primaryCurrency = detectedCurrency || formData.currency;
   const primaryTotals = calculationsByCurrency[primaryCurrency] || {
     gross: 0,
     discount: 0,
@@ -601,14 +116,45 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     vat: 0,
     grand: 0
   };
-  
-  const calculations = {
-    gross_total: primaryTotals.gross,
-    discount_amount: primaryTotals.discount,
-    net_total: primaryTotals.net,
-    vat_amount: primaryTotals.vat,
-    grand_total: primaryTotals.grand
-  };
+
+  // Actions
+  const actions = useProposalActions(
+    proposal,
+    formData,
+    items,
+    primaryTotals,
+    primaryCurrency,
+    customers || [],
+    handleSave,
+    refetchProposal,
+    id
+  );
+
+  // Product modal state
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
+  const [editingItemData, setEditingItemData] = useState<any>(null);
+
+  // Templates
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+
+  // Load templates
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        setIsLoadingTemplates(true);
+        const data = await PdfExportService.getTemplates('quote');
+        setTemplates(data);
+      } catch (error) {
+        console.error('Error loading templates:', error);
+      } finally {
+        setIsLoadingTemplates(false);
+      }
+    };
+    loadTemplates();
+  }, []);
 
   // Update item calculations
   useEffect(() => {
@@ -617,54 +163,40 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
       total_price: item.quantity * item.unit_price
     }));
     setItems(updatedItems);
-  }, [items.map(item => `${item.quantity}-${item.unit_price}`).join(',')]);
+  }, [items.map(item => `${item.quantity}-${item.unit_price}`).join(','), setItems]);
 
-  const handleItemChange = (index: number, field: keyof LineItem, value: any) => {
-    const updatedItems = [...items];
-    updatedItems[index] = {
-      ...updatedItems[index],
-      [field]: value
-    };
-    setItems(updatedItems);
-    setHasChanges(true);
+  // Initialize currency refs when proposal loads
+  useEffect(() => {
+    if (proposal && proposalLoaded) {
+      prevCurrencyRef.current = proposal.currency || "TRY";
+      prevExchangeRateRef.current = proposal.exchange_rate;
+    }
+  }, [proposal, proposalLoaded, prevCurrencyRef, prevExchangeRateRef]);
+
+  // Handle field change with currency conversion
+  const handleFieldChange = (field: string, value: any) => {
+    handleCurrencyFieldChange(field, value, formData, form, setFormData, setHasChanges);
   };
 
-  const addItem = () => {
-    const newItem: LineItem = {
-      id: Date.now().toString(),
-      row_number: items.length + 1,
-      name: "",
-      description: "",
-      quantity: 1,
-      unit: "adet",
-      unit_price: 0,
-      total_price: 0,
-      currency: formData.currency
-    };
-    setItems([...items, newItem]);
-    setHasChanges(true);
-  };
-
+  // Handle product modal select
   const handleProductModalSelect = (product: any, itemIndex?: number) => {
     setSelectedProduct(product);
     setEditingItemIndex(itemIndex);
-    // Eğer product'ta existingData varsa (aynı ürün tekrar seçildiğinde), onu kullan
     if (product?.existingData) {
       setEditingItemData(product.existingData);
     } else {
-      // Yeni ürün seçildiğinde veya existingData yoksa null yap
       setEditingItemData(null);
     }
     setProductModalOpen(true);
   };
 
+  // Handle add product to proposal
   const handleAddProductToProposal = (productData: any, itemIndex?: number) => {
     if (itemIndex !== undefined) {
-      // Update existing item
       const updatedItems = [...items];
       updatedItems[itemIndex] = {
         ...updatedItems[itemIndex],
-        product_id: productData.id, // Required: product_id for fetching image from products table
+        product_id: productData.id,
         name: productData.name,
         description: productData.description,
         quantity: productData.quantity,
@@ -674,14 +206,12 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         discount_rate: productData.discount_rate,
         total_price: productData.total_price,
         currency: productData.currency || formData.currency,
-        // image_url removed: Always fetch from products table using product_id
       };
       setItems(updatedItems);
     } else {
-      // Add new item
       const newItem: LineItem = {
         id: Date.now().toString(),
-        product_id: productData.id, // Required: product_id for fetching image from products table
+        product_id: productData.id,
         row_number: items.length + 1,
         name: productData.name,
         description: productData.description,
@@ -692,7 +222,6 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         discount_rate: productData.discount_rate,
         total_price: productData.total_price,
         currency: productData.currency || formData.currency,
-        // image_url removed: Always fetch from products table using product_id
       };
       setItems([...items, newItem]);
     }
@@ -703,1032 +232,187 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     setHasChanges(true);
   };
 
-  const removeItem = (index: number) => {
-    if (items.length > 1) {
-      const updatedItems = items.filter((_, i) => i !== index);
-      // Renumber items
-      const renumberedItems = updatedItems.map((item, i) => ({
-        ...item,
-        row_number: i + 1
-      }));
-      setItems(renumberedItems);
-      setHasChanges(true);
-    }
-  };
-
-  // Move item up
-  const moveItemUp = useCallback((index: number) => {
-    setItems(prevItems => {
-      if (index > 0) {
-        const updatedItems = [...prevItems];
-        const [movedItem] = updatedItems.splice(index, 1);
-        updatedItems.splice(index - 1, 0, movedItem);
-        
-        // Renumber items
-        return updatedItems.map((item, i) => ({
-          ...item,
-          row_number: i + 1
-        }));
-      }
-      return prevItems;
-    });
-    setHasChanges(true);
-  }, []);
-
-  // Move item down
-  const moveItemDown = useCallback((index: number) => {
-    setItems(prevItems => {
-      if (index < prevItems.length - 1) {
-        const updatedItems = [...prevItems];
-        const [movedItem] = updatedItems.splice(index, 1);
-        updatedItems.splice(index + 1, 0, movedItem);
-        
-        // Renumber items
-        return updatedItems.map((item, i) => ({
-          ...item,
-          row_number: i + 1
-        }));
-      }
-      return prevItems;
-    });
-    setHasChanges(true);
-  }, []);
-
-  // Save function
-  const handleSaveChanges = async (status: ProposalStatus = proposal?.status || 'draft') => {
-    console.log("🔍 Save changes clicked with status:", status);
-    console.log("🔍 FormData:", formData);
-    console.log("🔍 Items:", items);
-    
-    // Validation
-    if (!formData.contact_name.trim()) {
-      console.log("❌ Validation failed: contact_name is empty");
-      toast.error("İletişim kişisi adı gereklidir");
-      return;
-    }
-    if (!formData.validity_date) {
-      console.log("❌ Validation failed: validity_date is empty");
-      toast.error("Geçerlilik tarihi gereklidir");
-      return;
-    }
-    if (items.length === 0 || items.every(item => !item.name.trim() && !item.description.trim())) {
-      console.log("❌ Validation failed: no valid items");
-      toast.error("En az bir teklif kalemi eklenmelidir");
-      return;
-    }
-
-    console.log("✅ All validations passed, proceeding with save...");
-
-    setIsSaving(true);
-    try {
-      // Müşteri bilgisinden şirket adını al (customer_company alanı yok, direkt müşteriden al)
-      let customerCompanyName = "Müşteri";
-      if (formData.customer_id) {
-        const selected = customers?.find(c => c.id === formData.customer_id);
-        if (selected) {
-          customerCompanyName = selected.company || selected.name || "Müşteri";
-        }
-      }
-      
-      // Prepare data for backend compatible with database schema
-      const proposalData = {
-        title: `${customerCompanyName} - Teklif`,
-        subject: formData.subject, // Teklif konusu
-        description: formData.notes,
-        number: formData.offer_number,
-        customer_id: formData.customer_id || null,
-        employee_id: formData.employee_id || null,
-        contact_name: formData.contact_name || "", // İletişim kişisi
-        offer_date: formData.offer_date ? formatDateToLocalString(formData.offer_date) : null, // Teklif tarihi (yerel timezone)
-        valid_until: formData.validity_date ? formatDateToLocalString(formData.validity_date) : "",
-        terms: `${formData.payment_terms}\n\n${formData.delivery_terms}\n\nGaranti: ${formData.warranty_terms}`,
-        payment_terms: formData.payment_terms,
-        delivery_terms: formData.delivery_terms,
-        warranty_terms: formData.warranty_terms,
-        price_terms: formData.price_terms,
-        other_terms: formData.other_terms,
-        notes: formData.notes,
-        status: status,
-        // Financial totals for PDF generation
-        subtotal: primaryTotals.gross,
-        total_discount: primaryTotals.discount,
-        total_tax: primaryTotals.vat,
-        total_amount: primaryTotals.grand,
-        currency: primaryCurrency,
-        exchange_rate: formData.exchange_rate, // Döviz kuru
-        items: items.map(item => ({
-          ...item,
-          total_price: item.quantity * item.unit_price
-        }))
-      };
-
-      console.log("🔍 Prepared proposal data:", proposalData);
-
-      await handleSave(proposalData);
-      
-      // Invalidate all proposal queries to refresh the table (useProposalEdit'te de yapılıyor ama ekstra güvenlik için)
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
-      if (id) {
-        queryClient.invalidateQueries({ queryKey: ['proposal', id] });
-      }
-      // Hemen refetch yap - tablo otomatik yenilensin
-      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
-      
-      // Teklif düzenle sayfasını yenile - güncel verileri yükle
-      if (refetchProposal) {
-        await refetchProposal();
-      }
-      
-      setHasChanges(false);
-    } catch (error) {
-      console.error("💥 Error saving proposal:", error);
-      toast.error("Teklif güncellenirken bir hata oluştu");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  if (loading) {
-    return (
-    <div className="flex items-center justify-center h-[600px]">
-          <div className="w-8 h-8 border-4 border-t-blue-600 border-b-blue-600 border-l-transparent border-r-transparent rounded-full animate-spin"></div>
-        </div>
-  );
-  }
-
-  if (!proposal) {
-    return (
-    <div className="flex flex-col items-center justify-center h-[600px]">
-          <h2 className="text-xl font-semibold mb-2">Teklif Bulunamadı</h2>
-          <p className="text-muted-foreground mb-6">İstediğiniz teklif mevcut değil veya erişim izniniz yok.</p>
-          <Button onClick={handleBack}>Teklifler Sayfasına Dön</Button>
-        </div>
-  );
-  }
-
   const handlePreview = () => {
     toast.info("Önizleme özelliği yakında eklenecek");
   };
 
-  const handleStatusChange = async (newStatus: ProposalStatus) => {
-    if (!proposal) return;
-    
-    try {
-      await handleProposalStatusChange(
-        proposal.id,
-        proposal.title,
-        proposal.opportunity_id || null,
-        newStatus,
-        proposal.employee_id
-      );
-      
-      toast.success(`Teklif durumu "${proposalStatusLabels[newStatus]}" olarak güncellendi`);
-    } catch (error) {
-      console.error("Error updating proposal status:", error);
-      toast.error("Teklif durumu güncellenirken bir hata oluştu");
-    }
-  };
-
-  const handleDeleteClick = () => {
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    setIsDeleting(true);
-    try {
-      toast.success("Teklif silindi");
-      navigate("/proposals");
-    } catch (error) {
-      console.error('Error deleting proposal:', error);
-    } finally {
-      setIsDeleting(false);
-      setIsDeleteDialogOpen(false);
-    }
-  };
-
-  const handleDeleteCancel = () => {
-    setIsDeleteDialogOpen(false);
-  };
-
-  const handlePdfPrint = async (templateId?: string) => {
-    if (!proposal) return;
-    
-    try {
-      // Teklif detaylarını çek
-      const proposalData = await PdfExportService.transformProposalForPdf(proposal);
-      
-      // PDF'i yeni sekmede aç
-      await PdfExportService.openPdfInNewTab(proposalData, { templateId });
-      
-      toast("PDF yeni sekmede açıldı");
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      toast.error("PDF oluşturulurken hata oluştu: " + (error as Error).message);
-    }
-  };
-
-  const handleSendEmail = () => {
-    toast.success("E-posta gönderme penceresi açıldı");
-  };
-
-  const handleConvertToOrder = () => {
-    if (!proposal) return;
-    
-    navigate(`/orders/create?proposalId=${proposal.id}`);
-    toast.success("Sipariş oluşturma sayfasına yönlendiriliyorsunuz");
-  };
-
-  const handleConvertToInvoice = () => {
-    if (!proposal) return;
-
-    navigate(`/sales-invoices/create?proposalId=${proposal.id}`);
-    toast.success("Fatura oluşturma sayfasına yönlendiriliyorsunuz");
-  };
-
-  const getStatusActions = () => {
-    // Status action butonları artık İşlemler dropdown menüsünde
-    return null;
-  };
-
-  const handleExportPDF = () => {
-    toast.info("PDF export özelliği yakında eklenecek");
-  };
-
-
   const handleSmartSave = () => {
-    handleSaveChanges(proposal.status);
+    actions.handleSaveChanges(proposal?.status || 'draft');
   };
 
-  // Status action fonksiyonları
-  const handleSendToCustomer = () => {
-    handleStatusChange('sent');
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[600px]">
+        <div className="w-8 h-8 border-4 border-t-blue-600 border-b-blue-600 border-l-transparent border-r-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
-  const handleSendForApproval = () => {
-    handleStatusChange('pending_approval');
-  };
-
-  const handleConvertToDraft = () => {
-    handleStatusChange('draft');
-  };
-
-  const handleAcceptProposal = () => {
-    handleStatusChange('accepted');
-  };
-
-  const handleRejectProposal = () => {
-    handleStatusChange('rejected');
-  };
-
-  // Revizyon oluşturma fonksiyonu
-  const handleCreateRevision = async () => {
-    try {
-      toast.loading("Revizyon oluşturuluyor...", { id: 'revision' });
-
-      // Orijinal teklifi belirle (bu zaten bir revizyon mu?)
-      const originalProposalId = proposal.parent_proposal_id || proposal.id;
-
-      // Mevcut revizyonların sayısını al
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { data: revisionCount } = await supabase.rpc('get_next_revision_number', { p_parent_id: originalProposalId });
-
-      const nextRevisionNumber = revisionCount || 1;
-
-      // Revizyon için yeni proposal verisi hazırla ve hemen kaydet
-      const { createProposal } = await import('@/services/proposal/api/crudOperations');
-
-      const revisionData = {
-        title: proposal.title,
-        subject: proposal.subject,
-        description: proposal.description,
-        customer_id: proposal.customer_id,
-        employee_id: proposal.employee_id,
-        contact_name: proposal.contact_name,
-        offer_date: proposal.offer_date,
-        opportunity_id: proposal.opportunity_id,
-        status: 'draft' as ProposalStatus,
-        valid_until: undefined,
-        payment_terms: proposal.payment_terms,
-        delivery_terms: proposal.delivery_terms,
-        warranty_terms: proposal.warranty_terms,
-        price_terms: proposal.price_terms,
-        other_terms: proposal.other_terms,
-        notes: proposal.notes,
-        terms: proposal.terms,
-        currency: proposal.currency || 'TRY',
-        exchange_rate: proposal.exchange_rate,
-        total_amount: proposal.total_amount,
-        subtotal: proposal.subtotal,
-        total_discount: proposal.total_discount,
-        total_tax: proposal.total_tax,
-        items: proposal.items?.map(item => ({
-          ...item,
-          id: undefined // Yeni itemlar için ID'yi temizle
-        })) || [],
-        parent_proposal_id: originalProposalId,
-        revision_number: nextRevisionNumber,
-      };
-
-      const { data: newProposal, error } = await createProposal(revisionData);
-
-      if (error) {
-        throw error;
-      }
-
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
-      queryClient.invalidateQueries({ queryKey: ['proposal', proposal.id] });
-
-      toast.success(`Revizyon R${nextRevisionNumber} oluşturuldu!`, { id: 'revision' });
-
-      // Yeni oluşturulan revizyonun düzenleme sayfasına yönlendir (aynı sayfa formatı)
-      if (newProposal?.id) {
-        navigate(`/proposal/${newProposal.id}`);
-      }
-    } catch (error) {
-      console.error('Error creating revision:', error);
-      toast.error("Revizyon oluşturulurken bir hata oluştu.", { id: 'revision' });
-    }
-  };
-
-  // Aynı müşteri için kopyalama
-  const handleCopySameCustomer = async () => {
-    if (!proposal || isCopying) return;
-    
-    setIsCopying(true);
-    try {
-      const { createProposal, getProposalById } = await import('@/services/proposal/api/crudOperations');
-      const { data: fullProposal, error: fetchError } = await getProposalById(proposal.id);
-      
-      if (fetchError || !fullProposal) {
-        throw new Error('Teklif detayları alınamadı');
-      }
-
-      const copyData = {
-        title: `${fullProposal.title} (Kopya)`,
-        subject: fullProposal.subject ? `${fullProposal.subject} (Kopya)` : undefined,
-        description: fullProposal.description,
-        customer_id: fullProposal.customer_id,
-        employee_id: fullProposal.employee_id,
-        opportunity_id: undefined,
-        status: 'draft' as ProposalStatus,
-        valid_until: undefined,
-        payment_terms: fullProposal.payment_terms,
-        delivery_terms: fullProposal.delivery_terms,
-        warranty_terms: fullProposal.warranty_terms,
-        price_terms: fullProposal.price_terms,
-        other_terms: fullProposal.other_terms,
-        notes: fullProposal.notes,
-        terms: fullProposal.terms,
-        currency: fullProposal.currency || 'TRY',
-        exchange_rate: fullProposal.exchange_rate,
-        total_amount: fullProposal.total_amount,
-        items: fullProposal.items?.map(item => ({
-          ...item,
-          id: undefined
-        })) || [],
-      };
-
-      const { data: newProposal, error } = await createProposal(copyData);
-      
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
-      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
-      
-      toast.success("Teklif aynı müşteri için kopyalandı!");
-      
-      if (newProposal?.id) {
-        navigate(`/proposal/${newProposal.id}`);
-      }
-    } catch (error) {
-      console.error('Error copying proposal:', error);
-      toast.error("Teklif kopyalanırken bir hata oluştu.");
-    } finally {
-      setIsCopying(false);
-    }
-  };
-
-  // Farklı müşteri için kopyalama - müşteri seçim dialog'unu aç
-  const handleCopyDifferentCustomer = () => {
-    setSelectedCustomerId("");
-    setIsCustomerSelectDialogOpen(true);
-  };
-
-  // Farklı müşteri için kopyalama işlemini gerçekleştir
-  const handleConfirmCopyDifferentCustomer = async () => {
-    if (!proposal || !selectedCustomerId) {
-      toast.error("Lütfen bir müşteri seçin");
-      return;
-    }
-
-    if (isCopying) return;
-    
-    setIsCopying(true);
-    try {
-      const { createProposal, getProposalById } = await import('@/services/proposal/api/crudOperations');
-      const { data: fullProposal, error: fetchError } = await getProposalById(proposal.id);
-      
-      if (fetchError || !fullProposal) {
-        throw new Error('Teklif detayları alınamadı');
-      }
-
-      const copyData = {
-        title: `${fullProposal.title} (Kopya)`,
-        subject: fullProposal.subject ? `${fullProposal.subject} (Kopya)` : undefined,
-        description: fullProposal.description,
-        customer_id: selectedCustomerId,
-        employee_id: fullProposal.employee_id,
-        opportunity_id: undefined,
-        status: 'draft' as ProposalStatus,
-        valid_until: undefined,
-        payment_terms: fullProposal.payment_terms,
-        delivery_terms: fullProposal.delivery_terms,
-        warranty_terms: fullProposal.warranty_terms,
-        price_terms: fullProposal.price_terms,
-        other_terms: fullProposal.other_terms,
-        notes: fullProposal.notes,
-        terms: fullProposal.terms,
-        currency: fullProposal.currency || 'TRY',
-        exchange_rate: fullProposal.exchange_rate,
-        total_amount: fullProposal.total_amount,
-        items: fullProposal.items?.map(item => ({
-          ...item,
-          id: undefined
-        })) || [],
-      };
-
-      const { data: newProposal, error } = await createProposal(copyData);
-      
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
-      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
-      
-      toast.success("Teklif farklı müşteri için kopyalandı!");
-      
-      setIsCustomerSelectDialogOpen(false);
-      setSelectedCustomerId("");
-      
-      if (newProposal?.id) {
-        navigate(`/proposal/${newProposal.id}`);
-      }
-    } catch (error) {
-      console.error('Error copying proposal:', error);
-      toast.error("Teklif kopyalanırken bir hata oluştu.");
-    } finally {
-      setIsCopying(false);
-    }
-  };
+  if (!proposal) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[600px]">
+        <h2 className="text-xl font-semibold mb-2">Teklif Bulunamadı</h2>
+        <p className="text-muted-foreground mb-6">İstediğiniz teklif mevcut değil veya erişim izniniz yok.</p>
+        <Button onClick={handleBack}>Teklifler Sayfasına Dön</Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-2">
-      {/* Enhanced Sticky Header with Progress */}
-      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-2">
-        <div className="flex items-center justify-between p-3 pl-12">
-          <div className="flex items-center gap-3">
-            {/* Simple Back Button */}
-            <BackButton 
-              onClick={() => navigate("/proposals")}
-              variant="ghost"
-              size="sm"
-            >
-              Teklifler
-            </BackButton>
-            
-            {/* Simple Title Section with Icon */}
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-muted-foreground" />
-              <div className="space-y-0.5">
-                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                  Teklif Düzenle
-                </h1>
-                <div className="flex items-center gap-2">
-                  <p className="text-xs text-muted-foreground/70">
-                    {proposal.number || 'Teklif #' + id}
-                  </p>
-                  <Badge className={`${proposalStatusColors[proposal.status]} text-xs`}>
-                    {proposalStatusLabels[proposal.status]}
-                  </Badge>
-                  {proposal.revision_number && (
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] px-1.5 py-0 ${
-                        proposal.revision_number
-                          ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-700'
-                          : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700'
-                      }`}
-                    >
-                      R{proposal.revision_number || 0}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </div>
+    <FormProvider {...form}>
+      <div className="space-y-2">
+        <ProposalEditHeader
+          proposal={proposal}
+          proposalId={id}
+          hasChanges={hasChanges}
+          isSaving={actions.isSaving}
+          revisions={revisions}
+          templates={templates}
+          formData={formData}
+          onSave={handleSmartSave}
+          onPdfPrint={actions.handlePdfPrint}
+          onPreview={handlePreview}
+          onSendEmail={actions.handleSendEmail}
+          onSendToCustomer={actions.handleSendToCustomer}
+          onSendForApproval={actions.handleSendForApproval}
+          onConvertToDraft={actions.handleConvertToDraft}
+          onAcceptProposal={actions.handleAcceptProposal}
+          onRejectProposal={actions.handleRejectProposal}
+          onCopySameCustomer={actions.handleCopySameCustomer}
+          onCopyDifferentCustomer={actions.handleCopyDifferentCustomer}
+          onCreateRevision={actions.handleCreateRevision}
+          onConvertToOrder={actions.handleConvertToOrder}
+          onConvertToInvoice={actions.handleConvertToInvoice}
+          onDelete={actions.handleDeleteClick}
+          isCopying={actions.isCopying}
+        />
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <CustomerInfoCard
+              formData={formData}
+              handleFieldChange={handleFieldChange}
+              errors={{}}
+              form={form}
+            />
+
+            <ProposalDetailsCard
+              formData={formData}
+              handleFieldChange={handleFieldChange}
+              errors={{}}
+            />
           </div>
-          
-          <div className="flex items-center gap-4">
-            <Button 
-              onClick={handleSmartSave}
-              disabled={isSaving || !hasChanges}
-              className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
-            >
-              <Save className="h-4 w-4" />
-              <span>{isSaving ? "Kaydediliyor..." : hasChanges ? "Değişiklikleri Kaydet" : "Kaydedildi"}</span>
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                  <span className="font-medium">İşlemler</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {/* Yazdırma İşlemleri */}
-                <DropdownMenuLabel>Yazdırma</DropdownMenuLabel>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="cursor-pointer">
-                    <Printer className="h-4 w-4 mr-2 text-blue-500" />
-                    <span>Yazdır</span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="w-48">
-                    {templates && templates.length > 0 ? (
-                      templates.map((template) => (
-                        <DropdownMenuItem
-                          key={template.id}
-                          onClick={() => handlePdfPrint(template.id)}
-                          className="cursor-pointer"
-                        >
-                          <Printer className="h-4 w-4 mr-2 text-blue-500" />
-                          <span>{template.name || 'PDF Yazdır'}</span>
-                        </DropdownMenuItem>
-                      ))
-                    ) : (
-                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                        Şablon bulunamadı
-                      </div>
-                    )}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-                <DropdownMenuItem onClick={handlePreview} className="gap-2 cursor-pointer">
-                  <Eye className="h-4 w-4 text-slate-500" />
-                  <span>Önizle</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSendEmail} className="gap-2 cursor-pointer">
-                  <Send className="h-4 w-4 text-slate-500" />
-                  <span>E-posta Gönder</span>
-                </DropdownMenuItem>
-                
-                <DropdownMenuSeparator />
-                
-                {/* Durum İşlemleri */}
-                <DropdownMenuLabel>Durum</DropdownMenuLabel>
-                {proposal.status === 'draft' && (
-                  <>
-                    <DropdownMenuItem onClick={handleSendToCustomer} className="gap-2 cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                      <Send className="h-4 w-4" />
-                      <span>Müşteriye Gönder</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleSendForApproval} className="gap-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50">
-                      <Clock className="h-4 w-4" />
-                      <span>Onaya Gönder</span>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                
-                {proposal.status === 'pending_approval' && (
-                  <>
-                    <DropdownMenuItem onClick={handleSendToCustomer} className="gap-2 cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                      <Send className="h-4 w-4" />
-                      <span>Müşteriye Gönder</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleConvertToDraft} className="gap-2 cursor-pointer text-gray-600 hover:text-gray-700 hover:bg-gray-50">
-                      <ArrowLeft className="h-4 w-4" />
-                      <span>Taslağa Çevir</span>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                
-                {proposal.status === 'sent' && (
-                  <>
-                    <DropdownMenuItem onClick={handleAcceptProposal} className="gap-2 cursor-pointer text-green-600 hover:text-green-700 hover:bg-green-50">
-                      <Check className="h-4 w-4" />
-                      <span>Kabul Edildi</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleRejectProposal} className="gap-2 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50">
-                      <XCircle className="h-4 w-4" />
-                      <span>Reddedildi</span>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                
-                <DropdownMenuSeparator />
-                
-                {/* Kopyala & Revizyon İşlemleri */}
-                <DropdownMenuLabel>Kopyala & Revizyon</DropdownMenuLabel>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="cursor-pointer">
-                    <Copy className="h-4 w-4 mr-2 text-blue-500" />
-                    <span>Teklifi Kopyala</span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="w-48">
-                    <DropdownMenuItem
-                      onClick={handleCopySameCustomer}
-                      className="cursor-pointer"
-                      disabled={isCopying}
-                    >
-                      <Users className="h-4 w-4 mr-2 text-blue-500" />
-                      <span>Aynı Müşteri İçin</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={handleCopyDifferentCustomer}
-                      className="cursor-pointer"
-                      disabled={isCopying}
-                    >
-                      <UserPlus className="h-4 w-4 mr-2 text-green-500" />
-                      <span>Farklı Müşteri İçin</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-                <DropdownMenuItem onClick={handleCreateRevision} className="gap-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50">
-                  <GitBranch className="h-4 w-4" />
-                  <span>Yeni Revizyon Oluştur</span>
-                </DropdownMenuItem>
 
-                {/* Revizyonlar Listesi */}
-                {revisions.length > 1 && (
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="cursor-pointer">
-                      <GitBranch className="h-4 w-4 mr-2 text-orange-500" />
-                      <span>Revizyonlar ({revisions.length})</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="w-64">
-                      {revisions.map((rev) => (
-                        <DropdownMenuItem
-                          key={rev.id}
-                          onClick={() => navigate(`/proposal/${rev.id}`)}
-                          className={cn(
-                            "cursor-pointer flex items-center justify-between",
-                            rev.id === proposal.id && "bg-orange-50"
-                          )}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "text-[10px] px-1.5 py-0",
-                                rev.revision_number === 0
-                                  ? "bg-blue-50 text-blue-600 border-blue-200"
-                                  : "bg-orange-50 text-orange-600 border-orange-200"
-                              )}
-                            >
-                              R{rev.revision_number || 0}
-                            </Badge>
-                            <span className="text-xs">{rev.number}</span>
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "text-[10px] px-1.5 py-0",
-                                proposalStatusColors[rev.status as ProposalStatus]
-                              )}
-                            >
-                              {proposalStatusLabels[rev.status as ProposalStatus]}
-                            </Badge>
-                          </div>
-                          {rev.id === proposal.id && (
-                            <Check className="h-3 w-3 text-orange-600" />
-                          )}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                )}
-
-                <DropdownMenuSeparator />
+          <ProductServiceCard
+            items={items}
+            onAddItem={addItem}
+            onRemoveItem={removeItem}
+            onMoveItemUp={moveItemUp}
+            onMoveItemDown={moveItemDown}
+            onItemChange={handleItemChange}
+            onProductModalSelect={(product, itemIndex) => {
+              if (itemIndex !== undefined) {
+                setSelectedProduct(product);
+                setEditingItemIndex(itemIndex);
                 
-                {/* Dönüştürme İşlemleri */}
-                <DropdownMenuLabel>Dönüştür</DropdownMenuLabel>
-                <DropdownMenuItem onClick={handleConvertToOrder} className="gap-2 cursor-pointer">
-                  <ShoppingCart className="h-4 w-4 text-green-500" />
-                  <span>Siparişe Çevir</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleConvertToInvoice} className="gap-2 cursor-pointer">
-                  <Receipt className="h-4 w-4 text-purple-500" />
-                  <span>Faturaya Çevir</span>
-                </DropdownMenuItem>
-                
-                <DropdownMenuSeparator />
-                
-                {/* Müşteri Sayfasına Git */}
-                {formData.customer_id && (
-                  <>
-                    <DropdownMenuItem 
-                      onClick={() => navigate(`/customers/${formData.customer_id}`)}
-                      className="gap-2 cursor-pointer"
-                    >
-                      <Building2 className="h-4 w-4 text-blue-500" />
-                      <span>Müşteri Sayfasına Git</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                
-                <DropdownMenuItem onClick={handleDeleteClick} className="gap-2 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50">
-                  <Trash className="h-4 w-4" />
-                  <span>Sil</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-
-      {/* Status Actions */}
-      {getStatusActions()}
-
-      {/* Main Content */}
-      <div className="space-y-4">
-        {/* Top Row - Customer & Proposal Details Combined */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {/* Customer Information */}
-          <CustomerInfoCard
-            formData={formData}
-            handleFieldChange={handleFieldChange}
-            errors={{}}
-            form={form}
-          />
-
-          {/* Offer Details */}
-          <ProposalDetailsCard
-            formData={formData}
-            handleFieldChange={handleFieldChange}
-            errors={{}}
-          />
-        </div>
-
-        {/* Products/Services Table - Full Width */}
-        <ProductServiceCard
-          items={items}
-          onAddItem={addItem}
-          onRemoveItem={removeItem}
-          onMoveItemUp={moveItemUp}
-          onMoveItemDown={moveItemDown}
-          onItemChange={handleItemChange}
-          onProductModalSelect={(product, itemIndex) => {
-            if (itemIndex !== undefined) {
-              // Editing existing item
-              setSelectedProduct(product); // product'ı set et, null yapma
-              setEditingItemIndex(itemIndex);
-              
-              // Check if this is from ProductSelector (new product selection) or Edit button
-              // If product has existingData property (object), it means Edit button was clicked
-              // Otherwise, it's a new product selection from ProductSelector
-              if (product?.existingData && typeof product.existingData === 'object') {
-                // Edit button clicked - use current item data from items array
-                const currentItem = items[itemIndex];
-                if (currentItem) {
-                  setEditingItemData({
-                    name: currentItem.name,
-                    description: currentItem.description || "",
-                    quantity: currentItem.quantity || 1,
-                    unit: currentItem.unit || "adet",
-                    unit_price: currentItem.unit_price || 0,
-                    vat_rate: currentItem.tax_rate || 20,
-                    discount_rate: currentItem.discount_rate || 0,
-                    currency: currentItem.currency || formData.currency,
-                    product_id: currentItem.product_id
-                  });
+                if (product?.existingData && typeof product.existingData === 'object') {
+                  const currentItem = items[itemIndex];
+                  if (currentItem) {
+                    setEditingItemData({
+                      name: currentItem.name,
+                      description: currentItem.description || "",
+                      quantity: currentItem.quantity || 1,
+                      unit: currentItem.unit || "adet",
+                      unit_price: currentItem.unit_price || 0,
+                      vat_rate: currentItem.tax_rate || 20,
+                      discount_rate: currentItem.discount_rate || 0,
+                      currency: currentItem.currency || formData.currency,
+                      product_id: currentItem.product_id
+                    });
+                  } else {
+                    setEditingItemData(product.existingData);
+                  }
                 } else {
-                  // Fallback to product existingData if item not found
-                  setEditingItemData(product.existingData);
+                  setEditingItemData(null);
                 }
+                setProductModalOpen(true);
               } else {
-                // ProductSelector'dan yeni ürün seçildi - existingData null olmalı
+                handleProductModalSelect(product, itemIndex);
+              }
+            }}
+            showMoveButtons={true}
+            inputHeight="h-8"
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <TermsConditionsCard
+              paymentTerms={formData.payment_terms}
+              deliveryTerms={formData.delivery_terms}
+              warrantyTerms={formData.warranty_terms}
+              priceTerms={formData.price_terms}
+              otherTerms={formData.other_terms}
+              onInputChange={(e) => handleFieldChange(e.target.name, e.target.value)}
+            />
+
+            <FinancialSummaryCard
+              selectedCurrency={formData.currency}
+              calculationsByCurrency={calculationsByCurrency}
+              globalDiscountType={globalDiscountType}
+              globalDiscountValue={globalDiscountValue}
+              onGlobalDiscountTypeChange={(type) => {
+                setGlobalDiscountType(type);
+                setHasChanges(true);
+              }}
+              onGlobalDiscountValueChange={(value) => {
+                setGlobalDiscountValue(value);
+                setHasChanges(true);
+              }}
+              vatPercentage={formData.vat_percentage}
+              onVatPercentageChange={(value) => {
+                handleFieldChange('vat_percentage', value);
+              }}
+              showVatControl={true}
+              inputHeight="h-10"
+            />
+          </div>
+
+          <ProductDetailsModal
+            open={productModalOpen}
+            onOpenChange={(open) => {
+              setProductModalOpen(open);
+              if (!open) {
+                setEditingItemIndex(undefined);
+                setSelectedProduct(null);
                 setEditingItemData(null);
               }
-              setProductModalOpen(true);
-            } else {
-              // Adding new item
-              handleProductModalSelect(product, itemIndex);
-            }
-          }}
-          showMoveButtons={true}
-          inputHeight="h-8"
-        />
-
-        {/* Terms and Financial Summary - Side by Side */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Terms & Conditions */}
-          <TermsConditionsCard
-            paymentTerms={formData.payment_terms}
-            deliveryTerms={formData.delivery_terms}
-            warrantyTerms={formData.warranty_terms}
-            priceTerms={formData.price_terms}
-            otherTerms={formData.other_terms}
-            onInputChange={(e) => handleFieldChange(e.target.name, e.target.value)}
+            }}
+            product={selectedProduct}
+            onAddToProposal={(productData) => handleAddProductToProposal(productData, editingItemIndex)}
+            currency={formData.currency}
+            existingData={editingItemData}
           />
 
-          {/* Financial Summary */}
-          <FinancialSummaryCard
-            selectedCurrency={formData.currency}
-            calculationsByCurrency={calculationsByCurrency}
-            globalDiscountType={globalDiscountType}
-            globalDiscountValue={globalDiscountValue}
-            onGlobalDiscountTypeChange={(type) => {
-              setGlobalDiscountType(type);
-              setHasChanges(true);
-            }}
-            onGlobalDiscountValueChange={(value) => {
-              setGlobalDiscountValue(value);
-              setHasChanges(true);
-            }}
-            vatPercentage={formData.vat_percentage}
-            onVatPercentageChange={(value) => {
-              handleFieldChange('vat_percentage', value);
-            }}
-            showVatControl={true}
-            inputHeight="h-10"
+          <ProposalEditDialogs
+            currencyConversionDialog={currencyConversionDialog}
+            onCurrencyConversionConfirm={handleCurrencyConversionConfirm}
+            onCurrencyConversionCancel={handleCurrencyConversionCancel}
+            exchangeRatesMap={exchangeRatesMap}
+            isDeleteDialogOpen={actions.isDeleteDialogOpen}
+            onDeleteDialogOpenChange={actions.setIsDeleteDialogOpen}
+            onDeleteConfirm={actions.handleDeleteConfirm}
+            onDeleteCancel={actions.handleDeleteCancel}
+            isDeleting={actions.isDeleting}
+            isCustomerSelectDialogOpen={actions.isCustomerSelectDialogOpen}
+            onCustomerSelectDialogOpenChange={actions.setIsCustomerSelectDialogOpen}
+            selectedCustomerId={actions.selectedCustomerId}
+            onSelectedCustomerIdChange={actions.setSelectedCustomerId}
+            onConfirmCopyDifferentCustomer={actions.handleConfirmCopyDifferentCustomer}
+            customers={customers || []}
+            isCopying={actions.isCopying}
           />
         </div>
-
-        {/* Product Details Modal */}
-        <ProductDetailsModal
-          open={productModalOpen}
-          onOpenChange={(open) => {
-            setProductModalOpen(open);
-            if (!open) {
-              setEditingItemIndex(undefined);
-              setSelectedProduct(null);
-              setEditingItemData(null);
-            }
-          }}
-          product={selectedProduct}
-          onAddToProposal={(productData) => handleAddProductToProposal(productData, editingItemIndex)}
-          currency={formData.currency}
-          existingData={editingItemData}
-        />
-
-        {/* Currency Conversion Confirmation Dialog */}
-        <ConfirmationDialogComponent
-          open={currencyConversionDialog.open}
-          onOpenChange={(open) => {
-            if (!open) {
-              handleCurrencyConversionCancel();
-            }
-          }}
-          title="Para Birimi / Döviz Kuru Değişikliği"
-          description={
-            currencyConversionDialog.pendingField === 'currency'
-              ? (() => {
-                  const marketRate = currencyConversionDialog.oldCurrency === "TRY" 
-                    ? 1 
-                    : (exchangeRatesMap[currencyConversionDialog.oldCurrency] || 1);
-                  const isCustomRate = currencyConversionDialog.oldRate && 
-                    currencyConversionDialog.oldRate !== marketRate;
-                  
-                  return `Tüm kalemler ${currencyConversionDialog.oldCurrency} para biriminden ${currencyConversionDialog.newCurrency} para birimine dönüştürülecek.\n\n` +
-                    (currencyConversionDialog.oldCurrency !== "TRY"
-                      ? `Kullanılacak kur: 1 ${currencyConversionDialog.oldCurrency} = ${currencyConversionDialog.oldRate?.toFixed(4) || 'N/A'} TRY` +
-                        (isCustomRate
-                          ? `\n(Girilen özel kur kullanılacak)`
-                          : '') +
-                        `\n\n`
-                      : '') +
-                    (currencyConversionDialog.newCurrency !== "TRY" && currencyConversionDialog.newRate
-                      ? `Hedef kur: 1 ${currencyConversionDialog.newCurrency} = ${currencyConversionDialog.newRate.toFixed(4)} TRY\n\n`
-                      : '') +
-                    `Bu işlem geri alınamaz. Devam etmek istiyor musunuz?`;
-                })()
-              : `Tüm kalemler yeni döviz kuru ile dönüştürülecek.\n\n` +
-                `Eski kur: 1 ${currencyConversionDialog.oldCurrency} = ${currencyConversionDialog.oldRate?.toFixed(4) || 'N/A'} TRY\n` +
-                `Yeni kur: 1 ${currencyConversionDialog.newCurrency} = ${currencyConversionDialog.newRate?.toFixed(4) || 'N/A'} TRY\n\n` +
-                `Bu işlem geri alınamaz. Devam etmek istiyor musunuz?`
-          }
-          confirmText="Evet, Dönüştür"
-          cancelText="İptal"
-          variant="default"
-          onConfirm={handleCurrencyConversionConfirm}
-          onCancel={handleCurrencyConversionCancel}
-        />
-
-        {/* Müşteri Seçim Dialog - Farklı Müşteri İçin Kopyalama */}
-        <Dialog open={isCustomerSelectDialogOpen} onOpenChange={setIsCustomerSelectDialogOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Müşteri Seçin</DialogTitle>
-              <DialogDescription>
-                Teklifi kopyalamak için bir müşteri seçin.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <Label htmlFor="customer-select">Müşteri</Label>
-              <Popover open={customerSelectOpen} onOpenChange={setCustomerSelectOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={customerSelectOpen}
-                    className={cn(
-                      "w-full justify-between mt-2",
-                      !selectedCustomerId && "text-muted-foreground"
-                    )}
-                  >
-                    {selectedCustomerId && customers
-                      ? (() => {
-                          const selected = customers.find(c => c.id === selectedCustomerId);
-                          return selected
-                            ? selected.company 
-                              ? `${selected.name} (${selected.company})`
-                              : selected.name
-                            : "Müşteri seçin...";
-                        })()
-                      : "Müşteri seçin..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Müşteri ara..." />
-                    <CommandList>
-                      <CommandEmpty>Müşteri bulunamadı.</CommandEmpty>
-                      <CommandGroup>
-                        {customers?.map((customer) => (
-                          <CommandItem
-                            key={customer.id}
-                            value={`${customer.name} ${customer.company || ''}`}
-                            onSelect={() => {
-                              setSelectedCustomerId(customer.id);
-                              setCustomerSelectOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedCustomerId === customer.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            <div className="flex flex-col">
-                              <span className="font-medium">{customer.name}</span>
-                              {customer.company && (
-                                <span className="text-sm text-muted-foreground">{customer.company}</span>
-                              )}
-                              {customer.email && (
-                                <span className="text-xs text-muted-foreground">{customer.email}</span>
-                              )}
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsCustomerSelectDialogOpen(false);
-                  setSelectedCustomerId("");
-                }}
-                disabled={isCopying}
-              >
-                İptal
-              </Button>
-              <Button
-                onClick={handleConfirmCopyDifferentCustomer}
-                disabled={isCopying || !selectedCustomerId}
-              >
-                {isCopying ? "Kopyalanıyor..." : "Kopyala"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Confirmation Dialog */}
-        <ConfirmationDialogComponent
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          title="Teklifi Sil"
-          description="Bu teklifi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
-          confirmText={t("common.delete")}
-          cancelText={t("common.cancel")}
-          variant="destructive"
-          onConfirm={handleDeleteConfirm}
-          onCancel={handleDeleteCancel}
-          isLoading={isDeleting}
-        />
       </div>
-    </div>
+    </FormProvider>
   );
 };
 

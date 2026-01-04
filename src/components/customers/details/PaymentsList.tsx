@@ -150,6 +150,7 @@ export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
                 transactions={transactionsWithBalance}
                 onDelete={handleDeletePayment}
                 isDeleting={deletePaymentMutation.isPending}
+                customerId={customer.id}
               />
             </div>
           </div>

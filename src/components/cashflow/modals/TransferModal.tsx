@@ -328,10 +328,24 @@ const TransferModal = ({
   };
 
 
+  const resetForm = () => {
+    setFormData({
+      fromAccountId: "",
+      toAccountId: "",
+      amount: "",
+      currency: "TRY",
+      description: "",
+      transferDate: new Date().toISOString().split('T')[0]
+    });
+    setFromAccounts([]);
+    setToAccounts([]);
+  };
+
   return (
     <UnifiedDialog
       isOpen={isOpen}
       onClose={onClose}
+      onClosed={resetForm}
       title="Hesap Arası Transfer"
       maxWidth="2xl"
       headerColor="blue"

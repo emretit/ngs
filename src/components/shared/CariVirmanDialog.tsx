@@ -156,6 +156,20 @@ export default function CariVirmanDialog({
     }
   }, [open, form]);
 
+  const resetDialog = () => {
+    form.reset({
+      transaction_type: "receiver",
+      transaction_date: new Date(),
+      due_date: new Date(),
+      other_party_id: "",
+      other_party_type: "customer",
+      amount: 0,
+      description: "",
+    });
+    setPartners([]);
+    setComboboxOpen(false);
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (data: CariVirmanFormData) => {
       if (!userData?.company_id) {
@@ -302,6 +316,7 @@ export default function CariVirmanDialog({
     <UnifiedDialog
       isOpen={open}
       onClose={(isOpen) => onOpenChange(isOpen)}
+      onClosed={resetDialog}
       title="Cari Virman Fişleri"
       maxWidth="xl"
       headerColor="green"

@@ -83,13 +83,20 @@ export default function OutgoingCheckDialog({
     },
   });
 
+  const [checkNumber, setCheckNumber] = useState<string>("");
   const [bankName, setBankName] = useState<string>("");
+  const [amount, setAmount] = useState<string>("");
   const [issueDate, setIssueDate] = useState<Date | undefined>(undefined);
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [status, setStatus] = useState<string>("odenecek");
+  const [notes, setNotes] = useState<string>("");
+  const [portfolio, setPortfolio] = useState<boolean>(true);
   const [paymentAccountType, setPaymentAccountType] = useState<"cash" | "bank" | "credit_card" | "partner">("bank");
+  const [paymentAccountId, setPaymentAccountId] = useState<string>("");
   const [selectedPaymentAccountId, setSelectedPaymentAccountId] = useState<string>("");
 
+  const form = useForm();
+  
   const payeeForm = useForm({
     defaultValues: {
       customer_id: "",
@@ -120,20 +127,26 @@ export default function OutgoingCheckDialog({
   useEffect(() => {
     if (open) {
       if (editingCheck) {
+        setCheckNumber(editingCheck.check_number || "");
         setBankName(editingCheck.bank || "");
+        setAmount(editingCheck.amount?.toString() || "");
         setIssueDate(editingCheck.issue_date ? new Date(editingCheck.issue_date) : undefined);
         setDueDate(editingCheck.due_date ? new Date(editingCheck.due_date) : undefined);
         setStatus(editingCheck.status || "odenecek");
+        setNotes(editingCheck.notes || "");
         setPayeeName(editingCheck.payee || "");
         
         if (editingCheck.payee_supplier_id) {
           payeeForm.setValue("supplier_id", editingCheck.payee_supplier_id);
         }
       } else {
+        setCheckNumber("");
         setBankName(banks[0]?.name || "");
+        setAmount("");
         setIssueDate(undefined);
         setDueDate(undefined);
         setStatus("odenecek");
+        setNotes("");
         setPayeeName("");
         if (defaultSupplierId) {
           payeeForm.setValue("supplier_id", defaultSupplierId);
@@ -296,10 +309,24 @@ export default function OutgoingCheckDialog({
     },
   });
 
+  const resetDialog = () => {
+    setCheckNumber("");
+    setBankName("");
+    setAmount("");
+    setIssueDate(undefined);
+    setDueDate(undefined);
+    setPaymentAccountType("");
+    setPaymentAccountId("");
+    setNotes("");
+    setPortfolio(true);
+    form.reset();
+  };
+
   return (
     <UnifiedDialog
       isOpen={open}
       onClose={() => onOpenChange(false)}
+      onClosed={resetDialog}
       title={editingCheck?.id ? "Giden Çek Düzenle" : "Yeni Giden Çek Ekle"}
       maxWidth="lg"
       headerColor="blue"

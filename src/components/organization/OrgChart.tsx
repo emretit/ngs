@@ -18,6 +18,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OrgChartEmployeeCard, getDepartmentColorPalette } from "./OrgChartEmployeeCard";
 import { OrgChartMiniMap } from "./OrgChartMiniMap";
+import { useOrgChartData, EmployeeNode, DepartmentNode } from "./hooks/useOrgChartData";
+import { useOrgChartHierarchy } from "./hooks/useOrgChartHierarchy";
+import { useOrgChartControls } from "./hooks/useOrgChartControls";
 
 type ViewMode = 'tree' | 'list' | 'grid' | 'hierarchy' | 'table';
 type SortField = 'name' | 'position' | 'department' | 'email' | 'status';
@@ -64,249 +67,45 @@ export const OrgChart: React.FC<OrgChartProps> = ({
   const { companyId } = useCompany();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('hierarchy');
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  const [collapsedHierarchyNodes, setCollapsedHierarchyNodes] = useState<Set<string>>(new Set());
 
-  // Fetch departments with parent_id for hierarchy
-  const { data: departments = [], isLoading: isLoadingDepts } = useQuery({
-    queryKey: ["org-chart-departments", companyId],
-    queryFn: async () => {
-      if (!companyId) return [];
+  // Data fetching and filtering
+  const { departments, employees, allEmployees, isLoading } = useOrgChartData(
+    companyId,
+    searchQuery,
+    selectedStatus,
+    selectedPosition
+  );
 
-      const { data, error } = await supabase
-        .from("departments")
-        .select("id, name, description, head_id, parent_id")
-        .eq("company_id", companyId)
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true })
-        .order("name");
+  // Hierarchy building
+  const { orgStructure, completeHierarchy } = useOrgChartHierarchy(
+    departments,
+    employees,
+    selectedDepartment,
+    searchQuery
+  );
 
-      if (error) throw error;
-      return data as DepartmentNode[];
-    },
-    enabled: !!companyId,
-  });
-
-  // Fetch employees with department_id if available
-  const { data: allEmployees = [], isLoading: isLoadingEmps } = useQuery({
-    queryKey: ["org-chart-employees", companyId],
-    queryFn: async () => {
-      if (!companyId) return [];
-
-      // Try to get department_id if it exists in the schema
-      const { data, error } = await supabase
-        .from("employees")
-        .select("id, first_name, last_name, email, position, department, manager_id, status, avatar_url")
-        .eq("company_id", companyId)
-        .order("first_name");
-
-      if (error) throw error;
-      return data as EmployeeNode[];
-    },
-    enabled: !!companyId,
-  });
-
-  // Filter employees based on search and status
-  const employees = useMemo(() => {
-    let filtered = allEmployees;
-
-    // Status filter
-    if (selectedStatus !== "all") {
-      filtered = filtered.filter(emp => emp.status === selectedStatus);
-    }
-
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(emp => 
-        `${emp.first_name} ${emp.last_name}`.toLowerCase().includes(query) ||
-        emp.position?.toLowerCase().includes(query) ||
-        emp.department?.toLowerCase().includes(query) ||
-        emp.email?.toLowerCase().includes(query)
-      );
-    }
-
-    // Position filter
-    if (selectedPosition !== "all") {
-      filtered = filtered.filter(emp => emp.position === selectedPosition);
-    }
-
-    return filtered;
-  }, [allEmployees, searchQuery, selectedStatus, selectedPosition]);
-
-  const isLoading = isLoadingDepts || isLoadingEmps;
-
-  // Build complete organization hierarchy
-  const orgStructure = useMemo(() => {
-    // Filter departments if selected
-    let filteredDepartments = departments;
-    if (selectedDepartment !== "all") {
-      filteredDepartments = departments.filter(dept => dept.id === selectedDepartment);
-    }
-
-    // Also filter by search query for departments
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filteredDepartments = filteredDepartments.filter(dept => 
-        dept.name.toLowerCase().includes(query) ||
-        dept.description?.toLowerCase().includes(query)
-      );
-    }
-
-    if (!filteredDepartments.length && !employees.length) return [];
-
-    // Group employees by department name
-    const employeesByDept = new Map<string, EmployeeNode[]>();
-    const employeesWithoutDept: EmployeeNode[] = [];
-    const deptNameMap = new Map<string, string>();
-
-    filteredDepartments.forEach((dept) => {
-      deptNameMap.set(dept.name.toLowerCase(), dept.id);
-    });
-
-    employees.forEach((emp) => {
-      if (emp.department) {
-        const deptId = deptNameMap.get(emp.department.toLowerCase());
-        if (deptId) {
-          if (!employeesByDept.has(deptId)) {
-            employeesByDept.set(deptId, []);
-          }
-          employeesByDept.get(deptId)!.push(emp);
-        } else {
-          employeesWithoutDept.push(emp);
-        }
-      } else {
-        employeesWithoutDept.push(emp);
-      }
-    });
-
-    // Build employee hierarchy within each department
-    const buildEmployeeTree = (emps: EmployeeNode[]): EmployeeNode[] => {
-      const employeeMap = new Map<string, EmployeeNode>();
-      const roots: EmployeeNode[] = [];
-
-      // First pass: create all nodes
-      emps.forEach((emp) => {
-        employeeMap.set(emp.id, { ...emp, children: [] });
-      });
-
-      // Second pass: build tree
-      emps.forEach((emp) => {
-        const node = employeeMap.get(emp.id)!;
-        if (emp.manager_id && employeeMap.has(emp.manager_id)) {
-          const manager = employeeMap.get(emp.manager_id)!;
-          if (!manager.children) manager.children = [];
-          manager.children.push(node);
-        } else {
-          roots.push(node);
-        }
-      });
-
-      return roots;
-    };
-
-    // Build department hierarchy tree
-    const buildDepartmentTree = (depts: DepartmentNode[]): DepartmentNode[] => {
-      const deptMap = new Map<string, DepartmentNode>();
-      const roots: DepartmentNode[] = [];
-
-      // First pass: create all nodes
-      depts.forEach((dept) => {
-        const deptEmployees = employeesByDept.get(dept.id) || [];
-        const head = dept.head_id ? deptEmployees.find((e) => e.id === dept.head_id) : null;
-        deptMap.set(dept.id, {
-          ...dept,
-          head: head || null,
-          employees: buildEmployeeTree(deptEmployees),
-          children: [],
-        });
-      });
-
-      // Second pass: build tree
-      depts.forEach((dept) => {
-        const node = deptMap.get(dept.id)!;
-        if (dept.parent_id && deptMap.has(dept.parent_id)) {
-          const parent = deptMap.get(dept.parent_id)!;
-          if (!parent.children) parent.children = [];
-          parent.children.push(node);
-        } else {
-          roots.push(node);
-        }
-      });
-
-      return roots;
-    };
-
-    // Build department structure with hierarchy
-    const deptStructure: (DepartmentNode | { type: 'no-dept'; employees: EmployeeNode[] })[] = [];
-    const departmentTree = buildDepartmentTree(filteredDepartments);
-    
-    // Add root departments to structure
-    departmentTree.forEach((rootDept) => {
-      deptStructure.push(rootDept);
-    });
-
-    // Add employees without department
-    if (employeesWithoutDept.length > 0) {
-      deptStructure.push({
-        type: 'no-dept',
-        employees: buildEmployeeTree(employeesWithoutDept),
-      });
-    }
-
-    return deptStructure;
-  }, [departments, employees, selectedDepartment, searchQuery]);
-
-  // Build complete hierarchy tree (all employees regardless of department)
-  // Seviyeler otomatik olarak belirlenir: Her çalışanın CEO'dan (root) kendisine kadar olan mesafesi = seviye
-  // Örnek: CEO = 0, COO/CFO/CTO = 1, onların altındakiler = 2, vs.
-  const completeHierarchy = useMemo(() => {
-    const employeeMap = new Map<string, EmployeeNode>();
-    const roots: EmployeeNode[] = [];
-
-    // 1. Tüm çalışanları map'e ekle
-    employees.forEach((emp) => {
-      employeeMap.set(emp.id, { ...emp, children: [] });
-    });
-
-    // 2. Hiyerarşi ağacını oluştur (manager_id ilişkilerine göre)
-    employees.forEach((emp) => {
-      const node = employeeMap.get(emp.id)!;
-      if (emp.manager_id && employeeMap.has(emp.manager_id)) {
-        // Yöneticisi var ve aynı şirkette - bu node alt seviyede
-        const manager = employeeMap.get(emp.manager_id)!;
-        if (!manager.children) manager.children = [];
-        manager.children.push(node);
-      } else {
-        // Yöneticisi yok veya aynı şirkette değil - bu root node (en üst seviye = 0)
-        roots.push(node);
-      }
-    });
-
-    // 3. Ağaç yapısı tamamlandı, seviyeler otomatik olarak derinliğe göre belirlenecek
-    return roots;
-  }, [employees]);
-
-  // Toggle hierarchy node expansion
-  const toggleHierarchyNode = (nodeId: string) => {
-    setCollapsedHierarchyNodes(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(nodeId)) {
-        newSet.delete(nodeId);
-      } else {
-        newSet.add(nodeId);
-      }
-      return newSet;
-    });
-  };
+  // Controls (zoom, pan, sort)
+  const {
+    zoom,
+    pan,
+    setPan,
+    isDragging,
+    sortField,
+    sortOrder,
+    expandedNodes,
+    collapsedHierarchyNodes,
+    handleZoomIn,
+    handleZoomOut,
+    handleResetZoom,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    handleSort,
+    toggleNodeExpansion,
+    toggleHierarchyNode
+  } = useOrgChartControls(viewMode);
 
   // Get visible hierarchy (respects collapsed state)
   const getVisibleHierarchy = useMemo(() => {
@@ -321,46 +120,6 @@ export const OrgChart: React.FC<OrgChartProps> = ({
     };
     return filterCollapsed(completeHierarchy);
   }, [completeHierarchy, collapsedHierarchyNodes]);
-
-  // Zoom controls
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
-  const handleResetZoom = () => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  };
-
-  // Pan controls
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (viewMode === 'hierarchy') {
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && viewMode === 'hierarchy') {
-      setPan({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove as any);
-      document.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove as any);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, dragStart]);
 
   // Export functions
   const handleExport = () => {
@@ -393,19 +152,6 @@ export const OrgChart: React.FC<OrgChartProps> = ({
     window.print();
   };
 
-  // Toggle node expansion for tree view
-  const toggleNodeExpansion = (nodeId: string) => {
-    setExpandedNodes(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(nodeId)) {
-        newSet.delete(nodeId);
-      } else {
-        newSet.add(nodeId);
-      }
-      return newSet;
-    });
-  };
-
   // Sort employees for table view
   const sortedEmployees = useMemo(() => {
     const sorted = [...employees];
@@ -434,16 +180,6 @@ export const OrgChart: React.FC<OrgChartProps> = ({
     });
     return sorted;
   }, [employees, sortField, sortOrder]);
-
-  // Handle sorting
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-  };
 
   // Get direct reports count
   const getDirectReports = (employeeId: string) => {

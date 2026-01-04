@@ -152,16 +152,8 @@ const CashIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
       if (balanceError) throw balanceError;
 
       toast.success("Gelir işlemi eklendi");
-
       onSuccess();
       onClose();
-      setFormData({
-        amount: 0,
-        description: "",
-        category: "",
-        reference: "",
-        transaction_date: new Date()
-      });
     } catch (error) {
       console.error('Error adding income:', error);
       toast.error("Gelir işlemi eklenirken hata oluştu");
@@ -170,10 +162,21 @@ const CashIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      amount: 0,
+      description: "",
+      category: "",
+      reference: "",
+      transaction_date: new Date()
+    });
+  };
+
   return (
     <UnifiedDialog
       isOpen={isOpen}
       onClose={(open) => !open && onClose()}
+      onClosed={resetForm}
       title={`Gelir Ekle - ${accountName}`}
       headerColor="green"
       maxWidth="2xl"

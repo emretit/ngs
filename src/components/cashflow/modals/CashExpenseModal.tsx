@@ -148,16 +148,8 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
       if (balanceError) throw balanceError;
 
       toast.success("Masraf işlemi eklendi");
-
       onSuccess();
       onClose();
-      setFormData({
-        amount: 0,
-        description: "",
-        category: "",
-        reference: "",
-        transaction_date: new Date()
-      });
     } catch (error) {
       console.error('Error adding expense:', error);
       toast.error("Masraf işlemi eklenirken hata oluştu");
@@ -166,10 +158,21 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      amount: 0,
+      description: "",
+      category: "",
+      reference: "",
+      transaction_date: new Date()
+    });
+  };
+
   return (
     <UnifiedDialog
       isOpen={isOpen}
       onClose={onClose}
+      onClosed={resetForm}
       title={`Masraf Ekle - ${accountName}`}
       maxWidth="lg"
       headerColor="red"

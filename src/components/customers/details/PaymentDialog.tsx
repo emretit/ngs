@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { usePaymentAllocation } from "@/hooks/usePaymentAllocation";
 
 const paymentSchema = z.object({
   amount: z.number().positive("Tutar 0'dan büyük olmalıdır"),
@@ -38,6 +39,7 @@ interface PaymentDialogProps {
 
 export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType }: PaymentDialogProps) {
   const queryClient = useQueryClient();
+  const { autoAllocatePayment } = usePaymentAllocation();
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
@@ -54,6 +56,22 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
       form.setValue('payment_type', defaultPaymentType);
     }
   }, [defaultPaymentType, form]);
+
+  // Dialog açılıp kapandığında formu sıfırla
+  useEffect(() => {
+    if (!open) {
+      // Dialog kapandığında formu tamamen sıfırla
+      form.reset({
+        payment_date: new Date(),
+        payment_direction: "incoming",
+        payment_type: defaultPaymentType || "hesap",
+        account_type: "bank",
+        amount: undefined,
+        account_id: undefined,
+        description: undefined,
+      });
+    }
+  }, [open, form, defaultPaymentType]);
 
   // Tüm hesapları fetch et (birleşik accounts tablosundan)
   const { data: accounts } = useQuery({
@@ -201,11 +219,14 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
         account_type: accountType // Hesap türünü de kaydet
       };
 
-      const { error: paymentError } = await supabase
+      const { data: insertedPayment, error: paymentError } = await supabase
         .from("payments")
-        .insert(paymentData);
+        .insert(paymentData)
+        .select("id")
+        .single();
 
       if (paymentError) throw paymentError;
+      if (!insertedPayment) throw new Error("Ödeme kaydedilemedi");
 
       // 3. Hesap bakiyesini güncelle - account_type'a göre doğru tabloya update yap
       const balanceMultiplier = data.payment_direction === "incoming" ? 1 : -1;
@@ -263,6 +284,16 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
 
       if (customerUpdateError) throw customerUpdateError;
 
+      // 5. Otomatik FIFO tahsis (sadece gelen ödemeler için)
+      if (data.payment_direction === "incoming" && insertedPayment.id) {
+        try {
+          await autoAllocatePayment.mutateAsync(insertedPayment.id, customer.id, undefined);
+        } catch (allocError) {
+          // Tahsis hatası ödeme kaydını engellemez, sadece log'lar
+          console.warn("Otomatik fatura tahsisinde hata:", allocError);
+        }
+      }
+
       // Cache'i güncelle - company_id ile birlikte invalidate et
       queryClient.invalidateQueries({ queryKey: ["payment-accounts"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
@@ -274,6 +305,9 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
       queryClient.invalidateQueries({ 
         queryKey: ["customer-activities", customer.id, profile.company_id] 
       });
+      queryClient.invalidateQueries({ queryKey: ["invoice-payment-status"] });
+      queryClient.invalidateQueries({ queryKey: ["overdue-balances"] });
+      queryClient.invalidateQueries({ queryKey: ["critical-alerts"] });
       
       // Hemen refetch yap - sayfanın anında güncellenmesi için
       await Promise.all([

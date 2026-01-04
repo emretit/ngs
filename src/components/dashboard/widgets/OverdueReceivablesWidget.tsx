@@ -2,22 +2,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-
-interface OverdueReceivable {
-  id: string;
-  invoiceNumber: string;
-  customerName: string;
-  amount: number;
-  daysOverdue: number;
-}
+import { useOverdueBalances } from "@/hooks/useOverdueBalances";
+import { formatCurrency } from "@/utils/formatters";
+import { differenceInDays } from "date-fns";
 
 interface OverdueReceivablesWidgetProps {
-  receivables: OverdueReceivable[];
-  isLoading?: boolean;
+  receivables?: never; // Artık kullanılmıyor
+  isLoading?: never; // Artık kullanılmıyor
 }
 
-const OverdueReceivablesWidget = ({ receivables, isLoading }: OverdueReceivablesWidgetProps) => {
+const OverdueReceivablesWidget = ({}: OverdueReceivablesWidgetProps) => {
   const navigate = useNavigate();
+  const { data: overdueBalances = [], isLoading } = useOverdueBalances();
 
   if (isLoading) {
     return (
@@ -42,7 +38,7 @@ const OverdueReceivablesWidget = ({ receivables, isLoading }: OverdueReceivables
     );
   }
 
-  if (receivables.length === 0) {
+  if (overdueBalances.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -69,35 +65,46 @@ const OverdueReceivablesWidget = ({ receivables, isLoading }: OverdueReceivables
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {receivables.slice(0, 5).map((rec) => (
+        {overdueBalances.slice(0, 5).map((balance) => {
+          const daysOverdue = balance.oldestOverdueDate
+            ? differenceInDays(new Date(), new Date(balance.oldestOverdueDate))
+            : 0;
+
+          return (
           <div
-            key={rec.id}
+              key={balance.customerId}
             className="flex items-center justify-between p-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
-            onClick={() => navigate(`/invoices/${rec.id}`)}
+              onClick={() => navigate(`/customers/${balance.customerId}`)}
           >
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">
-                {rec.customerName}
+                  {balance.customerName}
               </p>
               <p className="text-xs text-muted-foreground">
-                {rec.invoiceNumber} • {rec.daysOverdue} gün geçti
+                  {daysOverdue > 0 ? `${daysOverdue} gün geçti` : "Vadesi geçmiş"}
+                  {balance.upcomingBalance > 0 && (
+                    <span className="ml-2">
+                      • Vadesi gelmemiş: {formatCurrency(balance.upcomingBalance)} {balance.currency}
+                    </span>
+                  )}
               </p>
             </div>
             <div className="flex items-center gap-2 ml-4">
               <span className="text-sm font-bold text-red-600 dark:text-red-400 whitespace-nowrap">
-                ₺{rec.amount.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatCurrency(balance.overdueBalance)} {balance.currency}
               </span>
               <ExternalLink className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>
-        ))}
-        {receivables.length > 5 && (
+          );
+        })}
+        {overdueBalances.length > 5 && (
           <Button
             variant="outline"
             className="w-full mt-2"
-            onClick={() => navigate("/invoices?filter=overdue")}
+            onClick={() => navigate("/customers?filter=overdue")}
           >
-            Tümünü Gör ({receivables.length})
+            Tümünü Gör ({overdueBalances.length})
           </Button>
         )}
       </CardContent>

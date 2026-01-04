@@ -222,10 +222,18 @@ export default function CheckTransferDialog({
     return "Bilinmiyor";
   };
 
+  const resetDialog = () => {
+    setTransferDate(new Date());
+    setSelectedSupplierId(defaultSupplierId || "");
+    setSelectedCheck(initialCheck || null);
+    payeeForm.reset();
+  };
+
   return (
     <UnifiedDialog
       isOpen={open}
       onClose={() => onOpenChange(false)}
+      onClosed={resetDialog}
       title="Çeki Ciro Et"
       maxWidth="lg"
       headerColor="blue"

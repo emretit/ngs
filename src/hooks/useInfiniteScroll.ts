@@ -30,9 +30,9 @@ export function useInfiniteScroll<T>(
     pageSize = 20,
     enabled = true,
     refetchOnWindowFocus = false,
-    refetchOnMount = false, // Cache'den veri varsa mount'ta refetch yapma
-    staleTime = 2 * 60 * 1000, // 2 minutes cache for infinite scroll
-    gcTime = 10 * 60 * 1000, // 10 minutes
+    refetchOnMount = true, // Her mount'ta veriyi kontrol et (stale ise yeniler)
+    staleTime = 3 * 60 * 1000, // 3 dakika - veri bu süre içinde fresh sayılır
+    gcTime = 10 * 60 * 1000, // 10 dakika - cache'de kalma süresi
   } = options;
 
   const [allData, setAllData] = useState<T[]>([]);
@@ -52,8 +52,8 @@ export function useInfiniteScroll<T>(
     queryFn: () => queryFn(1, pageSize),
     enabled,
     refetchOnWindowFocus,
-    refetchOnMount: true, // Invalidate edildiğinde refetch yap
-    staleTime, // Use configured staleTime (2 minutes)
+    refetchOnMount, // Parametreden gelen değeri kullan
+    staleTime, // Parametreden gelen staleTime'ı kullan
     gcTime,
     placeholderData: (previousData) => previousData, // Önceki veriyi göster (smooth transition)
   });

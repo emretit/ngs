@@ -109,8 +109,9 @@ export const useReturnsInfiniteScroll = (filters: UseReturnsFilters = {}) => {
       pageSize: 20,
       enabled: true,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
+      refetchOnMount: true, // Her mount'ta veriyi kontrol et ve gerekirse yenile
+      staleTime: 3 * 60 * 1000, // 3 dakika - veri bu süre içinde fresh sayılır
+      gcTime: 10 * 60 * 1000, // 10 dakika - cache'de kalma süresi
     }
   );
 };

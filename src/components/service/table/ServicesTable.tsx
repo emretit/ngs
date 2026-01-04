@@ -231,16 +231,17 @@ const ServicesTable = ({
   };
 
   return (
-    <Table>
-      <ServicesTableHeader
-        sortField={sortField}
-        sortDirection={sortDirection}
-        handleSort={handleSort}
-        onToggleServiceSelection={!!onToggleServiceSelection}
-        onSelectAll={onSelectAll}
-        allSelected={allSelected}
-      />
-      <TableBody>
+    <div className="w-full">
+      <Table className="min-w-[1200px]">
+        <ServicesTableHeader
+          sortField={sortField}
+          sortDirection={sortDirection}
+          handleSort={handleSort}
+          onToggleServiceSelection={!!onToggleServiceSelection}
+          onSelectAll={onSelectAll}
+          allSelected={allSelected}
+        />
+        <TableBody>
         {sortedServices.length === 0 ? (
           <TableRow>
             <TableCell 
@@ -291,33 +292,33 @@ const ServicesTable = ({
                 </div>
               </TableCell>
               <TableCell 
-                className="py-2 px-3 cursor-pointer font-medium"
+                className="py-2 px-3 cursor-pointer max-w-[200px]"
                 onClick={() => onSelectService(service)}
               >
                 <div className="flex items-center space-x-2">
                   {service.service_priority === 'high' && (
-                    <Star className="h-3 w-3 text-red-500 fill-red-500" />
+                    <Star className="h-3 w-3 text-red-500 fill-red-500 flex-shrink-0" />
                   )}
-                  <span className="text-xs" title={service.service_title}>
+                  <span className="text-xs truncate" title={service.service_title}>
                     {service.service_title}
                   </span>
                 </div>
               </TableCell>
               <TableCell 
-                className="py-2 px-3 cursor-pointer"
+                className="py-2 px-3 cursor-pointer max-w-[180px]"
                 onClick={() => onSelectService(service)}
               >
-                <div className="text-xs">
+                <div className="text-xs truncate" title={customerName}>
                   {customerName}
                 </div>
               </TableCell>
               <TableCell 
-                className="py-2 px-3 cursor-pointer"
+                className="py-2 px-3 cursor-pointer max-w-[150px]"
                 onClick={() => onSelectService(service)}
               >
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3" />
-                  {service.service_location || '-'}
+                <div className="flex items-center gap-1 text-xs text-muted-foreground truncate" title={service.service_location || '-'}>
+                  <MapPin className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">{service.service_location || '-'}</span>
                 </div>
               </TableCell>
               <TableCell 
@@ -333,12 +334,14 @@ const ServicesTable = ({
                 {getPriorityBadge(service.service_priority)}
               </TableCell>
               <TableCell 
-                className="py-2 px-3 cursor-pointer"
+                className="py-2 px-3 cursor-pointer max-w-[140px]"
                 onClick={() => onSelectService(service)}
               >
-                <div className="flex items-center gap-1 text-xs">
-                  <User className="h-3 w-3 text-muted-foreground" />
-                  {getTechnicianName(service.assigned_technician)}
+                <div className="flex items-center gap-1 text-xs truncate">
+                  <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                  <span className="truncate" title={getTechnicianName(service.assigned_technician)}>
+                    {getTechnicianName(service.assigned_technician)}
+                  </span>
                 </div>
               </TableCell>
               <TableCell 
@@ -443,6 +446,7 @@ const ServicesTable = ({
         )}
       </TableBody>
     </Table>
+    </div>
   );
 };
 

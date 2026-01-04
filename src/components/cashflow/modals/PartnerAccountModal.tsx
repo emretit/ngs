@@ -158,10 +158,23 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      partner_name: "",
+      partner_type: "ortak",
+      ownership_percentage: "",
+      initial_capital: "",
+      currency: "TRY",
+      investment_date: "",
+      investment_date_date: undefined
+    });
+  };
+
   return (
     <UnifiedDialog
       isOpen={isOpen}
       onClose={onClose}
+      onClosed={resetForm}
       title={mode === 'edit' ? 'Ortak Hesabı Düzenle' : 'Yeni Ortak Hesabı'}
       maxWidth="md"
       headerColor="yellow"

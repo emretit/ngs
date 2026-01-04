@@ -64,6 +64,14 @@ export default function BalanceAdjustmentDialog({
     }
   }, [open, currentBalance, form]);
 
+  const resetDialog = () => {
+    form.reset({
+      new_balance: currentBalance,
+      adjustment_date: new Date(),
+      notes: "",
+    });
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (data: BalanceAdjustmentFormData) => {
       if (!userData?.company_id) {
@@ -199,6 +207,7 @@ export default function BalanceAdjustmentDialog({
     <UnifiedDialog
       isOpen={open}
       onClose={(isOpen) => onOpenChange(isOpen)}
+      onClosed={resetDialog}
       title="Bakiye Düzelt"
       maxWidth="xl"
       headerColor="yellow"

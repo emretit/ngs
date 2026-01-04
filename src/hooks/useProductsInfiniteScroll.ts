@@ -274,8 +274,9 @@ export const useProductsInfiniteScroll = (filters: UseProductsFilters = {}) => {
       pageSize: 20,
       enabled: true,
       refetchOnWindowFocus: false,
-      staleTime: 10 * 60 * 1000, // 10 minutes
-      gcTime: 30 * 60 * 1000, // 30 minutes
+      refetchOnMount: true, // Her mount'ta veriyi kontrol et ve gerekirse yenile
+      staleTime: 5 * 60 * 1000, // 5 dakika - ürünler daha az sıklıkla değişir
+      gcTime: 15 * 60 * 1000, // 15 dakika - cache'de daha uzun kalabilir
     }
   );
 };

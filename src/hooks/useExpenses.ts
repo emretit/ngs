@@ -32,9 +32,9 @@ export const useExpenses = ({ startDate, endDate }: UseExpensesOptions) => {
       return (data as unknown as ExpenseItem[]) || [];
     },
     enabled: !!userData?.company_id,
-    staleTime: 5 * 60 * 1000, // 5 dakika
-    gcTime: 10 * 60 * 1000, // 10 dakika
-    refetchOnMount: false, // Cache'den okusun
+    staleTime: 3 * 60 * 1000, // 3 dakika - veri bu süre içinde fresh sayılır
+    gcTime: 10 * 60 * 1000, // 10 dakika - cache'de kalma süresi
+    refetchOnMount: true, // Her mount'ta veriyi kontrol et (realtime subscription olsa da)
   });
 
   // Realtime subscription - expenses tablosundaki değişiklikleri dinle

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog,
@@ -24,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, MoreHorizontal, X, Loader2 } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Loader2 } from "lucide-react";
 import LeaveTypeDetailSheet from "@/components/leaves/LeaveTypeDetailSheet";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
@@ -307,61 +306,52 @@ export const LeaveTypesManagement = () => {
 
   if (isLoadingTypes) {
     return (
-      <div className="text-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+      <div className="text-center py-6">
+        <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                İzin Türleri
-              </CardTitle>
-              <CardDescription className="mt-1">
-                İzin türlerini tanımlayın ve her bir tür için kurallar belirleyin.
-              </CardDescription>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setIsCreateLeaveTypeDialogOpen(true)}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Yeni Tür Ekle
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Search Bar */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="İzin türü ara..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+    <div className="space-y-3">
+      {/* Header with Add Button */}
+      <div className="flex items-center justify-between">
+        <Button
+          size="sm"
+          onClick={() => setIsCreateLeaveTypeDialogOpen(true)}
+          className="gap-2 ml-auto h-8 text-xs"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Yeni Tür Ekle
+        </Button>
+      </div>
 
-          <div className="rounded-md border bg-white">
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
+        <Input
+          placeholder="İzin türü ara..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-8 h-9 text-sm"
+        />
+      </div>
+
+      {/* Table */}
+      <div className="rounded-md border bg-white text-sm">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>İzin Türü</TableHead>
-                  <TableHead>Kurallar</TableHead>
-                  <TableHead>Durum</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead className="h-9 text-xs">İzin Türü</TableHead>
+                  <TableHead className="h-9 text-xs">Kurallar</TableHead>
+                  <TableHead className="h-9 text-xs">Durum</TableHead>
+                  <TableHead className="w-[40px] h-9"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredLeaveTypes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={4} className="text-center py-6 text-muted-foreground text-xs">
                       Henüz izin türü tanımlanmamış
                     </TableCell>
                   </TableRow>
@@ -372,33 +362,33 @@ export const LeaveTypesManagement = () => {
                       className="hover:bg-muted/50 cursor-pointer"
                       onClick={() => handleLeaveTypeClick(leaveType)}
                     >
-                      <TableCell className="font-medium">
+                      <TableCell className="py-2">
                         <div className="flex items-center gap-2">
                           {leaveType.color && (
                             <div
-                              className="w-3 h-3 rounded-full"
+                              className="w-2.5 h-2.5 rounded-full"
                               style={{ backgroundColor: leaveType.color }}
                             />
                           )}
-                          {leaveType.name}
+                          <span className="text-sm font-medium">{leaveType.name}</span>
                         </div>
                         {leaveType.description && (
-                          <div className="text-xs text-muted-foreground mt-1">
+                          <div className="text-xs text-muted-foreground mt-0.5">
                             {leaveType.description}
                           </div>
                         )}
                       </TableCell>
-                      <TableCell>{leaveType.rules_count} kural</TableCell>
-                      <TableCell>
-                        <Badge variant={leaveType.is_active ? "default" : "secondary"} className="text-xs">
+                      <TableCell className="py-2 text-xs">{leaveType.rules_count} kural</TableCell>
+                      <TableCell className="py-2">
+                        <Badge variant={leaveType.is_active ? "default" : "secondary"} className="text-xs px-2 py-0">
                           {leaveType.is_active ? "Aktif" : "Pasif"}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <MoreHorizontal className="h-3.5 w-3.5" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -427,8 +417,6 @@ export const LeaveTypesManagement = () => {
               </TableBody>
             </Table>
           </div>
-        </CardContent>
-      </Card>
 
       {/* Create Leave Type Dialog */}
       <Dialog open={isCreateLeaveTypeDialogOpen} onOpenChange={setIsCreateLeaveTypeDialogOpen}>

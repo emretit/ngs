@@ -1,18 +1,33 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import LeaveSettingsPageHeader from "@/components/leaves/LeaveSettingsPageHeader";
-import LeaveSettings from "@/components/leaves/LeaveSettings";
+import { LeavePoliciesCard } from "@/components/leaves/LeavePoliciesCard";
+import { LeaveTypesCard } from "@/components/leaves/LeaveTypesCard";
 import { Loader2 } from "lucide-react";
 
 export default function LeaveSettingsPage() {
   const { userData } = useCurrentUser();
   const [handleSave, setHandleSave] = useState<(() => void) | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-
-  console.log("LeaveSettingsPage rendered, userData:", userData);
+  
+  // Use refs to prevent unnecessary re-renders
+  const lastSavingRef = useRef(isSaving);
+  const saveHandlerRef = useRef<(() => void) | null>(null);
+  
+  // Create stable callback outside of JSX
+  const handleSaveReady = useCallback((saveHandler: () => void, saving: boolean) => {
+    // Only update state if values actually changed to prevent re-render loops
+    if (saveHandlerRef.current !== saveHandler) {
+      saveHandlerRef.current = saveHandler;
+      setHandleSave(() => saveHandler);
+    }
+    if (lastSavingRef.current !== saving) {
+      lastSavingRef.current = saving;
+      setIsSaving(saving);
+    }
+  }, []);
 
   // Fetch leave types for statistics
   const { data: leaveTypes = [], isLoading: isLoadingTypes } = useQuery({
@@ -83,7 +98,6 @@ export default function LeaveSettingsPage() {
   }, [leaveTypes, rulesCount, leaveSettings]);
 
   if (isLoadingTypes) {
-    console.log("LeaveSettingsPage: Loading types...");
     return (
       <div className="w-full space-y-2">
         <div className="flex items-center justify-center py-12">
@@ -92,8 +106,6 @@ export default function LeaveSettingsPage() {
       </div>
     );
   }
-
-  console.log("LeaveSettingsPage: Rendering main content, stats:", stats);
 
   return (
     <div className="w-full space-y-2">
@@ -107,20 +119,14 @@ export default function LeaveSettingsPage() {
         isSaving={isSaving}
       />
 
-      {/* Main Content */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Ayarlar</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <LeaveSettings 
-            onSaveReady={(saveHandler, saving) => {
-              setHandleSave(() => saveHandler);
-              setIsSaving(saving);
-            }}
-          />
-        </CardContent>
-      </Card>
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Sol Kart: İzin Politikaları */}
+        <LeavePoliciesCard onSaveReady={handleSaveReady} />
+        
+        {/* Sağ Kart: İzin Türleri */}
+        <LeaveTypesCard />
+      </div>
     </div>
   );
 }

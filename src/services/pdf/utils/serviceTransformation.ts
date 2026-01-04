@@ -315,3 +315,4 @@ export async function getCompanySettingsForPdf() {
   return getCompanySettings();
 }
 
+

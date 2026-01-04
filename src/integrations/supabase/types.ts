@@ -4148,6 +4148,63 @@ export type Database = {
           },
         ]
       }
+      generated_files: {
+        Row: {
+          company_id: string
+          conversation_id: string | null
+          created_at: string | null
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          metadata: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          conversation_id?: string | null
+          created_at?: string | null
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          metadata?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          conversation_id?: string | null
+          created_at?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          metadata?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_files_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_files_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geocoding_cache: {
         Row: {
           address: string
@@ -4651,6 +4708,66 @@ export type Database = {
           },
         ]
       }
+      invoice_payment_allocations: {
+        Row: {
+          allocated_amount: number
+          allocation_date: string | null
+          allocation_type: string | null
+          company_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          invoice_id: string
+          invoice_type: string
+          notes: string | null
+          payment_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          allocated_amount: number
+          allocation_date?: string | null
+          allocation_type?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          invoice_id: string
+          invoice_type: string
+          notes?: string | null
+          payment_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          allocated_amount?: number
+          allocation_date?: string | null
+          allocation_type?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          invoice_id?: string
+          invoice_type?: string
+          notes?: string | null
+          payment_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payment_allocations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payment_allocations_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leave_settings: {
         Row: {
           approval_model: string | null
@@ -4806,6 +4923,60 @@ export type Database = {
           },
         ]
       }
+      loan_payments: {
+        Row: {
+          account_id: string | null
+          account_type: string | null
+          created_at: string
+          id: string
+          loan_id: string
+          notes: string | null
+          payment_amount: number
+          payment_date: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          account_type?: string | null
+          created_at?: string
+          id?: string
+          loan_id: string
+          notes?: string | null
+          payment_amount: number
+          payment_date: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          account_type?: string | null
+          created_at?: string
+          id?: string
+          loan_id?: string
+          notes?: string | null
+          payment_amount?: number
+          payment_date?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_payments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_payments_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loans: {
         Row: {
           amount: number
@@ -4815,6 +4986,7 @@ export type Database = {
           end_date: string
           id: string
           installment_amount: number
+          installment_count: number | null
           interest_rate: number
           loan_name: string
           notes: string | null
@@ -4831,6 +5003,7 @@ export type Database = {
           end_date: string
           id?: string
           installment_amount: number
+          installment_count?: number | null
           interest_rate: number
           loan_name: string
           notes?: string | null
@@ -4847,6 +5020,7 @@ export type Database = {
           end_date?: string
           id?: string
           installment_amount?: number
+          installment_count?: number | null
           interest_rate?: number
           loan_name?: string
           notes?: string | null
@@ -7183,9 +7357,12 @@ export type Database = {
           selected_warranty_terms: string[] | null
           status: string
           subject: string | null
+          subtotal: number | null
           terms: string | null
           title: string
           total_amount: number
+          total_discount: number | null
+          total_tax: number | null
           updated_at: string
           valid_until: string | null
           warranty_terms: string | null
@@ -7220,9 +7397,12 @@ export type Database = {
           selected_warranty_terms?: string[] | null
           status?: string
           subject?: string | null
+          subtotal?: number | null
           terms?: string | null
           title: string
           total_amount?: number
+          total_discount?: number | null
+          total_tax?: number | null
           updated_at?: string
           valid_until?: string | null
           warranty_terms?: string | null
@@ -7257,9 +7437,12 @@ export type Database = {
           selected_warranty_terms?: string[] | null
           status?: string
           subject?: string | null
+          subtotal?: number | null
           terms?: string | null
           title?: string
           total_amount?: number
+          total_discount?: number | null
+          total_tax?: number | null
           updated_at?: string
           valid_until?: string | null
           warranty_terms?: string | null
@@ -10608,6 +10791,72 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          company_id: string
+          completed_at: string | null
+          conversation_id: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          metadata: Json | null
+          priority: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          company_id: string
+          completed_at?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          metadata?: Json | null
+          priority?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          company_id?: string
+          completed_at?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          metadata?: Json | null
+          priority?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
             referencedColumns: ["id"]
           },
         ]

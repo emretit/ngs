@@ -58,7 +58,7 @@ interface LoanDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editingLoan: Loan | null;
-  onSubmit: (data: LoanFormData) => void;
+  onSubmit: (data: LoanFormData & { end_date: Date; remaining_debt: number; status: string }) => void;
   isLoading?: boolean;
 }
 
@@ -185,12 +185,12 @@ export function LoanDialog({ open, onOpenChange, editingLoan, onSubmit, isLoadin
       bank: "",
       amount: 0,
       start_date: new Date(),
-      end_date: new Date(),
+      installment_count: 1,
       interest_rate: 0,
       installment_amount: 0,
-      remaining_debt: 0,
-      status: "odenecek",
       notes: "",
+      deposit_to_account: false,
+      account_type: "bank",
     });
   };
 

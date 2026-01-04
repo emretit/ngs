@@ -13,12 +13,12 @@ import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 
 interface ServiceCustomerInfoCardProps {
   formData: {
-    customer_id: string | null;
-    supplier_id: string | null;
-    contact_person: string;
-    contact_phone: string;
-    contact_email: string;
-    received_by: string | null;
+    customer_id?: string | null;
+    supplier_id?: string | null;
+    contact_person?: string;
+    contact_phone?: string;
+    contact_email?: string;
+    received_by?: string | null;
   };
   handleInputChange: (field: string, value: any) => void;
   handlePartnerSelect: (partnerId: string, type: 'customer' | 'supplier') => void;

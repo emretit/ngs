@@ -147,7 +147,7 @@ export const usePaymentAllocation = () => {
 
   // Otomatik tahsis (en eski vadeli faturadan başlayarak)
   const autoAllocatePayment = useMutation({
-    mutationFn: async (paymentId: string, customerId?: string, supplierId?: string) => {
+    mutationFn: async ({ paymentId, customerId, supplierId }: { paymentId: string; customerId?: string; supplierId?: string }) => {
       if (!companyId || !userData?.id) {
         throw new Error("Company ID or User ID not found");
       }

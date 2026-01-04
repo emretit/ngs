@@ -17,6 +17,7 @@ export const orderStatusLabels: Record<OrderStatus, string> = {
   shipped: 'Kargoda',
   delivered: 'Teslim Edildi',
   completed: 'Tamamlandı',
+  serviced: 'Servise Çevrildi',
   cancelled: 'İptal Edildi'
 };
 
@@ -28,6 +29,7 @@ export const orderStatusColors: Record<OrderStatus, string> = {
   shipped: 'bg-orange-500',
   delivered: 'bg-green-500',
   completed: 'bg-emerald-500',
+  serviced: 'bg-teal-500',
   cancelled: 'bg-red-500'
 };
 

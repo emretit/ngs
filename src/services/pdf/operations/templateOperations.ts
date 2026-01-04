@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
-import { PdfTemplate, ServicePdfTemplate } from '@/types/pdf-template';
+import { PdfTemplate } from '@/types/pdf-template';
+import { ServicePdfTemplate } from '@/types/service-template';
 import { defaultServiceTemplateSchema } from '@/types/service-template';
 import { logger } from '@/utils/logger';
 import { createDefaultTemplates as createDefaults } from '../templates/defaultTemplates';

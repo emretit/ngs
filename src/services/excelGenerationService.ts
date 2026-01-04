@@ -233,10 +233,10 @@ const getSheetName = (reportType: ReportType): string => {
 /**
  * Generate filename
  */
-const generateFilename = (reportType: ReportType, format: 'xlsx' | 'csv' = 'xlsx'): string => {
+const generateFilename = (reportType: ReportType, fileFormat: 'xlsx' | 'csv' = 'xlsx'): string => {
   const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
   const baseName = getSheetName(reportType).toLowerCase().replace(/\s+/g, '_');
-  return `${baseName}_${timestamp}.${format}`;
+  return `${baseName}_${timestamp}.${fileFormat}`;
 };
 
 /**

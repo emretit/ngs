@@ -10,13 +10,13 @@ import { parseLocationIQResult, formatDisplayName } from "@/utils/locationiqUtil
 
 interface ServiceBasicInfoCardProps {
   formData: {
-    service_title: string;
-    service_type: string;
-    service_number: string;
-    service_request_description: string;
-    service_location: string;
-    service_priority: 'low' | 'medium' | 'high' | 'urgent';
-    service_status: 'new' | 'assigned' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
+    service_title?: string;
+    service_type?: string;
+    service_number?: string;
+    service_request_description?: string;
+    service_location?: string;
+    service_priority?: 'low' | 'medium' | 'high' | 'urgent';
+    service_status?: 'new' | 'assigned' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
     assigned_technician?: string | null;
   };
   handleInputChange: (field: string, value: any) => void;

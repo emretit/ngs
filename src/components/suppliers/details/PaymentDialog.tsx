@@ -242,7 +242,7 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
       // 5. Otomatik FIFO tahsis (sadece giden ödemeler için - tedarikçiye ödeme)
       if (data.payment_direction === "outgoing" && insertedPayment.id) {
         try {
-          await autoAllocatePayment.mutateAsync(insertedPayment.id, undefined, supplier.id);
+          await autoAllocatePayment.mutateAsync({ paymentId: insertedPayment.id, supplierId: supplier.id });
         } catch (allocError) {
           // Tahsis hatası ödeme kaydını engellemez, sadece log'lar
           console.warn("Otomatik fatura tahsisinde hata:", allocError);

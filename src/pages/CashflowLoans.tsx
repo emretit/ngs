@@ -65,13 +65,13 @@ const CashflowLoans = () => {
   // Loan mutations
   const saveLoanMutation = useMutation({
     mutationFn: async (loanData: {
-      loan_name: string;
-      bank: string;
-      amount: number;
-      start_date: Date;
+      loan_name?: string;
+      bank?: string;
+      amount?: number;
+      start_date?: Date;
       end_date: Date;
-      interest_rate: number;
-      installment_amount: number;
+      interest_rate?: number;
+      installment_amount?: number;
       remaining_debt: number;
       status: string;
       notes?: string;

@@ -432,7 +432,7 @@ export default React.memo(TasksTableRow, (prevProps, nextProps) => {
     prevProps.task.id === nextProps.task.id &&
     prevProps.task.updated_at === nextProps.task.updated_at &&
     prevProps.task.status === nextProps.task.status &&
-    prevProps.task.completed === nextProps.task.completed
+    prevProps.task.priority === nextProps.task.priority
   );
 });
 

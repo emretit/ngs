@@ -113,90 +113,29 @@ export const useActivities = (filters: UseActivitiesFilters = {}) => {
       let data: any[] = [];
       let queryError: any = null;
 
-      // Status sıralaması için özel mantık - Microsoft To Do tarzı sıralama
-      if (sortField === 'status') {
-        // Status'a göre sıralama yapılırken, her status için ayrı sorgu yap
+      // Single query approach - much faster than multiple queries
+      // assignee için assignee_id kullan (assignee bir kolon değil, foreign key ilişkisi)
+      const orderField = sortField === 'assignee' ? 'assignee_id' : 
+                         sortField === 'status' ? 'created_at' : sortField;
+      
+      const result = await query.order(orderField, { ascending: sortField !== 'status' ? ascending : false });
+
+      data = result.data || [];
+      queryError = result.error;
+
+      // Status sıralaması için client-side sorting - tek sorgu ile daha hızlı
+      if (sortField === 'status' && data.length > 0) {
+        // Status priority mapping - Microsoft To Do tarzı sıralama
         // Varsayılan (ascending): todo -> in_progress -> postponed -> completed
-        // Yani tamamlanmamış olanlar üstte, tamamlanmış olanlar altta
-        const statuses = ascending
-          ? ['todo', 'in_progress', 'postponed', 'completed']
-          : ['completed', 'postponed', 'in_progress', 'todo'];
-
-        // Her status için veri çek ve birleştir
-        const allData: any[] = [];
-        for (const status of statuses) {
-          let statusQuery = client
-            .from("activities")
-            .select(`
-              *,
-              assignee:assignee_id(
-                id,
-                first_name,
-                last_name,
-                avatar_url
-              ),
-              subtasks(
-                id,
-                title,
-                completed,
-                created_at
-              ),
-              opportunity:opportunity_id(
-                id,
-                title,
-                customer:customer_id(
-                  id,
-                  name,
-                  company
-                )
-              )
-            `)
-            .eq("company_id", userData.company_id)
-            .eq("status", status);
-
-          // Apply same filters
-          if (filters.startDate) {
-            statusQuery = statusQuery.gte("created_at", filters.startDate.toISOString());
-          }
-          if (filters.endDate) {
-            const endDateTime = new Date(filters.endDate);
-            endDateTime.setHours(23, 59, 59, 999);
-            statusQuery = statusQuery.lte("created_at", endDateTime.toISOString());
-          }
-          if (filters.selectedEmployee) {
-            statusQuery = statusQuery.eq("assignee_id", filters.selectedEmployee);
-          }
-          if (filters.selectedType) {
-            statusQuery = statusQuery.eq("type", filters.selectedType);
-          }
-          if (filters.searchQuery) {
-            statusQuery = statusQuery.or(`title.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`);
-          }
-
-          // Her status grubu içinde created_at'a göre sırala
-          statusQuery = statusQuery.order('created_at', { ascending: false });
-
-          const { data: statusData, error: statusError } = await statusQuery;
-
-          if (statusError) {
-            queryError = statusError;
-            break;
-          }
-
-          if (statusData) {
-            allData.push(...statusData);
-          }
-        }
-
-        data = allData;
-      } else {
-        // Diğer alanlar için normal sıralama
-        // assignee için assignee_id kullan (assignee bir kolon değil, foreign key ilişkisi)
-        const orderField = sortField === 'assignee' ? 'assignee_id' : sortField;
-        const result = await query.order(orderField, { ascending });
-
-        data = result.data || [];
-        queryError = result.error;
+        const statusPriority: Record<string, number> = ascending
+          ? { todo: 1, in_progress: 2, postponed: 3, completed: 4 }
+          : { completed: 1, postponed: 2, in_progress: 3, todo: 4 };
+        
+        data.sort((a, b) => {
+          const priorityA = statusPriority[a.status] || 999;
+          const priorityB = statusPriority[b.status] || 999;
+          return priorityA - priorityB;
+        });
       }
 
       if (queryError) {

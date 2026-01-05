@@ -225,4 +225,12 @@ const SuppliersTableRow = ({
   );
 };
 
-export default SuppliersTableRow;
+export default React.memo(SuppliersTableRow, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.supplier.id === nextProps.supplier.id &&
+    prevProps.supplier.updated_at === nextProps.supplier.updated_at &&
+    prevProps.isSelected === nextProps.isSelected
+  );
+});
+

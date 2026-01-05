@@ -257,3 +257,13 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
     </TableRow>
   );
 };
+
+// Memoized export for performance optimization
+export default React.memo(OrdersTableRow, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.order.id === nextProps.order.id &&
+    prevProps.order.updated_at === nextProps.order.updated_at &&
+    prevProps.order.status === nextProps.order.status
+  );
+});

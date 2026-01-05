@@ -258,4 +258,12 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
   );
 };
 
-export default OpportunitiesTableRow;
+export default React.memo(OpportunitiesTableRow, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.opportunity.id === nextProps.opportunity.id &&
+    prevProps.opportunity.updated_at === nextProps.opportunity.updated_at &&
+    prevProps.opportunity.status === nextProps.opportunity.status
+  );
+});
+

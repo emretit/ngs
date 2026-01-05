@@ -126,5 +126,13 @@ const ProductsTableRow = ({
   );
 };
 
-export default ProductsTableRow;
+export default React.memo(ProductsTableRow, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.product.id === nextProps.product.id &&
+    prevProps.product.updated_at === nextProps.product.updated_at &&
+    prevProps.isSelected === nextProps.isSelected
+  );
+});
+
 

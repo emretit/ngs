@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Card } from "@/components/ui/card";
 
 interface DashboardCardProps {
@@ -43,4 +44,13 @@ const DashboardCard = ({ title, value, icon, trend }: DashboardCardProps) => {
   );
 };
 
-export default DashboardCard;
+export default React.memo(DashboardCard, (prevProps, nextProps) => {
+  // Only re-render if value or trend changes
+  return (
+    prevProps.title === nextProps.title &&
+    prevProps.value === nextProps.value &&
+    prevProps.trend?.value === nextProps.trend?.value &&
+    prevProps.trend?.isPositive === nextProps.trend?.isPositive
+  );
+});
+

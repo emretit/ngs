@@ -119,6 +119,86 @@ export const queryKeys = {
     latest: () => [...queryKeys.exchangeRates.all, 'latest'] as const,
     history: (date?: string) => [...queryKeys.exchangeRates.all, 'history', date] as const,
   },
+
+  // Activities/Tasks
+  activities: {
+    all: ['activities'] as const,
+    lists: () => [...queryKeys.activities.all, 'list'] as const,
+    list: (companyId?: string, filters?: Record<string, unknown>) => 
+      [...queryKeys.activities.lists(), companyId, JSON.stringify(filters)] as const,
+    detail: (id: string) => [...queryKeys.activities.all, 'detail', id] as const,
+  },
+
+  // Opportunities
+  opportunities: {
+    all: ['opportunities'] as const,
+    lists: () => [...queryKeys.opportunities.all, 'list'] as const,
+    list: (companyId?: string, filters?: Record<string, unknown>) => 
+      [...queryKeys.opportunities.lists(), companyId, filters] as const,
+    detail: (id: string) => [...queryKeys.opportunities.all, 'detail', id] as const,
+  },
+
+  // Global Search
+  globalSearch: {
+    all: ['global-search'] as const,
+    data: (companyId?: string, query?: string) => 
+      [...queryKeys.globalSearch.all, 'data', companyId, query] as const,
+  },
+
+  // Dashboard
+  dashboard: {
+    all: ['dashboard'] as const,
+    data: (companyId?: string) => [...queryKeys.dashboard.all, 'data', companyId] as const,
+    stats: (companyId?: string, period?: string) => 
+      [...queryKeys.dashboard.all, 'stats', companyId, period] as const,
+  },
+
+  // Deliveries
+  deliveries: {
+    all: ['deliveries'] as const,
+    lists: () => [...queryKeys.deliveries.all, 'list'] as const,
+    list: (companyId?: string, filters?: Record<string, unknown>) => 
+      [...queryKeys.deliveries.lists(), companyId, filters] as const,
+    detail: (id: string) => [...queryKeys.deliveries.all, 'detail', id] as const,
+  },
+
+  // Vehicles
+  vehicles: {
+    all: ['vehicles'] as const,
+    lists: () => [...queryKeys.vehicles.all, 'list'] as const,
+    list: (companyId?: string) => [...queryKeys.vehicles.lists(), companyId] as const,
+    detail: (id: string) => [...queryKeys.vehicles.all, 'detail', id] as const,
+  },
+} as const;
+
+/**
+ * Query options factory - provides consistent staleTime and gcTime
+ * for different data types
+ */
+export const queryOptions = {
+  // Static data that rarely changes (5 minutes)
+  static: {
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  },
+  
+  // Dynamic data that changes frequently (1 minute)
+  dynamic: {
+    staleTime: 1 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  },
+  
+  // Real-time data (30 seconds)
+  realtime: {
+    staleTime: 30 * 1000,
+    gcTime: 2 * 60 * 1000,
+  },
+  
+  // Cached data for offline use (30 minutes)
+  cached: {
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+  },
 } as const;
 
 

@@ -233,4 +233,14 @@ const CustomersTableRow = ({
   );
 };
 
-export default CustomersTableRow;
+export default React.memo(CustomersTableRow, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.customer.id === nextProps.customer.id &&
+    prevProps.customer.updated_at === nextProps.customer.updated_at &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.calculatedBalance === nextProps.calculatedBalance &&
+    prevProps.isLoadingBalance === nextProps.isLoadingBalance
+  );
+});
+

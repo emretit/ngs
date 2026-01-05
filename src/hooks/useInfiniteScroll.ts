@@ -42,6 +42,9 @@ export function useInfiniteScroll<T>(
   const [totalCount, setTotalCount] = useState<number | undefined>();
   const queryClient = useQueryClient();
   const abortControllerRef = useRef<AbortController | null>(null);
+  
+  // Optimize: Use ref to store existing IDs to avoid recreating Set on every loadMore call
+  const existingIdsRef = useRef<Set<string>>(new Set());
 
   // Memoize query key to prevent unnecessary re-renders
   const memoizedQueryKey = useMemo(() => queryKey, [queryKey.join(',')]);
@@ -64,6 +67,10 @@ export function useInfiniteScroll<T>(
       // Her zaman güncelle - invalidate edildiğinde yeni veriyi göster
       // (Teklif tarihi gibi alanlar değiştiğinde ID aynı kalabilir ama veri değişir)
       setAllData(firstPageData.data);
+      
+      // Update existing IDs ref
+      existingIdsRef.current = new Set(firstPageData.data.map((item: any) => (item as any)?.id));
+      
       setCurrentPage(1);
       setHasNextPage(firstPageData.hasNextPage ?? firstPageData.data.length === pageSize);
       if (firstPageData.totalCount !== undefined) {
@@ -100,10 +107,11 @@ export function useInfiniteScroll<T>(
         // Cache'den veri varsa kullan
         const result = cachedData as { data: T[]; totalCount?: number; hasNextPage?: boolean };
         if (result?.data) {
-          // Duplicate'leri önlemek için yeni verileri filtrele
+          // Duplicate'leri önlemek için yeni verileri filtrele - Optimize: Use ref instead of creating new Set
           setAllData(prev => {
-            const existingIds = new Set(prev.map((item: any) => (item as any)?.id));
-            const newItems = result.data.filter((item: any) => !existingIds.has((item as any)?.id));
+            const newItems = result.data.filter((item: any) => !existingIdsRef.current.has((item as any)?.id));
+            // Update ref with new IDs
+            newItems.forEach((item: any) => existingIdsRef.current.add((item as any)?.id));
             return [...prev, ...newItems];
           });
           setCurrentPage(nextPage);
@@ -122,10 +130,11 @@ export function useInfiniteScroll<T>(
         });
 
         if (result?.data) {
-          // Duplicate'leri önlemek için yeni verileri filtrele
+          // Duplicate'leri önlemek için yeni verileri filtrele - Optimize: Use ref instead of creating new Set
           setAllData(prev => {
-            const existingIds = new Set(prev.map((item: any) => (item as any)?.id));
-            const newItems = result.data.filter((item: any) => !existingIds.has((item as any)?.id));
+            const newItems = result.data.filter((item: any) => !existingIdsRef.current.has((item as any)?.id));
+            // Update ref with new IDs
+            newItems.forEach((item: any) => existingIdsRef.current.add((item as any)?.id));
             return [...prev, ...newItems];
           });
           setCurrentPage(nextPage);
@@ -170,6 +179,7 @@ export function useInfiniteScroll<T>(
     
     // State'i sıfırla
     setAllData([]);
+    existingIdsRef.current.clear(); // Clear the ref as well
     setCurrentPage(1);
     setHasNextPage(true);
     setIsLoadingMore(false);

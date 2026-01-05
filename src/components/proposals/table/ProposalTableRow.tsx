@@ -472,3 +472,19 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
     </TableRow>
   );
 };
+
+// Memoized export for performance optimization
+export default React.memo(ProposalTableRow, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  if (!prevProps.proposal || !nextProps.proposal) {
+    return prevProps.proposal === nextProps.proposal;
+  }
+  
+  return (
+    prevProps.proposal.id === nextProps.proposal.id &&
+    prevProps.proposal.updated_at === nextProps.proposal.updated_at &&
+    prevProps.proposal.status === nextProps.proposal.status &&
+    prevProps.isLoading === nextProps.isLoading &&
+    prevProps.templates?.length === nextProps.templates?.length
+  );
+});

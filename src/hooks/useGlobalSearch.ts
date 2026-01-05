@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Fuse from "fuse.js";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export interface SearchResult {
@@ -33,9 +33,23 @@ export const useGlobalSearch = (query: string) => {
   const { userData, loading: userLoading } = useCurrentUser();
   const companyId = userData?.company_id;
 
-  // Fetch all searchable data with company filter
+  // Debounced query state - wait 300ms after user stops typing
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Only fetch data when query is at least 3 characters
+  const shouldFetch = debouncedQuery.length >= 3;
+
+  // Fetch all searchable data with company filter - LAZY LOADED
   const { data: searchData, isLoading, error } = useQuery({
-    queryKey: ["global-search-data", companyId],
+    queryKey: ["global-search-data", companyId, debouncedQuery],
     queryFn: async () => {
       try {
         if (!companyId) {
@@ -146,14 +160,15 @@ export const useGlobalSearch = (query: string) => {
         };
       }
     },
-    enabled: !!companyId && !userLoading, // Only fetch when companyId is available
+    enabled: !!companyId && !userLoading && shouldFetch, // LAZY: Only fetch when query >= 3 chars
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1, // Retry once on failure
   });
 
   // Perform fuzzy search
   const results = useMemo(() => {
-    if (!query || !searchData || query.length < 2) return [];
+    // Don't search if query is too short
+    if (!debouncedQuery || !searchData || debouncedQuery.length < 3) return [];
 
     const allResults: SearchResult[] = [];
 
@@ -163,7 +178,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["name", "email", "office_phone", "company"],
         threshold: 0.3,
       });
-      const customerResults = customerFuse.search(query).slice(0, 5);
+      const customerResults = customerFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...customerResults.map((result) => ({
           id: result.item.id,
@@ -181,7 +196,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["first_name", "last_name", "email", "phone", "position"],
         threshold: 0.3,
       });
-      const employeeResults = employeeFuse.search(query).slice(0, 5);
+      const employeeResults = employeeFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...employeeResults.map((result) => ({
           id: result.item.id,
@@ -199,7 +214,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["title", "number", "customer.name"],
         threshold: 0.3,
       });
-      const proposalResults = proposalFuse.search(query).slice(0, 5);
+      const proposalResults = proposalFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...proposalResults.map((result) => ({
           id: result.item.id,
@@ -217,7 +232,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["name", "sku", "barcode", "description"],
         threshold: 0.3,
       });
-      const productResults = productFuse.search(query).slice(0, 5);
+      const productResults = productFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...productResults.map((result) => ({
           id: result.item.id,
@@ -235,7 +250,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["title", "description", "employee.first_name", "employee.last_name"],
         threshold: 0.3,
       });
-      const activityResults = activityFuse.search(query).slice(0, 5);
+      const activityResults = activityFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...activityResults.map((result) => ({
           id: result.item.id,
@@ -253,7 +268,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["order_number", "title", "customer.name"],
         threshold: 0.3,
       });
-      const orderResults = orderFuse.search(query).slice(0, 5);
+      const orderResults = orderFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...orderResults.map((result) => ({
           id: result.item.id,
@@ -271,7 +286,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["title", "customer.name"],
         threshold: 0.3,
       });
-      const opportunityResults = opportunityFuse.search(query).slice(0, 5);
+      const opportunityResults = opportunityFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...opportunityResults.map((result) => ({
           id: result.item.id,
@@ -289,7 +304,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["name", "email", "office_phone", "company"],
         threshold: 0.3,
       });
-      const supplierResults = supplierFuse.search(query).slice(0, 5);
+      const supplierResults = supplierFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...supplierResults.map((result) => ({
           id: result.item.id,
@@ -307,7 +322,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["fatura_no", "customer.name"],
         threshold: 0.3,
       });
-      const salesInvoiceResults = salesInvoiceFuse.search(query).slice(0, 5);
+      const salesInvoiceResults = salesInvoiceFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...salesInvoiceResults.map((result) => ({
           id: result.item.id,
@@ -325,7 +340,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["invoice_number", "supplier.name"],
         threshold: 0.3,
       });
-      const purchaseInvoiceResults = purchaseInvoiceFuse.search(query).slice(0, 5);
+      const purchaseInvoiceResults = purchaseInvoiceFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...purchaseInvoiceResults.map((result) => ({
           id: result.item.id,
@@ -343,7 +358,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["delivery_number", "customer.name"],
         threshold: 0.3,
       });
-      const deliveryResults = deliveryFuse.search(query).slice(0, 5);
+      const deliveryResults = deliveryFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...deliveryResults.map((result) => ({
           id: result.item.id,
@@ -361,7 +376,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["order_number", "supplier.name"],
         threshold: 0.3,
       });
-      const purchaseOrderResults = purchaseOrderFuse.search(query).slice(0, 5);
+      const purchaseOrderResults = purchaseOrderFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...purchaseOrderResults.map((result) => ({
           id: result.item.id,
@@ -379,7 +394,7 @@ export const useGlobalSearch = (query: string) => {
         keys: ["plate_number", "brand", "model"],
         threshold: 0.3,
       });
-      const vehicleResults = vehicleFuse.search(query).slice(0, 5);
+      const vehicleResults = vehicleFuse.search(debouncedQuery).slice(0, 5);
       allResults.push(
         ...vehicleResults.map((result) => ({
           id: result.item.id,
@@ -392,7 +407,7 @@ export const useGlobalSearch = (query: string) => {
     }
 
     return allResults;
-  }, [query, searchData]);
+  }, [debouncedQuery, searchData]);
 
   return {
     results,

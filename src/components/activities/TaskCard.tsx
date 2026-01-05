@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Draggable } from "@hello-pangea/dnd";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -183,4 +184,14 @@ const TaskCard = ({ task, index, onEdit, onSelect, onDelete }: TaskCardProps) =>
   );
 };
 
-export default TaskCard;
+export default React.memo(TaskCard, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.task.id === nextProps.task.id &&
+    prevProps.task.updated_at === nextProps.task.updated_at &&
+    prevProps.task.status === nextProps.task.status &&
+    prevProps.task.completed === nextProps.task.completed &&
+    prevProps.index === nextProps.index
+  );
+});
+

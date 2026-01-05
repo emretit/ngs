@@ -426,4 +426,13 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
   );
 };
 
-export default TasksTableRow;
+export default React.memo(TasksTableRow, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.task.id === nextProps.task.id &&
+    prevProps.task.updated_at === nextProps.task.updated_at &&
+    prevProps.task.status === nextProps.task.status &&
+    prevProps.task.completed === nextProps.task.completed
+  );
+});
+

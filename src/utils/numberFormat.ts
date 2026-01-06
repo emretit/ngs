@@ -15,7 +15,7 @@ export const getNumberFormat = async (formatKey: string, companyId?: string): Pr
       .select('parameter_value')
       .eq('parameter_key', formatKey)
       .eq('company_id', companyId)
-      .single();
+      .maybeSingle();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = not found
       console.warn(`Format ${formatKey} bulunamadı, varsayılan kullanılacak:`, error);
@@ -139,7 +139,7 @@ export const getNextSequentialNumber = async (
       .select('parameter_value')
       .eq('parameter_key', sequenceParamKey)
       .eq('company_id', companyId)
-      .single();
+      .maybeSingle();
 
     let nextNumber = 1;
 

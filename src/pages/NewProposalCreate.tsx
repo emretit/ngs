@@ -272,7 +272,7 @@ const NewProposalCreate = () => {
   const loadTemplates = async () => {
     try {
       setIsLoadingTemplates(true);
-      const data = await PdfExportService.getTemplates('quote');
+      const data = await PdfExportService.getTemplates(undefined, 'quote');
       setTemplates(data);
     } catch (error) {
       console.error('Error loading templates:', error);

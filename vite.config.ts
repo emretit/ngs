@@ -101,7 +101,7 @@ export default defineConfig(({ mode }) => ({
           'excel-vendor': ['xlsx'],
           
           // Gantt charts (heavy)
-          'gantt-vendor': ['gantt-task-react', 'wx-react-gantt'],
+          'gantt-vendor': ['gantt-task-react'],
           
           // Drag and drop
           'dnd-vendor': [

@@ -42,6 +42,19 @@ function getTitleForPath(path: string, t: (key: string) => string): string {
   
   // Pattern matching for detail pages and specific routes
   const patterns: Record<string, string> = {
+    // Create pages - must be before general patterns
+    '/customers/new': 'customers.create',
+    '/suppliers/new': 'suppliers.create',
+    '/proposals/create': 'proposals.create',
+    '/proposal/create': 'proposals.create',
+    '/orders/create': 'orders.create',
+    '/orders/new': 'orders.create',
+    '/sales-invoices/create': 'nav.salesInvoices',
+    '/deliveries/new': 'nav.deliveries',
+    '/pdf-templates/new': 'nav.pdfTemplates',
+    '/pdf-templates/service/new': 'nav.pdfTemplates',
+    '/service/new': 'nav.service',
+    
     // Detail pages - employees pattern'i en son kontrol edilmeli (detay sayfaları önce kontrol edilsin)
     '/customers/': 'nav.customers',
     '/suppliers/': 'nav.suppliers',
@@ -54,7 +67,6 @@ function getTitleForPath(path: string, t: (key: string) => string): string {
     '/service/tickets/': 'nav.service',
     '/service/detail/': 'nav.service',
     '/service/edit/': 'nav.service',
-    '/service/new': 'nav.service',
     '/contracts/': 'nav.contractManagement',
     '/vehicles/': 'nav.vehicleManagement',
     '/sales-invoices/': 'nav.salesInvoices',
@@ -74,9 +86,7 @@ function getTitleForPath(path: string, t: (key: string) => string): string {
     '/service/assets': 'nav.service',
     '/service/warranties': 'nav.service',
     '/service/maintenance': 'nav.service',
-    '/pdf-templates/new': 'nav.pdfTemplates',
     '/pdf-templates/edit/': 'nav.pdfTemplates',
-    '/pdf-templates/service/new': 'nav.pdfTemplates',
     '/pdf-templates/service/edit/': 'nav.pdfTemplates',
     '/cashflow/cash-accounts/': 'nav.accounts',
     '/cashflow/credit-cards/': 'nav.accounts',
@@ -87,9 +97,7 @@ function getTitleForPath(path: string, t: (key: string) => string): string {
     '/profile': 'settings.profile',
     '/notifications': 'settings.notifications',
     '/nilvera': 'nav.eInvoiceIntegrator',
-    '/deliveries/new': 'nav.deliveries',
     '/financial-overview': 'nav.reports',
-    '/sales-invoices/create': 'nav.salesInvoices',
     '/contracts/service': 'nav.serviceContracts',
     '/contracts/vehicle': 'nav.vehicleContracts',
     '/contracts/customer': 'nav.customerContracts',

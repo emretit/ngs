@@ -6,6 +6,8 @@ export interface Tab {
   path: string;
   title: string;
   closable: boolean;
+  keepMounted?: boolean; // If true, component stays mounted in DOM when inactive
+  refreshKey?: number; // Increment to force refresh
 }
 
 interface TabContextType {
@@ -13,6 +15,7 @@ interface TabContextType {
   activeTabId: string | null;
   addTab: (path: string, title: string, closable?: boolean) => void;
   removeTab: (id: string) => void;
+  refreshTab: (id: string) => void;
   setActiveTab: (id: string) => void;
   getTabByPath: (path: string) => Tab | undefined;
   updateTabTitle: (path: string, title: string) => void;
@@ -26,6 +29,8 @@ const DEFAULT_TAB: Tab = {
   path: '/dashboard',
   title: 'Gösterge Paneli',
   closable: true,
+  keepMounted: true,
+  refreshKey: 0,
 };
 
 export function TabProvider({ children }: { children: ReactNode }) {
@@ -55,12 +60,14 @@ export function TabProvider({ children }: { children: ReactNode }) {
         return prevTabs;
       }
 
-      // Create new tab
+      // Create new tab with keepMounted enabled by default
       const newTab: Tab = {
         id: `tab-${Date.now()}`,
         path,
         title,
         closable,
+        keepMounted: true, // Keep tabs mounted to preserve state
+        refreshKey: 0,
       };
 
       setActiveTabId(newTab.id);
@@ -95,6 +102,20 @@ export function TabProvider({ children }: { children: ReactNode }) {
     });
   }, [activeTabId, navigate]);
 
+  const refreshTab = useCallback((id: string) => {
+    setTabs(prevTabs => {
+      return prevTabs.map(tab => {
+        if (tab.id === id) {
+          return {
+            ...tab,
+            refreshKey: (tab.refreshKey || 0) + 1,
+          };
+        }
+        return tab;
+      });
+    });
+  }, []);
+
   const setActiveTab = useCallback((id: string) => {
     const tab = tabs.find(t => t.id === id);
     if (tab) {
@@ -118,7 +139,7 @@ export function TabProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <TabContext.Provider value={{ tabs, activeTabId, addTab, removeTab, setActiveTab, getTabByPath, updateTabTitle }}>
+    <TabContext.Provider value={{ tabs, activeTabId, addTab, removeTab, refreshTab, setActiveTab, getTabByPath, updateTabTitle }}>
       {children}
     </TabContext.Provider>
   );

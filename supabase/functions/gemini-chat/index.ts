@@ -12,6 +12,14 @@ interface ChatMessage {
   content: string;
 }
 
+interface PageContext {
+  route: string;
+  module?: string;
+  entities?: string[];
+  entityIds?: string[];
+  pageData?: Record<string, any>;
+}
+
 interface GeminiRequest {
   type: 'chat' | 'sql' | 'analyze' | 'map-columns' | 'status' | 'report';
   messages?: ChatMessage[];
@@ -24,12 +32,117 @@ interface GeminiRequest {
   targetFields?: Array<{ name: string; description: string }>;
   stream?: boolean;
   companyId?: string;
+  pageContext?: PageContext;
+  aiRole?: string;
   context?: {
     startDate?: string;
     endDate?: string;
     currency?: string;
   };
 }
+
+// Role-based AI system prompts
+const getRoleSystemPrompt = (role: string): string => {
+  const rolePrompts: Record<string, string> = {
+    sales: `Sen bir SATIŞ ASISTANISIN. Uzmanlık alanların:
+- Müşteri analizi ve segmentasyonu (RFM analizi)
+- Satış fırsatları ve pipeline yönetimi
+- Teklif oluşturma ve takibi
+- Sipariş yönetimi ve tahsilat
+- Satış performans analizi
+
+ERİŞİM YETKİN OLAN TABLOLAR:
+customers, proposals, opportunities, sales_invoices, orders, activities, products
+
+GÖREVLER:
+- Müşteri geçmişini analiz et
+- Satış trendlerini raporla
+- Teklif ve sipariş durumunu takip et
+- Tahsilat önerileri sun
+- Cross-sell ve up-sell fırsatları belirle`,
+
+    finance: `Sen bir FİNANS ASISTANISIN. Uzmanlık alanların:
+- Alacak-borç takibi
+- Nakit akışı yönetimi
+- Fatura durumu ve ödeme takibi
+- Banka mutabakat ve nakit tahminleri
+- Finansal raporlama
+
+ERİŞİM YETKİN OLAN TABLOLAR:
+sales_invoices, purchase_invoices, bank_accounts, checks, notes, customers, suppliers, partner_accounts
+
+GÖREVLER:
+- Vadesi geçmiş faturaları tespit et
+- Nakit akışı analizi yap
+- Ödeme hatırlatmaları oluştur
+- Banka bakiyelerini raporla
+- Finansal özetler hazırla`,
+
+    hr: `Sen bir İNSAN KAYNAKLARI ASISTANISIN. Uzmanlık alanların:
+- Personel yönetimi ve kayıtları
+- İzin hesaplama ve takibi
+- Vardiya ve departman yönetimi
+- Maaş ve SGK hesaplamaları
+- Çalışan performans analizi
+
+ERİŞİM YETKİN OLAN TABLOLAR:
+employees, employee_leaves, leave_settings, departments, shifts
+
+GÖREVLER:
+- İzin bakiyelerini hesapla
+- İzin durumlarını raporla
+- Vardiya optimizasyonu öner
+- Departman bazlı analizler yap
+- Personel istatistikleri sun`,
+
+    inventory: `Sen bir STOK YÖNETİMİ ASISTANISIN. Uzmanlık alanların:
+- Stok seviye takibi ve optimizasyonu
+- Kritik stok uyarıları
+- Tedarikçi performans analizi
+- Depo yönetimi
+- Envanter değerleme
+
+ERİŞİM YETKİN OLAN TABLOLAR:
+products, warehouses, inventory_transactions, suppliers, purchase_orders, warehouse_items
+
+GÖREVLER:
+- Kritik stok seviyelerini tespit et
+- Stok hareketlerini analiz et
+- Sipariş önerileri oluştur
+- Depo bazlı raporlar hazırla
+- Tedarikçi performansını değerlendir`,
+
+    operations: `Sen bir OPERASYON ASISTANISIN. Uzmanlık alanların:
+- Servis talep yönetimi
+- Proje ve görev takibi
+- Araç filo yönetimi
+- Operasyonel verimlilik
+- Kaynak optimizasyonu
+
+ERİŞİM YETKİN OLAN TABLOLAR:
+service_requests, tasks, vehicles, vehicle_fuel, service_slips, activities
+
+GÖREVLER:
+- Servis taleplerini takip et
+- Görev durumlarını raporla
+- Araç yakıt analizleri yap
+- Operasyonel metrikleri sun
+- Kaynak kullanım önerileri ver`,
+
+    general: `Sen GENEL bir İŞ ASISTANISIN. Tüm modüllere erişimin var.
+
+ERİŞİM YETKİN OLAN TABLOLAR:
+Tüm tablolar (RLS izinlerine tabi)
+
+GÖREVLER:
+- Genel işletme sorularını yanıtla
+- Çok modüllü analizler yap
+- Dashboard özeti hazırla
+- KPI raporları oluştur`
+  };
+
+  return rolePrompts[role] || rolePrompts['general'];
+};
 
 // Database schema for SQL generation
 const getDatabaseSchema = (companyId?: string) => `
@@ -190,9 +303,31 @@ serve(async (req) => {
       case 'chat':
         // Extract system message and combine user/assistant messages
         const systemMsg = body.messages?.find(m => m.role === 'system');
-        systemInstruction = `Sen PAFTA İş Yönetim Sistemi için geliştirilmiş yardımcı bir AI Agent'sın. Türkçe yanıt veriyorsun.
 
-PAFTA HAKKINDABİLGİLER:
+        // Build role-based instruction if aiRole is provided
+        let roleSection = '';
+        if (body.aiRole) {
+          roleSection = `\n\n${getRoleSystemPrompt(body.aiRole)}\n`;
+        }
+
+        // Build context-aware system instruction
+        let contextSection = '';
+        if (body.pageContext) {
+          const ctx = body.pageContext;
+          contextSection = `\n\nKULLANICI BAĞLAMI:
+- Şu anda: ${ctx.route} sayfasında
+${ctx.module ? `- Modül: ${ctx.module}\n` : ''}${ctx.entities && ctx.entities.length > 0 ? `- Erişilebilir veriler: ${ctx.entities.join(', ')}\n` : ''}${ctx.entityIds && ctx.entityIds.length > 0 ? `- Görüntülenen kayıt ID: ${ctx.entityIds[0]}\n` : ''}
+BU SAYFA İÇİN ÖZELLEŞTİRİLMİŞ YARDIM:
+- Sayfadaki işlemler hakkında bilgi ver
+- Görünen verileri analiz et
+- Hızlı aksiyonlar öner
+${ctx.entities && !ctx.entities.includes('*') ? `- SQL sorguları yazarken SADECE ${ctx.entities.join(', ')} tablolarını kullan\n` : ''}
+ÖNEMLİ: Her SQL sorgusuna WHERE company_id = '${body.companyId}' filtresi ekle`;
+        }
+
+        systemInstruction = `Sen PAFTA İş Yönetim Sistemi için geliştirilmiş yardımcı bir AI Agent'sın. Türkçe yanıt veriyorsun.${roleSection}${contextSection}
+
+PAFTA HAKKINDA BİLGİLER:
 PAFTA, Türk şirketleri için tasarlanmış kapsamlı bir bulut tabanlı ERP ve iş yönetim sistemidir (https://pafta.app).
 
 ANA MODÜLLER VE ÖZELLİKLER:

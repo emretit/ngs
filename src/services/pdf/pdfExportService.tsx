@@ -67,10 +67,10 @@ export class PdfExportService {
   }
 
   /**
-   * Get all PDF templates
+   * Get all PDF templates (optionally filtered by type and company)
    */
-  static async getTemplates(type: 'quote' | 'invoice' | 'proposal' = 'quote') {
-    return getTemplates(type);
+  static async getTemplates(companyId?: string, type?: 'quote' | 'invoice' | 'proposal') {
+    return getTemplates(companyId, type);
   }
 
   /**

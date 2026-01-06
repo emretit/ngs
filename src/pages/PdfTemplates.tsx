@@ -11,6 +11,8 @@ import PdfTemplatesContent from '@/components/pdf-templates/PdfTemplatesContent'
 import { ServiceTemplateService, ServiceTemplate } from '@/services/serviceTemplateService';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { TemplateTypeSelectionModal } from '@/components/pdf-templates/TemplateTypeSelectionModal';
+import { ensureDefaultServiceTemplates } from '@/services/serviceTemplates/defaultServiceTemplates';
+import { logger } from '@/utils/logger';
 
 type ViewMode = 'grid' | 'list';
 type SortOption = 'name' | 'updated' | 'created';
@@ -45,8 +47,10 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [templateToPreview, setTemplateToPreview] = useState<PdfTemplate | null>(null);
   useEffect(() => {
-    loadTemplates();
-  }, []);
+    if (userData && userData.company_id) {
+      loadTemplates();
+    }
+  }, [userData?.company_id]);
 
   // Birleşik template listesi oluştur
   const unifiedTemplates = useMemo(() => {
@@ -106,18 +110,40 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
   }, [unifiedTemplates, searchQuery, typeFilter, sortBy]);
 
   const loadTemplates = async () => {
+    if (!userData?.company_id) {
+      logger.warn('Company ID not found, skipping template load');
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
+      // Load templates first
       const [pdfTemplates, serviceTemplatesData] = await Promise.all([
-        PdfExportService.getTemplates(),
-        userData?.company_id 
-          ? ServiceTemplateService.getTemplates(userData.company_id)
-          : Promise.resolve([]),
+        PdfExportService.getTemplates(userData.company_id),
+        ServiceTemplateService.getTemplates(userData.company_id),
       ]);
+      
+      // Check if we need to create default service templates
+      if (serviceTemplatesData.length === 0) {
+        logger.info('No service templates found, creating defaults');
+        try {
+          await ensureDefaultServiceTemplates(userData.company_id);
+          // Reload service templates after creating defaults
+          const updatedServiceTemplates = await ServiceTemplateService.getTemplates(userData.company_id);
+          setServiceTemplates(updatedServiceTemplates);
+        } catch (error) {
+          logger.error('Error creating default service templates:', error);
+          // Continue even if default creation fails
+          setServiceTemplates([]);
+        }
+      } else {
+        setServiceTemplates(serviceTemplatesData);
+      }
+      
       setTemplates(pdfTemplates);
-      setServiceTemplates(serviceTemplatesData);
     } catch (error) {
-      console.error('Error loading templates:', error);
+      logger.error('Error loading templates:', error);
       toast.error('Şablonlar yüklenirken hata oluştu');
     } finally {
       setIsLoading(false);

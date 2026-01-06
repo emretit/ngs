@@ -1,7 +1,6 @@
 import { memo, useMemo, useCallback, lazy, Suspense, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { CriticalAlertsBanner } from "@/components/dashboard/CriticalAlertsBanner";
 import { GradientStatCards } from "@/components/dashboard/widgets/GradientStatCards";
@@ -12,7 +11,6 @@ import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Bot, ArrowRight } from "lucide-react";
 
 // Lazy load heavy components for better performance
 const WorkflowPipeline = lazy(() => import("@/components/dashboard/workflow/WorkflowPipeline").then(m => ({ default: m.WorkflowPipeline })));
@@ -115,69 +113,6 @@ const Dashboard = () => {
         turnoverTrend={turnoverTrend}
         isLoading={widgetsLoading}
       />
-
-      {/* AI Asistan Kartı */}
-      <Card className="bg-gradient-to-br from-primary/5 via-primary/3 to-background border-primary/20 shadow-lg hover:shadow-xl transition-all duration-300">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Bot className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-xl">AI Asistan</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Yapay zeka destekli iş asistanınız
-                </p>
-              </div>
-            </div>
-            <Button 
-              onClick={() => navigate('/ai-assistant')}
-              className="gap-2"
-            >
-              Sohbet Başlat
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="pb-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
-                <span className="text-lg">💡</span>
-              </div>
-              <div>
-                <h4 className="font-medium text-sm">Akıllı Öneriler</h4>
-                <p className="text-xs text-muted-foreground mt-1">
-                  İşletmeniz için özelleştirilmiş öneriler alın
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                <span className="text-lg">📊</span>
-              </div>
-              <div>
-                <h4 className="font-medium text-sm">Hızlı Raporlar</h4>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Sorularınıza anında rapor ve analiz üretin
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center">
-                <span className="text-lg">🎯</span>
-              </div>
-              <div>
-                <h4 className="font-medium text-sm">Görev Yönetimi</h4>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Yapılacaklar ve öncelikler konusunda yardım alın
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Finansal Analiz Chart - Bağımsız Kart */}
       <Suspense fallback={<Skeleton className="h-[500px] w-full rounded-lg" />}>

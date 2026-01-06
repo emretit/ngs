@@ -276,10 +276,6 @@
       "loading": "Çalışanlar yükleniyor...",
       "loadError": "Çalışanlar yüklenirken bir hata oluştu"
     },
-    "orders": {
-      "loading": "Siparişler yükleniyor...",
-      "loadError": "Siparişler yüklenirken bir hata oluştu"
-    },
     "activities": {
       "loading": "Aktiviteler yükleniyor...",
       "loadError": "Aktiviteler yüklenirken bir hata oluştu"
@@ -388,6 +384,7 @@
   },
   "customers": {
     "title": "Müşteriler",
+    "create": "Yeni Müşteri Ekle",
     "addCustomer": "Müşteri Ekle",
     "editCustomer": "Müşteri Düzenle",
     "customerDetails": "Müşteri Detayları",
@@ -400,6 +397,7 @@
   },
   "suppliers": {
     "title": "Tedarikçiler",
+    "create": "Yeni Tedarikçi Ekle",
     "addSupplier": "Tedarikçi Ekle",
     "editSupplier": "Tedarikçi Düzenle",
     "supplierDetails": "Tedarikçi Detayları",
@@ -421,6 +419,7 @@
   },
   "proposals": {
     "title": "Teklifler",
+    "create": "Yeni Teklif Oluştur",
     "addProposal": "Teklif Oluştur",
     "editProposal": "Teklif Düzenle",
     "proposalDetails": "Teklif Detayları",
@@ -436,6 +435,16 @@
       "rejected": "Reddedildi",
       "expired": "Süresi Doldu"
     }
+  },
+  "orders": {
+    "title": "Siparişler",
+    "create": "Yeni Sipariş Oluştur",
+    "addOrder": "Sipariş Oluştur",
+    "editOrder": "Sipariş Düzenle",
+    "orderDetails": "Sipariş Detayları",
+    "orderNumber": "Sipariş No",
+    "loading": "Siparişler yükleniyor...",
+    "loadError": "Siparişler yüklenirken bir hata oluştu"
   },
   "activities": {
     "title": "Aktivite Detayları",

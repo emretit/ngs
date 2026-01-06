@@ -120,17 +120,22 @@ export class IntegratorService {
       const integrator = await this.getSelectedIntegrator();
 
       console.log('📊 Giden faturalar alınıyor, entegratör:', integrator);
+      console.log('📅 Filtreler:', filters);
 
       if (integrator === 'veriban') {
-        return this.getVeribanOutgoingInvoices(filters);
+        const result = await this.getVeribanOutgoingInvoices(filters);
+        console.log('✅ Veriban giden faturalar sonucu:', result);
+        return result;
       } else {
         // Diğer entegratörler için henüz desteklenmiyor
+        console.log('⚠️ Giden faturalar için sadece Veriban destekleniyor. Seçili entegratör:', integrator);
         return {
           success: false,
           error: 'Giden faturalar için sadece Veriban destekleniyor',
         };
       }
     } catch (error: any) {
+      console.error('❌ getOutgoingInvoices hatası:', error);
       return {
         success: false,
         error: error.message || 'Giden faturalar alınamadı',
@@ -394,6 +399,8 @@ export class IntegratorService {
       const startDate = filters.startDate ? filters.startDate.split('T')[0] : undefined;
       const endDate = filters.endDate ? filters.endDate.split('T')[0] : undefined;
 
+      console.log('🔍 Veriban giden faturalar çağırılıyor:', { startDate, endDate, forceRefresh: filters.forceRefresh });
+
       const { data, error } = await supabase.functions.invoke('veriban-outgoing-invoices', {
         body: {
           startDate,
@@ -401,6 +408,9 @@ export class IntegratorService {
           forceRefresh: filters.forceRefresh || false,
         }
       });
+
+      console.log('📦 Veriban API yanıtı DATA:', JSON.stringify(data, null, 2));
+      console.log('❌ Veriban API yanıtı ERROR:', JSON.stringify(error, null, 2));
 
       if (error) {
         console.error('Veriban outgoing invoices error:', error);

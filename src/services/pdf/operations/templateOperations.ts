@@ -74,18 +74,24 @@ export async function ensureDefaultTemplates() {
 }
 
 /**
- * Get all PDF templates
+ * Get all PDF templates (optionally filtered by type)
  */
-export async function getTemplates(type: 'quote' | 'invoice' | 'proposal' = 'quote'): Promise<PdfTemplate[]> {
-  const companyId = await getCurrentCompanyId();
+export async function getTemplates(companyId?: string, type?: 'quote' | 'invoice' | 'proposal'): Promise<PdfTemplate[]> {
+  // If companyId is not provided, get it from current user
+  const targetCompanyId = companyId || await getCurrentCompanyId();
   
   let query = supabase
     .from('pdf_templates')
-    .select('*')
-    .eq('type', type);
+    .select('*');
 
-  if (companyId) {
-    query = query.eq('company_id', companyId);
+  // Filter by type if provided
+  if (type) {
+    query = query.eq('type', type);
+  }
+
+  // Always filter by company_id
+  if (targetCompanyId) {
+    query = query.eq('company_id', targetCompanyId);
   } else {
     query = query.is('company_id', null);
   }
@@ -98,15 +104,19 @@ export async function getTemplates(type: 'quote' | 'invoice' | 'proposal' = 'quo
   }
 
   // If no templates found and we have a company_id, create defaults
-  if (data.length === 0 && companyId) {
-    await createDefaultTemplates(companyId);
+  if (data.length === 0 && targetCompanyId) {
+    await createDefaultTemplates(targetCompanyId);
     
-    const { data: newData, error: retryError } = await supabase
+    let retryQuery = supabase
       .from('pdf_templates')
       .select('*')
-      .eq('type', type)
-      .eq('company_id', companyId)
-      .order('name');
+      .eq('company_id', targetCompanyId);
+    
+    if (type) {
+      retryQuery = retryQuery.eq('type', type);
+    }
+    
+    const { data: newData, error: retryError } = await retryQuery.order('name');
     
     if (retryError) {
       throw new Error('Şablonlar yüklenirken hata oluştu: ' + retryError.message);

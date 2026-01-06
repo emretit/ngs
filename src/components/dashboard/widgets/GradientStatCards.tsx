@@ -56,10 +56,7 @@ const StatCard = memo(({ title, value, subtitle, trend, icon: Icon, gradient, ic
           <p className="text-xs font-medium text-white/80 uppercase tracking-wide mb-1">
             {title}
           </p>
-          <p className={cn(
-            "font-bold text-white mb-1 break-words",
-            value >= 1000000 ? "text-lg" : value >= 100000 ? "text-xl" : "text-2xl"
-          )}>
+          <p className="text-xl font-bold text-white mb-1 break-words">
             {formatCurrency(value)}
           </p>
           {subtitle && (
@@ -121,7 +118,7 @@ export const GradientStatCards = memo(({
     {
       title: "Aylık Ciro",
       value: monthlyTurnover,
-      subtitle: "Bu ay onaylanan satışlar",
+      subtitle: "Faturalandırılmış satışlar",
       trend: turnoverTrend,
       icon: TrendingUp,
       gradient: "bg-gradient-to-br from-violet-500 via-purple-500 to-purple-600",

@@ -1,11 +1,11 @@
 import React, { useRef, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, RotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTabs } from './TabContext';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export default function TabBar() {
-  const { tabs, activeTabId, setActiveTab, removeTab } = useTabs();
+  const { tabs, activeTabId, setActiveTab, removeTab, refreshTab } = useTabs();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const activeTabRef = useRef<HTMLButtonElement>(null);
 
@@ -27,6 +27,11 @@ export default function TabBar() {
   const handleCloseTab = (e: React.MouseEvent, tabId: string) => {
     e.stopPropagation();
     removeTab(tabId);
+  };
+
+  const handleRefreshTab = (e: React.MouseEvent, tabId: string) => {
+    e.stopPropagation();
+    refreshTab(tabId);
   };
 
   // Don't show tab bar if there's only one tab or no tabs
@@ -58,17 +63,44 @@ export default function TabBar() {
                   )}
                 >
                   <span className="truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">{tab.title}</span>
-                  {tab.closable && (
-                    <span
-                      onClick={(e) => handleCloseTab(e, tab.id)}
-                      className={cn(
-                        'p-0.5 rounded hover:bg-destructive/20 hover:text-destructive transition-colors',
-                        isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                      )}
-                    >
-                      <X className="h-3 w-3" />
-                    </span>
-                  )}
+                  <div className="flex items-center gap-0.5">
+                    {/* Refresh button - always visible on active tab, hover on others */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          onClick={(e) => handleRefreshTab(e, tab.id)}
+                          className={cn(
+                            'p-0.5 rounded hover:bg-primary/20 hover:text-primary transition-colors',
+                            isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                          )}
+                        >
+                          <RotateCw className="h-3 w-3" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Sekmeyi Yenile</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    {/* Close button */}
+                    {tab.closable && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            onClick={(e) => handleCloseTab(e, tab.id)}
+                            className={cn(
+                              'p-0.5 rounded hover:bg-destructive/20 hover:text-destructive transition-colors',
+                              isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            )}
+                          >
+                            <X className="h-3 w-3" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p>Sekmeyi Kapat</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-[300px]">

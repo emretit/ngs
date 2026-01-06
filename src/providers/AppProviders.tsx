@@ -1,9 +1,11 @@
 
 import React from "react";
+import { BrowserRouter as Router } from "react-router-dom";
 import { QueryClientProvider } from "./QueryClientProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
+import { AIProvider } from "@/contexts/AIContext";
 import { ActivityTracker } from "@/components/ActivityTracker";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "@/i18n/config";
@@ -26,11 +28,15 @@ export const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children
     <ErrorBoundary>
       <QueryClientProvider>
         <AuthProvider>
-          <ActivityTrackerWrapper />
-          <TooltipProvider>
-            {children}
-            <Toaster />
-          </TooltipProvider>
+          <AIProvider>
+            <Router>
+              <ActivityTrackerWrapper />
+              <TooltipProvider>
+                {children}
+                <Toaster />
+              </TooltipProvider>
+            </Router>
+          </AIProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>

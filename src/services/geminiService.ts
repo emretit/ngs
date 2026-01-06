@@ -213,7 +213,15 @@ export const generateSQLQuery = async (
  */
 export const chatWithAI = async (
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-  model: string = 'gemini-2.0-flash-exp'
+  model: string = 'gemini-2.0-flash-exp',
+  pageContext?: {
+    route: string;
+    module?: string;
+    entities?: string[];
+    entityIds?: string[];
+    pageData?: Record<string, any>;
+  },
+  aiRole?: string
 ): Promise<GeminiChatResponse> => {
   try {
     const companyId = await getCurrentCompanyId();
@@ -223,7 +231,9 @@ export const chatWithAI = async (
         type: 'chat',
         messages,
         model,
-        companyId // Add company_id to request
+        companyId, // Add company_id to request
+        pageContext, // Add page context for context-aware AI
+        aiRole // Add AI role for role-based system prompts
       }
     });
 
@@ -244,7 +254,16 @@ export const chatWithAI = async (
  */
 export const sendMessageToGemini = async (
   userMessage: string,
-  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = []
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+  contextPrompt?: string,
+  pageContext?: {
+    route: string;
+    module?: string;
+    entities?: string[];
+    entityIds?: string[];
+    pageData?: Record<string, any>;
+  },
+  aiRole?: string
 ): Promise<string> => {
   try {
     // Convert conversation history to the format expected by chatWithAI
@@ -253,13 +272,21 @@ export const sendMessageToGemini = async (
       content: msg.content
     }));
 
+    // Add context prompt as system message if provided
+    if (contextPrompt) {
+      messages.unshift({
+        role: 'system' as const,
+        content: contextPrompt
+      });
+    }
+
     // Add the new user message
     messages.push({
       role: 'user' as const,
       content: userMessage
     });
 
-    const response = await chatWithAI(messages);
+    const response = await chatWithAI(messages, 'gemini-2.0-flash-exp', pageContext, aiRole);
 
     if (response.error) {
       throw new Error(response.error);

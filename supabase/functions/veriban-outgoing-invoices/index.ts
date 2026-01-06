@@ -202,11 +202,22 @@ serve(async (req) => {
     try {
       // Get Sales Invoice UUID List
       console.log('📊 GetSalesInvoiceUUIDList çağrılıyor...');
+      console.log('📅 Tarih Aralığı:', { 
+        startDate: formattedStartDate, 
+        endDate: formattedEndDate,
+        rawStartDate: startDate,
+        rawEndDate: endDate
+      });
+      console.log('🌐 Webservice URL:', veribanAuth.webservice_url);
+      console.log('🔑 Session Code mevcut:', !!sessionCode);
+      
       const uuidListResult = await VeribanSoapClient.getSalesInvoiceUUIDList(
         sessionCode,
         { startDate: formattedStartDate, endDate: formattedEndDate },
         veribanAuth.webservice_url
       );
+
+      console.log('📦 UUID List Response:', JSON.stringify(uuidListResult, null, 2));
 
       if (!uuidListResult.success) {
         console.error('❌ UUID listesi alınamadı:', uuidListResult.error);
@@ -221,6 +232,10 @@ serve(async (req) => {
 
       const uuidList = uuidListResult.data || [];
       console.log(`✅ ${uuidList.length} adet fatura UUID'si bulundu`);
+      
+      if (uuidList.length > 0) {
+        console.log('📄 İlk 5 UUID:', uuidList.slice(0, 5));
+      }
 
       if (uuidList.length === 0) {
         return new Response(JSON.stringify({

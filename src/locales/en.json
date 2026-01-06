@@ -280,10 +280,6 @@
       "loading": "Loading employees...",
       "loadError": "An error occurred while loading employees"
     },
-    "orders": {
-      "loading": "Loading orders...",
-      "loadError": "An error occurred while loading orders"
-    },
     "activities": {
       "loading": "Loading activities...",
       "loadError": "An error occurred while loading activities"
@@ -385,6 +381,7 @@
   },
   "customers": {
     "title": "Customers",
+    "create": "Add New Customer",
     "addCustomer": "Add Customer",
     "editCustomer": "Edit Customer",
     "customerDetails": "Customer Details",
@@ -397,6 +394,7 @@
   },
   "suppliers": {
     "title": "Suppliers",
+    "create": "Add New Supplier",
     "addSupplier": "Add Supplier",
     "editSupplier": "Edit Supplier",
     "supplierDetails": "Supplier Details",
@@ -418,6 +416,7 @@
   },
   "proposals": {
     "title": "Proposals",
+    "create": "Create New Proposal",
     "addProposal": "Create Proposal",
     "editProposal": "Edit Proposal",
     "proposalDetails": "Proposal Details",
@@ -433,6 +432,16 @@
       "rejected": "Rejected",
       "expired": "Expired"
     }
+  },
+  "orders": {
+    "title": "Orders",
+    "create": "Create New Order",
+    "addOrder": "Create Order",
+    "editOrder": "Edit Order",
+    "orderDetails": "Order Details",
+    "orderNumber": "Order No",
+    "loading": "Loading orders...",
+    "loadError": "An error occurred while loading orders"
   },
   "activities": {
     "title": "Activity Details",

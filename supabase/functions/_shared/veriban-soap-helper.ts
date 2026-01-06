@@ -692,6 +692,14 @@ export class VeribanSoapClient {
       customerRegisterNumber = '',
     } = params;
 
+    console.log('🔍 GetSalesInvoiceUUIDList Parametreleri:', {
+      sessionCodeLength: sessionCode?.length,
+      startDate,
+      endDate,
+      customerRegisterNumber,
+      url
+    });
+
     const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
                   xmlns:tem="http://tempuri.org/">
@@ -706,6 +714,8 @@ export class VeribanSoapClient {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
+    console.log('📤 SOAP Request:', soapRequest);
+
     try {
       const response = await this.fetchWithTimeout(url, {
         method: 'POST',
@@ -716,9 +726,17 @@ export class VeribanSoapClient {
         body: soapRequest,
       });
 
+      console.log('📥 Response Status:', response.status, response.statusText);
+      
       const xmlText = await response.text();
-      return this.parseUUIDListResponse(xmlText);
+      console.log('📥 Response XML:', xmlText.substring(0, 500) + '...');
+      
+      const result = this.parseUUIDListResponse(xmlText);
+      console.log('📊 Parsed Result:', JSON.stringify(result, null, 2));
+      
+      return result;
     } catch (error) {
+      console.error('❌ GetSalesInvoiceUUIDList Error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'GetSalesInvoiceUUIDList failed',

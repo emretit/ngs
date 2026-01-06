@@ -97,11 +97,15 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
         ? `${dateFilters.endDate}T23:59:59.999Z` 
         : `${endOfMonth.toISOString().split('T')[0]}T23:59:59.999Z`;
       
+      console.log('🔄 Giden faturalar API sync başlatılıyor:', { startDate, endDate, forceRefresh });
+      
       const result = await IntegratorService.getOutgoingInvoices({
         startDate,
         endDate,
         forceRefresh
       });
+
+      console.log('📊 API sync sonucu:', { success: result.success, invoiceCount: result.invoices?.length, error: result.error });
 
       if (!result.success) {
         throw new Error(result.error || 'Giden faturalar alınamadı');
@@ -109,7 +113,7 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
 
       return result.invoices || [];
     } catch (error: any) {
-      console.error('API sync error:', error);
+      console.error('❌ API sync error:', error);
       throw error;
     } finally {
       setIsSyncing(false);

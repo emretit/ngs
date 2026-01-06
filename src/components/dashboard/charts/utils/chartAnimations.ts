@@ -3,7 +3,7 @@
  */
 
 export const CHART_ANIMATION_DURATION = 800;
-export const CHART_EASING = "ease-in-out";
+export const CHART_EASING = "ease-in-out" as const;
 
 /**
  * Recharts animation configuration
@@ -12,7 +12,7 @@ export const chartAnimationConfig = {
   animationDuration: CHART_ANIMATION_DURATION,
   animationEasing: CHART_EASING,
   isAnimationActive: true,
-};
+} as const;
 
 /**
  * Staggered animation delays for multiple elements

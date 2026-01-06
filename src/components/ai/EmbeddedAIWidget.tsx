@@ -131,9 +131,14 @@ export function EmbeddedAIWidget() {
         ? buildContextAwarePrompt(pageContext, companyId)
         : undefined;
 
+      // Filter out system messages and map to expected format for Gemini
+      const geminiMessages = messages
+        .filter(m => m.role !== 'system')
+        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
       const aiResponse = await sendMessageToGemini(
         text,
-        messages,
+        geminiMessages,
         contextPrompt,
         pageContext || undefined,
         currentRole

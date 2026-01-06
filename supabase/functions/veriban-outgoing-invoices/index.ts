@@ -199,6 +199,39 @@ serve(async (req) => {
     const sessionCode = sessionResult.sessionCode;
     console.log('✅ Session code alındı');
 
+    // JWT'den AccountRegisterNumber'ı çek
+    let customerRegisterNumber = '';
+    if (sessionResult.jwtPayload?.AccountRegisterNumber) {
+      customerRegisterNumber = sessionResult.jwtPayload.AccountRegisterNumber;
+      console.log('📋 CustomerRegisterNumber JWT\'den alındı:', customerRegisterNumber);
+    } else {
+      // Eğer jwtPayload yoksa, sessionCode'dan decode et
+      try {
+        const parts = sessionCode.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          customerRegisterNumber = payload.AccountRegisterNumber || '';
+          console.log('📋 CustomerRegisterNumber session code\'dan alındı:', customerRegisterNumber);
+        }
+      } catch (e) {
+        console.warn('⚠️ Session code JWT parse hatası:', e);
+      }
+    }
+
+    // Veriban API'si maksimum 6 ay geriye izin veriyor - tarih validasyonu
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    sixMonthsAgo.setDate(sixMonthsAgo.getDate() + 1); // 1 gün buffer
+    const sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
+
+    if (formattedStartDate) {
+      const startDateObj = new Date(formattedStartDate);
+      if (startDateObj < sixMonthsAgo) {
+        console.log('⚠️ startDate 6 aydan eski, düzeltiliyor:', formattedStartDate, '->', sixMonthsAgoStr);
+        formattedStartDate = sixMonthsAgoStr;
+      }
+    }
+
     try {
       // Get Sales Invoice UUID List
       console.log('📊 GetSalesInvoiceUUIDList çağrılıyor...');
@@ -208,12 +241,17 @@ serve(async (req) => {
         rawStartDate: startDate,
         rawEndDate: endDate
       });
+      console.log('📋 CustomerRegisterNumber:', customerRegisterNumber || '(boş - tüm faturalar)');
       console.log('🌐 Webservice URL:', veribanAuth.webservice_url);
       console.log('🔑 Session Code mevcut:', !!sessionCode);
       
       const uuidListResult = await VeribanSoapClient.getSalesInvoiceUUIDList(
         sessionCode,
-        { startDate: formattedStartDate, endDate: formattedEndDate },
+        { 
+          startDate: formattedStartDate, 
+          endDate: formattedEndDate,
+          customerRegisterNumber: customerRegisterNumber // customerRegisterNumber eklendi
+        },
         veribanAuth.webservice_url
       );
 

@@ -1880,6 +1880,25 @@ export class VeribanSoapClient {
    */
   private static parseUUIDListResponse(xmlText: string): VeribanSoapResponse {
     try {
+      // Check for SOAP Fault first - this is critical!
+      const faultCodeMatch = xmlText.match(/<FaultCode[^>]*>(.*?)<\/FaultCode>/i);
+      const faultDescMatch = xmlText.match(/<FaultDescription[^>]*>(.*?)<\/FaultDescription>/i);
+      const faultStringMatch = xmlText.match(/<faultstring[^>]*>(.*?)<\/faultstring>/i);
+      const soapFaultMatch = xmlText.match(/<soap:Fault[^>]*>[\s\S]*?<soap:faultstring[^>]*>(.*?)<\/soap:faultstring>/i);
+      const soapFaultCodeMatch = xmlText.match(/<soap:Fault[^>]*>[\s\S]*?<soap:faultcode[^>]*>(.*?)<\/soap:faultcode>/i);
+      
+      // Also check for PARAMETER ERROR pattern in response
+      const parameterErrorMatch = xmlText.match(/PARAMETER\s*ERROR[^<]*(=>[^<]*)?/i);
+      
+      if (faultCodeMatch || faultDescMatch || faultStringMatch || soapFaultMatch || soapFaultCodeMatch || parameterErrorMatch) {
+        const errorMsg = faultDescMatch?.[1] || faultStringMatch?.[1] || soapFaultMatch?.[1] || parameterErrorMatch?.[0] || faultCodeMatch?.[1] || soapFaultCodeMatch?.[1] || 'Bilinmeyen SOAP hatası';
+        console.error('❌ SOAP Fault detected in UUID list response:', errorMsg);
+        return {
+          success: false,
+          error: errorMsg.trim(),
+        };
+      }
+
       const uuids: string[] = [];
       
       // Extract UUIDs from response - can be in <string> tags or other formats
@@ -1904,11 +1923,13 @@ export class VeribanSoapClient {
         }
       }
 
+      console.log(`✅ parseUUIDListResponse: ${uuids.length} UUID bulundu`);
       return {
         success: true,
         data: uuids,
       };
     } catch (error) {
+      console.error('❌ parseUUIDListResponse error:', error);
       return {
         success: false,
         error: 'XML parse error',

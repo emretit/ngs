@@ -89,7 +89,7 @@ export async function testPdfGeneration() {
     
     // 2. Get PAFTA template
     console.log('🎨 PAFTA şablonu getiriliyor...');
-    const templates = await PdfExportService.getTemplates('quote');
+    const templates = await PdfExportService.getTemplates(undefined, 'quote');
     
     const paftaTemplate = templates.find(t => t.name === 'pafta');
     

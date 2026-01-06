@@ -82,7 +82,7 @@ const ProposalTable = ({
 
   const loadTemplates = async () => {
     try {
-      const data = await PdfExportService.getTemplates('quote');
+      const data = await PdfExportService.getTemplates(undefined, 'quote');
       setTemplates(data);
     } catch (error) {
       console.error('Error loading templates:', error);

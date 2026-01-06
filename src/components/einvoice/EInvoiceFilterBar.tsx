@@ -16,6 +16,10 @@ interface EInvoiceFilterBarProps {
   setEndDate?: (value: Date | undefined) => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  // Giden faturalar için müşteri VKN filtresi
+  invoiceType?: 'incoming' | 'outgoing';
+  customerTaxNumber?: string;
+  setCustomerTaxNumber?: (value: string) => void;
 }
 
 const EInvoiceFilterBar = ({
@@ -28,7 +32,10 @@ const EInvoiceFilterBar = ({
   endDate,
   setEndDate,
   onRefresh,
-  isRefreshing = false
+  isRefreshing = false,
+  invoiceType,
+  customerTaxNumber,
+  setCustomerTaxNumber
 }: EInvoiceFilterBarProps) => {
   // Tarih aralığını formatla
   const formatDate = (date: Date | undefined) => {
@@ -57,6 +64,23 @@ const EInvoiceFilterBar = ({
           className="pl-10 w-full"
         />
       </div>
+
+      {/* Müşteri VKN Filtresi - Sadece Giden Faturalar için (ZORUNLU) */}
+      {invoiceType === 'outgoing' && setCustomerTaxNumber && (
+        <div className="relative min-w-[200px]">
+          <Input
+            placeholder="Müşteri VKN *"
+            value={customerTaxNumber || ''}
+            onChange={(e) => setCustomerTaxNumber(e.target.value)}
+            className="w-full border-orange-300 focus:border-orange-500"
+            maxLength={11}
+            required
+          />
+          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-orange-600">
+            Zorunlu
+          </span>
+        </div>
+      )}
       
       <Select value={typeFilter} onValueChange={setTypeFilter}>
         <SelectTrigger className="w-[180px]">

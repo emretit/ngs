@@ -36,6 +36,9 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   const [startDate, setStartDate] = useState<Date | undefined>(defaultRange.start);
   const [endDate, setEndDate] = useState<Date | undefined>(defaultRange.end);
   
+  // Müşteri VKN filtresi (sadece giden faturalar için)
+  const [customerTaxNumber, setCustomerTaxNumber] = useState<string>('');
+  
   // Convert Date to string for API
   const startDateString = startDate ? startDate.toISOString().split('T')[0] : undefined;
   const endDateString = endDate ? endDate.toISOString().split('T')[0] : undefined;
@@ -47,7 +50,8 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   
   const { outgoingInvoices, isLoading: isLoadingOutgoing, isSyncing: isSyncingOutgoing, refetch: refetchOutgoing, forceRefresh: forceRefreshOutgoing } = useOutgoingInvoices({ 
     startDate: startDateString, 
-    endDate: endDateString 
+    endDate: endDateString,
+    customerTaxNumber: customerTaxNumber || undefined
   }, invoiceType === 'outgoing');
   
   // İşlenmiş e-fatura ID'lerini çek (sadece gelen faturalar için)
@@ -110,6 +114,12 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   
   const handleRefresh = async () => {
     try {
+      // Giden faturalar için müşteri VKN kontrolü
+      if (invoiceType === 'outgoing' && (!customerTaxNumber || customerTaxNumber.length < 10)) {
+        toast.error('Giden faturalar için müşteri VKN girmeniz gerekmektedir (10-11 haneli)', { id: 'vkn-required' });
+        return;
+      }
+
       const integrator = await IntegratorService.getSelectedIntegrator();
       const integratorNames: Record<string, string> = {
         'nilvera': 'Nilvera',
@@ -118,7 +128,11 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
       };
       const integratorName = integratorNames[integrator] || 'Entegratör';
       
-      toast.loading(`${integratorName}'dan ${invoiceType === 'incoming' ? 'gelen' : 'giden'} faturalar çekiliyor...`, { id: 'fetching-invoices' });
+      const message = invoiceType === 'outgoing' 
+        ? `${integratorName}'dan müşteri VKN ${customerTaxNumber} için giden faturalar çekiliyor...`
+        : `${integratorName}'dan gelen faturalar çekiliyor...`;
+      
+      toast.loading(message, { id: 'fetching-invoices' });
       
       // Force refresh - API'den yeni faturaları çek ve DB'ye kaydet
       if (invoiceType === 'incoming') {
@@ -128,7 +142,11 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
         await forceRefreshOutgoing();
       }
       
-      toast.success(`${invoiceType === 'incoming' ? 'Gelen' : 'Giden'} e-faturalar başarıyla güncellendi`, { id: 'fetching-invoices' });
+      const successMessage = invoiceType === 'outgoing'
+        ? `Müşteri VKN ${customerTaxNumber} için giden faturalar başarıyla güncellendi`
+        : 'Gelen e-faturalar başarıyla güncellendi';
+        
+      toast.success(successMessage, { id: 'fetching-invoices' });
     } catch (error: any) {
       toast.error(error.message || "Faturalar güncellenirken hata oluştu", { id: 'fetching-invoices' });
     }
@@ -184,6 +202,9 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
           setEndDate={setEndDate}
           onRefresh={handleRefresh}
           isRefreshing={isLoading || isSyncing}
+          invoiceType={invoiceType}
+          customerTaxNumber={customerTaxNumber}
+          setCustomerTaxNumber={setCustomerTaxNumber}
         />
         <EInvoiceContent
           invoices={filteredInvoices}

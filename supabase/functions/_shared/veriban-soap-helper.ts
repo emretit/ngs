@@ -687,9 +687,9 @@ export class VeribanSoapClient {
     url: string
   ): Promise<VeribanSoapResponse> {
     const {
-      startDate = '',
-      endDate = '',
-      customerRegisterNumber = '',
+      startDate,
+      endDate,
+      customerRegisterNumber,
     } = params;
 
     console.log('🔍 GetSalesInvoiceUUIDList Parametreleri:', {
@@ -697,9 +697,25 @@ export class VeribanSoapClient {
       startDate,
       endDate,
       customerRegisterNumber,
+      customerRegisterNumberType: typeof customerRegisterNumber,
+      customerRegisterNumberProvided: !!customerRegisterNumber,
       url
     });
 
+    // customerRegisterNumber sadece dolu ise gönder, boşsa hiç gönderme
+    console.log('🔍 customerRegisterNumber kontrolü:', {
+      value: customerRegisterNumber,
+      type: typeof customerRegisterNumber,
+      length: customerRegisterNumber?.length,
+      willIncludeTag: !!customerRegisterNumber
+    });
+    
+    const customerRegNumberTag = customerRegisterNumber 
+      ? `<tem:customerRegisterNumber>${this.escapeXml(customerRegisterNumber)}</tem:customerRegisterNumber>`
+      : '';
+    
+    console.log('🏷️ Customer Register Number Tag:', customerRegNumberTag || '(boş - tag eklenmeyecek)');
+    
     const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
                   xmlns:tem="http://tempuri.org/">
@@ -708,8 +724,7 @@ export class VeribanSoapClient {
     <tem:GetSalesInvoiceUUIDList>
       <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
       ${startDate ? `<tem:startDate>${this.escapeXml(startDate)}</tem:startDate>` : '<tem:startDate xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'}
-      ${endDate ? `<tem:endDate>${this.escapeXml(endDate)}</tem:endDate>` : '<tem:endDate xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'}
-      ${customerRegisterNumber ? `<tem:customerRegisterNumber>${this.escapeXml(customerRegisterNumber)}</tem:customerRegisterNumber>` : '<tem:customerRegisterNumber xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'}
+      ${endDate ? `<tem:endDate>${this.escapeXml(endDate)}</tem:endDate>` : '<tem:endDate xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'}${customerRegNumberTag}
     </tem:GetSalesInvoiceUUIDList>
   </soapenv:Body>
 </soapenv:Envelope>`;
@@ -729,7 +744,8 @@ export class VeribanSoapClient {
       console.log('📥 Response Status:', response.status, response.statusText);
       
       const xmlText = await response.text();
-      console.log('📥 Response XML:', xmlText.substring(0, 500) + '...');
+      console.log('📥 Response XML (Full):', xmlText);
+      console.log('📥 Response XML Length:', xmlText.length);
       
       const result = this.parseUUIDListResponse(xmlText);
       console.log('📊 Parsed Result:', JSON.stringify(result, null, 2));
@@ -1901,29 +1917,24 @@ export class VeribanSoapClient {
 
       const uuids: string[] = [];
       
+      // UUID format regex: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+      const uuidFormatRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      
       // Extract UUIDs from response - can be in <string> tags or other formats
       const stringMatches = [...xmlText.matchAll(/<string[^>]*>(.*?)<\/string>/gi)];
-      const uuidMatches = [...xmlText.matchAll(/<[^>]*UUID[^>]*>(.*?)<\/[^>]*UUID[^>]*>/gi)];
       
-      // Try string format first (common for List<string>)
+      // Process string tags and validate UUID format
       for (const match of stringMatches) {
         const uuid = match[1].trim();
-        if (uuid && uuid.length > 10) { // UUID should be longer than 10 chars
+        // Validate UUID format before adding
+        if (uuid && uuidFormatRegex.test(uuid)) {
           uuids.push(uuid);
-        }
-      }
-      
-      // If no string matches, try UUID format
-      if (uuids.length === 0) {
-        for (const match of uuidMatches) {
-          const uuid = match[1].trim();
-          if (uuid && uuid.length > 10) {
-            uuids.push(uuid);
-          }
+        } else if (uuid) {
+          console.warn(`⚠️ Geçersiz UUID formatı atlanıyor: "${uuid}"`);
         }
       }
 
-      console.log(`✅ parseUUIDListResponse: ${uuids.length} UUID bulundu`);
+      console.log(`✅ parseUUIDListResponse: ${uuids.length} geçerli UUID bulundu`);
       return {
         success: true,
         data: uuids,

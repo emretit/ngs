@@ -23,7 +23,7 @@ export interface OutgoingInvoice {
   invoiceUUID?: string;
 }
 
-export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?: string }, enabled = true) => {
+export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?: string; customerTaxNumber?: string }, enabled = true) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -84,6 +84,11 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
   // Sync from API - arka planda API'den yeni faturaları çek
   const syncFromApi = async (forceRefresh = false): Promise<OutgoingInvoice[]> => {
     try {
+      // customerTaxNumber zorunlu kontrol
+      if (!dateFilters?.customerTaxNumber || dateFilters.customerTaxNumber.length < 10) {
+        throw new Error('Giden faturalar için müşteri VKN zorunludur (10-11 haneli)');
+      }
+
       setIsSyncing(true);
       
       const now = new Date();
@@ -97,12 +102,13 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
         ? `${dateFilters.endDate}T23:59:59.999Z` 
         : `${endOfMonth.toISOString().split('T')[0]}T23:59:59.999Z`;
       
-      console.log('🔄 Giden faturalar API sync başlatılıyor:', { startDate, endDate, forceRefresh });
+      console.log('🔄 Giden faturalar API sync başlatılıyor:', { startDate, endDate, customerTaxNumber: dateFilters.customerTaxNumber, forceRefresh });
       
       const result = await IntegratorService.getOutgoingInvoices({
         startDate,
         endDate,
-        forceRefresh
+        forceRefresh,
+        customerTaxNumber: dateFilters?.customerTaxNumber
       });
 
       console.log('📊 API sync sonucu:', { success: result.success, invoiceCount: result.invoices?.length, error: result.error });
@@ -145,7 +151,7 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
   };
 
   const { data: outgoingInvoices = [], error, refetch, isLoading: queryLoading } = useQuery({
-    queryKey: ['outgoing-invoices', dateFilters?.startDate, dateFilters?.endDate],
+    queryKey: ['outgoing-invoices', dateFilters?.startDate, dateFilters?.endDate, dateFilters?.customerTaxNumber],
     queryFn: fetchOutgoingInvoices,
     enabled,
     retry: 1,

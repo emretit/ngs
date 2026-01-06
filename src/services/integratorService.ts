@@ -6,6 +6,7 @@ export interface InvoiceFilters {
   startDate?: string;
   endDate?: string;
   forceRefresh?: boolean;
+  customerTaxNumber?: string; // Müşteri VKN filtresi (sadece giden faturalar için)
 }
 
 export interface IntegratorServiceResponse {
@@ -395,17 +396,34 @@ export class IntegratorService {
     filters: InvoiceFilters
   ): Promise<IntegratorServiceResponse> {
     try {
+      // customerTaxNumber zorunlu kontrol
+      if (!filters.customerTaxNumber || filters.customerTaxNumber.length < 10) {
+        return {
+          success: false,
+          error: 'Veriban giden faturalar için müşteri VKN zorunludur (10-11 haneli)',
+        };
+      }
+
       // Extract date strings from ISO format
       const startDate = filters.startDate ? filters.startDate.split('T')[0] : undefined;
       const endDate = filters.endDate ? filters.endDate.split('T')[0] : undefined;
 
-      console.log('🔍 Veriban giden faturalar çağırılıyor:', { startDate, endDate, forceRefresh: filters.forceRefresh });
+      console.log('🔍 Veriban giden faturalar çağırılıyor:', { 
+        startDate, 
+        endDate, 
+        customerTaxNumber: filters.customerTaxNumber,
+        forceRefresh: filters.forceRefresh 
+      });
 
-      const { data, error } = await supabase.functions.invoke('veriban-outgoing-invoices', {
+      const { data, error } = await supabase.functions.invoke('veriban-outgoing-invoices2', {
         body: {
           startDate,
           endDate,
           forceRefresh: filters.forceRefresh || false,
+          customerTaxNumber: filters.customerTaxNumber, // Opsiyonel - müşteri VKN filtresi
+          includeStatus: true, // Durum bilgilerini de çek
+          limit: 100,
+          offset: 0
         }
       });
 

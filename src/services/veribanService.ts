@@ -469,14 +469,21 @@ export class VeribanService {
     invoiceType?: 'sales' | 'purchase';
   }): Promise<VeribanResponse> {
     try {
-      console.log('🔍 [VeribanService] Getting invoice details for UUID:', params.invoiceUUID);
+      console.log('🔍 [VeribanService] Getting invoice details for UUID:', params.invoiceUUID, 'Type:', params.invoiceType || 'purchase (default)');
       
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Oturum bulunamadı');
       }
 
-      const { data, error } = await supabase.functions.invoke('veriban-invoice-details', {
+      // Giden faturalar için yeni edge function, gelen faturalar için eski
+      const functionName = params.invoiceType === 'sales' 
+        ? 'veriban-sales-invoice-details' 
+        : 'veriban-invoice-details';
+      
+      console.log('📞 [VeribanService] Calling function:', functionName);
+
+      const { data, error } = await supabase.functions.invoke(functionName, {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
@@ -491,7 +498,7 @@ export class VeribanService {
 
       return {
         success: data?.success || false,
-        data: data?.invoiceDetails,
+        data: data?.data || data?.invoiceDetails, // Yeni fonksiyon 'data', eski 'invoiceDetails' döndürüyor
         error: data?.error,
         message: data?.message,
       };

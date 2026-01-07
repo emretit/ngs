@@ -102,6 +102,7 @@ export class OutgoingInvoiceSyncService {
     const salesInvoiceData = this.mapOutgoingToSalesInvoice(outgoingInvoice, customerId || undefined);
 
     // 4. Mevcut kayıt varsa güncelle, yoksa oluştur
+    let salesInvoiceId: string;
     if (existingSalesInvoice) {
       // Güncelleme
       const { error: updateError } = await supabase
@@ -113,21 +114,28 @@ export class OutgoingInvoiceSyncService {
         throw new Error(`Güncelleme hatası: ${updateError.message}`);
       }
 
+      salesInvoiceId = existingSalesInvoice.id;
       result.updated++;
-      console.log(`🔄 [OutgoingInvoiceSync] Güncellendi: ${outgoingInvoice.invoiceNumber} -> ${existingSalesInvoice.id}`);
+      console.log(`🔄 [OutgoingInvoiceSync] Güncellendi: ${outgoingInvoice.invoiceNumber} -> ${salesInvoiceId}`);
     } else {
       // Yeni kayıt oluştur
-      const { error: insertError } = await supabase
+      const { data: newInvoice, error: insertError } = await supabase
         .from('sales_invoices')
-        .insert(salesInvoiceData);
+        .insert(salesInvoiceData)
+        .select('id')
+        .single();
 
       if (insertError) {
         throw new Error(`Oluşturma hatası: ${insertError.message}`);
       }
 
+      salesInvoiceId = newInvoice.id;
       result.created++;
-      console.log(`✨ [OutgoingInvoiceSync] Oluşturuldu: ${outgoingInvoice.invoiceNumber}`);
+      console.log(`✨ [OutgoingInvoiceSync] Oluşturuldu: ${outgoingInvoice.invoiceNumber} -> ${salesInvoiceId}`);
     }
+
+    // 5. Fatura kalemlerini senkronize et
+    await this.syncInvoiceItems(outgoingInvoice.id, salesInvoiceId);
   }
 
   /**
@@ -252,6 +260,80 @@ export class OutgoingInvoiceSyncService {
     };
     
     return statusMap[status?.toLowerCase()] || 'sent';
+  }
+
+  /**
+   * Fatura kalemlerini senkronize eder
+   */
+  private async syncInvoiceItems(outgoingInvoiceId: string, salesInvoiceId: string): Promise<void> {
+    try {
+      // 1. Outgoing invoice items'ları getir
+      const { data: outgoingItems, error: fetchError } = await supabase
+        .from('outgoing_invoice_items')
+        .select('*')
+        .eq('outgoing_invoice_id', outgoingInvoiceId)
+        .order('line_number', { ascending: true });
+
+      if (fetchError) {
+        console.error(`❌ [OutgoingInvoiceSync] Items fetch hatası: ${fetchError.message}`);
+        return;
+      }
+
+      if (!outgoingItems || outgoingItems.length === 0) {
+        console.log(`ℹ️ [OutgoingInvoiceSync] Fatura kalemleri yok, atlanıyor`);
+        return;
+      }
+
+      // 2. Company ID'yi al
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user?.id)
+        .single();
+
+      // 3. Mevcut sales invoice items'ları sil (yeniden oluşturmak için)
+      const { error: deleteError } = await supabase
+        .from('sales_invoice_items')
+        .delete()
+        .eq('sales_invoice_id', salesInvoiceId);
+
+      if (deleteError) {
+        console.error(`❌ [OutgoingInvoiceSync] Eski items silme hatası: ${deleteError.message}`);
+        // Devam et, yeni items eklemeyi dene
+      }
+
+      // 4. Items'ları map et ve ekle
+      const salesInvoiceItems = outgoingItems.map((item, index) => ({
+        sales_invoice_id: salesInvoiceId,
+        company_id: profile?.company_id || null,
+        urun_adi: item.product_name || item.description || `Ürün ${index + 1}`,
+        aciklama: item.description || null,
+        miktar: parseFloat(item.quantity as any) || 1,
+        birim: item.unit || 'Adet',
+        birim_fiyat: parseFloat(item.unit_price as any) || 0,
+        kdv_orani: parseFloat(item.tax_rate as any) || 18,
+        indirim_orani: parseFloat(item.discount_rate as any) || 0,
+        satir_toplami: parseFloat(item.line_total as any) || 0,
+        kdv_tutari: parseFloat(item.tax_amount as any) || 0,
+        para_birimi: item.unit_price ? 'TRY' : null,
+        sira_no: item.line_number || (index + 1),
+      }));
+
+      const { error: insertError } = await supabase
+        .from('sales_invoice_items')
+        .insert(salesInvoiceItems);
+
+      if (insertError) {
+        console.error(`❌ [OutgoingInvoiceSync] Items ekleme hatası: ${insertError.message}`);
+        throw new Error(`Items ekleme hatası: ${insertError.message}`);
+      }
+
+      console.log(`✅ [OutgoingInvoiceSync] ${salesInvoiceItems.length} kalem eklendi`);
+    } catch (error: any) {
+      console.error(`❌ [OutgoingInvoiceSync] Items sync hatası: ${error.message}`);
+      // Items hatası fatura sync'ini durdurmasın
+    }
   }
 }
 

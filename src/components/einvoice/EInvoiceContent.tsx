@@ -342,6 +342,42 @@ const EInvoiceContent = ({
                             size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
+                              navigate(`/e-invoice/process-outgoing/${invoice.id}`);
+                            }}
+                            className="h-8 w-8"
+                            title="İşle"
+                          >
+                            <Package className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setDownloadingInvoiceId(invoice.id);
+                              try {
+                                await handleDownloadPdf(invoice.id);
+                              } catch (error) {
+                                console.error('PDF önizleme hatası:', error);
+                              } finally {
+                                setDownloadingInvoiceId(null);
+                              }
+                            }}
+                            disabled={downloadingInvoiceId === invoice.id}
+                            className="h-8 w-8"
+                            title="PDF Önizleme"
+                          >
+                            {downloadingInvoiceId === invoice.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               handleViewXml(invoice);
                             }}
                             className="h-8 w-8"

@@ -501,10 +501,23 @@ serve(async (req) => {
             }
 
             const xmlContent = await decodeZIPAndExtractXML(downloadResult.data.binaryData);
-            if (!xmlContent) return null;
+            if (!xmlContent) {
+              console.error(`❌ XML decode edilemedi: ${invoiceUUID}`);
+              return null;
+            }
+            console.log(`✅ XML decode edildi, uzunluk: ${xmlContent.length} karakter`);
 
             const parsedInvoice = parseUBLTRXML(xmlContent);
-            if (!parsedInvoice) return null;
+            if (!parsedInvoice) {
+              console.error(`❌ XML parse edilemedi: ${invoiceUUID}`);
+              return null;
+            }
+            console.log(`✅ XML parse edildi: ${invoiceUUID}`);
+            console.log(`  📋 Fatura No: ${parsedInvoice.invoiceNumber}`);
+            console.log(`  👤 Müşteri: ${parsedInvoice.customerInfo?.name || '(yok)'}`);
+            console.log(`  🔢 Müşteri VKN: ${parsedInvoice.customerInfo?.taxNumber || '(YOK - SORUN BURADA!)'}`);
+            console.log(`  💰 Tutar: ${parsedInvoice.payableAmount} ${parsedInvoice.currency}`);
+            console.log(`  📦 Kalem sayısı: ${parsedInvoice.items?.length || 0}`);
 
             // Get invoice status if requested
             let statusData: any = null;
@@ -524,20 +537,24 @@ serve(async (req) => {
             }
 
             // Build invoice data
-            const invoiceData: OutgoingInvoiceData = {
+            const invoiceData: any = {
               ettn: invoiceUUID,
               invoice_number: parsedInvoice.invoiceNumber || '',
-              customer_tax_number: parsedInvoice.customerInfo?.taxNumber || '',
+              customer_tax_number: parsedInvoice.customerInfo?.taxNumber || customerTaxNumber || '',
               customer_name: parsedInvoice.customerInfo?.name || '',
               customer_alias: null, // Will be fetched separately if needed
               invoice_date: parsedInvoice.invoiceDate?.split('T')[0] || new Date().toISOString().split('T')[0],
+              invoice_time: parsedInvoice.invoiceTime || null,
               due_date: parsedInvoice.dueDate?.split('T')[0] || null,
               tax_exclusive_amount: parsedInvoice.taxExclusiveAmount || 0,
               tax_total_amount: parsedInvoice.taxTotalAmount || 0,
               payable_amount: parsedInvoice.payableAmount || 0,
+              line_extension_amount: parsedInvoice.lineExtensionAmount || null,
+              total_discount_amount: parsedInvoice.totalDiscountAmount || null,
               currency: parsedInvoice.currency || 'TRY',
               invoice_type: parsedInvoice.invoiceType || 'SATIS',
               invoice_profile: parsedInvoice.invoiceProfile || 'TEMELFATURA',
+              invoice_note: parsedInvoice.invoiceNote || null,
               scenario: parsedInvoice.invoiceProfile?.includes('TICARIFATURA') ? 'TICARIFATURA' : 'TEMELFATURA',
               document_type: 'EINVOICE',
               company_id: profile.company_id,
@@ -553,7 +570,39 @@ serve(async (req) => {
               delivered_at: statusData?.stateCode === 3 ? new Date().toISOString() : null,
               notes: null,
               xml_content: xmlContent, // 🔥 XML içeriğini ekliyoruz
+              
+              // Supplier (AccountingSupplierParty) Information
+              supplier_name: parsedInvoice.supplierInfo?.name || null,
+              supplier_tax_number: parsedInvoice.supplierInfo?.taxNumber || null,
+              supplier_tax_office: parsedInvoice.supplierInfo?.taxOffice || null,
+              supplier_address_street: parsedInvoice.supplierInfo?.address?.street || null,
+              supplier_address_city: parsedInvoice.supplierInfo?.address?.city || null,
+              supplier_address_district: parsedInvoice.supplierInfo?.address?.district || null,
+              supplier_contact_telephone: parsedInvoice.supplierInfo?.contact?.phone || null,
+              supplier_contact_email: parsedInvoice.supplierInfo?.contact?.email || null,
+              
+              // Customer (AccountingCustomerParty) Extended Information
+              customer_tax_office: parsedInvoice.customerInfo?.taxOffice || null,
+              customer_address_street: parsedInvoice.customerInfo?.address?.street || null,
+              customer_address_city: parsedInvoice.customerInfo?.address?.city || null,
+              customer_address_district: parsedInvoice.customerInfo?.address?.district || null,
+              customer_address_postal_zone: parsedInvoice.customerInfo?.address?.postalCode || null,
+              customer_address_country: parsedInvoice.customerInfo?.address?.country || null,
+              customer_contact_name: parsedInvoice.customerInfo?.contact?.name || null,
+              customer_contact_telephone: parsedInvoice.customerInfo?.contact?.phone || null,
+              customer_contact_email: parsedInvoice.customerInfo?.contact?.email || null,
+              
+              // Payment Information
+              payment_means_code: parsedInvoice.paymentMeansCode || null,
+              payment_channel_code: parsedInvoice.paymentChannelCode || null,
+              payee_iban: parsedInvoice.payeeIBAN || null,
+              payee_bank_name: parsedInvoice.payeeBankName || null,
+              payment_terms_note: parsedInvoice.paymentTermsNote || null,
             };
+
+            console.log(`📦 Invoice data hazırlandı:`);
+            console.log(`  - customer_tax_number: "${invoiceData.customer_tax_number}" (${invoiceData.customer_tax_number?.length || 0} karakter)`);
+            console.log(`  - xml_content: ${invoiceData.xml_content ? `${invoiceData.xml_content.length} karakter` : '(YOK - SORUN BURADA!)'}`);
 
             // Upsert to DB
             const { data: upsertedInvoice, error: upsertError } = await supabase
@@ -567,7 +616,66 @@ serve(async (req) => {
               return null;
             }
 
+            console.log(`✅ Fatura kaydedildi: ${parsedInvoice.invoiceNumber || invoiceUUID}`);
+            console.log(`  📄 DB'ye kaydedilen customer_tax_number: "${upsertedInvoice?.customer_tax_number || '(YOK)'}"`);
+            console.log(`  📄 DB'ye kaydedilen xml_content length: ${upsertedInvoice?.xml_content?.length || 0}`);
+
             console.log(`✅ Fatura ${globalIndex + 1} kaydedildi: ${invoiceData.invoice_number}`);
+            
+            // 💡 Fatura kalemlerini kaydet
+            console.log(`🔍 DEBUG: parsedInvoice.items kontrolü:`);
+            console.log(`  - parsedInvoice.items var mı? ${parsedInvoice.items ? 'EVET' : 'HAYIR'}`);
+            console.log(`  - parsedInvoice.items.length: ${parsedInvoice.items?.length || 0}`);
+            console.log(`  - upsertedInvoice?.id: ${upsertedInvoice?.id || '(YOK)'}`);
+            
+            if (parsedInvoice.items && parsedInvoice.items.length > 0 && upsertedInvoice?.id) {
+              console.log(`📝 ${parsedInvoice.items.length} kalem kaydediliyor...`);
+              
+              const invoiceItems = parsedInvoice.items.map((item: any, index: number) => ({
+                outgoing_invoice_id: upsertedInvoice.id,
+                company_id: profile.company_id,
+                line_number: item.lineNumber || (index + 1),
+                product_code: item.productCode || null,
+                product_name: item.description || `Ürün ${index + 1}`,
+                description: item.description || null,
+                quantity: item.quantity || 1,
+                unit: item.unit || 'Adet',
+                unit_code: item.unitCode || null,  // 🔄 UBL-TR birim kodu eklendi
+                unit_price: item.unitPrice || 0,
+                gross_amount: (item.quantity || 1) * (item.unitPrice || 0),
+                discount_rate: item.discountRate || 0,
+                discount_amount: item.discountAmount || 0,
+                tax_rate: item.vatRate || 18,
+                tax_amount: item.vatAmount || 0,
+                line_total: item.totalAmount || 0,
+                line_total_with_tax: (item.totalAmount || 0) + (item.vatAmount || 0),
+                gtip_code: item.gtipCode || null,
+                notes: null,
+              }));
+
+              const { error: itemsError } = await supabase
+                .from('outgoing_invoice_items')
+                .upsert(invoiceItems, { 
+                  onConflict: 'outgoing_invoice_id,line_number',
+                  ignoreDuplicates: false 
+                });
+
+              if (itemsError) {
+                console.error('⚠️ Fatura kalemleri kayıt hatası:', itemsError.message);
+                console.error('⚠️ Hata detayları:', JSON.stringify(itemsError));
+              } else {
+                console.log(`✅ ${invoiceItems.length} kalem kaydedildi`);
+              }
+            } else {
+              console.warn(`⚠️ Fatura kalemleri kaydedilmedi! Sebep:`);
+              if (!parsedInvoice.items) {
+                console.warn(`  - parsedInvoice.items undefined`);
+              } else if (parsedInvoice.items.length === 0) {
+                console.warn(`  - parsedInvoice.items.length = 0 (boş array)`);
+              } else if (!upsertedInvoice?.id) {
+                console.warn(`  - upsertedInvoice.id yok`);
+              }
+            }
             
             return { ...invoiceData, id: upsertedInvoice?.id };
 

@@ -13,6 +13,7 @@ export interface ParsedInvoiceItem {
   productCode: string;
   quantity: number;
   unit: string;
+  unitCode: string;  // 🆕 UBL-TR birim kodu (C62, KGM, vb.)
   unitPrice: number;
   vatRate: number;
   vatAmount: number;
@@ -30,6 +31,7 @@ export interface ParsedSupplierInfo {
   address?: {
     street?: string;
     city?: string;
+    district?: string;
     postalCode?: string;
     country?: string;
   };
@@ -46,10 +48,12 @@ export interface ParsedCustomerInfo {
   address?: {
     street?: string;
     city?: string;
+    district?: string;
     postalCode?: string;
     country?: string;
   };
   contact?: {
+    name?: string;
     email?: string;
     phone?: string;
   };
@@ -58,18 +62,27 @@ export interface ParsedCustomerInfo {
 export interface ParsedInvoice {
   invoiceNumber: string;
   invoiceDate: string;
+  invoiceTime?: string;
   dueDate?: string;
   currency: string;
   taxExclusiveAmount: number;
   taxTotalAmount: number;
   payableAmount: number;
+  lineExtensionAmount?: number;
+  totalDiscountAmount?: number;
   invoiceType?: string;
   invoiceProfile?: string;
+  invoiceNote?: string;
   supplierInfo: ParsedSupplierInfo;
   customerInfo?: ParsedCustomerInfo;
   items: ParsedInvoiceItem[];
   ettn?: string;
   uuid?: string;
+  paymentMeansCode?: string;
+  paymentChannelCode?: string;
+  payeeIBAN?: string;
+  payeeBankName?: string;
+  paymentTermsNote?: string;
 }
 
 /**
@@ -148,6 +161,11 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
                        invoice?.['IssueDate'] || 
                        new Date().toISOString();
     
+    const invoiceTime = invoice?.['cbc:IssueTime']?.['#text'] || 
+                       invoice?.['cbc:IssueTime'] || 
+                       invoice?.['IssueTime'] || 
+                       '';
+    
     const dueDate = invoice?.['cbc:DueDate']?.['#text'] || 
                    invoice?.['cbc:DueDate'] || 
                    invoice?.['DueDate'] || 
@@ -158,11 +176,32 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
                     invoice?.['DocumentCurrencyCode'] || 
                     'TRY';
     
+    // Extract invoice note
+    const invoiceNote = invoice?.['cbc:Note']?.['#text'] || 
+                       invoice?.['cbc:Note'] || 
+                       invoice?.['Note'] || 
+                       '';
+    
     // Extract amounts
+    const legalMonetaryTotal = invoice?.['cac:LegalMonetaryTotal'] || 
+                               invoice?.['LegalMonetaryTotal'] || 
+                               {};
+    
+    const lineExtensionAmount = parseFloat(
+      legalMonetaryTotal?.['cbc:LineExtensionAmount']?.['#text'] || 
+      legalMonetaryTotal?.['cbc:LineExtensionAmount'] || 
+      '0'
+    );
+    
+    const totalDiscountAmount = parseFloat(
+      legalMonetaryTotal?.['cbc:AllowanceTotalAmount']?.['#text'] || 
+      legalMonetaryTotal?.['cbc:AllowanceTotalAmount'] || 
+      '0'
+    );
+    
     const taxExclusiveAmount = parseFloat(
-      invoice?.['cac:LegalMonetaryTotal']?.['cbc:TaxExclusiveAmount']?.['#text'] || 
-      invoice?.['cac:LegalMonetaryTotal']?.['cbc:TaxExclusiveAmount'] || 
-      invoice?.['LegalMonetaryTotal']?.['TaxExclusiveAmount'] || 
+      legalMonetaryTotal?.['cbc:TaxExclusiveAmount']?.['#text'] || 
+      legalMonetaryTotal?.['cbc:TaxExclusiveAmount'] || 
       '0'
     );
     
@@ -174,9 +213,8 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
     );
     
     const payableAmount = parseFloat(
-      invoice?.['cac:LegalMonetaryTotal']?.['cbc:PayableAmount']?.['#text'] || 
-      invoice?.['cac:LegalMonetaryTotal']?.['cbc:PayableAmount'] || 
-      invoice?.['LegalMonetaryTotal']?.['PayableAmount'] || 
+      legalMonetaryTotal?.['cbc:PayableAmount']?.['#text'] || 
+      legalMonetaryTotal?.['cbc:PayableAmount'] || 
       '0'
     );
 
@@ -223,6 +261,7 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
     // PartyTaxScheme can be array or single object
     const taxSchemeArray = Array.isArray(partyTaxScheme) ? partyTaxScheme : [partyTaxScheme];
     let supplierTaxNumber = '';
+    let supplierTaxOffice = '';
     
     for (const taxSchemeItem of taxSchemeArray) {
       const companyId = taxSchemeItem?.['cac:CompanyID']?.['#text'] || 
@@ -234,6 +273,18 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
       
       if (companyId) {
         supplierTaxNumber = companyId;
+      }
+      
+      const taxSchemeName = taxSchemeItem?.['cac:TaxScheme']?.['cbc:Name']?.['#text'] ||
+                           taxSchemeItem?.['cac:TaxScheme']?.['cbc:Name'] ||
+                           taxSchemeItem?.['TaxScheme']?.['Name'] || 
+                           '';
+      
+      if (taxSchemeName) {
+        supplierTaxOffice = taxSchemeName;
+      }
+      
+      if (companyId && taxSchemeName) {
         break;
       }
     }
@@ -249,9 +300,10 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
     const supplierInfo: ParsedSupplierInfo = {
       name: supplierName,
       taxNumber: supplierTaxNumber,
-      taxOffice: partyTaxScheme?.['TaxScheme']?.['Name'] || '',
+      taxOffice: supplierTaxOffice,
       address: {
         street: postalAddress?.['cbc:StreetName']?.['#text'] || postalAddress?.['cbc:StreetName'] || '',
+        district: postalAddress?.['cbc:CitySubdivisionName']?.['#text'] || postalAddress?.['cbc:CitySubdivisionName'] || '',
         city: postalAddress?.['cbc:CityName']?.['#text'] || postalAddress?.['cbc:CityName'] || '',
         postalCode: postalAddress?.['cbc:PostalZone']?.['#text'] || postalAddress?.['cbc:PostalZone'] || '',
         country: postalAddress?.['cac:Country']?.['cbc:Name']?.['#text'] || postalAddress?.['cac:Country']?.['cbc:Name'] || '',
@@ -288,6 +340,7 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
     // PartyTaxScheme can be array or single object
     const customerTaxSchemeArray = Array.isArray(customerTaxScheme) ? customerTaxScheme : [customerTaxScheme];
     let customerTaxNumber = '';
+    let customerTaxOffice = '';
     
     for (const taxSchemeItem of customerTaxSchemeArray) {
       const companyId = taxSchemeItem?.['cac:CompanyID']?.['#text'] || 
@@ -299,6 +352,18 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
       
       if (companyId) {
         customerTaxNumber = companyId;
+      }
+      
+      const taxSchemeName = taxSchemeItem?.['cac:TaxScheme']?.['cbc:Name']?.['#text'] ||
+                           taxSchemeItem?.['cac:TaxScheme']?.['cbc:Name'] ||
+                           taxSchemeItem?.['TaxScheme']?.['Name'] || 
+                           '';
+      
+      if (taxSchemeName) {
+        customerTaxOffice = taxSchemeName;
+      }
+      
+      if (companyId && taxSchemeName) {
         break;
       }
     }
@@ -314,22 +379,78 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
     const customerInfo: ParsedCustomerInfo = {
       name: customerName,
       taxNumber: customerTaxNumber,
-      taxOffice: customerTaxScheme?.['TaxScheme']?.['Name'] || '',
+      taxOffice: customerTaxOffice,
       address: {
         street: customerPostalAddress?.['cbc:StreetName']?.['#text'] || customerPostalAddress?.['cbc:StreetName'] || '',
+        district: customerPostalAddress?.['cbc:CitySubdivisionName']?.['#text'] || customerPostalAddress?.['cbc:CitySubdivisionName'] || '',
         city: customerPostalAddress?.['cbc:CityName']?.['#text'] || customerPostalAddress?.['cbc:CityName'] || '',
         postalCode: customerPostalAddress?.['cbc:PostalZone']?.['#text'] || customerPostalAddress?.['cbc:PostalZone'] || '',
         country: customerPostalAddress?.['cac:Country']?.['cbc:Name']?.['#text'] || customerPostalAddress?.['cac:Country']?.['cbc:Name'] || '',
       },
       contact: {
+        name: customerContact?.['cbc:Name']?.['#text'] || customerContact?.['cbc:Name'] || '',
         email: customerContact?.['cbc:ElectronicMail']?.['#text'] || customerContact?.['cbc:ElectronicMail'] || '',
         phone: customerContact?.['cbc:Telephone']?.['#text'] || customerContact?.['cbc:Telephone'] || '',
       },
     };
 
+    // Extract payment information
+    const paymentMeans = invoice?.['cac:PaymentMeans'] || 
+                        invoice?.['PaymentMeans'] || 
+                        {};
+    
+    const paymentMeansCode = paymentMeans?.['cbc:PaymentMeansCode']?.['#text'] || 
+                            paymentMeans?.['cbc:PaymentMeansCode'] || 
+                            paymentMeans?.['PaymentMeansCode'] || 
+                            '';
+    
+    const paymentChannelCode = paymentMeans?.['cbc:PaymentChannelCode']?.['#text'] || 
+                              paymentMeans?.['cbc:PaymentChannelCode'] || 
+                              paymentMeans?.['PaymentChannelCode'] || 
+                              '';
+    
+    const payeeFinancialAccount = paymentMeans?.['cac:PayeeFinancialAccount'] || 
+                                 paymentMeans?.['PayeeFinancialAccount'] || 
+                                 {};
+    
+    const payeeIBAN = payeeFinancialAccount?.['cbc:ID']?.['#text'] || 
+                     payeeFinancialAccount?.['cbc:ID'] || 
+                     payeeFinancialAccount?.['ID'] || 
+                     '';
+    
+    const financialInstitutionBranch = payeeFinancialAccount?.['cac:FinancialInstitutionBranch'] || 
+                                      payeeFinancialAccount?.['FinancialInstitutionBranch'] || 
+                                      {};
+    
+    const payeeBankName = financialInstitutionBranch?.['cbc:Name']?.['#text'] || 
+                         financialInstitutionBranch?.['cbc:Name'] || 
+                         financialInstitutionBranch?.['Name'] || 
+                         '';
+    
+    // Extract payment terms
+    const paymentTerms = invoice?.['cac:PaymentTerms'] || 
+                        invoice?.['PaymentTerms'] || 
+                        {};
+    
+    const paymentTermsNote = paymentTerms?.['cbc:Note']?.['#text'] || 
+                            paymentTerms?.['cbc:Note'] || 
+                            paymentTerms?.['Note'] || 
+                            '';
+
     // Extract invoice lines
-    const invoiceLines = invoice?.['cac:InvoiceLine'] || [];
-    const linesArray = Array.isArray(invoiceLines) ? invoiceLines : [invoiceLines];
+    // Try multiple namespace variations - XML parser might strip namespaces
+    const invoiceLines = invoice?.['cac:InvoiceLine'] || 
+                        invoice?.['InvoiceLine'] || 
+                        invoice?.InvoiceLine || 
+                        [];
+    
+    console.log(`🔍 UBL Parser - invoiceLines debug:`);
+    console.log(`  - invoiceLines type: ${Array.isArray(invoiceLines) ? 'Array' : typeof invoiceLines}`);
+    console.log(`  - invoiceLines length/value:`, Array.isArray(invoiceLines) ? invoiceLines.length : 'not an array');
+    console.log(`  - invoice keys sample:`, Object.keys(invoice || {}).slice(0, 10).join(', '));
+    
+    const linesArray = Array.isArray(invoiceLines) ? invoiceLines : (invoiceLines && Object.keys(invoiceLines).length > 0 ? [invoiceLines] : []);
+    console.log(`  - linesArray.length: ${linesArray.length}`);
     
     const items: ParsedInvoiceItem[] = linesArray
       .filter((line: any) => line && Object.keys(line).length > 0)
@@ -343,6 +464,7 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
         // Extract unit code and convert to readable unit
         const rawUnit = quantity?.['@unitCode'] || quantity?.['unitCode'] || 'C62';
         const unit = mapUBLTRToUnit(rawUnit);
+        const unitCode = rawUnit; // 🆕 UBL-TR birim kodu (C62, KGM, vb.)
         
         // Extract tax rate - can be in TaxSubtotal array or single object
         let vatRate = 18; // default
@@ -413,6 +535,7 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
           productCode,
           quantity: quantityValue,
           unit,
+          unitCode,  // 🆕 UBL-TR birim kodu
           unitPrice,
           vatRate,
           vatAmount,
@@ -424,21 +547,35 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
         };
       });
 
+    console.log(`🔍 UBL Parser - Parsed items.length: ${items.length}`);
+    if (items.length > 0) {
+      console.log(`  - İlk kalem örneği:`, JSON.stringify(items[0]).substring(0, 200));
+    }
+
     return {
       invoiceNumber,
       invoiceDate,
+      invoiceTime: invoiceTime || undefined,
       dueDate: dueDate || undefined,
       currency,
       taxExclusiveAmount,
       taxTotalAmount,
       payableAmount,
+      lineExtensionAmount: lineExtensionAmount || undefined,
+      totalDiscountAmount: totalDiscountAmount || undefined,
       invoiceType,
       invoiceProfile,
+      invoiceNote: invoiceNote || undefined,
       supplierInfo,
       customerInfo,
       items,
       ettn,
       uuid: ettn,
+      paymentMeansCode: paymentMeansCode || undefined,
+      paymentChannelCode: paymentChannelCode || undefined,
+      payeeIBAN: payeeIBAN || undefined,
+      payeeBankName: payeeBankName || undefined,
+      paymentTermsNote: paymentTermsNote || undefined,
     };
   } catch (error) {
     console.error('❌ Error parsing UBL-TR XML:', error);

@@ -3,13 +3,18 @@ import { useQuery } from "@tanstack/react-query";
 import { showError } from "@/utils/toastUtils";
 import { IntegratorService } from "@/services/integratorService";
 import { supabase } from "@/integrations/supabase/client";
+import { outgoingInvoiceSyncService } from "@/services/outgoingInvoiceSyncService";
 
 export interface OutgoingInvoice {
   id: string;
   invoiceNumber: string;
   customerName: string;
   customerTaxNumber: string;
+  customerTaxOffice?: string;
+  supplierName?: string;
+  supplierTaxNumber?: string;
   invoiceDate: string;
+  invoiceTime?: string;
   dueDate?: string;
   totalAmount: number;
   taxAmount: number;
@@ -21,7 +26,10 @@ export interface OutgoingInvoice {
   invoiceType?: string;
   invoiceProfile?: string;
   invoiceUUID?: string;
-  xmlContent?: string; // 🔥 XML içeriği eklendi
+  xmlContent?: string;
+  paymentMeansCode?: string;
+  payeeIban?: string;
+  payeeBankName?: string;
 }
 
 export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?: string; customerTaxNumber?: string }, enabled = true) => {
@@ -56,7 +64,11 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
         invoiceNumber: inv.invoice_number || '',
         customerName: inv.customer_name || '',
         customerTaxNumber: inv.customer_tax_number || '',
+        customerTaxOffice: inv.customer_tax_office || '',
+        supplierName: inv.supplier_name || '',
+        supplierTaxNumber: inv.supplier_tax_number || '',
         invoiceDate: inv.invoice_date || '',
+        invoiceTime: inv.invoice_time || '',
         dueDate: inv.due_date,
         totalAmount: parseFloat(inv.payable_amount as any) || 0,
         taxAmount: parseFloat(inv.tax_total_amount as any) || 0,
@@ -68,7 +80,10 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
         invoiceType: inv.invoice_type || 'TEMEL',
         invoiceProfile: inv.invoice_profile || 'TEMELFATURA',
         invoiceUUID: inv.ettn || inv.id,
-        xmlContent: inv.xml_content, // 🔥 XML içeriğini ekliyoruz
+        xmlContent: inv.xml_content,
+        paymentMeansCode: inv.payment_means_code || '',
+        payeeIban: inv.payee_iban || '',
+        payeeBankName: inv.payee_bank_name || '',
       }));
     } catch (error) {
       console.error('Cache fetch error:', error);
@@ -110,6 +125,18 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
 
       if (!result.success) {
         throw new Error(result.error || 'Giden faturalar alınamadı');
+      }
+
+      // 🔄 Otomatik senkronizasyon: Veriban verilerini sales_invoices'a aktar
+      if (result.invoices && result.invoices.length > 0) {
+        try {
+          console.log('🔄 [useOutgoingInvoices] Sales invoices senkronizasyonu başlatılıyor...');
+          const syncResult = await outgoingInvoiceSyncService.syncToSalesInvoices(result.invoices);
+          console.log('✅ [useOutgoingInvoices] Senkronizasyon tamamlandı:', syncResult);
+        } catch (syncError: any) {
+          // Senkronizasyon hataları kullanıcı deneyimini bozmamalı, sadece loglanır
+          console.error('⚠️ [useOutgoingInvoices] Senkronizasyon hatası:', syncError.message);
+        }
       }
 
       return result.invoices || [];

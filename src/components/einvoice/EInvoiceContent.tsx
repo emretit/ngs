@@ -31,6 +31,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OutgoingInvoiceItem } from "@/types/einvoice";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EInvoiceContentProps {
   invoices: any[];
@@ -59,6 +62,10 @@ const EInvoiceContent = ({
   const [xmlViewerOpen, setXmlViewerOpen] = useState(false);
   const [selectedXmlContent, setSelectedXmlContent] = useState<string>('');
   const [selectedInvoiceNumber, setSelectedInvoiceNumber] = useState<string>('');
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>('');
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null); // Tüm fatura bilgileri
+  const [invoiceItems, setInvoiceItems] = useState<OutgoingInvoiceItem[]>([]);
+  const [loadingItems, setLoadingItems] = useState(false);
 
   // Get current integrator
   useEffect(() => {
@@ -80,10 +87,36 @@ const EInvoiceContent = ({
   };
 
   // XML görüntüleme handler
-  const handleViewXml = (invoice: any) => {
+  const handleViewXml = async (invoice: any) => {
+    setSelectedInvoice(invoice); // Tüm fatura bilgilerini sakla
     setSelectedXmlContent(invoice.xmlContent || '<Invoice>XML içeriği bulunamadı</Invoice>');
     setSelectedInvoiceNumber(invoice.invoiceNumber);
+    setSelectedInvoiceId(invoice.id);
     setXmlViewerOpen(true);
+    
+    // Fatura kalemlerini yükle
+    if (invoiceType === 'outgoing' && invoice.id) {
+      setLoadingItems(true);
+      try {
+        const { data, error } = await supabase
+          .from('outgoing_invoice_items')
+          .select('*')
+          .eq('outgoing_invoice_id', invoice.id)
+          .order('line_number', { ascending: true });
+        
+        if (error) {
+          console.error('Fatura kalemleri yüklenemedi:', error);
+          setInvoiceItems([]);
+        } else {
+          setInvoiceItems(data || []);
+        }
+      } catch (err) {
+        console.error('Fatura kalemleri yükleme hatası:', err);
+        setInvoiceItems([]);
+      } finally {
+        setLoadingItems(false);
+      }
+    }
   };
 
   const getInvoiceTypeBadge = (invoiceType: string) => {
@@ -173,11 +206,16 @@ const EInvoiceContent = ({
                     </>
                   ) : (
                     <>
+                      <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🏭 Tedarikçi</TableHead>
                       <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">👤 Müşteri</TableHead>
                       <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🔢 Vergi No</TableHead>
+                      <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🏛️ Vergi Dairesi</TableHead>
                     </>
                   )}
                   <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">📅 Fatura Tarihi</TableHead>
+                  {invoiceType === 'outgoing' && (
+                    <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">⏰ Saat</TableHead>
+                  )}
                   <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">💰 Tutar</TableHead>
                   <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">💱 Para Birimi</TableHead>
                   {(invoiceType === 'incoming' || invoiceType === 'outgoing') && (
@@ -217,11 +255,20 @@ const EInvoiceContent = ({
                         <TableCell className="py-2 px-3" onClick={() => undefined}>
                           <div className="flex items-center">
                             <Building className="h-3 w-3 text-muted-foreground mr-2" />
+                            <span className="text-xs">{invoice.supplierName || '-'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2 px-3" onClick={() => undefined}>
+                          <div className="flex items-center">
+                            <Building className="h-3 w-3 text-muted-foreground mr-2" />
                             <span className="text-xs">{invoice.customerName}</span>
                           </div>
                         </TableCell>
                         <TableCell className="font-mono text-xs py-2 px-3" onClick={() => undefined}>
-                          {invoice.customerTaxNumber}
+                          {invoice.customerTaxNumber || '-'}
+                        </TableCell>
+                        <TableCell className="text-xs py-2 px-3" onClick={() => undefined}>
+                          {invoice.customerTaxOffice || '-'}
                         </TableCell>
                       </>
                     )}
@@ -231,6 +278,11 @@ const EInvoiceContent = ({
                         {format(new Date(invoice.invoiceDate), 'dd MMM yyyy', { locale: tr })}
                       </div>
                     </TableCell>
+                    {invoiceType === 'outgoing' && (
+                      <TableCell className="text-center py-2 px-3 text-xs" onClick={() => undefined}>
+                        {invoice.invoiceTime || '-'}
+                      </TableCell>
+                    )}
                     <TableCell className="text-right font-semibold py-2 px-3 text-xs" onClick={() => invoiceType === 'incoming' ? navigate(`/e-invoice/process/${invoice.id}`) : undefined}>
                       {invoice.totalAmount.toLocaleString('tr-TR', {
                         minimumFractionDigits: 2,
@@ -312,16 +364,248 @@ const EInvoiceContent = ({
       <Sheet open={xmlViewerOpen} onOpenChange={setXmlViewerOpen}>
         <SheetContent side="right" className="w-full sm:w-2/3 lg:w-1/2 overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>XML İçeriği - {selectedInvoiceNumber}</SheetTitle>
+            <SheetTitle>Fatura Detayı - {selectedInvoiceNumber}</SheetTitle>
             <SheetDescription>
-              Fatura XML içeriğini buradan inceleyebilir ve matching yapabilirsiniz.
+              Fatura kalemlerini, detay bilgilerini ve XML içeriğini inceleyebilirsiniz.
             </SheetDescription>
           </SheetHeader>
-          <div className="mt-6">
-            <pre className="bg-gray-50 p-4 rounded-lg overflow-x-auto text-xs border">
-              <code className="language-xml">{selectedXmlContent}</code>
-            </pre>
-          </div>
+          
+          <Tabs defaultValue="items" className="mt-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="items">Kalemler</TabsTrigger>
+              <TabsTrigger value="details">Detaylar</TabsTrigger>
+              <TabsTrigger value="xml">XML</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="items" className="mt-4">
+              {loadingItems ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : invoiceItems.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="text-sm text-gray-600">
+                    Toplam {invoiceItems.length} kalem
+                  </div>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">#</TableHead>
+                          <TableHead>Ürün</TableHead>
+                          <TableHead className="text-right">Miktar</TableHead>
+                          <TableHead className="text-right">Birim Fiyat</TableHead>
+                          <TableHead className="text-right">İskonto</TableHead>
+                          <TableHead className="text-right">KDV</TableHead>
+                          <TableHead className="text-right">Toplam</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {invoiceItems.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">{item.line_number}</TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <div className="font-medium">{item.product_name}</div>
+                                {item.product_code && (
+                                  <div className="text-xs text-gray-500">Kod: {item.product_code}</div>
+                                )}
+                                {item.description && item.description !== item.product_name && (
+                                  <div className="text-xs text-gray-500">{item.description}</div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {item.quantity} {item.unit}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {new Intl.NumberFormat('tr-TR', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(item.unit_price)} ₺
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {item.discount_amount > 0 ? (
+                                <div>
+                                  <div>
+                                    {new Intl.NumberFormat('tr-TR', {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }).format(item.discount_amount)} ₺
+                                  </div>
+                                  {item.discount_rate > 0 && (
+                                    <div className="text-xs text-gray-500">(%{item.discount_rate})</div>
+                                  )}
+                                </div>
+                              ) : (
+                                '-'
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div>
+                                <div>
+                                  {new Intl.NumberFormat('tr-TR', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  }).format(item.tax_amount)} ₺
+                                </div>
+                                <div className="text-xs text-gray-500">(%{item.tax_rate})</div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {new Intl.NumberFormat('tr-TR', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(item.line_total_with_tax)} ₺
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Bu fatura için kalem bilgisi bulunamadı
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="details" className="mt-4">
+              {selectedInvoice ? (
+                <div className="space-y-6">
+                  {/* Tedarikçi Bilgileri */}
+                  {selectedInvoice.supplierName && (
+                    <div className="border rounded-lg p-4">
+                      <h3 className="font-semibold text-sm mb-3 flex items-center">
+                        <Building className="h-4 w-4 mr-2" />
+                        Tedarikçi Bilgileri
+                      </h3>
+                      <dl className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <dt className="text-gray-500">Firma Adı</dt>
+                          <dd className="font-medium">{selectedInvoice.supplierName}</dd>
+                        </div>
+                        {selectedInvoice.supplierTaxNumber && (
+                          <div>
+                            <dt className="text-gray-500">VKN/TCKN</dt>
+                            <dd className="font-mono">{selectedInvoice.supplierTaxNumber}</dd>
+                          </div>
+                        )}
+                      </dl>
+                    </div>
+                  )}
+                  
+                  {/* Müşteri Bilgileri */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-semibold text-sm mb-3 flex items-center">
+                      <Building className="h-4 w-4 mr-2" />
+                      Müşteri Bilgileri
+                    </h3>
+                    <dl className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <dt className="text-gray-500">Müşteri Adı</dt>
+                        <dd className="font-medium">{selectedInvoice.customerName}</dd>
+                      </div>
+                      {selectedInvoice.customerTaxNumber && (
+                        <div>
+                          <dt className="text-gray-500">VKN/TCKN</dt>
+                          <dd className="font-mono">{selectedInvoice.customerTaxNumber}</dd>
+                        </div>
+                      )}
+                      {selectedInvoice.customerTaxOffice && (
+                        <div className="col-span-2">
+                          <dt className="text-gray-500">Vergi Dairesi</dt>
+                          <dd className="font-medium">{selectedInvoice.customerTaxOffice}</dd>
+                        </div>
+                      )}
+                    </dl>
+                  </div>
+                  
+                  {/* Ödeme Bilgileri */}
+                  {(selectedInvoice.payeeIban || selectedInvoice.payeeBankName || selectedInvoice.paymentMeansCode) && (
+                    <div className="border rounded-lg p-4">
+                      <h3 className="font-semibold text-sm mb-3">💳 Ödeme Bilgileri</h3>
+                      <dl className="space-y-2 text-sm">
+                        {selectedInvoice.paymentMeansCode && (
+                          <div>
+                            <dt className="text-gray-500">Ödeme Şekli</dt>
+                            <dd className="font-medium">
+                              {selectedInvoice.paymentMeansCode === '42' ? 'Banka Transferi' : `Kod: ${selectedInvoice.paymentMeansCode}`}
+                            </dd>
+                          </div>
+                        )}
+                        {selectedInvoice.payeeIban && (
+                          <div>
+                            <dt className="text-gray-500">IBAN</dt>
+                            <dd className="font-mono text-xs">{selectedInvoice.payeeIban}</dd>
+                          </div>
+                        )}
+                        {selectedInvoice.payeeBankName && (
+                          <div>
+                            <dt className="text-gray-500">Banka</dt>
+                            <dd className="font-medium">{selectedInvoice.payeeBankName}</dd>
+                          </div>
+                        )}
+                      </dl>
+                    </div>
+                  )}
+                  
+                  {/* Tarih ve Saat Bilgileri */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-semibold text-sm mb-3">📅 Tarih Bilgileri</h3>
+                    <dl className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <dt className="text-gray-500">Fatura Tarihi</dt>
+                        <dd className="font-medium">
+                          {format(new Date(selectedInvoice.invoiceDate), 'dd MMMM yyyy', { locale: tr })}
+                        </dd>
+                      </div>
+                      {selectedInvoice.invoiceTime && (
+                        <div>
+                          <dt className="text-gray-500">Saat</dt>
+                          <dd className="font-medium">{selectedInvoice.invoiceTime}</dd>
+                        </div>
+                      )}
+                      {selectedInvoice.dueDate && (
+                        <div>
+                          <dt className="text-gray-500">Vade Tarihi</dt>
+                          <dd className="font-medium">
+                            {format(new Date(selectedInvoice.dueDate), 'dd MMMM yyyy', { locale: tr })}
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+                  </div>
+                  
+                  {/* Fatura Tipleri */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-semibold text-sm mb-3">🏷️ Fatura Tipleri</h3>
+                    <dl className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <dt className="text-gray-500">Fatura Tipi</dt>
+                        <dd>{getInvoiceTypeBadge(selectedInvoice.invoiceType)}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-gray-500">Fatura Profili</dt>
+                        <dd>{getInvoiceProfileBadge(selectedInvoice.invoiceProfile)}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Fatura detay bilgisi yükleniyor...
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="xml" className="mt-4">
+              <pre className="bg-gray-50 p-4 rounded-lg overflow-x-auto text-xs border">
+                <code className="language-xml">{selectedXmlContent}</code>
+              </pre>
+            </TabsContent>
+          </Tabs>
         </SheetContent>
       </Sheet>
     </>

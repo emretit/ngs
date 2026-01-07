@@ -61,7 +61,7 @@ const SalesInvoicesTable = ({
     { id: 'musteri', label: 'Müşteri Bilgileri', visible: true, sortable: true },
     { id: 'tarih', label: 'Tarih', visible: true, sortable: true },
     { id: 'tutar', label: 'Tutar', visible: true, sortable: true },
-    { id: 'tip', label: 'Tip', visible: true, sortable: false },
+    { id: 'tip', label: 'Fatura Tipi', visible: true, sortable: false },
     { id: 'e_fatura', label: 'E-Fatura', visible: true, sortable: false },
     { id: 'actions', label: 'İşlemler', visible: true, sortable: false }
   ];
@@ -165,6 +165,55 @@ const SalesInvoicesTable = ({
         return <Badge variant="outline" className="border-indigo-500 text-indigo-700">SMM</Badge>;
       default:
         return <Badge variant="outline">{type}</Badge>;
+    }
+  };
+
+  // Giden e-fatura ile aynı tip badge'leri kullan
+  const getInvoiceTypeBadge = (invoiceType: string) => {
+    switch (invoiceType) {
+      case 'SATIS':
+        return <Badge className="bg-green-100 text-green-800 text-xs">Satış</Badge>;
+      case 'IADE':
+        return <Badge className="bg-red-100 text-red-800 text-xs">İade</Badge>;
+      case 'OZELMATRAH':
+        return <Badge className="bg-blue-100 text-blue-800 text-xs">Özel Matrah</Badge>;
+      case 'TEVKIFAT_IADE':
+        return <Badge className="bg-blue-100 text-blue-800 text-xs">Tevkifat İade</Badge>;
+      case 'KONAKLAMA':
+        return <Badge className="bg-purple-100 text-purple-800 text-xs">Konaklama</Badge>;
+      case 'SGK':
+        return <Badge className="bg-blue-100 text-blue-800 text-xs">SGK</Badge>;
+      case 'IHRAC_KAYITLI':
+        return <Badge className="bg-blue-100 text-blue-800 text-xs">İhraç Kayıtlı</Badge>;
+      case 'ISTISNA':
+        return <Badge className="bg-blue-100 text-blue-800 text-xs">İstisna</Badge>;
+      case 'TEMEL':
+        return <Badge className="bg-gray-100 text-gray-800 text-xs">Temel</Badge>;
+      case 'TICARI':
+        return <Badge className="bg-green-100 text-green-800 text-xs">Ticari</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800 text-xs">{invoiceType || 'Bilinmiyor'}</Badge>;
+    }
+  };
+
+  const getInvoiceProfileBadge = (invoiceProfile: string) => {
+    switch (invoiceProfile) {
+      case 'TEMELFATURA':
+        return <Badge variant="outline" className="border-blue-500 text-blue-700 text-xs">Temel Fatura</Badge>;
+      case 'TICARIFATURA':
+        return <Badge variant="outline" className="border-green-500 text-green-700 text-xs">Ticari Fatura</Badge>;
+      case 'IHRACAT':
+        return <Badge variant="outline" className="border-purple-500 text-purple-700 text-xs">İhracat</Badge>;
+      case 'YOLCUBERABERFATURA':
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-700 text-xs">Yolcu Beraber</Badge>;
+      case 'EARSIVFATURA':
+        return <Badge variant="outline" className="border-indigo-500 text-indigo-700 text-xs">E-Arşiv</Badge>;
+      case 'KAMU':
+        return <Badge variant="outline" className="border-red-500 text-red-700 text-xs">Kamu</Badge>;
+      case 'HKS':
+        return <Badge variant="outline" className="border-gray-500 text-gray-700 text-xs">HKS</Badge>;
+      default:
+        return <Badge variant="outline" className="border-gray-500 text-gray-700 text-xs">{invoiceProfile || 'Bilinmiyor'}</Badge>;
     }
   };
 
@@ -311,7 +360,11 @@ const SalesInvoicesTable = ({
                 {invoice.toplam_tutar ? formatCurrency(invoice.toplam_tutar) : '-'}
               </TableCell>
               <TableCell className="text-center py-2 px-3" onClick={() => onSelectInvoice(invoice)}>
-                {getDocumentTypeBadge(invoice.document_type)}
+                <div className="flex flex-col items-center gap-1">
+                  {invoice.invoice_type && getInvoiceTypeBadge(invoice.invoice_type)}
+                  {invoice.invoice_profile && getInvoiceProfileBadge(invoice.invoice_profile)}
+                  {!invoice.invoice_type && !invoice.invoice_profile && getDocumentTypeBadge(invoice.document_type)}
+                </div>
               </TableCell>
               <TableCell className="text-center py-2 px-3" onClick={(e) => e.stopPropagation()}>
                 <EInvoiceStatusBadge 

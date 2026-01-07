@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { ChartContainer } from "@/components/ui/chart-container";
 
 const data = [
   { name: "Jan", value: 4000 },
@@ -14,7 +15,7 @@ const DashboardChart = () => {
   return (
     <Card className="p-6">
       <h3 className="text-lg font-medium text-gray-600 mb-4">Sales Overview</h3>
-      <div className="h-[300px]">
+      <ChartContainer height={300}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <defs>
@@ -56,7 +57,7 @@ const DashboardChart = () => {
             />
           </LineChart>
         </ResponsiveContainer>
-      </div>
+      </ChartContainer>
     </Card>
   );
 };

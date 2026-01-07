@@ -114,12 +114,6 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   
   const handleRefresh = async () => {
     try {
-      // Giden faturalar için müşteri VKN kontrolü
-      if (invoiceType === 'outgoing' && (!customerTaxNumber || customerTaxNumber.length < 10)) {
-        toast.error('Giden faturalar için müşteri VKN girmeniz gerekmektedir (10-11 haneli)', { id: 'vkn-required' });
-        return;
-      }
-
       const integrator = await IntegratorService.getSelectedIntegrator();
       const integratorNames: Record<string, string> = {
         'nilvera': 'Nilvera',
@@ -129,7 +123,9 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
       const integratorName = integratorNames[integrator] || 'Entegratör';
       
       const message = invoiceType === 'outgoing' 
-        ? `${integratorName}'dan müşteri VKN ${customerTaxNumber} için giden faturalar çekiliyor...`
+        ? customerTaxNumber 
+          ? `${integratorName}'dan müşteri VKN ${customerTaxNumber} için giden faturalar çekiliyor...`
+          : `${integratorName}'dan tüm giden faturalar çekiliyor...`
         : `${integratorName}'dan gelen faturalar çekiliyor...`;
       
       toast.loading(message, { id: 'fetching-invoices' });

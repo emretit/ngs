@@ -27,7 +27,7 @@ const OrdersSummary = () => {
       const { data: orders, error } = await supabase
         .from('orders')
         .select('status, total_amount')
-        .eq('company_id', userData.company_id);
+;
         
       if (error) {
         console.error('Orders table error:', error);

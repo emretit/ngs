@@ -28,7 +28,6 @@ export const useRevenueTrend = () => {
         const { data: salesData } = await supabase
           .from('sales_invoices')
           .select('toplam_tutar')
-          .eq('company_id', userData.company_id)
           .eq('durum', 'onaylandi')
           .gte('fatura_tarihi', monthStart)
           .lte('fatura_tarihi', monthEnd);
@@ -40,7 +39,6 @@ export const useRevenueTrend = () => {
         const { data: incomeData } = await supabase
           .from('expenses')
           .select('amount')
-          .eq('company_id', userData.company_id)
           .eq('type', 'income')
           .gte('date', monthStart)
           .lte('date', monthEnd);
@@ -51,7 +49,6 @@ export const useRevenueTrend = () => {
         const { data: bankIncomeData } = await supabase
           .from('bank_transactions')
           .select('amount')
-          .eq('company_id', userData.company_id)
           .eq('transaction_type', 'giris')
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
@@ -62,7 +59,6 @@ export const useRevenueTrend = () => {
         const { data: cashIncomeData } = await supabase
           .from('cash_transactions')
           .select('amount')
-          .eq('company_id', userData.company_id)
           .eq('type', 'income')
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
@@ -73,7 +69,6 @@ export const useRevenueTrend = () => {
         const { data: cardIncomeData } = await supabase
           .from('card_transactions')
           .select('amount')
-          .eq('company_id', userData.company_id)
           .in('transaction_type', ['payment', 'refund'])
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
@@ -89,7 +84,6 @@ export const useRevenueTrend = () => {
         const { data: expenseData } = await supabase
           .from('expenses')
           .select('amount')
-          .eq('company_id', userData.company_id)
           .eq('type', 'expense')
           .gte('date', monthStart)
           .lte('date', monthEnd);
@@ -100,7 +94,6 @@ export const useRevenueTrend = () => {
         const { data: purchaseInvoicesData } = await supabase
           .from('purchase_invoices')
           .select('total_amount')
-          .eq('company_id', userData.company_id)
           .gte('invoice_date', monthStart)
           .lte('invoice_date', monthEnd);
 
@@ -110,7 +103,6 @@ export const useRevenueTrend = () => {
         const { data: einvoicesData } = await supabase
           .from('einvoices')
           .select('total_amount')
-          .eq('company_id', userData.company_id)
           .eq('direction', 'incoming')
           .gte('invoice_date', monthStart)
           .lte('invoice_date', monthEnd);
@@ -121,7 +113,6 @@ export const useRevenueTrend = () => {
         const { data: bankExpenseData } = await supabase
           .from('bank_transactions')
           .select('amount')
-          .eq('company_id', userData.company_id)
           .eq('transaction_type', 'cikis')
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
@@ -132,7 +123,6 @@ export const useRevenueTrend = () => {
         const { data: cashExpenseData } = await supabase
           .from('cash_transactions')
           .select('amount')
-          .eq('company_id', userData.company_id)
           .eq('type', 'expense')
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
@@ -143,7 +133,6 @@ export const useRevenueTrend = () => {
         const { data: cardExpenseData } = await supabase
           .from('card_transactions')
           .select('amount')
-          .eq('company_id', userData.company_id)
           .eq('transaction_type', 'purchase')
           .gte('transaction_date', monthStart)
           .lte('transaction_date', monthEnd);
@@ -154,7 +143,6 @@ export const useRevenueTrend = () => {
         const { data: fuelExpenseData } = await supabase
           .from('vehicle_fuel')
           .select('total_cost')
-          .eq('company_id', userData.company_id)
           .gte('fuel_date', monthStart)
           .lte('fuel_date', monthEnd);
 
@@ -164,7 +152,6 @@ export const useRevenueTrend = () => {
         const { data: maintenanceExpenseData } = await supabase
           .from('vehicle_maintenance')
           .select('cost')
-          .eq('company_id', userData.company_id)
           .gte('maintenance_date', monthStart)
           .lte('maintenance_date', monthEnd);
 

@@ -4,6 +4,7 @@ import SalesInvoicesHeader from "@/components/sales/SalesInvoicesHeader";
 import SalesInvoiceFilterBar from "@/components/sales/SalesInvoiceFilterBar";
 import SalesInvoicesContent from "@/components/sales/SalesInvoicesContent";
 import SalesInvoicesBulkActions from "@/components/sales/SalesInvoicesBulkActions";
+import { EInvoiceResendConfirmDialog } from "@/components/sales/EInvoiceResendConfirmDialog";
 import { useSalesInvoices } from "@/hooks/useSalesInvoices";
 import { useEInvoice } from "@/hooks/useEInvoice";
 import { useVeribanInvoice } from "@/hooks/useVeribanInvoice";
@@ -26,7 +27,13 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
     deleteInvoiceMutation,
   } = useSalesInvoices();
   const { sendInvoice: sendNilveraInvoice } = useEInvoice();
-  const { sendInvoice: sendVeribanInvoice, checkStatus: checkVeribanStatus } = useVeribanInvoice();
+  const { 
+    sendInvoice: sendVeribanInvoice, 
+    checkStatus: checkVeribanStatus,
+    confirmDialog,
+    handleConfirmResend,
+    handleCancelResend,
+  } = useVeribanInvoice();
   const { downloadAndOpenPdf, isDownloading } = useNilveraPdf();
 
   const [filterKeyword, setFilterKeyword] = useState("");
@@ -93,7 +100,7 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
 
     if (integratorStatus.selected === 'veriban' && integratorStatus.veriban) {
       console.log('📤 [SalesInvoices] Sending to Veriban...');
-      sendVeribanInvoice(invoiceId);
+      sendVeribanInvoice({ salesInvoiceId: invoiceId, forceResend: false });
     } else if (integratorStatus.selected === 'nilvera' && integratorStatus.nilvera) {
       console.log('📤 [SalesInvoices] Sending to Nilvera...');
       sendNilveraInvoice(invoiceId);
@@ -288,6 +295,17 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
           onDeleteInvoice={handleDeleteInvoice}
           searchQuery={filterKeyword}
           documentTypeFilter={documentTypeFilter}
+        />
+        
+        {/* E-Fatura Tekrar Gönderme Onay Dialog'u */}
+        <EInvoiceResendConfirmDialog
+          open={confirmDialog.open}
+          onOpenChange={(open) => {
+            if (!open) handleCancelResend();
+          }}
+          currentStatus={confirmDialog.currentStatus}
+          onConfirm={handleConfirmResend}
+          onCancel={handleCancelResend}
         />
       </div>
   );

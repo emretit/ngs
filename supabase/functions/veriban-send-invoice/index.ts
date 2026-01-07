@@ -73,6 +73,8 @@ serve(async (req) => {
       customerAlias,
       isDirectSend = true,
       integrationCode,
+      forceResend = false, // YENİ: Kullanıcı onayı ile zorla tekrar gönder
+      skipStatusCheck = false, // YENİ: Durum kontrolünü atla (opsiyonel, debug için)
     } = await req.json();
 
     if (!invoiceId) {
@@ -310,6 +312,114 @@ serve(async (req) => {
       }
     } else {
       console.log('✅ Mevcut fatura numarası kullanılıyor:', invoiceNumber);
+    }
+
+    // ==========================================
+    // DURUM KONTROLÜ: Fatura zaten gönderilmiş mi?
+    // ==========================================
+    if (!forceResend && !skipStatusCheck) {
+      console.log('🔍 Fatura durumu kontrol ediliyor...');
+      
+      try {
+        // veriban-invoice-status fonksiyonunu çağır
+        const statusResponse = await fetch(
+          `${supabaseUrl}/functions/v1/veriban-invoice-status`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              'apikey': supabaseServiceKey,
+            },
+            body: JSON.stringify({
+              invoiceId: invoiceId,
+              invoiceNumber: invoiceNumber
+            })
+          }
+        );
+
+        const statusData = await statusResponse.json();
+        
+        if (statusData?.success && statusData.status) {
+          const stateCode = statusData.status.einvoice_invoice_state;
+          const stateName = statusData.status.stateName || 'Bilinmiyor';
+          const userFriendlyStatus = statusData.status.userFriendlyStatus || stateName;
+          
+          console.log('📊 Mevcut fatura durumu:', {
+            stateCode,
+            stateName,
+            userFriendlyStatus
+          });
+          
+          // StateCode 5: Başarılı - Faturayı tekrar gönderme
+          if (stateCode === 5) {
+            console.log('⛔ Fatura zaten başarıyla gönderilmiş, tekrar gönderilmeyecek');
+            
+            // Veritabanını güncelle
+            await supabase
+              .from('sales_invoices')
+              .update({
+                einvoice_invoice_state: 5,
+                einvoice_status: 'delivered',
+                einvoice_delivered_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', invoiceId);
+            
+            return new Response(JSON.stringify({
+              success: false,
+              error: 'Bu fatura zaten başarıyla gönderilmiş ve alıcıya ulaşmış. Tekrar gönderilemez.',
+              needsConfirmation: false,
+              currentStatus: {
+                stateCode: 5,
+                stateName: stateName,
+                userFriendlyStatus: userFriendlyStatus
+              }
+            }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+          
+          // StateCode 1,2,3,4: Taslak/İşleniyor/Hatalı - Kullanıcı onayı gerekli
+          if ([1, 2, 3, 4].includes(stateCode)) {
+            console.log('⚠️ Fatura zaten işlem görmüş, kullanıcı onayı gerekli');
+            
+            const statusMessages: Record<number, string> = {
+              1: 'Bu fatura taslak durumda.',
+              2: 'Bu fatura imza bekliyor.',
+              3: 'Bu fatura işleniyor.',
+              4: 'Bu fatura hatalı durumda.'
+            };
+            
+            const message = statusMessages[stateCode] || 'Bu fatura zaten işlem görmüş.';
+            
+            return new Response(JSON.stringify({
+              success: false,
+              error: `${message} Tekrar göndermek için onay gerekli.`,
+              needsConfirmation: true,
+              currentStatus: {
+                stateCode: stateCode,
+                stateName: stateName,
+                userFriendlyStatus: userFriendlyStatus
+              }
+            }), {
+              status: 409, // Conflict
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+          
+          // StateCode 0 veya bilinmiyor: Normal akış devam eder
+          console.log('✅ Durum kontrolü geçti, gönderim işlemine devam ediliyor');
+        }
+      } catch (statusError) {
+        // Durum sorgulama hatası olsa bile gönderimi engelleme
+        console.warn('⚠️ Durum sorgulama hatası (gönderime devam ediliyor):', statusError);
+      }
+    } else if (forceResend) {
+      console.log('🔄 forceResend=true, durum kontrolü atlandı');
+    } else if (skipStatusCheck) {
+      console.log('⏭️ skipStatusCheck=true, durum kontrolü atlandı');
     }
 
     // Update status to "sending" at the start
@@ -650,6 +760,45 @@ serve(async (req) => {
 
       if (updateError) {
         console.error('❌ Veritabanı güncelleme hatası:', updateError);
+      }
+
+      // ============================================
+      // İLİŞKİLENDİRME: outgoing_invoices ile bağla
+      // ============================================
+      console.log('🔗 outgoing_invoices ile ilişkilendirme yapılıyor...');
+      console.log('🆔 ETTN:', ettn);
+      
+      try {
+        // ETTN ile outgoing_invoices'da ara
+        const { data: outgoingInvoice, error: outgoingError } = await supabase
+          .from('outgoing_invoices')
+          .select('id, invoice_number, status')
+          .eq('ettn', ettn)
+          .eq('company_id', profile.company_id)
+          .maybeSingle();
+
+        if (outgoingError) {
+          console.warn('⚠️ outgoing_invoices sorgusu hatası:', outgoingError.message);
+        } else if (outgoingInvoice) {
+          console.log('✅ outgoing_invoices\'da eşleşme bulundu:', outgoingInvoice.invoice_number);
+          
+          // İlişkilendir
+          const { error: linkError } = await supabase
+            .from('sales_invoices')
+            .update({ outgoing_invoice_id: outgoingInvoice.id })
+            .eq('id', invoiceId);
+
+          if (linkError) {
+            console.error('❌ İlişkilendirme hatası:', linkError.message);
+          } else {
+            console.log('✅ sales_invoices ve outgoing_invoices ilişkilendirildi');
+          }
+        } else {
+          console.log('ℹ️ outgoing_invoices\'da henüz kayıt yok (birkaç dakika sonra senkronize edilecek)');
+        }
+      } catch (linkingError: any) {
+        // İlişkilendirme hatası olsa bile fatura gönderimi başarılı
+        console.warn('⚠️ İlişkilendirme hatası (kritik değil):', linkingError.message);
       }
 
       return new Response(JSON.stringify({

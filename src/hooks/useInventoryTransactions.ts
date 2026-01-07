@@ -26,20 +26,6 @@ export const useInventoryTransactions = () => {
   });
 
   const fetchTransactions = async (): Promise<InventoryTransaction[]> => {
-    // Get current user's company_id
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("company_id")
-      .eq("id", user?.id)
-      .single();
-
-    if (!profile?.company_id) {
-      return [];
-    }
-
     // Product ID filtresi varsa önce transaction ID'lerini bul
     let transactionIds: string[] | null = null;
     if (filters.product_id) {
@@ -67,8 +53,7 @@ export const useInventoryTransactions = () => {
           *,
           product:products!inventory_transaction_items_product_id_fkey(id, name, sku)
         )
-      `)
-      .eq("company_id", profile.company_id);
+      `);
 
     // Product ID filtresi varsa transaction ID'lere göre filtrele
     if (transactionIds && transactionIds.length > 0) {
@@ -138,19 +123,6 @@ export const useInventoryTransactions = () => {
   };
 
   const fetchTransactionById = async (id: string): Promise<InventoryTransaction | null> => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("company_id")
-      .eq("id", user?.id)
-      .single();
-
-    if (!profile?.company_id) {
-      return null;
-    }
-
     const { data, error } = await supabase
       .from("inventory_transactions")
       .select(`
@@ -164,7 +136,6 @@ export const useInventoryTransactions = () => {
         )
       `)
       .eq("id", id)
-      .eq("company_id", profile.company_id)
       .single();
 
     if (error) {
@@ -198,7 +169,6 @@ export const useInventoryTransactions = () => {
     const { data: existingTransactions } = await supabase
       .from('inventory_transactions')
       .select('transaction_number')
-      .eq('company_id', companyId)
       .like('transaction_number', `${prefix}%`)
       .order('transaction_number', { ascending: false })
       .limit(1);
@@ -338,8 +308,7 @@ export const useInventoryTransactions = () => {
     const { error: updateError } = await supabase
       .from("inventory_transactions")
       .update(updateData)
-      .eq("id", id)
-      .eq("company_id", profile.company_id);
+      .eq("id", id);
 
     if (updateError) {
       toast.error("İşlem güncellenirken hata oluştu");
@@ -393,7 +362,6 @@ export const useInventoryTransactions = () => {
       .select("id, quantity")
       .eq("product_id", productId)
       .eq("warehouse_id", warehouseId)
-      .eq("company_id", companyId)
       .maybeSingle();
 
     if (existingStock) {
@@ -521,7 +489,6 @@ export const useInventoryTransactions = () => {
                 .select("id, quantity")
                 .eq("product_id", item.product_id)
                 .eq("warehouse_id", transaction.warehouse_id)
-                .eq("company_id", profile.company_id)
                 .maybeSingle();
 
               const systemQuantity = existingStock ? Number(existingStock.quantity) : 0;
@@ -573,8 +540,7 @@ export const useInventoryTransactions = () => {
         approved_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq("id", id)
-      .eq("company_id", profile.company_id);
+      .eq("id", id);
 
     if (updateError) {
       toast.error("İşlem onaylanırken hata oluştu");
@@ -615,8 +581,7 @@ export const useInventoryTransactions = () => {
         status: 'cancelled',
         updated_at: new Date().toISOString(),
       })
-      .eq("id", id)
-      .eq("company_id", profile.company_id);
+      .eq("id", id);
 
     if (updateError) {
       toast.error("İşlem iptal edilirken hata oluştu");
@@ -718,8 +683,7 @@ export const useInventoryTransactions = () => {
     const { error: deleteError } = await supabase
       .from("inventory_transactions")
       .delete()
-      .eq("id", id)
-      .eq("company_id", profile.company_id);
+      .eq("id", id);
 
     if (deleteError) {
       console.error("❌ Transaction silinirken hata:", deleteError);

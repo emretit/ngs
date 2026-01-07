@@ -4,11 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { CriticalAlertsBanner } from "@/components/dashboard/CriticalAlertsBanner";
 import { GradientStatCards } from "@/components/dashboard/widgets/GradientStatCards";
+import { ProactiveInsightsWidget } from "@/components/dashboard/ProactiveInsightsWidget";
 import { TimePeriodCard } from "@/components/dashboard/v2/TimePeriodCard";
 import { useWorkflowPipeline } from "@/hooks/useWorkflowPipeline";
 import { useTodaysTasks } from "@/hooks/useTodaysTasks";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
+import { useCompany } from "@/hooks/useCompany";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -24,8 +26,9 @@ const RecentActivitiesTimeline = lazy(() => import("@/components/dashboard/Recen
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { companyId } = useCompany();
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<'today' | 'week' | 'month' | 'quarter'>('month');
-  
+
   // Workflow data
   const { data: pipelineStages, isLoading: pipelineLoading } = useWorkflowPipeline();
   const { tasks, isLoading: tasksLoading, completeTask } = useTodaysTasks();
@@ -105,7 +108,7 @@ const Dashboard = () => {
       />
 
       {/* Gradient Stat Cards - Zaman Periyodu Altında */}
-      <GradientStatCards 
+      <GradientStatCards
         monthlyTurnover={monthlyTurnover}
         totalReceivables={totalReceivables}
         monthlyExpenses={monthlyExpenses}
@@ -113,6 +116,11 @@ const Dashboard = () => {
         turnoverTrend={turnoverTrend}
         isLoading={widgetsLoading}
       />
+
+      {/* AI Proactive Insights Widget */}
+      {companyId && (
+        <ProactiveInsightsWidget companyId={companyId} limit={3} />
+      )}
 
       {/* Finansal Analiz Chart - Bağımsız Kart */}
       <Suspense fallback={<Skeleton className="h-[500px] w-full rounded-lg" />}>

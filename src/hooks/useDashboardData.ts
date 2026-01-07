@@ -16,16 +16,16 @@ export const useDashboardData = () => {
       const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
       const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
+      // ✅ RLS policy otomatik olarak current_company_id() ile filtreler (Tüm tablolar artık güvenli!)
       const [bankAccounts, cashAccounts, customers, invoices, monthlyRevenue] = await Promise.all([
-        supabase.from('bank_accounts').select('current_balance').eq('company_id', userData.company_id),
-        supabase.from('cash_accounts').select('current_balance').eq('company_id', userData.company_id),
-        supabase.from('customers').select('balance').eq('company_id', userData.company_id),
-        supabase.from('einvoices').select('remaining_amount').eq('company_id', userData.company_id),
+        supabase.from('bank_accounts').select('current_balance'),
+        supabase.from('cash_accounts').select('current_balance'),
+        supabase.from('customers').select('balance'),
+        supabase.from('einvoices').select('remaining_amount'),
         // Aylık ciro: Bu ayki onaylanmış satış faturalarının toplamı
         supabase
           .from('sales_invoices')
           .select('toplam_tutar')
-          .eq('company_id', userData.company_id)
           .eq('durum', 'onaylandi')
           .gte('fatura_tarihi', currentMonthStart)
           .lte('fatura_tarihi', currentMonthEnd)
@@ -59,10 +59,11 @@ export const useDashboardData = () => {
     queryFn: async () => {
       if (!userData?.company_id) return null;
 
+      // RLS policy otomatik olarak current_company_id() ile filtreler
       const [opportunities, activities, proposals] = await Promise.all([
-        supabase.from('opportunities').select('id').eq('company_id', userData.company_id).in('status', ['open', 'in_progress']),
-        supabase.from('activities').select('id').eq('company_id', userData.company_id).in('status', ['todo', 'in_progress']),
-        supabase.from('proposals').select('id').eq('company_id', userData.company_id).eq('status', 'draft')
+        supabase.from('opportunities').select('id').in('status', ['open', 'in_progress']),
+        supabase.from('activities').select('id').in('status', ['todo', 'in_progress']),
+        supabase.from('proposals').select('id').eq('status', 'draft')
       ]);
 
       return {
@@ -84,9 +85,10 @@ export const useDashboardData = () => {
     queryFn: async () => {
       if (!userData?.company_id) return null;
 
+      // RLS policy otomatik olarak current_company_id() ile filtreler
       const [employees, leaves] = await Promise.all([
-        supabase.from('employees').select('id').eq('company_id', userData.company_id).eq('status', 'aktif'),
-        supabase.from('employee_leaves').select('id').eq('company_id', userData.company_id).eq('status', 'approved').gte('end_date', new Date().toISOString())
+        supabase.from('employees').select('id').eq('status', 'aktif'),
+        supabase.from('employee_leaves').select('id').eq('status', 'approved').gte('end_date', new Date().toISOString())
       ]);
 
       return {

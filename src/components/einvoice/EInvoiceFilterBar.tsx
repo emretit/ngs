@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Search, FileText, Calendar, RefreshCw } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
+import { CustomerSelect } from "./CustomerSelect";
 
 interface EInvoiceFilterBarProps {
   searchTerm: string;
@@ -65,21 +66,13 @@ const EInvoiceFilterBar = ({
         />
       </div>
 
-      {/* Müşteri VKN Filtresi - Sadece Giden Faturalar için (ZORUNLU) */}
+      {/* Müşteri Seçici - Sadece Giden Faturalar için */}
       {invoiceType === 'outgoing' && setCustomerTaxNumber && (
-        <div className="relative min-w-[200px]">
-          <Input
-            placeholder="Müşteri VKN *"
-            value={customerTaxNumber || ''}
-            onChange={(e) => setCustomerTaxNumber(e.target.value)}
-            className="w-full border-orange-300 focus:border-orange-500"
-            maxLength={11}
-            required
-          />
-          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-orange-600">
-            Zorunlu
-          </span>
-        </div>
+        <CustomerSelect
+          value={customerTaxNumber}
+          onChange={setCustomerTaxNumber}
+          placeholder="Müşteri Seç (VKN)"
+        />
       )}
       
       <Select value={typeFilter} onValueChange={setTypeFilter}>

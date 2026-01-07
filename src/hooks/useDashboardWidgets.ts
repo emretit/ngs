@@ -19,7 +19,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('sales_invoices')
         .select('toplam_tutar')
-        .eq('company_id', userData.company_id)
         .eq('durum', 'onaylandi')
         .gte('fatura_tarihi', currentMonthStart)
         .lte('fatura_tarihi', currentMonthEnd);
@@ -40,7 +39,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('expenses')
         .select('amount')
-        .eq('company_id', userData.company_id)
         .eq('type', 'expense')
         .gte('date', currentMonthStart)
         .lte('date', currentMonthEnd);
@@ -65,8 +63,7 @@ export const useDashboardWidgets = () => {
           quantity,
           product_id,
           products!inner(price, purchase_price)
-        `)
-        .eq('company_id', userData.company_id);
+        `);
 
       if (wsError) throw wsError;
 
@@ -82,7 +79,6 @@ export const useDashboardWidgets = () => {
       const { data: products, error: productsError } = await supabase
         .from('products')
         .select('stock_quantity, purchase_price, price')
-        .eq('company_id', userData.company_id)
         .eq('is_active', true);
 
       if (productsError) throw productsError;
@@ -103,10 +99,10 @@ export const useDashboardWidgets = () => {
       if (!userData?.company_id) return null;
 
       const [bankAccounts, cashAccounts, customers, checks] = await Promise.all([
-        supabase.from('bank_accounts').select('current_balance').eq('company_id', userData.company_id),
-        supabase.from('cash_accounts').select('current_balance').eq('company_id', userData.company_id),
-        supabase.from('customers').select('balance').eq('company_id', userData.company_id),
-        supabase.from('checks').select('amount').eq('company_id', userData.company_id).eq('check_type', 'incoming').in('status', ['odenecek', 'tahsilat_bekleniyor', 'portfoyde'])
+        supabase.from('bank_accounts').select('current_balance'),
+        supabase.from('cash_accounts').select('current_balance'),
+        supabase.from('customers').select('balance'),
+        supabase.from('checks').select('amount').eq('check_type', 'incoming').in('status', ['odenecek', 'tahsilat_bekleniyor', 'portfoyde'])
       ]);
 
       const bank = bankAccounts.data?.reduce((sum, acc) => sum + (Number(acc.current_balance) || 0), 0) || 0;
@@ -134,10 +130,10 @@ export const useDashboardWidgets = () => {
       if (!userData?.company_id) return null;
 
       const [suppliers, creditCards, loans, einvoices] = await Promise.all([
-        supabase.from('suppliers').select('balance').eq('company_id', userData.company_id),
-        supabase.from('credit_cards').select('current_balance').eq('company_id', userData.company_id).eq('is_active', true),
-        supabase.from('loans').select('remaining_debt').eq('company_id', userData.company_id).eq('status', 'odenecek'),
-        supabase.from('einvoices').select('remaining_amount').eq('company_id', userData.company_id).in('status', ['pending', 'partially_paid'])
+        supabase.from('suppliers').select('balance'),
+        supabase.from('credit_cards').select('current_balance').eq('is_active', true),
+        supabase.from('loans').select('remaining_debt').eq('status', 'odenecek'),
+        supabase.from('einvoices').select('remaining_amount').in('status', ['pending', 'partially_paid'])
       ]);
 
       const payables = suppliers.data?.reduce((sum, s) => sum + (Number(s.balance) || 0), 0) || 0;
@@ -168,7 +164,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('sales_invoices')
         .select('id, fatura_no, toplam_tutar, odenen_tutar, vade_tarihi, customers(name, company)')
-        .eq('company_id', userData.company_id)
         .eq('odeme_durumu', 'odenmedi')
         .lt('vade_tarihi', today)
         .order('vade_tarihi', { ascending: true })
@@ -208,7 +203,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('checks')
         .select('id, check_number, amount, due_date, issuer_name, payee, status')
-        .eq('company_id', userData.company_id)
         .in('check_type', ['incoming', 'outgoing'])
         .in('status', ['odenecek', 'tahsilat_bekleniyor', 'portfoyde'])
         .gte('due_date', today)
@@ -240,7 +234,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('veriban_incoming_invoices')
         .select('id, invoice_number, customer_title, payable_amount, issue_time, currency_code')
-        .eq('company_id', userData.company_id)
         .eq('is_read', false)
         .order('issue_time', { ascending: false })
         .limit(10);
@@ -250,7 +243,6 @@ export const useDashboardWidgets = () => {
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('einvoices_received')
           .select('id, invoice_id, supplier_name, total_amount, invoice_date, currency')
-          .eq('company_id', userData.company_id)
           .order('invoice_date', { ascending: false })
           .limit(10);
 
@@ -293,7 +285,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('expenses')
         .select('id, amount, date, description, category_id, cashflow_categories(name)')
-        .eq('company_id', userData.company_id)
         .eq('type', 'expense')
         .eq('is_paid', false)
         .gte('date', today)
@@ -326,7 +317,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('opportunities')
         .select('id, title, value, currency, status, expected_close_date, customers(name, company)')
-        .eq('company_id', userData.company_id)
         .in('status', ['open', 'in_progress'])
         .order('expected_close_date', { ascending: true })
         .limit(5);
@@ -353,7 +343,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('proposals')
         .select('id, number, title, total_amount, currency, status, valid_until, customers(name, company)')
-        .eq('company_id', userData.company_id)
         .eq('status', 'draft')
         .order('created_at', { ascending: false })
         .limit(5);
@@ -381,7 +370,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('sales_invoices')
         .select('toplam_tutar')
-        .eq('company_id', userData.company_id)
         .eq('durum', 'onaylandi')
         .eq('fatura_tarihi', today);
       if (error) throw error;
@@ -399,7 +387,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('orders')
         .select('id, order_number, title, total_amount, currency, status, expected_delivery_date, customers(name, company)')
-        .eq('company_id', userData.company_id)
         .in('status', ['pending', 'confirmed', 'processing'])
         .order('order_date', { ascending: false })
         .limit(5);
@@ -427,7 +414,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('deliveries')
         .select('id, delivery_number, status, planned_delivery_date, customers(name, company)')
-        .eq('company_id', userData.company_id)
         .in('status', ['pending', 'prepared', 'shipped'])
         .order('planned_delivery_date', { ascending: true })
         .limit(5);
@@ -452,7 +438,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('purchase_requests')
         .select('id, request_number, title, total_budget, status, needed_by_date')
-        .eq('company_id', userData.company_id)
         .in('status', ['draft', 'pending', 'approved'])
         .order('requested_date', { ascending: false })
         .limit(5);
@@ -478,7 +463,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('purchase_orders')
         .select('id, order_number, total_amount, currency, status, expected_delivery_date, suppliers(name)')
-        .eq('company_id', userData.company_id)
         .in('status', ['draft', 'pending'])
         .order('order_date', { ascending: false })
         .limit(5);
@@ -505,7 +489,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('products')
         .select('id, name, sku, stock_quantity, min_stock_level, purchase_price, price')
-        .eq('company_id', userData.company_id)
         .eq('is_active', true)
         .filter('stock_quantity', 'lt', supabase.raw('min_stock_level'))
         .order('stock_quantity', { ascending: true })
@@ -532,7 +515,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('service_requests')
         .select('id, service_number, service_title, service_status, service_priority, service_due_date, customers(name, company)')
-        .eq('company_id', userData.company_id)
         .in('service_status', ['new', 'assigned', 'in_progress'])
         .order('service_due_date', { ascending: true })
         .limit(5);
@@ -559,7 +541,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('work_orders')
         .select('id, code, title, status, priority, scheduled_start, customers(name, company)')
-        .eq('company_id', userData.company_id)
         .in('status', ['assigned', 'in_progress'])
         .order('scheduled_start', { ascending: true })
         .limit(5);
@@ -590,7 +571,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('vehicle_maintenance')
         .select('id, maintenance_type, description, maintenance_date, cost, status, vehicles(plate_number, brand, model)')
-        .eq('company_id', userData.company_id)
         .in('status', ['planlandı', 'devam_ediyor'])
         .gte('maintenance_date', today)
         .lte('maintenance_date', next30DaysStr)
@@ -618,8 +598,7 @@ export const useDashboardWidgets = () => {
       if (!userData?.company_id) return { total: 0, active: 0 };
       const { data, error } = await supabase
         .from('customers')
-        .select('id, status, is_active')
-        .eq('company_id', userData.company_id);
+        .select('id, status, is_active');
       if (error) throw error;
       const total = data?.length || 0;
       const active = data?.filter(c => c.status === 'aktif' || c.is_active === true).length || 0;
@@ -640,7 +619,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('sales_invoices')
         .select('toplam_tutar')
-        .eq('company_id', userData.company_id)
         .eq('durum', 'onaylandi')
         .gte('fatura_tarihi', previousMonthStart)
         .lte('fatura_tarihi', previousMonthEnd);
@@ -659,8 +637,7 @@ export const useDashboardWidgets = () => {
       // Müşterilerin toplam alacağını hesapla (sadece pozitif bakiyeler)
       const { data, error } = await supabase
         .from('customers')
-        .select('balance')
-        .eq('company_id', userData.company_id);
+        .select('balance');
       if (error) throw error;
       return data?.reduce((sum, customer) => {
         const balance = Number(customer.balance) || 0;
@@ -680,7 +657,6 @@ export const useDashboardWidgets = () => {
       const { data, error } = await supabase
         .from('opportunities')
         .select('value, currency')
-        .eq('company_id', userData.company_id)
         .in('status', ['open', 'in_progress']);
       if (error) throw error;
       const totalValue = data?.reduce((sum, opp) => sum + (Number(opp.value) || 0), 0) || 0;
@@ -698,8 +674,7 @@ export const useDashboardWidgets = () => {
       if (!userData?.company_id) return [];
       const { data, error } = await supabase
         .from('sales_invoice_items')
-        .select('product_id, urun_adi, miktar, satir_toplami, products(id, name)')
-        .eq('company_id', userData.company_id);
+        .select('product_id, urun_adi, miktar, satir_toplami, products(id, name)');
       if (error) throw error;
 
       // Group by product

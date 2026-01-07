@@ -74,6 +74,7 @@ interface OutgoingInvoiceData {
   sent_at: string | null;
   delivered_at: string | null;
   notes: string | null;
+  xml_content?: string; // 🔥 XML içeriği için eklendi
 }
 
 serve(async (req) => {
@@ -169,22 +170,11 @@ serve(async (req) => {
       startDate, 
       endDate, 
       forceRefresh = false, 
-      customerTaxNumber,  // ZORUNLU - Veriban API gerektiriyor
+      customerTaxNumber,  // OPSİYONEL - Müşteri filtresi
       includeStatus = false,  // Durum bilgisi dahil edilsin mi
       limit = 100,  // Sayfa başına fatura sayısı
       offset = 0    // Sayfalama offset
     } = requestBody;
-
-    // customerTaxNumber zorunlu kontrol - Veriban API zorunlu kılıyor
-    if (!customerTaxNumber || customerTaxNumber.length < 10) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Müşteri VKN zorunludur (10-11 haneli) - Veriban API bu parametreyi gerektiriyor'
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
 
     // Validate dates
     let formattedStartDate: string | undefined;
@@ -249,7 +239,7 @@ serve(async (req) => {
         .from('outgoing_invoices')
         .select('*')
         .eq('company_id', profile.company_id)
-        .order('invoice_date', { ascending: false });
+        .order('invoice_number', { ascending: false });
 
       if (formattedStartDate) {
         cacheQuery = cacheQuery.gte('invoice_date', formattedStartDate);
@@ -257,7 +247,8 @@ serve(async (req) => {
       if (formattedEndDate) {
         cacheQuery = cacheQuery.lte('invoice_date', formattedEndDate);
       }
-      if (customerTaxNumber) {
+      // VKN filtresi - sadece geçerli ve dolu ise kullan
+      if (customerTaxNumber && customerTaxNumber.length >= 10) {
         cacheQuery = cacheQuery.eq('customer_tax_number', customerTaxNumber);
       }
 
@@ -561,6 +552,7 @@ serve(async (req) => {
               sent_at: parsedInvoice.invoiceDate || new Date().toISOString(),
               delivered_at: statusData?.stateCode === 3 ? new Date().toISOString() : null,
               notes: null,
+              xml_content: xmlContent, // 🔥 XML içeriğini ekliyoruz
             };
 
             // Upsert to DB
@@ -599,7 +591,7 @@ serve(async (req) => {
         .from('outgoing_invoices')
         .select('*')
         .eq('company_id', profile.company_id)
-        .order('invoice_date', { ascending: false });
+        .order('invoice_number', { ascending: false });
 
       if (formattedStartDate) {
         allInvoicesQuery = allInvoicesQuery.gte('invoice_date', formattedStartDate);
@@ -607,7 +599,8 @@ serve(async (req) => {
       if (formattedEndDate) {
         allInvoicesQuery = allInvoicesQuery.lte('invoice_date', formattedEndDate);
       }
-      if (customerTaxNumber) {
+      // VKN filtresi - sadece geçerli ve dolu ise kullan
+      if (customerTaxNumber && customerTaxNumber.length >= 10) {
         allInvoicesQuery = allInvoicesQuery.eq('customer_tax_number', customerTaxNumber);
       }
 
@@ -716,6 +709,7 @@ function formatInvoiceResponse(inv: any) {
     refId: inv.ref_id || null,
     notes: inv.notes || null,
     pdfUrl: inv.pdf_url || null,
+    xmlContent: inv.xml_content || null, // 🔥 XML içeriğini response'a ekliyoruz
   };
 }
 

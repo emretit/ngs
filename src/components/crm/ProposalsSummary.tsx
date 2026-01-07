@@ -44,7 +44,7 @@ const ProposalsSummary = () => {
       const { data: rawData, error } = await supabase
         .from('proposals')
         .select('status')
-        .eq('company_id', userData.company_id);
+;
         
       if (error) throw error;
       

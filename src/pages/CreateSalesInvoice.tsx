@@ -17,6 +17,7 @@ import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard"
 import FinancialSummaryCard from "@/components/proposals/cards/FinancialSummaryCard";
 import InvoiceHeaderCard from "@/components/invoices/cards/InvoiceHeaderCard";
 import TermsConditionsCard from "@/components/proposals/cards/TermsConditionsCard";
+import { EInvoiceResendConfirmDialog } from "@/components/sales/EInvoiceResendConfirmDialog";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useEInvoice } from "@/hooks/useEInvoice";
@@ -104,7 +105,13 @@ const CreateSalesInvoice = () => {
   const { customers } = useCustomerSelect();
   const { userData } = useCurrentUser();
   const { sendInvoice: sendNilveraInvoice, isSending: isSendingNilvera } = useEInvoice();
-  const { sendInvoice: sendVeribanInvoice, isSending: isSendingVeriban } = useVeribanInvoice();
+  const { 
+    sendInvoice: sendVeribanInvoice, 
+    isSending: isSendingVeriban,
+    confirmDialog,
+    handleConfirmResend,
+    handleCancelResend,
+  } = useVeribanInvoice();
   const { searchMukellef, mukellefInfo } = useNilveraCompanyInfo();
   
   // Integrator status
@@ -147,7 +154,7 @@ const CreateSalesInvoice = () => {
     
     if (integratorStatus.selected === 'veriban' && integratorStatus.veriban) {
       console.log('📤 [CreateSalesInvoice] Sending to Veriban...');
-      sendVeribanInvoice(invoiceId);
+      sendVeribanInvoice({ salesInvoiceId: invoiceId, forceResend: false });
     } else if (integratorStatus.selected === 'nilvera' && integratorStatus.nilvera) {
       console.log('📤 [CreateSalesInvoice] Sending to Nilvera...');
       sendNilveraInvoice(invoiceId);
@@ -1180,6 +1187,17 @@ const CreateSalesInvoice = () => {
           onAddToProposal={(productData) => handleAddProductToInvoice(productData, editingItemIndex)}
           currency={financialData.currency}
           existingData={editingItemData}
+        />
+        
+        {/* E-Fatura Tekrar Gönderme Onay Dialog'u */}
+        <EInvoiceResendConfirmDialog
+          open={confirmDialog.open}
+          onOpenChange={(open) => {
+            if (!open) handleCancelResend();
+          }}
+          currentStatus={confirmDialog.currentStatus}
+          onConfirm={handleConfirmResend}
+          onCancel={handleCancelResend}
         />
       </div>
     </div>

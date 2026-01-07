@@ -396,11 +396,12 @@ export class IntegratorService {
     filters: InvoiceFilters
   ): Promise<IntegratorServiceResponse> {
     try {
-      // customerTaxNumber zorunlu kontrol
+      // Veriban API customerRegisterNumber parametresini zorunlu tutuyor
       if (!filters.customerTaxNumber || filters.customerTaxNumber.length < 10) {
         return {
           success: false,
-          error: 'Veriban giden faturalar için müşteri VKN zorunludur (10-11 haneli)',
+          error: 'Veriban API için müşteri VKN zorunludur. Lütfen dropdown\'dan bir müşteri seçin.',
+          invoices: [],
         };
       }
 

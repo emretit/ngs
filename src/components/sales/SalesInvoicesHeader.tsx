@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, TrendingUp, Clock, DollarSign } from "lucide-react";
+import { Plus, FileText, TrendingUp, Clock, DollarSign, RefreshCw } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
+import { useVeribanInvoice } from "@/hooks/useVeribanInvoice";
 
 interface SalesInvoicesHeaderProps {
   invoices?: any[];
@@ -9,6 +10,7 @@ interface SalesInvoicesHeaderProps {
 
 const SalesInvoicesHeader = ({ invoices = [] }: SalesInvoicesHeaderProps) => {
   const navigate = useNavigate();
+  const { refreshAllInvoiceStatuses } = useVeribanInvoice();
 
   // Toplam fatura sayısını hesapla
   const totalCount = invoices.length;
@@ -83,6 +85,14 @@ const SalesInvoicesHeader = ({ invoices = [] }: SalesInvoicesHeaderProps) => {
 
         {/* Sağ taraf - Butonlar */}
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-300"
+            onClick={() => refreshAllInvoiceStatuses()}
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Durumları Yenile</span>
+          </Button>
           <Button
             className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300"
             onClick={() => navigate('/sales-invoices/create')}

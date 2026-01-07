@@ -139,8 +139,8 @@ export function ProactiveInsightsWidget({ companyId, maxInsights = 3 }: Proactiv
 
       <CardContent className="space-y-3">
         {insights.map((insight) => {
-          const Icon = severityIcons[insight.severity];
-          const colorClass = severityColors[insight.severity];
+          const Icon = severityIcons[insight.severity] || Info;
+          const colorClass = severityColors[insight.severity] || 'bg-blue-100 text-blue-700';
 
           return (
             <div
@@ -150,7 +150,7 @@ export function ProactiveInsightsWidget({ companyId, maxInsights = 3 }: Proactiv
             >
               <div className="flex items-start gap-3">
                 <div className={cn('p-2 rounded-lg flex-shrink-0', colorClass)}>
-                  <Icon className="h-4 w-4" />
+                  {Icon && <Icon className="h-4 w-4" />}
                 </div>
 
                 <div className="flex-1 min-w-0">

@@ -49,10 +49,17 @@ const EInvoiceStatusBadge: React.FC<EInvoiceStatusBadgeProps> = ({
       }
     };
 
+    const handleBulkUpdate = () => {
+      console.log("🔄 Toplu durum güncellemesi, tüm badge'ler yenileniyor...");
+      refreshStatus();
+    };
+
     window.addEventListener('einvoice-status-updated', handleStatusUpdate as EventListener);
+    window.addEventListener('einvoice-status-bulk-updated', handleBulkUpdate);
     
     return () => {
       window.removeEventListener('einvoice-status-updated', handleStatusUpdate as EventListener);
+      window.removeEventListener('einvoice-status-bulk-updated', handleBulkUpdate);
     };
   }, [salesInvoiceId, refreshStatus, invoiceData]);
 

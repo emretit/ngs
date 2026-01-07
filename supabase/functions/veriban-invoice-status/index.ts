@@ -84,7 +84,7 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const {
+    let {
       invoiceId,
       invoiceUUID,
       invoiceNumber,
@@ -107,12 +107,15 @@ serve(async (req) => {
     console.log('📄 Invoice Number:', invoiceNumber);
     console.log('🔑 Integration Code:', integrationCode);
 
-    // Get invoice from database if invoiceId provided
+    // Get invoice from database if invoiceId or invoiceNumber provided
+    // Include outgoing_invoices relationship for cache check
     let invoice;
+    let cachedOutgoingInvoice = null;
+    
     if (invoiceId) {
       const { data, error } = await supabase
         .from('sales_invoices')
-        .select('*')
+        .select('*, outgoing_invoices(*)')
         .eq('id', invoiceId)
         .eq('company_id', profile.company_id)
         .single();
@@ -127,6 +130,67 @@ serve(async (req) => {
         });
       }
       invoice = data;
+      cachedOutgoingInvoice = (data as any).outgoing_invoices;
+    } else if (invoiceNumber) {
+      // invoiceId yoksa invoiceNumber ile ara
+      const { data, error } = await supabase
+        .from('sales_invoices')
+        .select('*, outgoing_invoices(*)')
+        .eq('fatura_no', invoiceNumber)
+        .eq('company_id', profile.company_id)
+        .single();
+
+      if (error || !data) {
+        console.warn('⚠️ Fatura numarası ile fatura bulunamadı, yalnızca Veriban sorgulaması yapılacak');
+      } else {
+        invoice = data;
+        invoiceId = data.id; // invoiceId'yi güncelleme için set et
+        cachedOutgoingInvoice = (data as any).outgoing_invoices;
+      }
+    }
+
+    // ============================================
+    // CACHE CHECK: outgoing_invoices'dan oku
+    // ============================================
+    if (cachedOutgoingInvoice) {
+      console.log('✅ Cache\'den outgoing_invoice bulundu:', cachedOutgoingInvoice.invoice_number);
+      console.log('📊 Cache durum:', {
+        status: cachedOutgoingInvoice.status,
+        elogo_status: cachedOutgoingInvoice.elogo_status,
+        elogo_code: cachedOutgoingInvoice.elogo_code
+      });
+      
+      // Cache'deki veri yeterince yeni mi? (Son 5 dakika içinde güncellenmiş)
+      const cacheAge = new Date().getTime() - new Date(cachedOutgoingInvoice.updated_at).getTime();
+      const CACHE_THRESHOLD = 5 * 60 * 1000; // 5 dakika
+      
+      if (cacheAge < CACHE_THRESHOLD) {
+        console.log('✅ Cache yeterince yeni, API çağrısı yapılmayacak');
+        
+        // Map cached data to expected response format
+        const cachedStatus = {
+          success: true,
+          status: {
+            einvoice_status: cachedOutgoingInvoice.status,
+            einvoice_invoice_state: cachedOutgoingInvoice.elogo_status || 0,
+            stateCode: cachedOutgoingInvoice.elogo_status || 0,
+            stateName: getStateName(cachedOutgoingInvoice.elogo_status),
+            userFriendlyStatus: getUserFriendlyStatus(cachedOutgoingInvoice.elogo_status),
+            answerStateCode: cachedOutgoingInvoice.elogo_code || 0,
+            answerTypeCode: getAnswerTypeCode(cachedOutgoingInvoice.answer_type),
+            fromCache: true,
+            cacheAge: Math.floor(cacheAge / 1000) // saniye cinsinden
+          }
+        };
+        
+        return new Response(JSON.stringify(cachedStatus), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } else {
+        console.log('⚠️ Cache eski (yaşı: ' + Math.floor(cacheAge / 60000) + ' dakika), API\'den güncel veri çekilecek');
+      }
+    } else {
+      console.log('ℹ️ outgoing_invoices ile ilişkilendirme henüz yapılmamış, API\'den sorgulama yapılacak');
     }
 
     // Get valid session code (reuses existing session if not expired)
@@ -469,4 +533,64 @@ serve(async (req) => {
     });
   }
 });
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Get state name from state code
+ */
+function getStateName(stateCode: number | null | undefined): string {
+  if (stateCode === null || stateCode === undefined) return 'Bilinmiyor';
+  
+  switch (stateCode) {
+    case 0: return 'Beklemede';
+    case 1: return 'Taslak';
+    case 2: return 'İmza Bekliyor';
+    case 3: return 'Gönderildi';
+    case 4: return 'Hatalı';
+    case 5: return 'Başarılı';
+    case 6: return 'Reddedildi';
+    case 7: return 'Kabul Edildi';
+    default: return 'Bilinmiyor';
+  }
+}
+
+/**
+ * Get user-friendly status from state code
+ */
+function getUserFriendlyStatus(stateCode: number | null | undefined): string {
+  if (stateCode === null || stateCode === undefined) return 'Bilinmeyen durum';
+  
+  switch (stateCode) {
+    case 0: return 'Beklemede';
+    case 1: return 'Taslak veri';
+    case 2: return 'Gönderilmeyi bekliyor, imza bekliyor';
+    case 3: return 'Gönderim listesinde, işlem yapılıyor';
+    case 4: return 'Başarısız - Hata oluştu';
+    case 5: return 'Başarılı - Fatura alıcıya ulaştı';
+    case 6: return 'Reddedildi';
+    case 7: return 'Kabul Edildi';
+    default: return 'Bilinmeyen durum';
+  }
+}
+
+/**
+ * Get answer type code from answer type string
+ */
+function getAnswerTypeCode(answerType: string | null | undefined): number {
+  if (!answerType) return 0;
+  
+  const answerTypeUpper = answerType.toUpperCase();
+  switch (answerTypeUpper) {
+    case 'KABUL': return 5;
+    case 'RED': 
+    case 'REDDEDILDI': return 4;
+    case 'IADE': 
+    case 'IADE EDILDI': return 3;
+    default: return 0;
+  }
+}
+
 

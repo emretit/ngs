@@ -168,8 +168,8 @@ export function InsightNotificationCenter({ companyId }: InsightNotificationCent
           ) : (
             <div className="divide-y">
               {insights.map((insight) => {
-                const Icon = severityIcons[insight.severity];
-                const colorClass = severityColors[insight.severity];
+                const Icon = severityIcons[insight.severity] || Info;
+                const colorClass = severityColors[insight.severity] || 'text-blue-600';
 
                 return (
                   <div
@@ -187,7 +187,7 @@ export function InsightNotificationCenter({ companyId }: InsightNotificationCent
 
                     <div className="flex items-start gap-3">
                       <div className={cn('mt-0.5', colorClass)}>
-                        <Icon className="h-5 w-5" />
+                        {Icon && <Icon className="h-5 w-5" />}
                       </div>
 
                       <div className="flex-1 min-w-0">

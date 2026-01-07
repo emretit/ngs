@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,10 +9,31 @@ export const useVeribanInvoice = () => {
   const queryClient = useQueryClient();
   const retryTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
+  // Confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    invoiceId: string | null;
+    currentStatus: {
+      stateCode: number;
+      stateName: string;
+      userFriendlyStatus: string;
+    } | null;
+  }>({
+    open: false,
+    invoiceId: null,
+    currentStatus: null
+  });
+
   // Send invoice to Veriban
   const sendInvoiceMutation = useMutation({
-    mutationFn: async (salesInvoiceId: string) => {
-      console.log('🚀 [useVeribanInvoice] Sending invoice to Veriban:', salesInvoiceId);
+    mutationFn: async ({ 
+      salesInvoiceId, 
+      forceResend = false 
+    }: { 
+      salesInvoiceId: string; 
+      forceResend?: boolean 
+    }) => {
+      console.log('🚀 [useVeribanInvoice] Sending invoice to Veriban:', salesInvoiceId, 'forceResend:', forceResend);
       
       // Create a timeout promise (30 seconds)
       const timeoutPromise = new Promise<never>((_, reject) => {
@@ -26,6 +47,7 @@ export const useVeribanInvoice = () => {
         body: { 
           invoiceId: salesInvoiceId,
           isDirectSend: true, // Direkt GİB'e gönder
+          forceResend: forceResend, // Kullanıcı onayı ile zorla tekrar gönder
         }
       });
       
@@ -54,7 +76,19 @@ export const useVeribanInvoice = () => {
                 if (responseJson.error) {
                   errorMessage = responseJson.error;
                 }
+                // Check for confirmation needed
+                if (responseJson.needsConfirmation) {
+                  throw {
+                    message: 'NEEDS_CONFIRMATION',
+                    needsConfirmation: true,
+                    currentStatus: responseJson.currentStatus
+                  };
+                }
               } catch (e) {
+                // If it's the NEEDS_CONFIRMATION error, re-throw it
+                if ((e as any).message === 'NEEDS_CONFIRMATION') {
+                  throw e;
+                }
                 // Not JSON, use text as is
                 if (responseText) {
                   errorMessage = responseText;
@@ -62,8 +96,20 @@ export const useVeribanInvoice = () => {
               }
             } else if (error.context.body?.error) {
               errorMessage = error.context.body.error;
+              // Check for confirmation needed in context
+              if (error.context.body?.needsConfirmation) {
+                throw {
+                  message: 'NEEDS_CONFIRMATION',
+                  needsConfirmation: true,
+                  currentStatus: error.context.body.currentStatus
+                };
+              }
             }
           } catch (e) {
+            // If it's the NEEDS_CONFIRMATION error, re-throw it
+            if ((e as any).message === 'NEEDS_CONFIRMATION') {
+              throw e;
+            }
             console.error('❌ [useVeribanInvoice] Could not read response body:', e);
           }
         }
@@ -87,10 +133,19 @@ export const useVeribanInvoice = () => {
         }
       }
       
+      // Check if response data indicates confirmation needed
+      if (data?.needsConfirmation) {
+        throw {
+          message: 'NEEDS_CONFIRMATION',
+          needsConfirmation: true,
+          currentStatus: data.currentStatus
+        };
+      }
+      
       console.log('✅ [useVeribanInvoice] Response:', data);
       return data;
     },
-    onSuccess: (data, salesInvoiceId) => {
+    onSuccess: (data, { salesInvoiceId }) => {
       console.log("🎯 Veriban e-fatura gönderim cevabı:", data);
       
       if (data?.success) {
@@ -103,26 +158,24 @@ export const useVeribanInvoice = () => {
         window.dispatchEvent(new CustomEvent('einvoice-status-updated', {
           detail: { salesInvoiceId, status: 'sent' }
         }));
-
-        // Fatura gönderildikten sonra durum kontrolü yap
-        // veriban-invoice-status edge function'ı otomatik olarak önce transfer durumunu kontrol ediyor
-        // Eğer transfer tamamlanmamışsa 202 (Accepted) döner ve retry yapılır
-        // Eğer transfer tamamlandıysa invoice durumunu kontrol eder
-        
-        // İlk bekleme: 2-3 dakika (Veriban'ın dosyayı işlemesi için)
-        const initialWaitTime = 2 * 60 * 1000; // 2 dakika
-        
-        setTimeout(() => {
-          console.log('🔄 [useVeribanInvoice] Durum kontrolü başlatılıyor:', salesInvoiceId);
-          checkStatusWithRetry(salesInvoiceId, 0);
-        }, initialWaitTime);
       } else {
         toast.error(data?.error || data?.message || 'E-fatura gönderilemedi');
         queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       }
     },
-    onError: (error: any, salesInvoiceId) => {
+    onError: (error: any, { salesInvoiceId }) => {
       console.error("❌ Veriban e-fatura gönderim hatası:", error);
+      
+      // Check if confirmation is needed
+      if (error?.message === 'NEEDS_CONFIRMATION' && error?.needsConfirmation) {
+        // Open confirmation dialog
+        setConfirmDialog({
+          open: true,
+          invoiceId: salesInvoiceId,
+          currentStatus: error.currentStatus
+        });
+        return; // Don't show error toast
+      }
       
       // Edge function'dan gelen detaylı hata mesajını göster
       let errorMessage = "E-fatura gönderilirken bir hata oluştu";
@@ -329,14 +382,125 @@ export const useVeribanInvoice = () => {
     });
   };
 
+  // Toplu durum sorgulama: Tüm faturaların durumunu kontrol et
+  const refreshAllInvoiceStatuses = useCallback(async () => {
+    try {
+      console.log('🔄 [BulkStatusRefresh] Başlatılıyor...');
+      toast.loading('Fatura durumları güncelleniyor...', { id: 'bulk-refresh' });
+
+      // Tüm faturaları al (fatura_no olan)
+      const { data: invoices, error } = await supabase
+        .from('sales_invoices')
+        .select('id, fatura_no, einvoice_status')
+        .not('fatura_no', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(50); // Son 50 fatura
+
+      if (error) {
+        throw error;
+      }
+
+      if (!invoices || invoices.length === 0) {
+        toast.info('Sorgulanacak fatura bulunamadı', { id: 'bulk-refresh' });
+        return;
+      }
+
+      console.log(`📊 [BulkStatusRefresh] ${invoices.length} fatura bulundu`);
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Her fatura için durum sorgula (paralel olarak)
+      const promises = invoices.map(async (invoice) => {
+        try {
+          const { data, error: statusError } = await supabase.functions.invoke('veriban-invoice-status', {
+            body: { 
+              invoiceId: invoice.id,        // ← invoiceId ekledik (veritabanı güncellemesi için gerekli)
+              invoiceNumber: invoice.fatura_no
+            }
+          });
+
+          if (statusError) {
+            console.error(`❌ [BulkStatusRefresh] ${invoice.fatura_no} hatası:`, statusError);
+            errorCount++;
+          } else if (data?.success) {
+            console.log(`✅ [BulkStatusRefresh] ${invoice.fatura_no} güncellendi:`, data.status?.userFriendlyStatus);
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (err) {
+          console.error(`❌ [BulkStatusRefresh] ${invoice.fatura_no} hatası:`, err);
+          errorCount++;
+        }
+      });
+
+      // Tüm sorguların bitmesini bekle
+      await Promise.all(promises);
+
+      console.log(`✅ [BulkStatusRefresh] Tamamlandı: ${successCount} başarılı, ${errorCount} hata`);
+
+      // Listeyi yenile - tüm query'leri agresif şekilde yenile
+      await queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+      await queryClient.invalidateQueries({ queryKey: ["einvoice-status"] });
+      await queryClient.refetchQueries({ queryKey: ["salesInvoices"] });
+
+      // Tüm componentleri güncelle
+      window.dispatchEvent(new CustomEvent('einvoice-status-bulk-updated'));
+
+      toast.success(`${successCount} fatura durumu güncellendi`, { id: 'bulk-refresh' });
+
+    } catch (error: any) {
+      console.error('❌ [BulkStatusRefresh] Hata:', error);
+      toast.error('Fatura durumları güncellenirken hata oluştu', { id: 'bulk-refresh' });
+    }
+  }, [queryClient]);
+
+  // Cleanup: Component unmount olduğunda tüm timeout'ları temizle
+  useEffect(() => {
+    return () => {
+      // Tüm retry timeout'larını temizle
+      retryTimeoutsRef.current.forEach((timeout, invoiceId) => {
+        clearTimeout(timeout);
+        console.log('🧹 [Cleanup] Retry timeout temizlendi:', invoiceId);
+      });
+      retryTimeoutsRef.current.clear();
+    };
+  }, []);
+
+  // Confirmation dialog handlers
+  const handleConfirmResend = useCallback(() => {
+    if (confirmDialog.invoiceId) {
+      console.log('✅ Kullanıcı tekrar göndermeyi onayladı:', confirmDialog.invoiceId);
+      // forceResend = true ile tekrar çağır
+      sendInvoiceMutation.mutate({
+        salesInvoiceId: confirmDialog.invoiceId,
+        forceResend: true
+      });
+    }
+    setConfirmDialog({ open: false, invoiceId: null, currentStatus: null });
+  }, [confirmDialog.invoiceId, sendInvoiceMutation]);
+
+  const handleCancelResend = useCallback(() => {
+    console.log('❌ Kullanıcı tekrar göndermeyi iptal etti');
+    setConfirmDialog({ open: false, invoiceId: null, currentStatus: null });
+    toast.info('E-fatura gönderimi iptal edildi');
+  }, []);
+
   return {
     // Actions
     sendInvoice: sendInvoiceMutation.mutate,
     checkStatus,
+    refreshAllInvoiceStatuses, // Toplu durum yenileme
 
     // States
     isSending: sendInvoiceMutation.isPending,
     isCheckingStatus: checkStatusMutation.isPending,
+    
+    // Confirmation dialog
+    confirmDialog,
+    handleConfirmResend,
+    handleCancelResend,
   };
 };
 

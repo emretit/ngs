@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { ChartContainer } from "@/components/ui/chart-container";
 
 const data = [
   { name: "Q1", deals: 42, revenue: 145 },
@@ -12,7 +13,7 @@ const DashboardBarChart = () => {
   return (
     <Card className="p-6">
       <h3 className="text-lg font-medium mb-4">Quarterly Performance</h3>
-      <div className="h-[300px]">
+      <ChartContainer height={300}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
             <defs>
@@ -76,7 +77,7 @@ const DashboardBarChart = () => {
             />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </ChartContainer>
       <div className="flex items-center justify-center gap-6 mt-4 text-sm text-gray-600">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-black opacity-80" />

@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Bot, User, Database, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { ChartContainer } from "@/components/ui/chart-container";
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -104,34 +105,39 @@ export const AIChatMessage = memo(({ message }: AIChatMessageProps) => {
             )}
 
             {message.chartType === 'bar' && message.chartConfig && (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={message.data}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey={message.chartConfig.xKey} tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey={message.chartConfig.yKey} fill="#8b5cf6" />
-                </BarChart>
-              </ResponsiveContainer>
+              <ChartContainer height={250}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={message.data}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey={message.chartConfig.xKey} tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey={message.chartConfig.yKey} fill="#8b5cf6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
             )}
 
             {message.chartType === 'line' && message.chartConfig && (
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={message.data}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey={message.chartConfig.xKey} tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Line type="monotone" dataKey={message.chartConfig.yKey} stroke="#3b82f6" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
+              <ChartContainer height={250}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={message.data}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey={message.chartConfig.xKey} tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Line type="monotone" dataKey={message.chartConfig.yKey} stroke="#3b82f6" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
             )}
 
             {message.chartType === 'pie' && message.chartConfig && (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
+              <ChartContainer height={250}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
                   <Pie
                     data={message.data}
                     dataKey={message.chartConfig.yKey}
@@ -149,6 +155,7 @@ export const AIChatMessage = memo(({ message }: AIChatMessageProps) => {
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
+              </ChartContainer>
             )}
 
             {/* SQL debug info (collapsed by default) */}

@@ -97,6 +97,23 @@ export const ROUTE_CONTEXT_MAP: Record<string, Omit<PageContext, 'route'>> = {
     pageData: { type: 'list' }
   },
 
+  // E-Invoice Management
+  '/e-invoice': {
+    module: 'Finance',
+    entities: ['einvoices', 'einvoices_sent', 'einvoices_received', 'outgoing_invoices'],
+    pageData: { type: 'list' }
+  },
+  '/e-invoice/outgoing': {
+    module: 'Finance',
+    entities: ['outgoing_invoices', 'customers'],
+    pageData: { type: 'list' }
+  },
+  '/e-invoice/incoming': {
+    module: 'Finance',
+    entities: ['einvoices_received', 'suppliers'],
+    pageData: { type: 'list' }
+  },
+
   // Inventory
   '/products': {
     module: 'Inventory',

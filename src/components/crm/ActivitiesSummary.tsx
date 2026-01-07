@@ -42,7 +42,7 @@ const ActivitiesSummary = () => {
       const { data: activities, error } = await supabase
         .from('activities')
         .select('type, status, priority')
-        .eq('company_id', userData.company_id);
+;
         
       if (error) throw error;
       

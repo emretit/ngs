@@ -31,17 +31,10 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
   // Fast DB fetch - önce cache'den oku
   const fetchFromCache = async (): Promise<IncomingInvoice[]> => {
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .single();
-
-      if (!profile?.company_id) return [];
-
+      // RLS policy otomatik olarak current_company_id() ile filtreler
       let query = supabase
         .from('einvoices_received')
         .select('*')
-        .eq('company_id', profile.company_id)
         .order('invoice_date', { ascending: false });
 
       if (dateFilters?.startDate) {

@@ -29,7 +29,6 @@ export const usePaymentAllocation = () => {
         .from("payments")
         .select("amount, currency")
         .eq("id", params.paymentId)
-        .eq("company_id", companyId)
         .single();
 
       if (paymentError) throw paymentError;
@@ -39,8 +38,7 @@ export const usePaymentAllocation = () => {
       const { data: existingAllocations, error: allocError } = await supabase
         .from("invoice_payment_allocations")
         .select("allocated_amount")
-        .eq("payment_id", params.paymentId)
-        .eq("company_id", companyId);
+        .eq("payment_id", params.paymentId);
 
       if (allocError) throw allocError;
 
@@ -64,7 +62,6 @@ export const usePaymentAllocation = () => {
         .from(tableName)
         .select(amountField)
         .eq("id", params.invoiceId)
-        .eq("company_id", companyId)
         .single();
 
       if (invoiceError) throw invoiceError;
@@ -77,8 +74,7 @@ export const usePaymentAllocation = () => {
         .from("invoice_payment_allocations")
         .select("allocated_amount")
         .eq("invoice_id", params.invoiceId)
-        .eq("invoice_type", params.invoiceType)
-        .eq("company_id", companyId);
+        .eq("invoice_type", params.invoiceType);
 
       if (invAllocError) throw invAllocError;
 
@@ -132,8 +128,7 @@ export const usePaymentAllocation = () => {
       const { error } = await supabase
         .from("invoice_payment_allocations")
         .delete()
-        .eq("id", allocationId)
-        .eq("company_id", companyId);
+        .eq("id", allocationId);
 
       if (error) throw error;
     },
@@ -157,7 +152,6 @@ export const usePaymentAllocation = () => {
         .from("payments")
         .select("amount, currency, customer_id, supplier_id")
         .eq("id", paymentId)
-        .eq("company_id", companyId)
         .single();
 
       if (paymentError) throw paymentError;
@@ -175,8 +169,7 @@ export const usePaymentAllocation = () => {
       const { data: existingAllocations, error: allocError } = await supabase
         .from("invoice_payment_allocations")
         .select("allocated_amount")
-        .eq("payment_id", paymentId)
-        .eq("company_id", companyId);
+        .eq("payment_id", paymentId);
 
       if (allocError) throw allocError;
 
@@ -196,7 +189,6 @@ export const usePaymentAllocation = () => {
         const { data: salesInvoices, error: salesError } = await supabase
           .from("sales_invoices")
           .select("id, toplam_tutar, vade_tarihi")
-          .eq("company_id", companyId)
           .eq("customer_id", targetCustomerId)
           .in("odeme_durumu", ["odenmedi", "kismi_odendi"])
           .not("vade_tarihi", "is", null)
@@ -215,8 +207,7 @@ export const usePaymentAllocation = () => {
             .from("invoice_payment_allocations")
             .select("allocated_amount")
             .eq("invoice_id", invoice.id)
-            .eq("invoice_type", "sales")
-            .eq("company_id", companyId);
+            .eq("invoice_type", "sales");
 
           if (invAllocError) throw invAllocError;
 
@@ -254,7 +245,6 @@ export const usePaymentAllocation = () => {
         const { data: purchaseInvoices, error: purchaseError } = await supabase
           .from("purchase_invoices")
           .select("id, total_amount, due_date")
-          .eq("company_id", companyId)
           .eq("supplier_id", targetSupplierId)
           .in("status", ["pending", "partially_paid"])
           .not("due_date", "is", null)
@@ -271,8 +261,7 @@ export const usePaymentAllocation = () => {
             .from("invoice_payment_allocations")
             .select("allocated_amount")
             .eq("invoice_id", invoice.id)
-            .eq("invoice_type", "purchase")
-            .eq("company_id", companyId);
+            .eq("invoice_type", "purchase");
 
           if (invAllocError) throw invAllocError;
 

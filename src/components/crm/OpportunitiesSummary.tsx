@@ -39,10 +39,10 @@ const OpportunitiesSummary = () => {
         return { stats: [], total: 0 };
       }
       
+      // RLS policy otomatik olarak current_company_id() ile filtreler
       const { data: opportunities, error } = await supabase
         .from('opportunities')
-        .select('status')
-        .eq('company_id', userData.company_id);
+        .select('status');
       
       if (error) throw error;
       

@@ -21,6 +21,7 @@ export interface OutgoingInvoice {
   invoiceType?: string;
   invoiceProfile?: string;
   invoiceUUID?: string;
+  xmlContent?: string; // 🔥 XML içeriği eklendi
 }
 
 export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?: string; customerTaxNumber?: string }, enabled = true) => {
@@ -30,18 +31,11 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
   // Fast DB fetch - önce cache'den oku
   const fetchFromCache = async (): Promise<OutgoingInvoice[]> => {
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .single();
-
-      if (!profile?.company_id) return [];
-
+      // ✅ RLS policy otomatik olarak current_company_id() ile filtreler
       let query = supabase
         .from('outgoing_invoices')
         .select('*')
-        .eq('company_id', profile.company_id)
-        .order('invoice_date', { ascending: false });
+        .order('invoice_number', { ascending: false });
 
       if (dateFilters?.startDate) {
         query = query.gte('invoice_date', dateFilters.startDate);
@@ -74,6 +68,7 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
         invoiceType: inv.invoice_type || 'TEMEL',
         invoiceProfile: inv.invoice_profile || 'TEMELFATURA',
         invoiceUUID: inv.ettn || inv.id,
+        xmlContent: inv.xml_content, // 🔥 XML içeriğini ekliyoruz
       }));
     } catch (error) {
       console.error('Cache fetch error:', error);
@@ -84,9 +79,9 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
   // Sync from API - arka planda API'den yeni faturaları çek
   const syncFromApi = async (forceRefresh = false): Promise<OutgoingInvoice[]> => {
     try {
-      // customerTaxNumber zorunlu kontrol
+      // Veriban API customerRegisterNumber parametresini zorunlu tutuyor
       if (!dateFilters?.customerTaxNumber || dateFilters.customerTaxNumber.length < 10) {
-        throw new Error('Giden faturalar için müşteri VKN zorunludur (10-11 haneli)');
+        throw new Error('Veriban API için müşteri VKN zorunludur. Lütfen dropdown\'dan bir müşteri seçin.');
       }
 
       setIsSyncing(true);
@@ -130,15 +125,28 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
     try {
       setIsLoading(true);
       
-      // Önce cache'den hızlıca oku
+      // VKN yoksa sadece cache'den oku
+      if (!dateFilters?.customerTaxNumber || dateFilters.customerTaxNumber.length < 10) {
+        console.log('⚠️ VKN yok - sadece cache görüntüleniyor');
+        return await fetchFromCache();
+      }
+      
+      // 1. Önce cache'den hızlıca oku ve göster
       const cachedInvoices = await fetchFromCache();
       
-      // Eğer cache'de veri varsa, hemen döndür
+      // Cache'de veri varsa hemen döndür, arka planda sync devam eder
       if (cachedInvoices.length > 0) {
+        setIsLoading(false);
+        
+        // Arka planda API'den senkronize et (non-blocking)
+        syncFromApi(false).catch(error => {
+          console.error('Background sync error:', error);
+        });
+        
         return cachedInvoices;
       }
       
-      // Cache boşsa API'den çek
+      // Cache boşsa API'den çek ve bekle
       return await syncFromApi(false);
       
     } catch (error: any) {
@@ -151,7 +159,7 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
   };
 
   const { data: outgoingInvoices = [], error, refetch, isLoading: queryLoading } = useQuery({
-    queryKey: ['outgoing-invoices', dateFilters?.startDate, dateFilters?.endDate, dateFilters?.customerTaxNumber],
+    queryKey: ['outgoing-invoices', dateFilters?.startDate, dateFilters?.endDate],
     queryFn: fetchOutgoingInvoices,
     enabled,
     retry: 1,

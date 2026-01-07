@@ -1,6 +1,7 @@
 
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { ChartContainer } from "@/components/ui/chart-container";
 
 interface ChartWrapperProps {
   title: string;
@@ -12,7 +13,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({ title, data, dataKey }) => 
   return (
     <div className="bg-white p-4 rounded-lg shadow">
       <h3 className="text-lg font-medium mb-4">{title}</h3>
-      <div className="h-64">
+      <ChartContainer height={256}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
@@ -30,7 +31,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({ title, data, dataKey }) => 
             <Bar dataKey={dataKey} fill="#8884d8" />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </ChartContainer>
     </div>
   );
 };

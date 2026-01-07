@@ -324,12 +324,6 @@ const SalesInvoicesTable = ({
                       onSendInvoice(invoice.id);
                     }
                   }}
-                  invoiceData={{
-                    einvoice_status: invoice.einvoice_status,
-                    nilvera_invoice_id: invoice.nilvera_invoice_id,
-                    einvoice_sent_at: invoice.einvoice_sent_at,
-                    einvoice_error_message: invoice.einvoice_error_message
-                  }}
                 />
               </TableCell>
               <TableCell className="py-2 px-3 text-center">

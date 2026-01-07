@@ -32,21 +32,18 @@ export const useCalendarData = (options: CalendarDataOptions = {}) => {
         client
           .from("activities")
           .select(`*, assignee:assignee_id(id, first_name, last_name)`)
-          .eq("company_id", userData.company_id)
           .not("due_date", "is", null)
           .gte("due_date", dateRange.start)
           .lte("due_date", dateRange.end),
         client
           .from("opportunities")
           .select(`*, customer:customers(id, name, company)`)
-          .eq("company_id", userData.company_id)
           .not("expected_close_date", "is", null)
           .gte("expected_close_date", dateRange.start)
           .lte("expected_close_date", dateRange.end),
         client
           .from("events")
           .select("id, company_id, title, description, start_time, end_time, event_type, category, assigned_to, created_at, updated_at")
-          .eq("company_id", userData.company_id)
           .not("start_time", "is", null)
           .gte("start_time", dateRange.start)
           .lte("start_time", dateRange.end)
@@ -73,19 +70,16 @@ export const useCalendarData = (options: CalendarDataOptions = {}) => {
         client
           .from("proposals")
           .select(`*, customer:customers(id, name, company)`)
-          .eq("company_id", userData.company_id)
           .gte("offer_date", dateRange.start)
           .lte("offer_date", dateRange.end),
         client
           .from("orders")
           .select(`*, customer:customers(id, name, company)`)
-          .eq("company_id", userData.company_id)
           .gte("order_date", dateRange.start)
           .lte("order_date", dateRange.end),
         client
           .from("deliveries")
           .select(`*, customer:customers(id, name, company)`)
-          .eq("company_id", userData.company_id)
           .gte("planned_delivery_date", dateRange.start)
           .lte("planned_delivery_date", dateRange.end)
       ]);
@@ -111,34 +105,29 @@ export const useCalendarData = (options: CalendarDataOptions = {}) => {
         client
           .from("payments")
           .select("id, company_id, amount, currency, payment_date, payment_type, description, customer_id, supplier_id, account_id, created_at, updated_at")
-          .eq("company_id", userData.company_id)
           .not("payment_date", "is", null)
           .gte("payment_date", dateRange.start)
           .lte("payment_date", dateRange.end),
         client
           .from("expenses")
           .select("id, company_id, amount, type, date, category_id, description, payment_account_type, payment_account_id, created_at, updated_at")
-          .eq("company_id", userData.company_id)
           .not("date", "is", null)
           .gte("date", dateRange.start)
           .lte("date", dateRange.end),
         client
           .from("checks")
           .select("id, company_id, amount, due_date, issue_date, check_number, bank, status, notes, issuer_supplier_id, payee_supplier_id, created_at, updated_at")
-          .eq("company_id", userData.company_id)
           .not("due_date", "is", null)
           .gte("due_date", dateRange.start)
           .lte("due_date", dateRange.end),
         client
           .from("sales_invoices")
           .select(`*, customer:customers(id, name, company)`)
-          .eq("company_id", userData.company_id)
           .gte("fatura_tarihi", dateRange.start)
           .lte("fatura_tarihi", dateRange.end),
         client
           .from("purchase_invoices")
           .select(`*, supplier:suppliers(id, name, company)`)
-          .eq("company_id", userData.company_id)
           .gte("invoice_date", dateRange.start)
           .lte("invoice_date", dateRange.end)
       ]);
@@ -171,51 +160,43 @@ export const useCalendarData = (options: CalendarDataOptions = {}) => {
         client
           .from("work_orders")
           .select("id, company_id, title, description, scheduled_start, scheduled_end, status, priority, assigned_to, customer_id, sla_due, created_at, updated_at")
-          .eq("company_id", userData.company_id)
           .gte("scheduled_start", dateRange.start)
           .lte("scheduled_start", dateRange.end),
         client
           .from("service_requests")
           .select(`*, customer:customers(id, name, company)`)
-          .eq("company_id", userData.company_id)
           .gte("service_due_date", dateRange.start)
           .lte("service_due_date", dateRange.end),
         client
           .from("purchase_orders")
           .select(`*, supplier:suppliers(id, name, company)`)
-          .eq("company_id", userData.company_id)
           .gte("order_date", dateRange.start)
           .lte("order_date", dateRange.end),
         client
           .from("employee_leaves")
           .select(`*, employee:employees(id, first_name, last_name)`)
-          .eq("company_id", userData.company_id)
           .gte("start_date", dateRange.start)
           .lte("start_date", dateRange.end),
         client
           .from("grns")
           .select(`*, po:purchase_orders(id, order_number)`)
-          .eq("company_id", userData.company_id)
           .not("received_date", "is", null)
           .gte("received_date", dateRange.start)
           .lte("received_date", dateRange.end),
         client
           .from("rfqs")
           .select("*")
-          .eq("company_id", userData.company_id)
           .not("due_date", "is", null)
           .gte("due_date", dateRange.start)
           .lte("due_date", dateRange.end),
         client
           .from("purchase_requests")
           .select("*")
-          .eq("company_id", userData.company_id)
           .gte("requested_date", dateRange.start)
           .lte("requested_date", dateRange.end),
         client
           .from("inventory_transactions")
           .select("*")
-          .eq("company_id", userData.company_id)
           .not("transaction_date", "is", null)
           .gte("transaction_date", dateRange.start)
           .lte("transaction_date", dateRange.end)
@@ -249,21 +230,18 @@ export const useCalendarData = (options: CalendarDataOptions = {}) => {
         client
           .from("vehicle_maintenance")
           .select(`*, vehicle:vehicles(id, plate_number, brand, model)`)
-          .eq("company_id", userData.company_id)
           .not("maintenance_date", "is", null)
           .gte("maintenance_date", dateRange.start)
           .lte("maintenance_date", dateRange.end),
         client
           .from("vehicle_documents")
           .select(`*, vehicle:vehicles(id, plate_number, brand, model)`)
-          .eq("company_id", userData.company_id)
           .not("expiry_date", "is", null)
           .gte("expiry_date", dateRange.start)
           .lte("expiry_date", dateRange.end),
         client
           .from("vehicle_incidents")
           .select(`*, vehicle:vehicles(id, plate_number, brand, model)`)
-          .eq("company_id", userData.company_id)
           .not("incident_date", "is", null)
           .gte("incident_date", dateRange.start)
           .lte("incident_date", dateRange.end)

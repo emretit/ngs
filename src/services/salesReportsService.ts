@@ -34,16 +34,11 @@ async function getCompanyId(): Promise<string | null> {
 
 /**
  * Build base query with company filter
+ * @deprecated RLS handles company filtering automatically
  */
 async function buildBaseQuery(table: string) {
-  const companyId = await getCompanyId();
-  let query = supabase.from(table).select('*');
-  
-  if (companyId) {
-    query = query.eq('company_id', companyId);
-  }
-  
-  return query;
+  // RLS automatically filters by current_company_id()
+  return supabase.from(table).select('*');
 }
 
 /**
@@ -136,7 +131,6 @@ export async function fetchSalesPerformanceData(
   let currentQuery = supabase
     .from('opportunities')
     .select('*, sales_invoices(total_amount, currency)')
-    .eq('company_id', companyId)
     .in('status', ['won', 'closed']);
 
   currentQuery = applyDateFilters(currentQuery, filters);
@@ -159,7 +153,6 @@ export async function fetchSalesPerformanceData(
   let prevQuery = supabase
     .from('opportunities')
     .select('*, sales_invoices(total_amount, currency)')
-    .eq('company_id', companyId)
     .in('status', ['won', 'closed'])
     .gte('created_at', prevStartDate.toISOString())
     .lte('created_at', prevEndDate.toISOString());
@@ -183,8 +176,7 @@ export async function fetchSalesPerformanceData(
   // Calculate win rate (won / (won + lost))
   const { data: allCurrentOpps } = await supabase
     .from('opportunities')
-    .select('status')
-    .eq('company_id', companyId);
+    .select('status');
   
   const allCurrent = allCurrentOpps || [];
   const won = allCurrent.filter((o: any) => o.status === 'won').length;
@@ -229,7 +221,6 @@ export async function fetchSalesPerformanceData(
   const { data: allPrevOpps } = await supabase
     .from('opportunities')
     .select('status')
-    .eq('company_id', companyId)
     .gte('created_at', prevStartDate.toISOString())
     .lte('created_at', prevEndDate.toISOString());
   
@@ -284,8 +275,7 @@ export async function fetchSalesFunnelData(
 
   let query = supabase
     .from('opportunities')
-    .select('*')
-    .eq('company_id', companyId);
+    .select('*');
 
   query = applyDateFilters(query, filters);
   query = applyEmployeeFilter(query, filters.salesRepId);
@@ -404,7 +394,6 @@ export async function fetchSalesFunnelData(
   let lostQuery = supabase
     .from('opportunities')
     .select('*')
-    .eq('company_id', companyId)
     .eq('status', 'lost');
 
   lostQuery = applyDateFilters(lostQuery, filters);
@@ -478,8 +467,7 @@ export async function fetchSalesRepPerformanceData(
 
   let query = supabase
     .from('opportunities')
-    .select('*, employees(id, first_name, last_name)')
-    .eq('company_id', companyId);
+    .select('*, employees(id, first_name, last_name)');
 
   query = applyDateFilters(query, filters);
   query = applyCustomerFilter(query, filters.customerId);
@@ -580,8 +568,7 @@ export async function fetchProposalAnalysisData(
 
   let query = supabase
     .from('proposals')
-    .select('*')
-    .eq('company_id', companyId);
+    .select('*');
 
   query = applyDateFilters(query, filters);
   query = applyEmployeeFilter(query, filters.salesRepId);
@@ -661,7 +648,6 @@ export async function fetchSalesForecastData(
   let query = supabase
     .from('opportunities')
     .select('*')
-    .eq('company_id', companyId)
     .in('status', ['open', 'qualified', 'proposal', 'negotiation']);
 
   query = applyDateFilters(query, filters);
@@ -763,7 +749,6 @@ export async function fetchLostSalesData(
   let query = supabase
     .from('opportunities')
     .select('*')
-    .eq('company_id', companyId)
     .eq('status', 'lost');
 
   query = applyDateFilters(query, filters);
@@ -838,7 +823,6 @@ export async function fetchCustomerSalesData(
   let query = supabase
     .from('opportunities')
     .select('*, customers(id, name), sales_invoices(total_amount, created_at)')
-    .eq('company_id', companyId)
     .in('status', ['won', 'closed']);
 
   query = applyDateFilters(query, filters);

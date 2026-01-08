@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { loadOutgoingInvoiceDetails as loadInvoiceDetailsUtil } from '../utils/outgoingInvoiceDetailsLoader';
 
@@ -63,12 +64,13 @@ export const useOutgoingEInvoiceData = (invoiceId: string | undefined) => {
   });
 
   // Load invoice details - wrapper function
-  const loadInvoiceDetails = async () => {
+  // useCallback ile sarmalayarak her render'da yeni referans oluşturulmasını önle
+  const loadInvoiceDetails = useCallback(async () => {
     if (!invoiceId) {
       throw new Error('Invoice ID is required');
     }
     return loadInvoiceDetailsUtil(invoiceId);
-  };
+  }, [invoiceId]);
 
   return {
     products,

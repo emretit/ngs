@@ -97,50 +97,143 @@ export default function EInvoiceProcessOutgoing() {
   } = useOutgoingEInvoiceData(invoiceId);
 
   // Load invoice details - wrapper that sets state
-  const loadInvoiceDetails = useCallback(async () => {
-    try {
-      const invoiceDetails = await loadInvoiceDetailsFromHook();
-      
-      setInvoice(invoiceDetails);
-      
-      // Set default form values - tarihi doğru formatta al
-      const invoiceDateForForm = invoiceDetails.invoice_date.includes('T') 
-        ? invoiceDetails.invoice_date.split('T')[0] 
-        : invoiceDetails.invoice_date.substring(0, 10);
-      const dueDateForForm = invoiceDetails.due_date 
-        ? (invoiceDetails.due_date.includes('T') ? invoiceDetails.due_date.split('T')[0] : invoiceDetails.due_date.substring(0, 10))
-        : '';
-      setFormData({
-        invoice_date: invoiceDateForForm,
-        due_date: dueDateForForm,
-        payment_terms: '30 gün',
-        notes: `E-faturadan aktarılan satış faturası - Orijinal No: ${invoiceDetails.invoice_number}`,
-        project_id: '',
-        income_category_id: ''
-      });
-      
-      // Initialize matching items
-      const initialMatching: ProductMatchingItem[] = invoiceDetails.items.map(item => ({
-        invoice_item: item
-      }));
-      setMatchingItems(initialMatching);
-      console.log('✅ Invoice details loaded:', invoiceDetails);
-    } catch (error: any) {
-      console.error('❌ Error in loadInvoiceDetails:', error);
-      throw error;
-    }
-  }, [loadInvoiceDetailsFromHook]);
-
+  // useCallback kullanmıyoruz çünkü loadInvoiceDetailsFromHook her render'da yeni referans alabilir
+  // Bunun yerine useEffect içinde direkt çağırıyoruz
   useEffect(() => {
-    if (invoiceId) {
-      loadInvoiceDetails().catch((error) => {
-        console.error('❌ Error loading invoice details:', error);
+    if (!invoiceId) return;
+    
+    let isMounted = true;
+    
+    const loadInvoiceDetails = async () => {
+      try {
+        const invoiceDetails = await loadInvoiceDetailsFromHook();
+        
+        if (!isMounted) return;
+        
+        setInvoice(invoiceDetails);
+        
+        // Set default form values - tarihi doğru formatta al
+        const invoiceDateForForm = invoiceDetails.invoice_date.includes('T') 
+          ? invoiceDetails.invoice_date.split('T')[0] 
+          : invoiceDetails.invoice_date.substring(0, 10);
+        const dueDateForForm = invoiceDetails.due_date 
+          ? (invoiceDetails.due_date.includes('T') ? invoiceDetails.due_date.split('T')[0] : invoiceDetails.due_date.substring(0, 10))
+          : '';
+        setFormData({
+          invoice_date: invoiceDateForForm,
+          due_date: dueDateForForm,
+          payment_terms: '30 gün',
+          notes: `E-faturadan aktarılan satış faturası - Orijinal No: ${invoiceDetails.invoice_number}`,
+          project_id: '',
+          income_category_id: ''
+        });
+        
+        // Giden faturalar için einvoices tablosunda kayıt olup olmadığını kontrol et
+        // Eğer yoksa oluştur (foreign key constraint için gerekli)
+        let einvoiceId = invoiceId;
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: userProfile } = await supabase
+              .from('profiles')
+              .select('company_id')
+              .eq('id', user.id)
+              .single();
+            
+            if (userProfile?.company_id) {
+              const { data: existingEinvoice } = await supabase
+                .from('einvoices')
+                .select('id')
+                .eq('id', invoiceId)
+                .maybeSingle();
+              
+              if (!existingEinvoice) {
+                // einvoices tablosunda kayıt yok, oluştur
+                const { data: newEinvoice, error: createEinvoiceError } = await supabase
+                  .from('einvoices')
+                  .insert({
+                    id: invoiceId,
+                    invoice_number: invoiceDetails.invoice_number,
+                    supplier_name: (invoiceDetails as any).customer_name || invoiceDetails.supplier_name,
+                    supplier_tax_number: (invoiceDetails as any).customer_tax_number || invoiceDetails.supplier_tax_number,
+                    invoice_date: invoiceDetails.invoice_date,
+                    due_date: invoiceDetails.due_date || null,
+                    status: 'pending',
+                    total_amount: invoiceDetails.total_amount,
+                    paid_amount: 0,
+                    remaining_amount: invoiceDetails.total_amount,
+                    currency: invoiceDetails.currency,
+                    tax_amount: invoiceDetails.tax_total,
+                    company_id: userProfile.company_id
+                  })
+                  .select('id')
+                  .single();
+                
+                if (createEinvoiceError) {
+                  console.warn('⚠️ Error creating einvoice record:', createEinvoiceError);
+                } else if (newEinvoice) {
+                  einvoiceId = newEinvoice.id;
+                  console.log('✅ Created einvoice record for outgoing invoice:', einvoiceId);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('⚠️ Error checking/creating einvoice record:', error);
+        }
+        
+        // Initialize matching items
+        const initialMatching: ProductMatchingItem[] = invoiceDetails.items.map(item => ({
+          invoice_item: item
+        }));
+        
+        // Kaydedilmiş eşleştirmeleri yükle (einvoiceId kullan)
+        try {
+          const { data: savedMatchings, error: matchingError } = await supabase
+            .from('e_fatura_stok_eslestirme')
+            .select('*')
+            .eq('invoice_id', einvoiceId);
+          
+          if (matchingError) {
+            console.warn('⚠️ Error loading saved matchings:', matchingError);
+          } else if (savedMatchings && savedMatchings.length > 0) {
+            // Kaydedilmiş eşleştirmeleri initialMatching'e ekle
+            savedMatchings.forEach(saved => {
+              const itemIndex = initialMatching.findIndex(
+                item => item.invoice_item.id === saved.invoice_line_id
+              );
+              if (itemIndex >= 0 && saved.matched_stock_id) {
+                initialMatching[itemIndex].matched_product_id = saved.matched_stock_id;
+                if (saved.notes) {
+                  initialMatching[itemIndex].notes = saved.notes;
+                }
+              }
+            });
+            console.log('✅ Loaded saved matchings:', savedMatchings.length);
+          }
+        } catch (error) {
+          console.warn('⚠️ Error loading saved matchings:', error);
+        }
+        
+        if (!isMounted) return;
+        
+        setMatchingItems(initialMatching);
+        console.log('✅ Invoice details loaded:', invoiceDetails);
+      } catch (error: any) {
+        if (!isMounted) return;
+        console.error('❌ Error in loadInvoiceDetails:', error);
         toast.error(error.message || "Fatura detayları yüklenirken bir hata oluştu");
         // Hata durumunda geri dön
         navigate('/e-invoice');
-      });
-    }
-  }, [invoiceId, loadInvoiceDetails, navigate]);
+      }
+    };
+    
+    loadInvoiceDetails();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [invoiceId, navigate]); // loadInvoiceDetailsFromHook'u dependency'den çıkardık
   
   // Update tab title when invoice is loaded
   useEffect(() => {
@@ -149,19 +242,26 @@ export default function EInvoiceProcessOutgoing() {
     }
   }, [invoice?.invoice_number, location.pathname, updateTabTitle]);
 
-  // Müşteri eşleştirmesi için ayrı fonksiyon - useCallback ile optimize et
-  const matchCustomer = useCallback(async () => {
-    if (!invoice) {
-      console.log('⚠️ Invoice yok, müşteri araması yapılamıyor');
-      return;
-    }
+  // Müşteri eşleştirmesi için useEffect
+  // customers array'ini JSON.stringify ile serialize ederek referans değişikliğini kontrol ediyoruz
+  const customersTaxNumbers = useMemo(() => 
+    customers.map(c => c.tax_number).sort().join(','), 
+    [customers]
+  );
+  
+  useEffect(() => {
+    if (!invoice) return;
     
-    if (!customers.length) {
-      console.log('⚠️ Müşteri listesi boş, not_found olarak işaretleniyor');
+    // Müşteri listesi yükleniyor mu kontrol et
+    if (isLoadingCustomers) return;
+    
+    // Müşteri listesi boşsa not_found olarak işaretle
+    if (customers.length === 0) {
       setCustomerMatchStatus('not_found');
       return;
     }
     
+    // Müşteri araması yap
     setCustomerMatchStatus('searching');
     console.log('🔍 Müşteri aranıyor. VKN:', invoice.supplier_tax_number, 'Toplam müşteri:', customers.length);
     
@@ -181,44 +281,164 @@ export default function EInvoiceProcessOutgoing() {
       console.log('⚠️ VKN eşleşmedi. Aranan VKN:', taxNumberToMatch);
       console.log('📋 Sistemdeki müşteri VKN\'leri:', customers.map(c => c.tax_number).join(', '));
     }
-  }, [invoice, customers]);
-
-  // Müşteri eşleştirmesi için useEffect
-  useEffect(() => {
-    if (invoice && customers.length > 0) {
-      matchCustomer();
-    } else if (invoice && !isLoadingCustomers && customers.length === 0) {
-      // Müşteri listesi yüklendi ama boş - not_found olarak işaretle
-      console.log('⚠️ Müşteri listesi boş, not_found durumu');
-      setCustomerMatchStatus('not_found');
-    }
-  }, [invoice, customers, matchCustomer, isLoadingCustomers]);
+  }, [invoice?.supplier_tax_number, (invoice as any)?.customer_tax_number, customersTaxNumbers, customers.length, isLoadingCustomers]); // customersTaxNumbers ile referans değişikliğini kontrol ediyoruz
   
   // Loading state'i hesapla
   const isLoading = !invoice || isLoadingProducts || isLoadingCustomers;
   
-  const handleManualMatch = useCallback((itemIndex: number, productId: string) => {
+  const handleManualMatch = useCallback(async (itemIndex: number, productId: string) => {
+    if (!invoiceId) return;
+    
+    let itemToSave: ProductMatchingItem | null = null;
+    
+    // State'i güncelle ve item'ı kaydet
     setMatchingItems(prev => {
       const updatedMatching = [...prev];
-      updatedMatching[itemIndex] = {
-        ...updatedMatching[itemIndex],
+      const item = updatedMatching[itemIndex];
+      if (!item) return prev;
+      
+      itemToSave = {
+        ...item,
         matched_product_id: productId
       };
+      
+      updatedMatching[itemIndex] = itemToSave;
       return updatedMatching;
     });
-  }, []);
+    
+    if (!itemToSave) return;
+    
+    // Veritabanına kaydet
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (!userProfile?.company_id) return;
+      
+      // Giden faturalar için einvoices tablosunda kayıt olup olmadığını kontrol et
+      // Eğer yoksa oluştur (foreign key constraint için gerekli)
+      let einvoiceId = invoiceId;
+      if (invoice) {
+        const { data: existingEinvoice } = await supabase
+          .from('einvoices')
+          .select('id')
+          .eq('id', invoiceId)
+          .maybeSingle();
+        
+        if (!existingEinvoice) {
+          // einvoices tablosunda kayıt yok, oluştur
+          const { data: newEinvoice, error: createEinvoiceError } = await supabase
+            .from('einvoices')
+            .insert({
+              id: invoiceId,
+              invoice_number: invoice.invoice_number,
+              supplier_name: (invoice as any).customer_name || invoice.supplier_name,
+              supplier_tax_number: (invoice as any).customer_tax_number || invoice.supplier_tax_number,
+              invoice_date: invoice.invoice_date,
+              due_date: invoice.due_date || null,
+              status: 'pending',
+              total_amount: invoice.total_amount,
+              paid_amount: 0,
+              remaining_amount: invoice.total_amount,
+              currency: invoice.currency,
+              tax_amount: invoice.tax_total,
+              company_id: userProfile.company_id
+            })
+            .select('id')
+            .single();
+          
+          if (createEinvoiceError) {
+            console.error('❌ Error creating einvoice record:', createEinvoiceError);
+            toast.error('Fatura kaydı oluşturulurken hata oluştu.');
+            return;
+          }
+          
+          if (newEinvoice) {
+            einvoiceId = newEinvoice.id;
+            console.log('✅ Created einvoice record for outgoing invoice:', einvoiceId);
+          }
+        }
+      }
+      
+      const matchingRecord = {
+        invoice_id: einvoiceId, // einvoices tablosundaki ID'yi kullan
+        invoice_line_id: itemToSave.invoice_item.id,
+        invoice_product_name: itemToSave.invoice_item.product_name,
+        invoice_product_code: itemToSave.invoice_item.product_code || null,
+        invoice_quantity: itemToSave.invoice_item.quantity,
+        invoice_unit: itemToSave.invoice_item.unit || null,
+        invoice_unit_price: itemToSave.invoice_item.unit_price,
+        invoice_total_amount: itemToSave.invoice_item.line_total,
+        invoice_tax_rate: itemToSave.invoice_item.tax_rate || null,
+        matched_stock_id: productId,
+        match_type: 'manual',
+        match_confidence: 1.0,
+        is_confirmed: true,
+        notes: itemToSave.notes || null,
+        company_id: userProfile.company_id
+      };
+      
+      // Mevcut kaydı kontrol et
+      const { data: existing } = await supabase
+        .from('e_fatura_stok_eslestirme')
+        .select('id')
+        .eq('invoice_id', einvoiceId)
+        .eq('invoice_line_id', itemToSave.invoice_item.id)
+        .maybeSingle();
+      
+      if (existing) {
+        // Güncelle
+        const { error: updateError } = await supabase
+          .from('e_fatura_stok_eslestirme')
+          .update({
+            matched_stock_id: productId,
+            match_type: 'manual',
+            match_confidence: 1.0,
+            is_confirmed: true,
+            notes: itemToSave.notes || null,
+          })
+          .eq('invoice_id', einvoiceId)
+          .eq('invoice_line_id', itemToSave.invoice_item.id);
+        
+        if (updateError) {
+          console.error('❌ Error updating matching:', updateError);
+        } else {
+          console.log('✅ Matching updated in database');
+        }
+      } else {
+        // Yeni kayıt ekle
+        const { error: insertError } = await supabase
+          .from('e_fatura_stok_eslestirme')
+          .insert(matchingRecord);
+        
+        if (insertError) {
+          console.error('❌ Error saving matching:', insertError);
+        } else {
+          console.log('✅ Matching saved to database');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error in handleManualMatch:', error);
+    }
+  }, [invoiceId, invoice]); // invoice'u dependency'ye ekledik çünkü einvoice kaydı oluştururken kullanıyoruz
   
   const handleProductSelect = useCallback((itemIndex: number, product: Product) => {
     // Ürün seçildiğinde detay dialog'unu aç
     setSelectedProductForWarehouse(product);
     setPendingProductIndex(itemIndex);
     setIsWarehouseDialogOpen(true);
-  }, [matchingItems]);
+  }, []);
 
-  const handleProductDetailsConfirm = useCallback((data: { warehouseId: string; quantity?: number; price?: number; unit?: string; discountRate?: number; taxRate?: number; description?: string }) => {
+  const handleProductDetailsConfirm = useCallback(async (data: { warehouseId: string; quantity?: number; price?: number; unit?: string; discountRate?: number; taxRate?: number; description?: string }) => {
     if (selectedProductForWarehouse && pendingProductIndex >= 0) {
-      // Ürünü eşleştir
-      handleManualMatch(pendingProductIndex, selectedProductForWarehouse.id);
+      // Ürünü eşleştir (async olarak)
+      await handleManualMatch(pendingProductIndex, selectedProductForWarehouse.id);
     }
     setIsWarehouseDialogOpen(false);
     setSelectedProductForWarehouse(null);
@@ -235,12 +455,8 @@ export default function EInvoiceProcessOutgoing() {
     await queryClient.invalidateQueries({ queryKey: ["products-for-einvoice"] });
     // Match with current item
     if (currentItemIndex >= 0) {
-      const updatedMatching = [...matchingItems];
-      updatedMatching[currentItemIndex] = {
-        ...updatedMatching[currentItemIndex],
-        matched_product_id: newProduct.id
-      };
-      setMatchingItems(updatedMatching);
+      // handleManualMatch fonksiyonunu kullanarak hem state'i hem de veritabanını güncelle
+      await handleManualMatch(currentItemIndex, newProduct.id);
     }
     // Reset form state
     setCurrentItemIndex(-1);
@@ -248,16 +464,78 @@ export default function EInvoiceProcessOutgoing() {
     toast.success("Ürün oluşturuldu ve eşleştirildi");
   };
   
-  const handleRemoveMatch = useCallback((itemIndex: number) => {
+  const handleRemoveMatch = useCallback(async (itemIndex: number) => {
+    if (!invoiceId || !invoice) return;
+    
+    let itemToRemove: ProductMatchingItem | null = null;
+    let invoiceLineId: string | undefined;
+    
+    // State'i güncelle ve item'ı kaydet
     setMatchingItems(prev => {
       const updatedMatching = [...prev];
+      const item = updatedMatching[itemIndex];
+      if (!item) return prev;
+      
+      itemToRemove = item;
+      invoiceLineId = item.invoice_item.id;
+      
       updatedMatching[itemIndex] = {
-        ...updatedMatching[itemIndex],
+        ...item,
         matched_product_id: undefined
       };
       return updatedMatching;
     });
-  }, []);
+    
+    if (!itemToRemove || !invoiceLineId) return;
+    
+    // einvoiceId'yi bul (einvoices tablosunda kayıt olmalı)
+    let einvoiceId = invoiceId;
+    try {
+      const { data: existingEinvoice } = await supabase
+        .from('einvoices')
+        .select('id')
+        .eq('id', invoiceId)
+        .maybeSingle();
+      
+      if (!existingEinvoice) {
+        console.warn('⚠️ Einvoice record not found, cannot remove matching');
+        return;
+      }
+    } catch (error) {
+      console.error('❌ Error checking einvoice record:', error);
+      return;
+    }
+    
+    // Veritabanından sil veya güncelle
+    try {
+      const { data: existing } = await supabase
+        .from('e_fatura_stok_eslestirme')
+        .select('id')
+        .eq('invoice_id', einvoiceId)
+        .eq('invoice_line_id', invoiceLineId)
+        .maybeSingle();
+      
+      if (existing) {
+        // Eşleştirmeyi kaldır (matched_stock_id'yi null yap)
+        const { error: updateError } = await supabase
+          .from('e_fatura_stok_eslestirme')
+          .update({
+            matched_stock_id: null,
+            is_confirmed: false
+          })
+          .eq('invoice_id', einvoiceId)
+          .eq('invoice_line_id', invoiceLineId);
+        
+        if (updateError) {
+          console.error('❌ Error removing matching:', updateError);
+        } else {
+          console.log('✅ Matching removed from database');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error in handleRemoveMatch:', error);
+    }
+  }, [invoiceId, invoice]);
   
   const handleCreateNewCustomer = async () => {
     if (!invoice) return;
@@ -412,10 +690,11 @@ export default function EInvoiceProcessOutgoing() {
           kdv_tutari: taxTotal,
           toplam_tutar: total,
           odenen_tutar: 0,
-          tarih: formData.invoice_date,
+          fatura_tarihi: formData.invoice_date,
           vade_tarihi: formData.due_date || formData.invoice_date,
           notlar: formData.notes,
-          e_fatura_durum: 'gonderildi', // E-faturadan geldiği için zaten gönderilmiş
+          einvoice_status: 'sent', // E-faturadan geldiği için zaten gönderilmiş
+          outgoing_invoice_id: invoiceId, // Giden fatura ile ilişkilendir
           company_id: userProfile.company_id
         })
         .select()
@@ -449,15 +728,14 @@ export default function EInvoiceProcessOutgoing() {
       // Create sales invoice items
       const salesInvoiceItems = validItems.map(item => ({
         sales_invoice_id: salesInvoice.id,
-        urun_id: item.matched_product_id,
+        product_id: item.matched_product_id,
         urun_adi: item.invoice_item.product_name,
-        stok_kodu: item.invoice_item.product_code,
         miktar: item.invoice_item.quantity,
         birim: item.invoice_item.unit,
         birim_fiyat: item.invoice_item.unit_price,
         kdv_orani: item.invoice_item.tax_rate,
         indirim_orani: item.invoice_item.discount_rate || 0,
-        toplam_tutar: item.invoice_item.line_total,
+        satir_toplami: item.invoice_item.line_total,
         company_id: userProfile.company_id
       }));
       

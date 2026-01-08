@@ -167,6 +167,38 @@ const EInvoiceContent = ({
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'sent':
+      case 'gönderildi':
+        return <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 text-xs">Gönderildi</Badge>;
+      case 'delivered':
+      case 'teslim edildi':
+        return <Badge variant="outline" className="border-emerald-400 text-emerald-600 bg-emerald-50 text-xs">Teslim Edildi</Badge>;
+      case 'accepted':
+      case 'kabul edildi':
+      case 'onaylandı':
+        return <Badge variant="outline" className="border-teal-400 text-teal-600 bg-teal-50 text-xs">Kabul Edildi</Badge>;
+      case 'rejected':
+      case 'reddedildi':
+        return <Badge variant="outline" className="border-red-400 text-red-600 bg-red-50 text-xs">Reddedildi</Badge>;
+      case 'error':
+      case 'hatalı':
+        return <Badge variant="outline" className="border-red-400 text-red-600 bg-red-50 text-xs">Hata</Badge>;
+      case 'sending':
+      case 'gönderiliyor':
+        return <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 text-xs">Gönderiliyor</Badge>;
+      case 'draft':
+      case 'taslak':
+        return <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50 text-xs">Taslak</Badge>;
+      case 'pending':
+      case 'bekliyor':
+        return <Badge variant="outline" className="border-orange-400 text-orange-600 bg-orange-50 text-xs">Bekliyor</Badge>;
+      default:
+        return <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50 text-xs">{status || 'Bilinmiyor'}</Badge>;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -218,6 +250,9 @@ const EInvoiceContent = ({
                   )}
                   <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">💰 Tutar</TableHead>
                   <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">💱 Para Birimi</TableHead>
+                  {invoiceType === 'outgoing' && (
+                    <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">📊 Durum</TableHead>
+                  )}
                   {(invoiceType === 'incoming' || invoiceType === 'outgoing') && (
                     <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">⚙️ İşlemler</TableHead>
                   )}
@@ -292,6 +327,11 @@ const EInvoiceContent = ({
                     <TableCell className="text-center py-2 px-3" onClick={() => invoiceType === 'incoming' ? navigate(`/e-invoice/process/${invoice.id}`) : undefined}>
                       <Badge variant="outline" className="text-xs">{invoice.currency}</Badge>
                     </TableCell>
+                    {invoiceType === 'outgoing' && (
+                      <TableCell className="text-center py-2 px-3" onClick={() => undefined}>
+                        {getStatusBadge(invoice.status)}
+                      </TableCell>
+                    )}
                     {invoiceType === 'incoming' && (
                       <TableCell className="py-2 px-3 text-center" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-center space-x-2">

@@ -345,6 +345,128 @@ serve(async (req) => {
 
       const { data: allCachedInvoices } = await allInvoicesQuery;
       
+      // ============================================
+      // FORCE REFRESH: Update status for all cached incoming invoices
+      // Her "E-Fatura Çek" butonuna basıldığında mevcut gelen faturaların durumunu da güncelleyelim
+      // ============================================
+      if (forceRefresh && allCachedInvoices && allCachedInvoices.length > 0) {
+        console.log(`🔄 Gelen faturaların cache'sinde ${allCachedInvoices.length} fatura var - durum güncelleniyor...`);
+        
+        // Update status for cached invoices in smaller batches to avoid timeout
+        const STATUS_UPDATE_BATCH_SIZE = 10;
+        let statusUpdateCount = 0;
+        
+        for (let i = 0; i < allCachedInvoices.length; i += STATUS_UPDATE_BATCH_SIZE) {
+          const batch = allCachedInvoices.slice(i, i + STATUS_UPDATE_BATCH_SIZE);
+          
+          const statusUpdatePromises = batch.map(async (cachedInvoice) => {
+            try {
+              // Her fatura için durum sorgulama yap
+              const invoiceUUID = cachedInvoice.invoice_uuid;
+              const invoiceNumber = cachedInvoice.invoice_id;
+              
+              if (!invoiceUUID) {
+                console.warn(`⚠️ Fatura UUID yok, durum güncellemesi atlanıyor:`, cachedInvoice.invoice_id);
+                return;
+              }
+              
+              console.log(`📊 Gelen fatura durumu güncelleniyor: ${invoiceNumber || invoiceUUID}`);
+              
+              // Durum sorgulama - önce invoice number ile dene, yoksa UUID ile
+              let statusResult;
+              if (invoiceNumber) {
+                statusResult = await VeribanSoapClient.getPurchaseInvoiceStatusWithInvoiceNumber(
+                  sessionCode,
+                  invoiceNumber,
+                  veribanAuth.webservice_url
+                );
+              } else {
+                statusResult = await VeribanSoapClient.getPurchaseInvoiceStatus(
+                  sessionCode,
+                  invoiceUUID,
+                  veribanAuth.webservice_url
+                );
+              }
+              
+              if (!statusResult.success) {
+                console.warn(`⚠️ Gelen fatura durumu sorgulanamadı: ${invoiceNumber || invoiceUUID}`, statusResult.error);
+                return;
+              }
+              
+              const statusData = statusResult.data;
+              
+              if (!statusData) {
+                console.warn(`⚠️ Gelen fatura durum bilgisi alınamadı: ${invoiceNumber || invoiceUUID}`);
+                return;
+              }
+              
+              // Update database with latest status
+              const updateData: any = {
+                updated_at: new Date().toISOString(),
+              };
+              
+              // Gelen faturalarda stateCode genellikle 5 (alındı) olur
+              // Ancak cevap durumunu da güncelleyelim
+              if (statusData.stateCode === 5) {
+                updateData.status = 'received';
+              }
+              
+              // Update answer information if available
+              // AnswerTypeCode: 1=Bilinmiyor, 3=Iade Edildi, 4=Reddedildi, 5=Kabul edildi
+              if (statusData.answerTypeCode && statusData.answerTypeCode !== 1) {
+                updateData.answer_status = statusData.answerTypeCode === 5 ? 'KABUL' : (statusData.answerTypeCode === 4 ? 'RED' : 'IADE');
+                updateData.answer_date = updateData.answer_date || new Date().toISOString();
+              }
+              
+              // Update in database
+              const { error: updateError } = await supabase
+                .from('einvoices_received')
+                .update(updateData)
+                .eq('invoice_uuid', invoiceUUID);
+              
+              if (updateError) {
+                console.error(`❌ Gelen fatura durumu güncellenemedi: ${invoiceNumber || invoiceUUID}`, updateError.message);
+              } else {
+                statusUpdateCount++;
+                console.log(`✅ Gelen fatura durumu güncellendi: ${invoiceNumber || invoiceUUID}`);
+              }
+              
+            } catch (err: any) {
+              console.error(`❌ Gelen fatura durum güncelleme hatası:`, err.message);
+            }
+          });
+          
+          await Promise.all(statusUpdatePromises);
+          
+          // Rate limiting - wait 200ms between batches
+          if (i + STATUS_UPDATE_BATCH_SIZE < allCachedInvoices.length) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        }
+        
+        console.log(`✅ ${statusUpdateCount} gelen faturanın durumu başarıyla güncellendi`);
+        
+        // Re-fetch updated invoices from DB - query'yi yeniden execute et
+        let refetchQuery = supabase
+          .from('einvoices_received')
+          .select('*')
+          .eq('company_id', profile.company_id)
+          .order('invoice_date', { ascending: false });
+
+        if (formattedStartDate) {
+          refetchQuery = refetchQuery.gte('invoice_date', formattedStartDate);
+        }
+        if (formattedEndDate) {
+          refetchQuery = refetchQuery.lte('invoice_date', formattedEndDate);
+        }
+
+        const { data: updatedInvoices } = await refetchQuery;
+        if (updatedInvoices) {
+          allCachedInvoices.length = 0;
+          allCachedInvoices.push(...updatedInvoices);
+        }
+      }
+      
       const allInvoices = (allCachedInvoices || []).map(inv => ({
         id: inv.invoice_uuid,
         einvoice_id: inv.invoice_uuid,

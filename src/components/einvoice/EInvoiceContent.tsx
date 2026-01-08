@@ -16,7 +16,8 @@ import {
   Loader2,
   Package,
   Eye,
-  Code
+  Code,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -34,6 +35,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OutgoingInvoiceItem } from "@/types/einvoice";
 import { supabase } from "@/integrations/supabase/client";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { toast } from "sonner";
 
 interface EInvoiceContentProps {
   invoices: any[];
@@ -58,6 +61,10 @@ const EInvoiceContent = ({
   const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
   const [currentIntegrator, setCurrentIntegrator] = useState<IntegratorType | null>(null);
   
+  // Silme state'leri
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<any>(null);
+  
   // XML görüntüleme state'leri
   const [xmlViewerOpen, setXmlViewerOpen] = useState(false);
   const [selectedXmlContent, setSelectedXmlContent] = useState<string>('');
@@ -79,7 +86,7 @@ const EInvoiceContent = ({
   // PDF download handler - integrator'e göre doğru fonksiyonu çağır
   const handleDownloadPdf = async (invoiceId: string) => {
     if (currentIntegrator === 'veriban') {
-      return await downloadVeribanPdf(invoiceId, 'e-fatura');
+      return await downloadVeribanPdf(invoiceId, 'e-fatura', invoiceType);
     } else {
       // Default to Nilvera
       return await downloadNilveraPdf(invoiceId, 'e-fatura');
@@ -116,6 +123,53 @@ const EInvoiceContent = ({
       } finally {
         setLoadingItems(false);
       }
+    }
+  };
+
+  // Silme handler
+  const handleDeleteClick = (invoice: any) => {
+    // Gönderilmiş faturalar silinemez
+    if (invoice.elogoStatus === 5 || invoice.einvoice_status === 'sent' || invoice.einvoice_status === 'delivered' || invoice.einvoice_status === 'accepted') {
+      toast.error("Gönderilmiş e-faturalar silinemez");
+      return;
+    }
+    setInvoiceToDelete(invoice);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!invoiceToDelete) return;
+
+    try {
+      // Önce fatura kalemlerini sil
+      const { error: itemsError } = await supabase
+        .from('outgoing_invoice_items')
+        .delete()
+        .eq('outgoing_invoice_id', invoiceToDelete.id);
+
+      if (itemsError) {
+        throw new Error(`Kalemler silinirken hata: ${itemsError.message}`);
+      }
+
+      // Sonra faturayı sil
+      const { error: invoiceError } = await supabase
+        .from('outgoing_invoices')
+        .delete()
+        .eq('id', invoiceToDelete.id);
+
+      if (invoiceError) {
+        throw new Error(`Fatura silinirken hata: ${invoiceError.message}`);
+      }
+
+      toast.success(`"${invoiceToDelete.invoiceNumber}" numaralı e-fatura başarıyla silindi`);
+      setDeleteDialogOpen(false);
+      setInvoiceToDelete(null);
+      
+      // Listeyi yenile
+      onRefresh();
+    } catch (error: any) {
+      console.error('Silme hatası:', error);
+      toast.error(`Fatura silinirken hata oluştu: ${error.message}`);
     }
   };
 
@@ -167,21 +221,38 @@ const EInvoiceContent = ({
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status?.toLowerCase()) {
+  // E-Fatura Durumu (StateCode bazlı - Veriban XML'den gelen)
+  const getEInvoiceStatusBadge = (invoice: any) => {
+    const stateCode = invoice.elogoStatus || invoice.stateCode;
+    const answerType = invoice.answerType;
+
+    if (stateCode === 5) { // Başarıyla iletildi
+      if (answerType === 'KABUL') return <Badge variant="outline" className="border-teal-400 text-teal-600 bg-teal-50 text-xs">Kabul Edildi</Badge>;
+      if (answerType === 'RED') return <Badge variant="outline" className="border-red-400 text-red-600 bg-red-50 text-xs">Reddedildi</Badge>;
+      if (answerType === 'IADE') return <Badge variant="outline" className="border-orange-400 text-orange-600 bg-orange-50 text-xs">İade Edildi</Badge>;
+      return <Badge variant="outline" className="border-emerald-400 text-emerald-600 bg-emerald-50 text-xs">Teslim Edildi</Badge>;
+    } else if (stateCode === 4) { // Hatalı
+      return <Badge variant="outline" className="border-red-400 text-red-600 bg-red-50 text-xs">Hata</Badge>;
+    } else if (stateCode === 3) { // Gönderim listesinde
+      return <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 text-xs">Gönderim Listesinde</Badge>;
+    } else if (stateCode === 2) { // Bekliyor/İmza bekliyor
+      return <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 text-xs">İmza Bekliyor</Badge>;
+    } else if (stateCode === 1) { // Taslak
+      return <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50 text-xs">Taslak</Badge>;
+    }
+    
+    return <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50 text-xs">-</Badge>;
+  };
+
+  // Gönderim Durumu (İşlem durumu - gönderiliyor, hata vb.)
+  const getSendingStatusBadge = (invoice: any) => {
+    switch (invoice.status?.toLowerCase()) {
       case 'sent':
       case 'gönderildi':
         return <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 text-xs">Gönderildi</Badge>;
       case 'delivered':
       case 'teslim edildi':
         return <Badge variant="outline" className="border-emerald-400 text-emerald-600 bg-emerald-50 text-xs">Teslim Edildi</Badge>;
-      case 'accepted':
-      case 'kabul edildi':
-      case 'onaylandı':
-        return <Badge variant="outline" className="border-teal-400 text-teal-600 bg-teal-50 text-xs">Kabul Edildi</Badge>;
-      case 'rejected':
-      case 'reddedildi':
-        return <Badge variant="outline" className="border-red-400 text-red-600 bg-red-50 text-xs">Reddedildi</Badge>;
       case 'error':
       case 'hatalı':
         return <Badge variant="outline" className="border-red-400 text-red-600 bg-red-50 text-xs">Hata</Badge>;
@@ -194,8 +265,14 @@ const EInvoiceContent = ({
       case 'pending':
       case 'bekliyor':
         return <Badge variant="outline" className="border-orange-400 text-orange-600 bg-orange-50 text-xs">Bekliyor</Badge>;
+      case 'cancelled':
+      case 'iptal':
+        return <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50 text-xs">İptal</Badge>;
+      case 'failed':
+      case 'başarısız':
+        return <Badge variant="outline" className="border-red-400 text-red-600 bg-red-50 text-xs">Başarısız</Badge>;
       default:
-        return <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50 text-xs">{status || 'Bilinmiyor'}</Badge>;
+        return <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50 text-xs">{invoice.status || '-'}</Badge>;
     }
   };
 
@@ -251,7 +328,10 @@ const EInvoiceContent = ({
                   <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">💰 Tutar</TableHead>
                   <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">💱 Para Birimi</TableHead>
                   {invoiceType === 'outgoing' && (
-                    <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">📊 Durum</TableHead>
+                    <>
+                      <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">📊 E-Fatura Durumu</TableHead>
+                      <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">🚀 Gönderim Durumu</TableHead>
+                    </>
                   )}
                   {(invoiceType === 'incoming' || invoiceType === 'outgoing') && (
                     <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">⚙️ İşlemler</TableHead>
@@ -328,9 +408,14 @@ const EInvoiceContent = ({
                       <Badge variant="outline" className="text-xs">{invoice.currency}</Badge>
                     </TableCell>
                     {invoiceType === 'outgoing' && (
-                      <TableCell className="text-center py-2 px-3" onClick={() => undefined}>
-                        {getStatusBadge(invoice.status)}
-                      </TableCell>
+                      <>
+                        <TableCell className="text-center py-2 px-3" onClick={() => undefined}>
+                          {getEInvoiceStatusBadge(invoice)}
+                        </TableCell>
+                        <TableCell className="text-center py-2 px-3" onClick={() => undefined}>
+                          {getSendingStatusBadge(invoice)}
+                        </TableCell>
+                      </>
                     )}
                     {invoiceType === 'incoming' && (
                       <TableCell className="py-2 px-3 text-center" onClick={(e) => e.stopPropagation()}>
@@ -424,6 +509,19 @@ const EInvoiceContent = ({
                             title="XML Görüntüle"
                           >
                             <Code className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(invoice);
+                            }}
+                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            title="Sil"
+                            disabled={invoice.elogoStatus === 5 || invoice.einvoice_status === 'sent' || invoice.einvoice_status === 'delivered' || invoice.einvoice_status === 'accepted'}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -684,6 +782,18 @@ const EInvoiceContent = ({
           </Tabs>
         </SheetContent>
       </Sheet>
+
+      {/* Silme Onay Dialogu */}
+      <ConfirmationDialogComponent
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="E-Faturayı Sil"
+        description={`"${invoiceToDelete?.invoiceNumber || 'Bu e-fatura'}" numaralı e-faturayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        onConfirm={handleConfirmDelete}
+        variant="destructive"
+      />
     </>
   );
 };

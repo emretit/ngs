@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Table,
@@ -12,12 +12,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit2, Trash2, Download, FileText, MoreHorizontal, Copy, Eye } from "lucide-react";
-import EInvoiceStatusBadge from "./EInvoiceStatusBadge";
+import { Edit2, Trash2, Download, FileText, MoreHorizontal, Copy, Eye, Loader2 } from "lucide-react";
+import EInvoiceStateBadge from "./EInvoiceStateBadge";
 import SalesInvoicesTableHeader from "./table/SalesInvoicesTableHeader";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { useNilveraPdf } from "@/hooks/useNilveraPdf";
+import { useVeribanPdf } from "@/hooks/useVeribanPdf";
+import { IntegratorService, IntegratorType } from "@/services/integratorService";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface SalesInvoicesTableProps {
   invoices: any[];
@@ -45,7 +49,8 @@ const SalesInvoicesTable = ({
   documentTypeFilter
 }: SalesInvoicesTableProps) => {
   const navigate = useNavigate();
-  const { downloadAndOpenPdf, isDownloading } = useNilveraPdf();
+  const { downloadAndOpenPdf: downloadNilveraPdf } = useNilveraPdf();
+  const { downloadAndOpenPdf: downloadVeribanPdf } = useVeribanPdf();
   
   // Sorting state
   const [sortField, setSortField] = useState<string>('tarih');
@@ -54,6 +59,80 @@ const SalesInvoicesTable = ({
   // Delete confirmation state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<any>(null);
+  
+  // PDF downloading state
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
+  
+  // Integrator state
+  const [currentIntegrator, setCurrentIntegrator] = useState<IntegratorType | null>(null);
+
+  // Get current integrator
+  useEffect(() => {
+    const fetchIntegrator = async () => {
+      const integrator = await IntegratorService.getSelectedIntegrator();
+      setCurrentIntegrator(integrator);
+    };
+    fetchIntegrator();
+  }, []);
+
+  // PDF'in mevcut olup olmadığını kontrol et
+  const [outgoingInvoiceIds, setOutgoingInvoiceIds] = useState<Record<string, string>>({});
+  const [fetchingOutgoingInvoices, setFetchingOutgoingInvoices] = useState(false);
+
+  useEffect(() => {
+    // Sadece Veriban aktifse ve faturalarda outgoing_invoice_id varsa kontrol et
+    if (currentIntegrator !== 'veriban' || invoices.length === 0) return;
+
+    const fetchOutgoingInvoiceIds = async () => {
+      if (fetchingOutgoingInvoices) return;
+      setFetchingOutgoingInvoices(true);
+
+      try {
+        // İlişki: sales_invoices.outgoing_invoice_id = outgoing_invoices.id
+        const invoicesWithOutgoing = invoices.filter(inv => inv.outgoing_invoice_id);
+        
+        if (invoicesWithOutgoing.length === 0) {
+          console.log('ℹ️ [SalesInvoicesTable] Veriban ile ilişkili fatura yok');
+          setFetchingOutgoingInvoices(false);
+          return;
+        }
+        
+        const outgoingIds = invoicesWithOutgoing.map(inv => inv.outgoing_invoice_id);
+        
+        console.log('🔍 [SalesInvoicesTable] Checking outgoing_invoice_ids:', outgoingIds);
+        
+        const { data, error } = await supabase
+          .from('outgoing_invoices')
+          .select('id, ettn')
+          .in('id', outgoingIds);
+
+        if (error) {
+          console.error('❌ [SalesInvoicesTable] Error fetching outgoing invoices:', error);
+          return;
+        }
+
+        console.log('✅ [SalesInvoicesTable] Outgoing invoices found:', data?.length || 0);
+
+        if (data) {
+          // sales_invoice_id -> outgoing_invoice_id mapping oluştur
+          const mapping: Record<string, string> = {};
+          invoicesWithOutgoing.forEach(inv => {
+            if (inv.outgoing_invoice_id && data.some(d => d.id === inv.outgoing_invoice_id)) {
+              mapping[inv.id] = inv.outgoing_invoice_id;
+            }
+          });
+          setOutgoingInvoiceIds(mapping);
+          console.log('📊 [SalesInvoicesTable] Outgoing invoice mapping:', mapping);
+        }
+      } catch (error) {
+        console.error('❌ [SalesInvoicesTable] Exception in fetchOutgoingInvoiceIds:', error);
+      } finally {
+        setFetchingOutgoingInvoices(false);
+      }
+    };
+
+    fetchOutgoingInvoiceIds();
+  }, [invoices, currentIntegrator]);
 
   // Columns definition
   const columns = [
@@ -62,7 +141,7 @@ const SalesInvoicesTable = ({
     { id: 'tarih', label: 'Tarih', visible: true, sortable: true },
     { id: 'tutar', label: 'Tutar', visible: true, sortable: true },
     { id: 'tip', label: 'Fatura Tipi', visible: true, sortable: false },
-    { id: 'e_fatura', label: 'E-Fatura', visible: true, sortable: false },
+    { id: 'e_fatura_durumu', label: 'E-Fatura Durumu', visible: true, sortable: false },
     { id: 'actions', label: 'İşlemler', visible: true, sortable: false }
   ];
 
@@ -240,11 +319,46 @@ const SalesInvoicesTable = ({
     setInvoiceToDelete(null);
   };
 
-  // PDF indirme
+  // Fatura için PDF'in mevcut olup olmadığını kontrol et
+  const hasPdfAvailable = (invoice: any) => {
+    // Nilvera kontrolü (Nilvera entegratör kullanılıyorsa)
+    if (currentIntegrator === 'nilvera' && invoice.nilvera_invoice_id) return true;
+    
+    // Veriban kontrolü (outgoing_invoice_id ile ilişkilendirilmiş)
+    if (currentIntegrator === 'veriban' && outgoingInvoiceIds[invoice.id]) return true;
+    
+    // Fallback: Her iki entegratör için de kontrol
+    if (invoice.nilvera_invoice_id || outgoingInvoiceIds[invoice.id]) return true;
+    
+    return false;
+  };
+
+  // PDF indirme - hem Nilvera hem Veriban destekli
   const handleDownloadPdf = async (invoice: any) => {
-    if (invoice.nilvera_invoice_id) {
-      const invoiceType = invoice.einvoice_profile === 'EARSIVFATURA' ? 'e-arşiv' : 'e-fatura';
-      await downloadAndOpenPdf(invoice.nilvera_invoice_id, invoiceType);
+    setDownloadingInvoiceId(invoice.id);
+    try {
+      const invoiceType = invoice.invoice_profile === 'EARSIVFATURA' ? 'e-arşiv' : 'e-fatura';
+      
+      // Veriban kontrolü - outgoing_invoice_id varsa Veriban ile indir
+      if (currentIntegrator === 'veriban' && outgoingInvoiceIds[invoice.id]) {
+        console.log('📄 [PDF Download] Veriban ile indiriliyor:', outgoingInvoiceIds[invoice.id]);
+        await downloadVeribanPdf(outgoingInvoiceIds[invoice.id], invoiceType, 'outgoing');
+        return;
+      }
+      
+      // Nilvera kontrolü
+      if (invoice.nilvera_invoice_id) {
+        console.log('📄 [PDF Download] Nilvera ile indiriliyor:', invoice.nilvera_invoice_id);
+        await downloadNilveraPdf(invoice.nilvera_invoice_id, invoiceType);
+        return;
+      }
+      
+      // Hiçbir entegratör ile ilişkili değilse
+      toast.error('Bu fatura için PDF bulunamadı. Lütfen önce e-fatura gönderin.');
+    } catch (error) {
+      console.error('PDF önizleme hatası:', error);
+    } finally {
+      setDownloadingInvoiceId(null);
     }
   };
 
@@ -367,16 +481,16 @@ const SalesInvoicesTable = ({
                 </div>
               </TableCell>
               <TableCell className="text-center py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                <EInvoiceStatusBadge 
-                  salesInvoiceId={invoice.id}
-                  customerTaxNumber={invoice.customer?.tax_number}
+                <EInvoiceStateBadge 
+                  stateCode={invoice.elogo_status}
+                  answerType={invoice.answer_type}
                   onSendClick={() => {
                     console.log('Sending invoice:', invoice.id);
-                    // Use the sendInvoice function from parent component
                     if (onSendInvoice) {
                       onSendInvoice(invoice.id);
                     }
                   }}
+                  showActionButton={true}
                 />
               </TableCell>
               <TableCell className="py-2 px-3 text-center">
@@ -393,6 +507,26 @@ const SalesInvoicesTable = ({
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
+                  
+                  {hasPdfAvailable(invoice) && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadPdf(invoice);
+                      }}
+                      disabled={downloadingInvoiceId === invoice.id}
+                      className="h-7 w-7"
+                      title="PDF Önizleme"
+                    >
+                      {downloadingInvoiceId === invoice.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <FileText className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
                   
                   <Button
                     variant="ghost"
@@ -429,10 +563,10 @@ const SalesInvoicesTable = ({
                         <Copy className="h-4 w-4 mr-2" />
                         Kopyala
                       </DropdownMenuItem>
-                      {invoice.nilvera_invoice_id && (
+                      {hasPdfAvailable(invoice) && (
                         <DropdownMenuItem 
                           onClick={() => handleDownloadPdf(invoice)}
-                          disabled={isDownloading}
+                          disabled={downloadingInvoiceId === invoice.id}
                         >
                           <Download className="h-4 w-4 mr-2" />
                           PDF İndir

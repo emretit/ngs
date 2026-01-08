@@ -461,6 +461,134 @@ serve(async (req) => {
 
       const { data: allCachedInvoices } = await allInvoicesQuery;
       
+      // ============================================
+      // FORCE REFRESH: Update status for all cached invoices
+      // Her "E-Fatura Çek" butonuna basıldığında mevcut faturaların durumunu da güncelleyelim
+      // ============================================
+      if (forceRefresh && allCachedInvoices && allCachedInvoices.length > 0) {
+        console.log(`🔄 Cache'deki ${allCachedInvoices.length} faturanın durumu güncelleniyor...`);
+        
+        // Update status for cached invoices in smaller batches to avoid timeout
+        const STATUS_UPDATE_BATCH_SIZE = 10;
+        let statusUpdateCount = 0;
+        
+        for (let i = 0; i < allCachedInvoices.length; i += STATUS_UPDATE_BATCH_SIZE) {
+          const batch = allCachedInvoices.slice(i, i + STATUS_UPDATE_BATCH_SIZE);
+          
+          const statusUpdatePromises = batch.map(async (cachedInvoice) => {
+            try {
+              // Her fatura için durum sorgulama yap
+              const invoiceUUID = cachedInvoice.ettn || cachedInvoice.id;
+              const invoiceNumber = cachedInvoice.invoice_number;
+              
+              if (!invoiceUUID) {
+                console.warn(`⚠️ Fatura UUID yok, durum güncellemesi atlanıyor:`, cachedInvoice.id);
+                return;
+              }
+              
+              console.log(`📊 Durum güncelleniyor: ${invoiceNumber || invoiceUUID}`);
+              
+              // Durum sorgulama - önce invoice number ile dene, yoksa UUID ile
+              let statusResult;
+              if (invoiceNumber) {
+                statusResult = await VeribanSoapClient.getSalesInvoiceStatusWithInvoiceNumber(
+                  sessionCode,
+                  invoiceNumber,
+                  veribanAuth.webservice_url
+                );
+              } else {
+                statusResult = await VeribanSoapClient.getSalesInvoiceStatus(
+                  sessionCode,
+                  invoiceUUID,
+                  veribanAuth.webservice_url
+                );
+              }
+              
+              if (!statusResult.success) {
+                console.warn(`⚠️ Durum sorgulanamadı: ${invoiceNumber || invoiceUUID}`, statusResult.error);
+                return;
+              }
+              
+              const statusData = statusResult.data;
+              
+              if (!statusData) {
+                console.warn(`⚠️ Durum bilgisi alınamadı: ${invoiceNumber || invoiceUUID}`);
+                return;
+              }
+              
+              // Update database with latest status
+              const updateData: any = {
+                updated_at: new Date().toISOString(),
+              };
+              
+              // StateCode: 1=TASLAK, 2=Gönderilmeyi bekliyor, 3=Gönderim listesinde, 4=HATALI, 5=Başarıyla iletildi
+              if (statusData.stateCode === 5) {
+                updateData.status = 'delivered';
+                updateData.delivered_at = updateData.delivered_at || new Date().toISOString();
+              } else if (statusData.stateCode === 4) {
+                updateData.status = 'failed';
+              } else if (statusData.stateCode === 3 || statusData.stateCode === 2) {
+                updateData.status = 'sent';
+              } else if (statusData.stateCode === 1) {
+                updateData.status = 'draft';
+              }
+              
+              // Update answer information if available
+              if (statusData.answerTypeCode && statusData.answerTypeCode !== 1) {
+                updateData.is_answered = true;
+                updateData.answer_type = statusData.answerTypeCode === 5 ? 'KABUL' : (statusData.answerTypeCode === 4 ? 'RED' : 'IADE');
+                updateData.answer_date = updateData.answer_date || new Date().toISOString();
+              }
+              
+              // Update in database
+              const { error: updateError } = await supabase
+                .from('outgoing_invoices')
+                .update(updateData)
+                .eq('id', cachedInvoice.id);
+              
+              if (updateError) {
+                console.error(`❌ Durum güncellenemedi: ${invoiceNumber || invoiceUUID}`, updateError.message);
+              } else {
+                statusUpdateCount++;
+                console.log(`✅ Durum güncellendi: ${invoiceNumber || invoiceUUID} -> ${updateData.status}`);
+              }
+              
+            } catch (err: any) {
+              console.error(`❌ Durum güncelleme hatası:`, err.message);
+            }
+          });
+          
+          await Promise.all(statusUpdatePromises);
+          
+          // Rate limiting - wait 200ms between batches
+          if (i + STATUS_UPDATE_BATCH_SIZE < allCachedInvoices.length) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        }
+        
+        console.log(`✅ ${statusUpdateCount} faturanın durumu başarıyla güncellendi`);
+        
+        // Re-fetch updated invoices from DB - query'yi yeniden execute et
+        let refetchQuery = supabase
+          .from('outgoing_invoices')
+          .select('*')
+          .eq('company_id', profile.company_id)
+          .order('invoice_date', { ascending: false });
+
+        if (formattedStartDate) {
+          refetchQuery = refetchQuery.gte('invoice_date', formattedStartDate);
+        }
+        if (formattedEndDate) {
+          refetchQuery = refetchQuery.lte('invoice_date', formattedEndDate);
+        }
+
+        const { data: updatedInvoices } = await refetchQuery;
+        if (updatedInvoices) {
+          allCachedInvoices.length = 0;
+          allCachedInvoices.push(...updatedInvoices);
+        }
+      }
+      
       const allInvoices = (allCachedInvoices || []).map(inv => ({
         id: inv.id,
         invoiceUUID: inv.ettn || inv.id,
@@ -478,6 +606,13 @@ serve(async (req) => {
         status: inv.status || 'sent',
         sentAt: inv.sent_at || null,
         deliveredAt: inv.delivered_at || null,
+        // Veriban durum bilgileri - XML'den gelen ve DB'ye kaydedilen bilgiler
+        stateCode: inv.elogo_status || null,
+        answerStateCode: inv.elogo_code || null,
+        statusDescription: inv.elogo_description || null,
+        answerType: inv.answer_type || null,
+        isAnswered: inv.is_answered || false,
+        xmlContent: inv.xml_content || null,
       }));
 
       console.log(`✅ Toplam ${allInvoices.length} fatura döndürülüyor (${invoices.length} yeni)`);

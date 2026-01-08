@@ -567,7 +567,7 @@ export default function EInvoiceProcessOutgoing() {
         company: customerDetails?.company_name || customerName,
         tax_number: customerDetails?.tax_number || customerTaxNumber,
         email: customerDetails?.email,
-        phone: customerDetails?.phone,
+        mobile_phone: customerDetails?.phone,
         address: customerDetails?.address ? 
           `${customerDetails.address.street || ''} ${customerDetails.address.district || ''} ${customerDetails.address.city || ''}`.trim() : 
           undefined,
@@ -575,8 +575,8 @@ export default function EInvoiceProcessOutgoing() {
         district: customerDetails?.address?.district,
         postal_code: customerDetails?.address?.postal_code,
         country: customerDetails?.address?.country || 'Türkiye',
-        type: 'kurumsal',
-        status: 'active',
+        type: 'kurumsal' as const,
+        status: 'aktif' as const,
         balance: 0,
         company_id: userProfile.company_id // RLS için company_id ekle
       };
@@ -695,7 +695,12 @@ export default function EInvoiceProcessOutgoing() {
           notlar: formData.notes,
           einvoice_status: 'sent', // E-faturadan geldiği için zaten gönderilmiş
           outgoing_invoice_id: invoiceId, // Giden fatura ile ilişkilendir
-          company_id: userProfile.company_id
+          company_id: userProfile.company_id,
+          // Veriban durum bilgileri
+          elogo_status: invoice.elogo_status || null,
+          answer_type: invoice.answer_type || null,
+          elogo_code: invoice.elogo_code || null,
+          elogo_description: invoice.elogo_description || null,
         })
         .select()
         .single();
@@ -966,6 +971,62 @@ export default function EInvoiceProcessOutgoing() {
   const customerName = (invoice as any).customer_name || invoice.supplier_name;
   const customerTaxNumber = (invoice as any).customer_tax_number || invoice.supplier_tax_number;
   
+  // E-Fatura Durumu badge helper (StateCode bazlı)
+  const getEInvoiceStatusBadge = () => {
+    if (!invoice) return null;
+    
+    const stateCode = invoice.elogo_status;
+    const answerType = invoice.answer_type;
+
+    if (stateCode !== null && stateCode !== undefined) {
+      if (stateCode === 5) {
+        if (answerType === 'KABUL') {
+          return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">✓ Kabul Edildi</Badge>;
+        } else if (answerType === 'RED') {
+          return <Badge className="bg-red-50 text-red-700 border-red-200">✗ Reddedildi</Badge>;
+        } else if (answerType === 'IADE') {
+          return <Badge className="bg-orange-50 text-orange-700 border-orange-200">↩ İade Edildi</Badge>;
+        }
+        return <Badge className="bg-teal-50 text-teal-700 border-teal-200">✓ Teslim Edildi</Badge>;
+      } else if (stateCode === 4) {
+        return <Badge className="bg-red-50 text-red-700 border-red-200">✗ Hata</Badge>;
+      } else if (stateCode === 3) {
+        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">→ Gönderim Listesinde</Badge>;
+      } else if (stateCode === 2) {
+        return <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">⏱ İmza Bekliyor</Badge>;
+      } else if (stateCode === 1) {
+        return <Badge className="bg-gray-50 text-gray-700 border-gray-200">📝 Taslak</Badge>;
+      }
+    }
+
+    return <Badge className="bg-gray-50 text-gray-700 border-gray-200">-</Badge>;
+  };
+
+  // Gönderim Durumu badge helper
+  const getSendingStatusBadge = () => {
+    if (!invoice || !invoice.status) return null;
+    
+    switch (invoice.status.toLowerCase()) {
+      case 'delivered':
+        return <Badge className="bg-teal-50 text-teal-700 border-teal-200">✓ Teslim Edildi</Badge>;
+      case 'sent':
+        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">→ Gönderildi</Badge>;
+      case 'draft':
+        return <Badge className="bg-gray-50 text-gray-700 border-gray-200">📝 Taslak</Badge>;
+      case 'sending':
+        return <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">⏱ Gönderiliyor</Badge>;
+      case 'error':
+      case 'failed':
+        return <Badge className="bg-red-50 text-red-700 border-red-200">✗ Hata</Badge>;
+      case 'pending':
+        return <Badge className="bg-orange-50 text-orange-700 border-orange-200">⏱ Bekliyor</Badge>;
+      case 'cancelled':
+        return <Badge className="bg-gray-50 text-gray-700 border-gray-200">⊗ İptal</Badge>;
+      default:
+        return <Badge className="bg-gray-50 text-gray-700 border-gray-200">{invoice.status}</Badge>;
+    }
+  };
+  
   return (
     <>
       <div className="space-y-2">
@@ -996,6 +1057,8 @@ export default function EInvoiceProcessOutgoing() {
             
             <div className="flex items-center gap-4">
               <div className="flex flex-wrap gap-2 items-center">
+                {getEInvoiceStatusBadge()}
+                {getSendingStatusBadge()}
                 <Badge variant="outline" className="px-3 py-1">
                   <Package className="h-3 w-3 mr-1" />
                   {invoice.items.length} Kalem

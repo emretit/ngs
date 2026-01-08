@@ -119,7 +119,7 @@ const Dashboard = () => {
 
       {/* AI Proactive Insights Widget */}
       {companyId && (
-        <ProactiveInsightsWidget companyId={companyId} limit={3} />
+        <ProactiveInsightsWidget companyId={companyId} maxInsights={3} />
       )}
 
       {/* Finansal Analiz Chart - Bağımsız Kart */}

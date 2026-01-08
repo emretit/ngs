@@ -468,6 +468,13 @@ export class IntegratorService {
         invoiceType: inv.invoiceType || 'TEMEL',
         invoiceProfile: inv.invoiceProfile || 'TEMELFATURA',
         invoiceUUID: inv.invoiceUUID || inv.id,
+        // Veriban durum bilgileri - XML'den gelen bilgiler
+        elogoStatus: inv.stateCode || inv.elogoStatus || null,
+        elogoCode: inv.answerStateCode || inv.elogoCode || null,
+        elogoDescription: inv.statusDescription || inv.stateDescription || inv.elogoDescription || null,
+        answerType: inv.answerType || null,
+        isAnswered: inv.isAnswered || false,
+        xmlContent: inv.xmlContent || null,
       }));
 
       return {

@@ -1,47 +1,41 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   ArrowLeft, 
   Edit, 
   Download, 
   FileText, 
-  Calendar, 
-  User, 
-  Building2, 
-  Receipt, 
-  DollarSign, 
-  Tag, 
-  RefreshCw,
   Send,
   Loader2,
   Copy,
   Trash2,
   Package,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
+  DollarSign,
   Eye,
-  MoreHorizontal
+  MoreHorizontal,
+  Building2,
+  Printer
 } from "lucide-react";
 import { useSalesInvoices } from "@/hooks/useSalesInvoices";
-import { useInvoiceTags } from "@/hooks/useInvoiceTags";
 import { useEInvoice } from "@/hooks/useEInvoice";
+import { useVeribanInvoice } from "@/hooks/useVeribanInvoice";
+import { IntegratorService } from "@/services/integratorService";
 import { useNilveraPdf } from "@/hooks/useNilveraPdf";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatUnit } from "@/utils/unitConstants";
+import { formatCurrency } from "@/utils/formatters";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { toast } from "sonner";
-import EInvoiceStatusBadge from "@/components/sales/EInvoiceStatusBadge";
+import { EInvoiceResendConfirmDialog } from "@/components/sales/EInvoiceResendConfirmDialog";
+import InvoiceHeaderCard from "@/components/invoices/cards/InvoiceHeaderCard";
+import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard";
+import FinancialSummaryCard from "@/components/proposals/cards/FinancialSummaryCard";
+import EInvoiceStateBadge from "@/components/sales/EInvoiceStateBadge";
+import { generateNumber } from "@/utils/numberFormat";
 
 interface SalesInvoiceDetailProps {
   isCollapsed?: boolean;
@@ -74,20 +68,53 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { fetchInvoiceById, deleteInvoiceMutation } = useSalesInvoices();
-  const { sendInvoice, isSending } = useEInvoice();
+  const { sendInvoice: sendNilveraInvoice, isSending: isSendingNilvera } = useEInvoice();
+  const { 
+    sendInvoice: sendVeribanInvoice, 
+    isSending: isSendingVeriban,
+    confirmDialog,
+    handleConfirmResend,
+    handleCancelResend,
+  } = useVeribanInvoice();
   const { downloadAndOpenPdf, isDownloading } = useNilveraPdf();
+  
+  // Form setup for customer selection
+  const form = useForm({ 
+    defaultValues: { 
+      customer_id: "", 
+      supplier_id: "" 
+    },
+    mode: "onChange"
+  });
   
   const [invoice, setInvoice] = useState<any>(null);
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [itemsLoading, setItemsLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  // Sadece Nilvera'ya gönderilmiş faturalar için etiketleri yükle
-  const { tags, isLoading: tagsLoading, refreshTags, isRefreshing } = useInvoiceTags(
-    id, 
-    invoice?.nilvera_invoice_id && invoice?.einvoice_status && invoice?.einvoice_status !== 'draft'
-  );
+  
+  // Integrator status
+  const [integratorStatus, setIntegratorStatus] = useState<{
+    nilvera: boolean;
+    elogo: boolean;
+    veriban: boolean;
+    selected: 'nilvera' | 'elogo' | 'veriban';
+  } | null>(null);
+  
+  useEffect(() => {
+    const loadIntegratorStatus = async () => {
+      try {
+        const status = await IntegratorService.checkIntegratorStatus();
+        setIntegratorStatus(status);
+      } catch (error) {
+        console.error('Error loading integrator status:', error);
+      }
+    };
+    loadIntegratorStatus();
+  }, []);
+  
+  // Determine which integrator to use and get sending state
+  const usingVeriban = integratorStatus?.selected === 'veriban';
+  const isSending = usingVeriban ? isSendingVeriban : isSendingNilvera;
 
   useEffect(() => {
     if (id) {
@@ -101,8 +128,14 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
       setLoading(true);
       const invoiceData = await fetchInvoiceById(id!);
       setInvoice(invoiceData);
+      
+      // Set customer_id in form when invoice is loaded
+      if (invoiceData?.customer_id) {
+        form.setValue("customer_id", invoiceData.customer_id);
+      }
     } catch (error) {
       console.error("Error loading invoice:", error);
+      toast.error("Fatura yüklenirken hata oluştu");
     } finally {
       setLoading(false);
     }
@@ -111,7 +144,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
   const loadInvoiceItems = async () => {
     if (!id) return;
     try {
-      setItemsLoading(true);
       const { data: items, error } = await supabase
         .from("sales_invoice_items")
         .select(`
@@ -128,63 +160,12 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
 
       if (error) {
         console.error("Error loading invoice items:", error);
+        toast.error("Fatura kalemleri yüklenirken hata oluştu");
       } else {
         setInvoiceItems(items || []);
       }
     } catch (error) {
       console.error("Error loading invoice items:", error);
-    } finally {
-      setItemsLoading(false);
-    }
-  };
-
-  const formatCurrency = (amount: number, currency: string = 'TRY') => {
-    const currencyCode = currency === 'TL' ? 'TRY' : currency;
-    const formatted = new Intl.NumberFormat('tr-TR', {
-      style: 'currency',
-      currency: currencyCode,
-      minimumFractionDigits: 2
-    }).format(amount);
-    return formatted;
-  };
-
-  const getDocumentTypeBadge = (type: any) => {
-    switch (type) {
-      case 'e_fatura':
-        return <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50 text-xs">e-Fatura</Badge>;
-      case 'e_arsiv':
-        return <Badge variant="outline" className="border-purple-500 text-purple-700 bg-purple-50 text-xs">e-Arşiv</Badge>;
-      case 'fatura':
-        return <Badge variant="outline" className="border-gray-500 text-gray-700 bg-gray-50 text-xs">Fatura</Badge>;
-      case 'irsaliye':
-        return <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50 text-xs">İrsaliye</Badge>;
-      case 'makbuz':
-        return <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50 text-xs">Makbuz</Badge>;
-      case 'serbest_meslek_makbuzu':
-        return <Badge variant="outline" className="border-indigo-500 text-indigo-700 bg-indigo-50 text-xs">SMM</Badge>;
-      default:
-        return <Badge variant="outline" className="text-xs">{type}</Badge>;
-    }
-  };
-
-  const getEInvoiceStatusBadge = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50 text-xs"><Clock className="h-3 w-3 mr-1" />Taslak</Badge>;
-      case 'sending':
-        return <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 text-xs"><Loader2 className="h-3 w-3 mr-1 animate-spin" />Gönderiliyor</Badge>;
-      case 'sent':
-        return <Badge variant="outline" className="border-green-400 text-green-600 bg-green-50 text-xs"><CheckCircle2 className="h-3 w-3 mr-1" />Gönderildi</Badge>;
-      case 'delivered':
-        return <Badge variant="outline" className="border-emerald-400 text-emerald-600 bg-emerald-50 text-xs"><CheckCircle2 className="h-3 w-3 mr-1" />Teslim Edildi</Badge>;
-      case 'accepted':
-        return <Badge variant="outline" className="border-teal-400 text-teal-600 bg-teal-50 text-xs"><CheckCircle2 className="h-3 w-3 mr-1" />Kabul Edildi</Badge>;
-      case 'rejected':
-        return <Badge variant="outline" className="border-red-400 text-red-600 bg-red-50 text-xs"><AlertCircle className="h-3 w-3 mr-1" />Reddedildi</Badge>;
-      case 'error':
-        return <Badge variant="outline" className="border-red-400 text-red-600 bg-red-50 text-xs"><AlertCircle className="h-3 w-3 mr-1" />Hata</Badge>;
-      default:
-        return <Badge variant="outline" className="text-xs">{status}</Badge>;
     }
   };
 
@@ -199,15 +180,88 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
   const handleConfirmDelete = () => {
     deleteInvoiceMutation.mutate(id!, {
       onSuccess: () => {
+        toast.success("Fatura başarıyla silindi");
         navigate('/sales-invoices');
       }
     });
     setDeleteDialogOpen(false);
   };
 
-  const handleSendEInvoice = () => {
-    if (id) {
-      sendInvoice(id);
+  const handleSendEInvoice = async () => {
+    if (!id) return;
+    
+    try {
+      // Fatura numarası kontrolü - tüm entegratörler için
+      if (!invoice?.fatura_no) {
+        console.log('📝 [SalesInvoiceDetail] Fatura numarası yok, otomatik üretiliyor...');
+        
+        // Kullanıcının company_id'sini al
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast.error('Kullanıcı bilgisi alınamadı');
+          return;
+        }
+        
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('id', user.id)
+          .single();
+        
+        if (!profile?.company_id) {
+          toast.error('Şirket bilgisi bulunamadı');
+          return;
+        }
+        
+        // Hangi formatı kullanacağımızı belirle
+        let formatKey = 'invoice_number_format';
+        let checkVeriban = false;
+        
+        if (usingVeriban) {
+          formatKey = 'veriban_invoice_number_format';
+          checkVeriban = true;
+        } else if (usingNilvera) {
+          formatKey = 'einvoice_number_format';
+        }
+        
+        // Otomatik fatura numarası üret
+        const invoiceDate = invoice.fatura_tarihi ? new Date(invoice.fatura_tarihi) : new Date();
+        const autoInvoiceNumber = await generateNumber(
+          formatKey,
+          profile.company_id,
+          invoiceDate,
+          checkVeriban // Veriban ise çift kontrol
+        );
+        
+        console.log('✅ [SalesInvoiceDetail] Otomatik fatura numarası üretildi:', autoInvoiceNumber);
+        
+        // Fatura numarasını veritabanına kaydet
+        const { error: updateError } = await supabase
+          .from('sales_invoices')
+          .update({ fatura_no: autoInvoiceNumber })
+          .eq('id', id);
+        
+        if (updateError) {
+          console.error('❌ [SalesInvoiceDetail] Fatura numarası kaydedilemedi:', updateError);
+          toast.error('Fatura numarası oluşturulamadı');
+          return;
+        }
+        
+        // Local state'i güncelle
+        setInvoice((prev: any) => ({ ...prev, fatura_no: autoInvoiceNumber }));
+        
+        toast.success(`Fatura numarası oluşturuldu: ${autoInvoiceNumber}`);
+      }
+      
+      // E-fatura gönderimini başlat
+      if (usingVeriban) {
+        sendVeribanInvoice({ salesInvoiceId: id });
+      } else {
+        sendNilveraInvoice(id);
+      }
+    } catch (error) {
+      console.error('❌ [SalesInvoiceDetail] Fatura gönderimi hazırlanırken hata:', error);
+      toast.error('Bir hata oluştu, lütfen tekrar deneyin');
     }
   };
 
@@ -220,66 +274,102 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
     }
   };
 
+  const handleCopyInvoice = () => {
+    navigate(`/sales-invoices/create?copyFrom=${id}`);
+  };
+
+  // Transform items to match ProductServiceCard format
+  const transformedItems = invoiceItems.map((item, index) => ({
+    id: item.id,
+    row_number: item.sira_no || index + 1,
+    name: item.urun_adi,
+    description: item.aciklama || "",
+    quantity: item.miktar,
+    unit: item.birim,
+    unit_price: item.birim_fiyat,
+    tax_rate: item.kdv_orani,
+    discount_rate: item.indirim_orani || 0,
+    total_price: item.satir_toplami,
+    currency: item.para_birimi || invoice?.para_birimi || 'TRY',
+  }));
+
+  // Calculate financial totals for FinancialSummaryCard
+  const calculationsByCurrency: Record<string, any> = {};
+  const currency = invoice?.para_birimi || 'TRY';
+  
+  let gross = 0;
+  let discount = 0;
+  let net = 0;
+  let vat = 0;
+  let grand = 0;
+
+  transformedItems.forEach(item => {
+    const itemGross = item.quantity * item.unit_price;
+    const itemDiscount = itemGross * (item.discount_rate / 100);
+    const itemNet = itemGross - itemDiscount;
+    const itemVat = itemNet * (item.tax_rate / 100);
+    const itemGrand = itemNet + itemVat;
+
+    gross += itemGross;
+    discount += itemDiscount;
+    net += itemNet;
+    vat += itemVat;
+    grand += itemGrand;
+  });
+
+  calculationsByCurrency[currency] = { gross, discount, net, vat, grand };
+
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardContent className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-              <p className="text-gray-600">Fatura detayları yükleniyor...</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Fatura yükleniyor...</p>
+        </div>
       </div>
     );
   }
 
   if (!invoice) {
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardContent className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Fatura Bulunamadı</h3>
-              <p className="text-gray-600 mb-4">Aradığınız fatura mevcut değil veya silinmiş olabilir.</p>
-              <Button onClick={() => navigate('/sales-invoices')} variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Faturalara Dön
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Fatura Bulunamadı</h3>
+          <p className="text-muted-foreground mb-4">Aradığınız fatura mevcut değil veya silinmiş olabilir.</p>
+          <Button onClick={() => navigate('/sales-invoices')} variant="outline">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Faturalara Dön
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="space-y-2">
-        {/* Enhanced Sticky Header with Progress */}
-        <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-2">
-          <div className="flex items-center justify-between p-3 pl-12">
-            <div className="flex items-center gap-3">
-              {/* Simple Back Button */}
+      <div className="space-y-4">
+        {/* Modern Header - Yeni Satış Faturası sayfası gibi */}
+        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm rounded-xl border border-gray-200 shadow-lg mb-6">
+          <div className="flex items-center justify-between p-4 pl-12">
+            <div className="flex items-center gap-4">
               <BackButton 
                 onClick={() => navigate("/sales-invoices")}
                 variant="ghost"
                 size="sm"
+                className="rounded-xl"
               >
                 Satış Faturaları
               </BackButton>
               
-              {/* Simple Title Section with Icon */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <FileText className="h-5 w-5 text-muted-foreground" />
                 <div className="space-y-0.5">
                   <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                    Satış Faturası
+                    Satış Faturası Detay
                   </h1>
                   <p className="text-xs text-muted-foreground/70">
-                    {invoice.fatura_no || 'Henüz atanmadı'} • {invoice.customer?.company || invoice.customer?.name || 'Müşteri'}
+                    {invoice.fatura_no ? `Fatura No: ${invoice.fatura_no}` : 'Görüntüleme modu'}
                   </p>
                 </div>
               </div>
@@ -287,16 +377,45 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
             
             <div className="flex items-center gap-4">
               <div className="flex flex-wrap gap-2 items-center">
+                {/* E-Fatura Durumu Badge (StateCode Bazlı - Single Source of Truth) */}
+                <EInvoiceStateBadge 
+                  stateCode={invoice.elogo_status}
+                  answerType={invoice.answer_type}
+                  onSendClick={handleSendEInvoice}
+                  showActionButton={false}
+                  isSending={isSending}
+                />
+                
                 <Badge variant="outline" className="px-3 py-1">
                   <Package className="h-3 w-3 mr-1" />
                   {invoiceItems.length} Kalem
                 </Badge>
                 <Badge variant="outline" className="px-3 py-1">
                   <DollarSign className="h-3 w-3 mr-1" />
-                  {formatCurrency(invoice.toplam_tutar || 0, invoice.para_birimi)}
+                  {formatCurrency(invoice.toplam_tutar || 0, invoice.para_birimi || 'TRY')}
                 </Badge>
-                {getDocumentTypeBadge(invoice.document_type)}
               </div>
+              
+              {/* E-Fatura Gönder Butonu */}
+              {(!invoice.einvoice_status || invoice.einvoice_status === 'draft' || invoice.einvoice_status === 'error') && (
+                <Button
+                  onClick={handleSendEInvoice}
+                  disabled={isSending}
+                  className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+                >
+                  {isSending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Gönderiliyor...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      <span>E-Fatura Gönder</span>
+                    </>
+                  )}
+                </Button>
+              )}
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -335,11 +454,19 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                     <span>PDF İndir</span>
                   </DropdownMenuItem>
                   
+                  <DropdownMenuItem 
+                    onClick={() => window.print()}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <Printer className="h-4 w-4 text-gray-500" />
+                    <span>Yazdır</span>
+                  </DropdownMenuItem>
+                  
                   <DropdownMenuSeparator />
                   
                   <DropdownMenuLabel>Kopyalama</DropdownMenuLabel>
                   <DropdownMenuItem 
-                    onClick={() => navigate(`/sales-invoices/new?copyFrom=${id}`)}
+                    onClick={handleCopyInvoice}
                     className="gap-2 cursor-pointer"
                   >
                     <Copy className="h-4 w-4 text-green-500" />
@@ -348,7 +475,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                   
                   <DropdownMenuSeparator />
                   
-                  {/* Müşteri Sayfasına Git */}
                   {invoice.customer_id && (
                     <>
                       <DropdownMenuItem 
@@ -376,382 +502,54 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
           </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Column - Invoice Info */}
-          <div className="lg:col-span-1 space-y-4">
-            {/* Fatura & Müşteri Bilgileri */}
-            <Card className="border-2 border-gray-300 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-b-2 border-gray-300 p-3">
-                <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-blue-600" />
-                  Fatura & Müşteri Bilgileri
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 space-y-4">
-                {/* Fatura Bilgileri */}
-                <div className="space-y-1.5 text-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Fatura No:</span>
-                    <span className={`font-semibold text-xs ${invoice.fatura_no ? 'text-blue-600' : 'text-gray-400'}`}>
-                      {invoice.fatura_no || 'Henüz atanmadı'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Tarih:</span>
-                    <span className="text-xs">{format(new Date(invoice.fatura_tarihi), 'dd.MM.yyyy', { locale: tr })}</span>
-                  </div>
-                  {invoice.vade_tarihi && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500">Vade:</span>
-                      <span className="text-xs">{format(new Date(invoice.vade_tarihi), 'dd.MM.yyyy', { locale: tr })}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Kalem:</span>
-                    <span className="font-medium text-xs">{invoiceItems.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Para Birimi:</span>
-                    <span className="text-xs font-medium">{invoice.para_birimi === 'TL' ? 'TRY' : (invoice.para_birimi || 'TRY')}</span>
-                  </div>
-                  <Separator className="my-2" />
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-xs">Ara Toplam:</span>
-                    <span className="font-medium text-xs">{formatCurrency(invoice.ara_toplam || 0, invoice.para_birimi)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-xs">KDV:</span>
-                    <span className="font-medium text-xs">{formatCurrency(invoice.kdv_tutari || 0, invoice.para_birimi)}</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-1 border-t">
-                    <span className="text-gray-700 font-medium text-xs">Toplam:</span>
-                    <span className="text-base font-bold text-primary">
-                      {formatCurrency(invoice.toplam_tutar || 0, invoice.para_birimi)}
-                    </span>
-                  </div>
-                  <Separator className="my-2" />
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-xs">Belge Tipi:</span>
-                    {getDocumentTypeBadge(invoice.document_type)}
-                  </div>
-                  {invoice.durum && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500 text-xs">Durum:</span>
-                      <Badge variant="outline" className="bg-gray-100 text-xs">{invoice.durum}</Badge>
-                    </div>
-                  )}
-                </div>
+        {/* Main Content - Yeni Satış Faturası sayfası layout'u */}
+        <div className="space-y-6">
+          {/* Invoice Header Card */}
+          <InvoiceHeaderCard
+            selectedCustomer={invoice.customer}
+            formData={{
+              fatura_no: invoice.fatura_no || "",
+              fatura_tarihi: new Date(invoice.fatura_tarihi),
+              issue_time: invoice.issue_time || "",
+              vade_tarihi: invoice.vade_tarihi ? new Date(invoice.vade_tarihi) : null,
+              invoice_type: invoice.invoice_type || "SATIS",
+              invoice_profile: invoice.invoice_profile || "TEMELFATURA",
+              send_type: invoice.send_type || "ELEKTRONIK",
+              sales_platform: invoice.sales_platform || "NORMAL",
+              is_despatch: invoice.is_despatch || false,
+              internet_info: invoice.internet_info || {},
+              return_invoice_info: invoice.return_invoice_info || {},
+              aciklama: invoice.aciklama || "",
+              notlar: invoice.notlar || "",
+              para_birimi: invoice.para_birimi || 'TRY',
+              exchange_rate: invoice.exchange_rate || 1,
+              banka_bilgileri: invoice.banka_bilgileri || "",
+            }}
+            assignedInvoiceNumber={invoice.fatura_no}
+            einvoiceStatus={invoice.einvoice_status}
+            onFieldChange={() => {}} // Read-only, no changes
+            form={form}
+            compact={true}
+          />
 
-                <Separator />
+          {/* Product/Service Items */}
+          <ProductServiceCard
+            items={transformedItems}
+            onAddItem={() => {}} // Read-only
+            onRemoveItem={() => {}} // Read-only
+            onItemChange={() => {}} // Read-only
+            onProductModalSelect={() => {}} // Read-only
+          />
 
-                {/* Müşteri Bilgileri */}
-                <div className="p-2.5 rounded-lg text-xs bg-green-50 border border-green-200">
-                  <div className="mb-2">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Building2 className="h-3 w-3 text-green-600" />
-                      <span className="text-green-700 font-medium text-xs">Müşteri Bilgileri</span>
-                    </div>
-                    <div className="font-semibold text-gray-900 text-sm mb-0.5">
-                      {invoice.customer?.name || 'Bilinmiyor'}
-                    </div>
-                    {invoice.customer?.company && (
-                      <div className="text-gray-600 text-xs">
-                        {invoice.customer.company}
-                      </div>
-                    )}
-                    {invoice.customer?.tax_number && (
-                      <div className="text-gray-500 text-xs mt-0.5">
-                        VKN: {invoice.customer.tax_number}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {invoice.aciklama && (
-                  <>
-                    <Separator />
-                    <div>
-                      <div className="text-xs font-medium text-gray-500 mb-1">Açıklama</div>
-                      <div className="text-xs text-gray-700">{invoice.aciklama}</div>
-                    </div>
-                  </>
-                )}
-
-                {invoice.notlar && (
-                  <>
-                    <Separator />
-                    <div>
-                      <div className="text-xs font-medium text-gray-500 mb-1">Notlar</div>
-                      <div className="text-xs text-gray-700 whitespace-pre-wrap">{invoice.notlar}</div>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* E-Fatura Durumu */}
-            <Card className="border-2 border-gray-300 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-cyan-50 to-cyan-100/50 border-b-2 border-gray-300 p-3">
-                <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                  <Send className="h-4 w-4 text-cyan-600" />
-                  E-Fatura Durumu
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-xs">Durum:</span>
-                  {invoice.einvoice_status ? (
-                    getEInvoiceStatusBadge(invoice.einvoice_status)
-                  ) : (
-                    <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50 text-xs">
-                      <Clock className="h-3 w-3 mr-1" />Gönderilmedi
-                    </Badge>
-                  )}
-                </div>
-                
-                {invoice.nilvera_invoice_id && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 text-xs">Nilvera ID:</span>
-                    <span className="font-mono text-xs text-gray-700">{invoice.nilvera_invoice_id.substring(0, 12)}...</span>
-                  </div>
-                )}
-                
-                {invoice.einvoice_sent_at && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 text-xs">Gönderilme:</span>
-                    <span className="text-xs">{format(new Date(invoice.einvoice_sent_at), "dd.MM.yyyy HH:mm", { locale: tr })}</span>
-                  </div>
-                )}
-                
-                {invoice.einvoice_error_message && (
-                  <div className="p-2 bg-red-50 rounded-lg border border-red-200">
-                    <div className="flex items-center gap-1 text-red-600 text-xs font-medium mb-1">
-                      <AlertCircle className="h-3 w-3" />
-                      Hata
-                    </div>
-                    <p className="text-red-600 text-xs">{invoice.einvoice_error_message}</p>
-                  </div>
-                )}
-
-                {/* E-Fatura Gönder Butonu */}
-                {(!invoice.einvoice_status || invoice.einvoice_status === 'draft' || invoice.einvoice_status === 'error') && (
-                  <Button
-                    onClick={handleSendEInvoice}
-                    disabled={isSending}
-                    size="sm"
-                    className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
-                  >
-                    {isSending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Gönderiliyor...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        E-Fatura Gönder
-                      </>
-                    )}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Invoice Items */}
-          <div className="lg:col-span-3 space-y-4">
-            {/* Fatura Kalemleri */}
-            <Card className="border-2 border-gray-300 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100/50 border-b-2 border-gray-300 p-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                    <Package className="h-4 w-4 text-orange-600" />
-                    Fatura Kalemleri
-                  </CardTitle>
-                  <Badge variant="outline" className="px-3 py-1">
-                    {invoiceItems.length} Kalem
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {itemsLoading ? (
-                  <div className="p-4 space-y-2">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                  </div>
-                ) : invoiceItems.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="font-medium">Fatura kalemleri bulunamadı</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <div className="max-h-[50vh] overflow-y-auto">
-                      <Table>
-                        <TableHeader className="sticky top-0 bg-gray-50 z-10">
-                          <TableRow className="border-gray-200">
-                            <TableHead className="w-10 font-semibold text-[10px] px-2">#</TableHead>
-                            <TableHead className="min-w-80 font-semibold text-[10px] px-3">Ürün</TableHead>
-                            <TableHead className="text-right font-semibold text-[10px] px-2 w-20">Miktar</TableHead>
-                            <TableHead className="text-center font-semibold text-[10px] px-2 w-16">Birim</TableHead>
-                            <TableHead className="text-right font-semibold text-[10px] px-2 w-24">Birim Fiyat</TableHead>
-                            <TableHead className="text-right font-semibold text-[10px] px-2 w-20">İndirim</TableHead>
-                            <TableHead className="text-right font-semibold text-[10px] px-2 w-16">KDV</TableHead>
-                            <TableHead className="text-right font-semibold text-[10px] px-2 w-24">Toplam</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {invoiceItems.map((item, index) => (
-                            <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors border-gray-100">
-                              <TableCell className="font-medium text-[10px] px-2 py-2">
-                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-semibold text-gray-600">
-                                  {item.sira_no || index + 1}
-                                </div>
-                              </TableCell>
-                              <TableCell className="px-3 py-2">
-                                <div className="min-w-80 max-w-none">
-                                  <p className="font-medium text-gray-900 text-xs mb-1 break-words">
-                                    {item.urun_adi}
-                                  </p>
-                                  <div className="flex flex-wrap gap-2 text-[10px] text-gray-500 mt-1">
-                                    {item.product?.sku && (
-                                      <span className="px-2 py-0.5 bg-gray-100 rounded">SKU: {item.product.sku}</span>
-                                    )}
-                                    {item.aciklama && (
-                                      <span className="text-gray-500">{item.aciklama}</span>
-                                    )}
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-right px-2 py-2">
-                                <div className="font-mono text-xs font-semibold text-gray-700">
-                                  {item.miktar.toFixed(2)}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-center px-2 py-2">
-                                <div className="text-[10px] font-medium text-gray-600">
-                                  {formatUnit(item.birim)}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-right text-xs font-medium px-2 py-2">
-                                {formatCurrency(item.birim_fiyat, item.para_birimi || invoice.para_birimi)}
-                              </TableCell>
-                              <TableCell className="text-right px-2 py-2">
-                                {item.indirim_orani && item.indirim_orani > 0 ? (
-                                  <span className="text-red-600 text-[10px]">{item.indirim_orani}%</span>
-                                ) : (
-                                  <span className="text-gray-400 text-[10px]">-</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right text-[10px] px-2 py-2">{item.kdv_orani}%</TableCell>
-                              <TableCell className="text-right font-semibold text-xs text-gray-900 px-2 py-2">
-                                {formatCurrency(item.satir_toplami, item.para_birimi || invoice.para_birimi)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                          <TableRow className="bg-gray-50 font-bold border-t-2 border-gray-300">
-                            <TableCell colSpan={7} className="text-right text-xs px-2 py-2">
-                              Genel Toplam
-                            </TableCell>
-                            <TableCell className="text-right text-sm px-2 py-2">
-                              {formatCurrency(invoiceItems.reduce((sum, item) => sum + (item.satir_toplami || 0), 0), invoice.para_birimi)}
-                            </TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Fatura Etiketleri */}
-            {invoice.nilvera_invoice_id && invoice.einvoice_status && invoice.einvoice_status !== 'draft' ? (
-              <Card className="border-2 border-gray-300 shadow-sm">
-                <CardHeader className="bg-gradient-to-r from-pink-50 to-pink-100/50 border-b-2 border-gray-300 p-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                      <Tag className="h-4 w-4 text-pink-600" />
-                      Fatura Etiketleri
-                    </CardTitle>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => refreshTags()}
-                      disabled={isRefreshing}
-                      className="shadow-sm h-7 text-xs"
-                    >
-                      <RefreshCw className={`h-3 w-3 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
-                      Yenile
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4">
-                  {tagsLoading ? (
-                    <div className="space-y-2">
-                      <Skeleton className="h-8 w-full" />
-                      <Skeleton className="h-8 w-3/4" />
-                    </div>
-                  ) : tags.length > 0 ? (
-                    <div className="space-y-2">
-                      {tags.map((tag, index) => (
-                        <div key={tag.UUID || index} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
-                          {tag.Color && (
-                            <div 
-                              className="w-3 h-3 rounded-full border-2 border-gray-300"
-                              style={{ backgroundColor: tag.Color }}
-                            />
-                          )}
-                          <div className="flex-1">
-                            <p className="font-medium text-xs">{tag.Name || 'İsimsiz Etiket'}</p>
-                            {tag.Description && (
-                              <p className="text-xs text-gray-500 mt-0.5">{tag.Description}</p>
-                            )}
-                          </div>
-                          {tag.UUID && (
-                            <Badge variant="outline" className="text-xs">
-                              {tag.UUID.substring(0, 8)}...
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <Tag className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p className="font-medium text-sm">Bu fatura için etiket bulunamadı</p>
-                      <p className="text-xs mt-1">Etiketler Nilvera sisteminde oluşturulduktan sonra burada görünecektir</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="border-2 border-gray-300 shadow-sm">
-                <CardHeader className="bg-gradient-to-r from-pink-50 to-pink-100/50 border-b-2 border-gray-300 p-3">
-                  <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                    <Tag className="h-4 w-4 text-pink-600" />
-                    Fatura Etiketleri
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <div className="text-center py-8 text-gray-500">
-                    <Tag className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="font-medium text-sm">Etiketler henüz mevcut değil</p>
-                    <p className="text-xs mt-1">
-                      Fatura etiketleri, fatura Nilvera'ya e-fatura olarak gönderildikten sonra görünecektir.
-                    </p>
-                    {(!invoice.einvoice_status || invoice.einvoice_status === 'draft') && (
-                      <p className="text-xs mt-2 text-blue-600">
-                        Faturayı e-fatura olarak göndermek için sol paneldeki "E-Fatura Gönder" butonunu kullanın.
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          {/* Financial Summary */}
+          <FinancialSummaryCard
+            calculationsByCurrency={calculationsByCurrency}
+            globalDiscountType="percentage"
+            globalDiscountValue={0}
+            onGlobalDiscountTypeChange={() => {}} // Read-only
+            onGlobalDiscountValueChange={() => {}} // Read-only
+            selectedCurrency={invoice.para_birimi || 'TRY'}
+          />
         </div>
       </div>
 
@@ -765,6 +563,17 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
         cancelText="İptal"
         onConfirm={handleConfirmDelete}
         variant="destructive"
+      />
+
+      {/* E-Fatura Tekrar Gönderme Onay Dialog'u (Veriban için) */}
+      <EInvoiceResendConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => {
+          if (!open) handleCancelResend();
+        }}
+        currentStatus={confirmDialog.currentStatus}
+        onConfirm={handleConfirmResend}
+        onCancel={handleCancelResend}
       />
     </>
   );

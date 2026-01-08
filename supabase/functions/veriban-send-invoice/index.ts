@@ -794,11 +794,60 @@ serve(async (req) => {
             console.log('✅ sales_invoices ve outgoing_invoices ilişkilendirildi');
           }
         } else {
-          console.log('ℹ️ outgoing_invoices\'da henüz kayıt yok (birkaç dakika sonra senkronize edilecek)');
+          console.log('ℹ️ outgoing_invoices\'da henüz kayıt yok, oluşturuluyor...');
+          
+          // outgoing_invoices'a kayıt ekle
+          const outgoingInvoiceData = {
+            company_id: profile.company_id,
+            invoice_number: veribanInvoiceNumber || invoice.fatura_no,
+            invoice_date: invoice.fatura_tarihi,
+            due_date: invoice.vade_tarihi,
+            customer_name: invoice.customers?.contact_name || invoice.customers?.company_name,
+            customer_tax_number: invoice.customers?.tax_number,
+            customer_tax_office: invoice.customers?.tax_office,
+            ettn: ettn, // ← ETTN kaydediliyor
+            envelope_id: transferFileUniqueId,
+            invoice_type: invoice.invoice_type,
+            invoice_profile: invoice.invoice_profile,
+            currency: invoice.para_birimi,
+            tax_exclusive_amount: invoice.ara_toplam - invoice.indirim_tutari,
+            tax_total_amount: invoice.kdv_tutari,
+            payable_amount: invoice.toplam_tutar,
+            status: 'sent', // Gönderildi
+            elogo_status: 2, // StateCode 2 = İmza bekliyor / GİB'e iletilmeyi bekliyor
+            xml_content: finalXmlContent,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            sent_at: new Date().toISOString(),
+          };
+          
+          const { data: newOutgoingInvoice, error: insertError } = await supabase
+            .from('outgoing_invoices')
+            .insert(outgoingInvoiceData)
+            .select('id')
+            .single();
+          
+          if (insertError) {
+            console.error('❌ outgoing_invoices ekleme hatası:', insertError.message);
+          } else if (newOutgoingInvoice) {
+            console.log('✅ outgoing_invoices kaydı oluşturuldu:', newOutgoingInvoice.id);
+            
+            // İlişkilendir
+            const { error: linkError } = await supabase
+              .from('sales_invoices')
+              .update({ outgoing_invoice_id: newOutgoingInvoice.id })
+              .eq('id', invoiceId);
+            
+            if (linkError) {
+              console.error('❌ İlişkilendirme hatası:', linkError.message);
+            } else {
+              console.log('✅ sales_invoices ve outgoing_invoices ilişkilendirildi');
+            }
+          }
         }
       } catch (linkingError: any) {
         // İlişkilendirme hatası olsa bile fatura gönderimi başarılı
-        console.warn('⚠️ İlişkilendirme hatası (kritik değil):', linkingError.message);
+        console.warn('⚠️ İlişkilendirme/Ekleme hatası (kritik değil):', linkingError.message);
       }
 
       return new Response(JSON.stringify({

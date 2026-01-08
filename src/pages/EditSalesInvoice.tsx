@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSalesInvoiceEdit } from "@/hooks/useSalesInvoiceEdit";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
@@ -76,20 +77,11 @@ interface EInvoiceData {
   return_invoice_info: any;
 }
 
-const CreateSalesInvoice = () => {
+const EditSalesInvoice = () => {
 
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const orderId = searchParams.get("orderId");
-  const proposalId = searchParams.get("proposalId");
-
-  // Log URL params only when they change
-  useEffect(() => {
-    if (orderId || proposalId) {
-      console.log("🔵 [CreateSalesInvoice] URL Params:", { orderId, proposalId });
-    }
-  }, [orderId, proposalId]);
+  const { invoice, loading: loadingInvoice, saving, handleBack, handleSave, refetchInvoice } = useSalesInvoiceEdit();
 
   // Form setup
   const form = useForm({ 
@@ -176,11 +168,8 @@ const CreateSalesInvoice = () => {
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
   const [editingItemData, setEditingItemData] = useState<any>(null);
 
-  // Source tracking
-  const [sourceData, setSourceData] = useState<{
-    type: 'proposal' | 'order' | null;
-    data: any;
-  }>({ type: null, data: null });
+  // Loading state for data population
+  const [invoiceLoaded, setInvoiceLoaded] = useState(false);
   
   // Global discount state
   const [globalDiscountType, setGlobalDiscountType] = useState<'percentage' | 'amount'>('percentage');
@@ -433,193 +422,71 @@ const CreateSalesInvoice = () => {
   ]);
 
   // Load order or proposal data
-  const loadOrderData = useCallback(async (id: string) => {
-    console.log("🔵 [CreateSalesInvoice] Loading order data...", { orderId: id });
-    try {
-      setLoadingData(true);
-      const { data: order, error } = await supabase
-        .from("orders")
-        .select(`*, customer:customers(*), items:order_items(*)`)
-        .eq("id", id)
-        .single();
-
-      if (error) throw error;
-
-      if (order) {
-        // Store source data
-        setSourceData({ type: 'order', data: order });
-
-        // Set customer
-        if (order.customer_id) {
-          form.setValue("customer_id", order.customer_id);
-          setSelectedCustomer(order.customer);
-        }
-
-        // Set invoice data
-        const orderCurrency = order.currency === 'TRY' ? 'TRY' : (order.currency || "TRY");
-        setInvoiceData(prev => ({
-          ...prev,
-          invoice_date: order.order_date ? new Date(order.order_date) : new Date(),
-          due_date: order.expected_delivery_date ? new Date(order.expected_delivery_date) : null,
-          description: [order.order_number && `Sipariş No: ${order.order_number}`, order.title, order.description].filter(Boolean).join(' - '),
-          notes: order.notes || "",
-          banka_bilgileri: "",
-        }));
-
-        setFinancialData(prev => ({
-          ...prev,
-          currency: orderCurrency,
-          exchange_rate: order.exchange_rate || 1,
-        }));
-
-        // Load terms from order if available
-        if (order.payment_terms || order.delivery_terms || order.warranty_terms || order.price_terms || order.other_terms) {
-          setTermsData({
-            payment_terms: order.payment_terms || "",
-            delivery_terms: order.delivery_terms || "",
-            warranty_terms: order.warranty_terms || "",
-            price_terms: order.price_terms || "",
-            other_terms: order.other_terms || "",
-          });
-        }
-
-        // Convert items
-        if (order.items && order.items.length > 0) {
-          const invoiceItems = order.items.map((item: any, index: number) => ({
-            id: (index + 1).toString(),
-            row_number: index + 1,
-            name: item.name,
-            description: item.description || "",
-            quantity: parseFloat(item.quantity),
-            unit: item.unit || "adet",
-            unit_price: parseFloat(item.unit_price),
-            tax_rate: parseFloat(item.tax_rate) || DEFAULT_VAT_PERCENTAGE,
-            discount_rate: parseFloat(item.discount_rate) || 0,
-            total_price: parseFloat(item.total_price),
-            currency: orderCurrency
-          }));
-          setItems(invoiceItems);
-        }
-        console.log("✅ [CreateSalesInvoice] Order data loaded successfully", { 
-          orderNumber: order.order_number,
-          itemsCount: order.items?.length || 0 
-        });
-      }
-    } catch (error) {
-      console.error("❌ [CreateSalesInvoice] Error loading order:", error);
-      toast.error("Sipariş verileri yüklenirken hata oluştu");
-    } finally {
-      setLoadingData(false);
-    }
-  }, [form]);
-
-  const loadProposalData = useCallback(async (id: string) => {
-    console.log("🔵 [CreateSalesInvoice] Loading proposal data...", { proposalId: id });
-    try {
-      setLoadingData(true);
-      const { data: proposal, error } = await supabase
-        .from("proposals")
-        .select(`*, customer:customers(*)`)
-        .eq("id", id)
-        .single();
-
-      if (error) throw error;
-
-      if (proposal) {
-        // Store source data
-        setSourceData({ type: 'proposal', data: proposal });
-
-        // Set customer
-        if (proposal.customer_id) {
-          form.setValue("customer_id", proposal.customer_id);
-          setSelectedCustomer(proposal.customer);
-        }
-
-        // Set invoice data
-        const proposalCurrency = proposal.currency === 'TRY' ? 'TRY' : (proposal.currency || "TRY");
-        setInvoiceData(prev => ({
-          ...prev,
-          invoice_date: proposal.offer_date ? new Date(proposal.offer_date) : new Date(),
-          due_date: proposal.valid_until ? new Date(proposal.valid_until) : null,
-          description: [proposal.number && `Teklif No: ${proposal.number}`, proposal.title, proposal.subject, proposal.description].filter(Boolean).join(' - '),
-          notes: proposal.notes || "",
-        }));
-
-        setFinancialData(prev => ({
-          ...prev,
-          currency: proposalCurrency,
-          exchange_rate: proposal.exchange_rate || 1,
-        }));
-
-        // Load terms from proposal if available
-        if (proposal.payment_terms || proposal.delivery_terms || proposal.warranty_terms || proposal.price_terms || proposal.other_terms) {
-          setTermsData({
-            payment_terms: proposal.payment_terms || "",
-            delivery_terms: proposal.delivery_terms || "",
-            warranty_terms: proposal.warranty_terms || "",
-            price_terms: proposal.price_terms || "",
-            other_terms: proposal.other_terms || "",
-          });
-        }
-
-        // Parse items
-        let parsedItems: any[] = [];
-        if (proposal.items) {
-          if (typeof proposal.items === 'string') {
-            parsedItems = JSON.parse(proposal.items);
-          } else if (Array.isArray(proposal.items)) {
-            parsedItems = proposal.items;
-          }
-        }
-
-        if (parsedItems.length > 0) {
-          const invoiceItems = parsedItems.map((item: any, index: number) => ({
-            id: (index + 1).toString(),
-            row_number: index + 1,
-            name: item.name || item.urun_adi || "",
-            description: item.description || item.aciklama || "",
-            quantity: parseFloat(item.quantity || item.miktar) || 1,
-            unit: item.unit || item.birim || "adet",
-            unit_price: parseFloat(item.unit_price || item.birim_fiyat) || 0,
-            tax_rate: parseFloat(item.tax_rate || item.kdv_orani) || DEFAULT_VAT_PERCENTAGE,
-            discount_rate: parseFloat(item.discount_rate || item.indirim_orani) || 0,
-            total_price: parseFloat(item.total_price || item.satir_toplami) || 0,
-            currency: proposalCurrency
-          }));
-          setItems(invoiceItems);
-        }
-        console.log("✅ [CreateSalesInvoice] Proposal data loaded successfully", { 
-          proposalNumber: proposal.number,
-          itemsCount: parsedItems.length 
-        });
-      }
-    } catch (error) {
-      console.error("❌ [CreateSalesInvoice] Error loading proposal:", error);
-      toast.error("Teklif verileri yüklenirken hata oluştu");
-    } finally {
-      console.log("  → loadProposalData completed, setting loadingData to false");
-      setLoadingData(false);
-    }
-  }, [form]);
-
-  // Load data on mount
+  // Load invoice data from hook
   useEffect(() => {
-    console.log("🟣 [CreateSalesInvoice] useEffect - loadData on mount triggered", {
-      orderId,
-      proposalId,
-      timestamp: new Date().toISOString()
-    });
+    if (!invoice || invoiceLoaded) return;
 
-    if (orderId) {
-      console.log("  → Loading order data...");
-      loadOrderData(orderId);
-    } else if (proposalId) {
-      console.log("  → Loading proposal data...");
-      loadProposalData(proposalId);
-    } else {
-      console.log("  → No orderId or proposalId, skipping data load");
+    console.log("🔵 [EditSalesInvoice] Loading invoice data...");
+    
+    try {
+      // Set customer
+      if (invoice.customer_id) {
+        form.setValue("customer_id", invoice.customer_id);
+        setSelectedCustomer(invoice.customer);
+        setCustomerData({
+          contact_name: invoice.customer?.name || "",
+          customer_id: invoice.customer_id,
+        });
+      }
+
+      // Set invoice data
+      setInvoiceData({
+        invoice_date: invoice.fatura_tarihi ? new Date(invoice.fatura_tarihi) : new Date(),
+        invoice_number: invoice.fatura_no || "",
+        issue_time: invoice.issue_time || "",
+        due_date: invoice.vade_tarihi ? new Date(invoice.vade_tarihi) : null,
+        invoice_type: invoice.invoice_type || "SATIS",
+        invoice_profile: invoice.invoice_profile || "TEMELFATURA",
+        send_type: invoice.send_type || "ELEKTRONIK",
+        sales_platform: invoice.sales_platform || "NORMAL",
+        is_despatch: invoice.is_despatch || false,
+        description: invoice.aciklama || "",
+        notes: invoice.notlar || "",
+        banka_bilgileri: invoice.banka_bilgileri || "",
+      });
+
+      // Set financial data
+      setFinancialData({
+        currency: invoice.para_birimi || DEFAULT_CURRENCY,
+        exchange_rate: 1,
+        vat_percentage: DEFAULT_VAT_PERCENTAGE,
+      });
+
+      // Load items
+      if (invoice.items && invoice.items.length > 0) {
+        const invoiceItems = invoice.items.map((item: any, index: number) => ({
+          id: item.id || (index + 1).toString(),
+          row_number: item.sira_no || index + 1,
+          name: item.urun_adi,
+          description: item.aciklama || "",
+          quantity: parseFloat(item.miktar),
+          unit: item.birim || "adet",
+          unit_price: parseFloat(item.birim_fiyat),
+          tax_rate: parseFloat(item.kdv_orani) || DEFAULT_VAT_PERCENTAGE,
+          discount_rate: parseFloat(item.indirim_orani) || 0,
+          total_price: parseFloat(item.satir_toplami),
+          currency: item.para_birimi || invoice.para_birimi || DEFAULT_CURRENCY,
+        }));
+        setItems(invoiceItems);
+      }
+
+      setInvoiceLoaded(true);
+      console.log("✅ [EditSalesInvoice] Invoice data loaded successfully");
+    } catch (error) {
+      console.error("❌ [EditSalesInvoice] Error loading invoice:", error);
+      toast.error("Fatura verileri yüklenirken hata oluştu");
     }
-  }, [orderId, proposalId, loadOrderData, loadProposalData]);
+  }, [invoice, invoiceLoaded, form]);
 
   // Calculate totals by currency
   const calculationsByCurrency = useMemo(() => {
@@ -798,7 +665,7 @@ const CreateSalesInvoice = () => {
 
   // Save invoice
   const handleSave = async () => {
-    console.log("💾 [CreateSalesInvoice] Saving invoice...");
+    console.log("💾 [EditSalesInvoice] Updating invoice...");
     try {
       // Validation
       const customerId = watchCustomerId || customerData.customer_id;
@@ -833,7 +700,7 @@ const CreateSalesInvoice = () => {
       // Numara sadece "E-Fatura Gönder" butonuna basıldığında otomatik üretilecek
       let finalInvoiceNumber = invoiceData.invoice_number || null;
       
-      console.log('📝 [CreateSalesInvoice] Fatura kaydediliyor, numara:', finalInvoiceNumber || 'yok (E-Fatura gönderildiğinde atanacak)');
+      console.log('📝 [EditSalesInvoice] Fatura güncelleniyor, numara:', finalInvoiceNumber || 'yok (E-Fatura gönderildiğinde atanacak)');
 
       // Prepare invoice data
       const invoicePayload = {
@@ -935,13 +802,13 @@ const CreateSalesInvoice = () => {
         queryClient.invalidateQueries({ queryKey: ['customers'] });
       }
 
-      console.log("✅ [CreateSalesInvoice] Invoice saved successfully", { invoiceId: invoice.id });
+      console.log("✅ [EditSalesInvoice] Invoice updated successfully", { invoiceId: invoice.id });
       
       // Show success message
       if (finalInvoiceNumber) {
-        toast.success(`Fatura başarıyla kaydedildi (${finalInvoiceNumber})`);
+        toast.success(`Fatura başarıyla güncellendi (${finalInvoiceNumber})`);
       } else {
-        toast.success("Fatura kaydedildi. E-Fatura göndermek için 'E-Fatura Gönder' butonuna tıklayın.");
+        toast.success("Fatura güncellendi. E-Fatura göndermek için 'E-Fatura Gönder' butonuna tıklayın.");
       }
       
       navigate(`/sales-invoices/${invoice.id}`);
@@ -988,10 +855,10 @@ const CreateSalesInvoice = () => {
               <FileText className="h-5 w-5 text-muted-foreground" />
               <div className="space-y-0.5">
                 <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                  Yeni Satış Faturası
+                  Satış Faturası Düzenle
                 </h1>
                 <p className="text-xs text-muted-foreground/70">
-                  Hızlı ve kolay fatura oluşturma
+                  {invoice?.fatura_no ? `Fatura No: ${invoice.fatura_no}` : 'Fatura bilgilerini düzenleyin'}
                 </p>
               </div>
             </div>
@@ -1000,11 +867,11 @@ const CreateSalesInvoice = () => {
           <div className="flex items-center gap-4">
             <Button 
               onClick={handleSmartSave}
-              disabled={saving || isSending}
+              disabled={saving || isSending || loadingInvoice}
               className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
             >
               <Save className="h-4 w-4" />
-              <span>{saving || isSending ? "İşleniyor..." : "Kaydet"}</span>
+              <span>{saving || isSending ? "İşleniyor..." : "Güncelle"}</span>
             </Button>
             
             <DropdownMenu>
@@ -1200,4 +1067,4 @@ const CreateSalesInvoice = () => {
   );
 };
 
-export default CreateSalesInvoice;
+export default EditSalesInvoice;

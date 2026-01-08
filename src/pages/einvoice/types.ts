@@ -49,6 +49,13 @@ export interface EInvoiceDetails {
       account_number?: string;
     };
   };
+  // Veriban durum bilgileri - giden faturalar için
+  status?: string;
+  elogo_status?: number | null;        // StateCode (1-5)
+  elogo_code?: number | null;          // AnswerStateCode
+  elogo_description?: string | null;   // Durum açıklaması
+  answer_type?: string | null;         // KABUL/RED/IADE
+  is_answered?: boolean;               // Cevap verildi mi?
 }
 
 export interface ProductMatchingItem {

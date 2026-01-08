@@ -55,19 +55,13 @@ serve(async (req) => {
 
     // Get session
     console.log('🔐 Veriban session alınıyor...');
-    const sessionResult = await VeribanSoapClient.getClientSession(
-      {
-        username: veribanAuth.username,
-        password: veribanAuth.password,
-      },
-      veribanAuth.webservice_url
-    );
+    const sessionResult = await getValidSessionCode(supabaseClient, veribanAuth);
 
-    if (!sessionResult.success || !sessionResult.data?.sessionCode) {
+    if (!sessionResult.success || !sessionResult.sessionCode) {
       throw new Error('Session alınamadı: ' + sessionResult.error);
     }
 
-    const sessionCode = sessionResult.data.sessionCode;
+    const sessionCode = sessionResult.sessionCode;
     console.log('✅ Session alındı');
 
     // Download invoice XML

@@ -16,6 +16,7 @@ const PurchaseInvoiceDetail = React.lazy(() => import("@/pages/PurchaseInvoiceDe
 const EditPurchaseInvoice = React.lazy(() => import("@/pages/EditPurchaseInvoice"));
 const SalesInvoices = React.lazy(() => import("@/pages/SalesInvoices"));
 const CreateSalesInvoice = React.lazy(() => import("@/pages/CreateSalesInvoice"));
+const EditSalesInvoice = React.lazy(() => import("@/pages/EditSalesInvoice"));
 const SalesInvoiceDetail = React.lazy(() => import("@/pages/SalesInvoiceDetail"));
 const FinancialOverview = React.lazy(() => import("@/pages/FinancialOverview"));
 const CashAccountDetail = React.lazy(() => import("@/pages/CashAccountDetail"));
@@ -71,6 +72,7 @@ export const financeRoutes: RouteConfig[] = [
   { path: "/purchase-invoices/:id", component: PurchaseInvoiceDetail, protected: true },
   { path: "/purchase-invoices", component: PurchaseInvoices, protected: true },
   { path: "/sales-invoices/create", component: CreateSalesInvoice, protected: true },
+  { path: "/sales-invoices/edit/:id", component: EditSalesInvoice, protected: true },
   { path: "/sales-invoices/:id", component: SalesInvoiceDetail, protected: true },
   { path: "/sales-invoices", component: SalesInvoices, protected: true }, // En son base route
   { path: "/e-invoice/process-outgoing/:invoiceId", component: EInvoiceProcessOutgoing, protected: true },

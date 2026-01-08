@@ -5,16 +5,21 @@ import { toast } from 'sonner';
 export const useVeribanPdf = () => {
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const downloadAndOpenPdf = async (invoiceId: string, invoiceType: 'e-fatura' | 'e-arşiv') => {
+  const downloadAndOpenPdf = async (
+    invoiceId: string, 
+    invoiceType: 'e-fatura' | 'e-arşiv',
+    direction: 'incoming' | 'outgoing' = 'incoming'
+  ) => {
     setIsDownloading(true);
 
     try {
-      console.log('📄 [Veriban PDF] Starting PDF download:', { invoiceId, invoiceType });
+      console.log('📄 [Veriban PDF] Starting PDF download:', { invoiceId, invoiceType, direction });
 
       const { data, error } = await supabase.functions.invoke('veriban-invoice-pdf', {
         body: {
           invoiceId,
-          invoiceType
+          invoiceType,
+          direction
         }
       });
 

@@ -34,6 +34,11 @@ export interface SalesInvoice {
   nilvera_invoice_id?: string;
   einvoice_sent_at?: string;
   einvoice_error_message?: string;
+  // Veriban E-Fatura Durum Bilgileri
+  elogo_status?: number | null;
+  answer_type?: string | null;
+  elogo_code?: number | null;
+  elogo_description?: string | null;
   customer?: {
     name: string;
     tax_number?: string;

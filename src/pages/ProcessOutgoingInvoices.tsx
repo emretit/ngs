@@ -30,7 +30,7 @@ const ProcessOutgoingInvoices = () => {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - 30);
 
-  const { data: invoices = [], isLoading, refetch } = useOutgoingInvoices(
+  const { outgoingInvoices: invoices = [], isLoading, refetch } = useOutgoingInvoices(
     {
       startDate: format(startDate, "yyyy-MM-dd"),
       endDate: format(endDate, "yyyy-MM-dd"),

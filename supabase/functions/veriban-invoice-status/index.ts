@@ -151,6 +151,7 @@ serve(async (req) => {
 
     // ============================================
     // CACHE CHECK: outgoing_invoices'dan oku
+    // Cache kontrolü - ancak her "E-Fatura Çek" butonuna basıldığında yeniden çekilsin
     // ============================================
     if (cachedOutgoingInvoice) {
       console.log('✅ Cache\'den outgoing_invoice bulundu:', cachedOutgoingInvoice.invoice_number);
@@ -161,34 +162,14 @@ serve(async (req) => {
       });
       
       // Cache'deki veri yeterince yeni mi? (Son 5 dakika içinde güncellenmiş)
+      // NOT: Cache threshold'u kaldırdık - artık her çağrıda API'den güncel veri çekilecek
+      // Böylece "E-Fatura Çek" butonuna her basıldığında durumlar güncellenecek
       const cacheAge = new Date().getTime() - new Date(cachedOutgoingInvoice.updated_at).getTime();
-      const CACHE_THRESHOLD = 5 * 60 * 1000; // 5 dakika
+      console.log('📊 Cache yaşı: ' + Math.floor(cacheAge / 60000) + ' dakika - API\'den güncel veri çekilecek');
       
-      if (cacheAge < CACHE_THRESHOLD) {
-        console.log('✅ Cache yeterince yeni, API çağrısı yapılmayacak');
-        
-        // Map cached data to expected response format
-        const cachedStatus = {
-          success: true,
-          status: {
-            einvoice_status: cachedOutgoingInvoice.status,
-            einvoice_invoice_state: cachedOutgoingInvoice.elogo_status || 0,
-            stateCode: cachedOutgoingInvoice.elogo_status || 0,
-            stateName: getStateName(cachedOutgoingInvoice.elogo_status),
-            userFriendlyStatus: getUserFriendlyStatus(cachedOutgoingInvoice.elogo_status),
-            answerStateCode: cachedOutgoingInvoice.elogo_code || 0,
-            answerTypeCode: getAnswerTypeCode(cachedOutgoingInvoice.answer_type),
-            fromCache: true,
-            cacheAge: Math.floor(cacheAge / 1000) // saniye cinsinden
-          }
-        };
-        
-        return new Response(JSON.stringify(cachedStatus), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } else {
-        console.log('⚠️ Cache eski (yaşı: ' + Math.floor(cacheAge / 60000) + ' dakika), API\'den güncel veri çekilecek');
-      }
+      // Cache kontrolü kaldırıldı - her zaman API'den güncel veri çek
+      // ÖNCEDEN: if (cacheAge < CACHE_THRESHOLD) { return cached data }
+      // ŞİMDİ: Her zaman API'den güncel veri çek
     } else {
       console.log('ℹ️ outgoing_invoices ile ilişkilendirme henüz yapılmamış, API\'den sorgulama yapılacak');
     }
@@ -428,6 +409,15 @@ serve(async (req) => {
 
         updateData.xml_data = xmlDataUpdate;
 
+        // ============================================
+        // SINGLE SOURCE OF TRUTH: elogo_status
+        // Update all status fields based on Veriban StateCode
+        // ============================================
+        
+        // Always update elogo_status (Single Source of Truth)
+        updateData.elogo_status = statusData.stateCode;
+        console.log('✅ [veriban-invoice-status] elogo_status güncelleniyor:', statusData.stateCode);
+        
         // Update status based on Veriban state code
         // StateCode values: 1=TASLAK, 2=Gönderilmeyi bekliyor/İmza bekliyor, 3=Gönderim listesinde, 4=HATALI, 5=Başarıyla alıcıya iletildi
         if (statusData.stateCode === 5) {
@@ -450,6 +440,19 @@ serve(async (req) => {
         if (statusData.answerTypeCode && statusData.answerTypeCode !== 1) {
           updateData.einvoice_responded_at = new Date().toISOString();
           updateData.einvoice_answer_type = statusData.answerTypeCode === 5 ? 5 : (statusData.answerTypeCode === 4 ? 4 : 3);
+          
+          // Map AnswerTypeCode to answer_type (for badge display)
+          if (statusData.answerTypeCode === 5) {
+            updateData.answer_type = 'KABUL';
+          } else if (statusData.answerTypeCode === 4) {
+            updateData.answer_type = 'RED';
+          } else if (statusData.answerTypeCode === 3) {
+            updateData.answer_type = 'IADE';
+          }
+          console.log('✅ [veriban-invoice-status] answer_type güncelleniyor:', updateData.answer_type);
+        } else {
+          // No answer yet, set to null
+          updateData.answer_type = null;
         }
 
         const { error: updateError } = await supabase

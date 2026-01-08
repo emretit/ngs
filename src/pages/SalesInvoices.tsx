@@ -113,6 +113,9 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
     }
   }, [integratorStatus, sendVeribanInvoice, sendNilveraInvoice]);
 
+  // DEVRE DIŞI: Otomatik gönderim kaldırıldı
+  // Kullanıcı manuel olarak "E-Fatura Gönder" butonuna basmalı
+  /*
   // "GİB'e Gönderilmeyi Bekliyor" durumundaki faturaları otomatik gönder
   useEffect(() => {
     if (!integratorStatus || !invoices || invoices.length === 0) return;
@@ -141,13 +144,15 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
       });
     }
   }, [integratorStatus, invoices, sendInvoice]);
+  */
 
   // "GİB'e Gönderilmeyi Bekliyor" durumundaki faturalar için periyodik durum kontrolü (sadece Veriban için)
+  // Kontrol sıklığı: 5 dakika (300 saniye)
   useEffect(() => {
     if (!integratorStatus || integratorStatus.selected !== 'veriban' || !integratorStatus.veriban) return;
     if (!invoices || invoices.length === 0) return;
 
-    // Her 30 saniyede bir durum kontrolü yap
+    // Her 5 dakikada bir durum kontrolü yap (30 saniye -> 300 saniye)
     const statusCheckInterval = setInterval(() => {
       // Her seferinde güncel faturaları kontrol et
       // Sadece Veriban'a gönderilmiş faturaları kontrol et
@@ -177,21 +182,21 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
           checkVeribanStatus(invoice.id, {
             silent: true, // Periyodik kontrollerde toast gösterme
             onSuccess: () => {
-              // Başarılı kontrol sonrası 5 dakika sonra tekrar kontrol edilebilir
+              // Başarılı kontrol sonrası 10 dakika sonra tekrar kontrol edilebilir
               setTimeout(() => {
                 checkedInvoicesRef.current.delete(invoice.id);
-              }, 5 * 60 * 1000); // 5 dakika
+              }, 10 * 60 * 1000); // 10 dakika
             },
             onError: () => {
-              // Hata durumunda 1 dakika sonra tekrar kontrol edilebilir
+              // Hata durumunda 2 dakika sonra tekrar kontrol edilebilir
               setTimeout(() => {
                 checkedInvoicesRef.current.delete(invoice.id);
-              }, 60 * 1000); // 1 dakika
+              }, 2 * 60 * 1000); // 2 dakika
             }
           });
         }
       });
-    }, 30000); // 30 saniye
+    }, 300000); // 300 saniye = 5 dakika (önceden 30 saniye idi)
 
     return () => {
       clearInterval(statusCheckInterval);

@@ -35,6 +35,30 @@ export const useVeribanInvoice = () => {
     }) => {
       console.log('🚀 [useVeribanInvoice] Sending invoice to Veriban:', salesInvoiceId, 'forceResend:', forceResend);
       
+      // GÖNDERİM BAŞLARKEN HEMEN DURUMU GÜNCELLE
+      // Bu sayede kullanıcı arayüzde hemen değişikliği görür
+      try {
+        const { error: updateError } = await supabase
+          .from('sales_invoices')
+          .update({ 
+            einvoice_status: 'sending', // Gönderiliyor durumuna çek
+            elogo_status: 3, // StateCode 3 = Gönderim listesinde
+            durum: 'gonderildi' // Fatura durumu da "gönderildi" olsun
+          })
+          .eq('id', salesInvoiceId);
+        
+        if (updateError) {
+          console.error('⚠️ [useVeribanInvoice] Durum güncelleme hatası:', updateError);
+        } else {
+          console.log('✅ [useVeribanInvoice] Fatura durumu "sending" (StateCode=3) olarak güncellendi');
+          // Hemen query'leri yenile
+          queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+          queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
+        }
+      } catch (err) {
+        console.error('⚠️ [useVeribanInvoice] Durum güncelleme hatası:', err);
+      }
+      
       // Create a timeout promise (30 seconds)
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
@@ -145,10 +169,30 @@ export const useVeribanInvoice = () => {
       console.log('✅ [useVeribanInvoice] Response:', data);
       return data;
     },
-    onSuccess: (data, { salesInvoiceId }) => {
+    onSuccess: async (data, { salesInvoiceId }) => {
       console.log("🎯 Veriban e-fatura gönderim cevabı:", data);
       
       if (data?.success) {
+        // Başarılı gönderimde durumu 'sent' olarak güncelle
+        try {
+          const { error: updateError } = await supabase
+            .from('sales_invoices')
+            .update({ 
+              einvoice_status: 'sent', // GİB'e gönderildi
+              elogo_status: 2, // StateCode 2 = İmza bekliyor / GİB'e iletilmeyi bekliyor
+              durum: 'gonderildi'
+            })
+            .eq('id', salesInvoiceId);
+          
+          if (updateError) {
+            console.error('⚠️ [useVeribanInvoice] Başarılı gönderim sonrası durum güncelleme hatası:', updateError);
+          } else {
+            console.log('✅ [useVeribanInvoice] Fatura durumu "sent" (StateCode=2) olarak güncellendi');
+          }
+        } catch (err) {
+          console.error('⚠️ [useVeribanInvoice] Başarılı gönderim sonrası durum güncelleme hatası:', err);
+        }
+        
         toast.success('E-fatura başarıyla Veriban sistemine gönderildi');
         // E-fatura durumunu ve satış faturaları listesini yenile
         queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
@@ -160,10 +204,23 @@ export const useVeribanInvoice = () => {
         }));
       } else {
         toast.error(data?.error || data?.message || 'E-fatura gönderilemedi');
+        // Hata durumunda durumu 'error' olarak güncelle
+        try {
+          await supabase
+            .from('sales_invoices')
+            .update({ 
+              einvoice_status: 'error',
+              elogo_status: 4, // StateCode 4 = Hatalı
+              einvoice_error_message: data?.error || data?.message || 'E-fatura gönderilemedi'
+            })
+            .eq('id', salesInvoiceId);
+        } catch (err) {
+          console.error('⚠️ [useVeribanInvoice] Hata durumu güncellenemedi:', err);
+        }
         queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       }
     },
-    onError: (error: any, { salesInvoiceId }) => {
+    onError: async (error: any, { salesInvoiceId }) => {
       console.error("❌ Veriban e-fatura gönderim hatası:", error);
       
       // Check if confirmation is needed
@@ -175,6 +232,21 @@ export const useVeribanInvoice = () => {
           currentStatus: error.currentStatus
         });
         return; // Don't show error toast
+      }
+      
+      // Hata durumunda durumu 'error' olarak güncelle
+      try {
+        await supabase
+          .from('sales_invoices')
+          .update({ 
+            einvoice_status: 'error',
+            elogo_status: 4, // StateCode 4 = Hatalı
+            einvoice_error_message: error?.message || 'E-fatura gönderilemedi'
+          })
+          .eq('id', salesInvoiceId);
+        console.log('✅ [useVeribanInvoice] Hata durumu (StateCode=4) veritabanına kaydedildi');
+      } catch (err) {
+        console.error('⚠️ [useVeribanInvoice] Hata durumu güncellenemedi:', err);
       }
       
       // Edge function'dan gelen detaylı hata mesajını göster

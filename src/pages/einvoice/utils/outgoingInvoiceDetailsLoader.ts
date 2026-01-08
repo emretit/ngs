@@ -227,6 +227,13 @@ export const loadOutgoingInvoiceDetails = async (invoiceId: string): Promise<EIn
     tax_total: taxTotal,
     total_amount: totalAmount,
     items,
+    // Veriban durum bilgileri - XML'den gelen bilgiler
+    status: invoiceData.status || undefined,
+    elogo_status: invoiceData.elogo_status || null,
+    elogo_code: invoiceData.elogo_code || null,
+    elogo_description: invoiceData.elogo_description || null,
+    answer_type: invoiceData.answer_type || null,
+    is_answered: invoiceData.is_answered || false,
     supplier_details: {
       company_name: customerName, // Müşteri adı
       tax_number: customerTaxNumber, // Müşteri VKN

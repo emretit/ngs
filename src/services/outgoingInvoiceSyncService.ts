@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { OutgoingInvoice } from '@/hooks/useOutgoingInvoices';
 import { SalesInvoice } from '@/hooks/useSalesInvoices';
+import { getInvoiceStatusFromStateCode } from '@/utils/invoiceStatusHelpers';
 
 /**
  * Veriban giden e-fatura verilerini sales_invoices tablosuna senkronize eden servis
@@ -10,6 +11,7 @@ import { SalesInvoice } from '@/hooks/useSalesInvoices';
  *   (nilvera_invoice_id alanı hem Nilvera hem Veriban için kullanılır)
  * - Müşteri bulunamazsa otomatik oluşturma
  * - Veriban verilerini üzerine yazma stratejisi
+ * - StateCode (elogo_status) bazlı durum yönetimi - Single Source of Truth
  * - Hata yönetimi ve loglama
  */
 
@@ -98,7 +100,7 @@ export class OutgoingInvoiceSyncService {
       throw new Error(`Mevcut fatura arama hatası: ${findError.message}`);
     }
 
-    // 3. Fatura verisini hazırla
+    // 3. Fatura verisini hazırla (company_id default olarak current_company_id() kullanılacak)
     const salesInvoiceData = this.mapOutgoingToSalesInvoice(outgoingInvoice, customerId || undefined);
 
     // 4. Mevcut kayıt varsa güncelle, yoksa oluştur
@@ -118,7 +120,7 @@ export class OutgoingInvoiceSyncService {
       result.updated++;
       console.log(`🔄 [OutgoingInvoiceSync] Güncellendi: ${outgoingInvoice.invoiceNumber} -> ${salesInvoiceId}`);
     } else {
-      // Yeni kayıt oluştur
+      // Yeni kayıt oluştur - company_id default value olarak otomatik gelecek
       const { data: newInvoice, error: insertError } = await supabase
         .from('sales_invoices')
         .insert(salesInvoiceData)
@@ -190,12 +192,34 @@ export class OutgoingInvoiceSyncService {
 
   /**
    * outgoing_invoices verisini sales_invoices formatına dönüştürür
+   * Not: company_id otomatik olarak current_company_id() default value ile dolacak
+   * 
+   * ÖNEMLI: einvoice_status artık elogo_status (StateCode) ve answer_type'dan türetiliyor
+   * Bu sayede Single Source of Truth prensibi uygulanıyor
    */
   private mapOutgoingToSalesInvoice(
     outgoing: OutgoingInvoice,
     customerId?: string
   ): Partial<SalesInvoice> {
+    // StateCode (elogo_status) ve AnswerType'dan einvoice_status'u türet
+    const stateCode = outgoing.elogoStatus || null;
+    const answerType = outgoing.answerType || null;
+    const einvoiceStatus = getInvoiceStatusFromStateCode(
+      stateCode as any,
+      answerType as any
+    );
+
+    console.log(`📊 [OutgoingInvoiceSync] ${outgoing.invoiceNumber} mapping:`, {
+      stateCode,
+      answerType,
+      derivedStatus: einvoiceStatus,
+      oldStatus: outgoing.status
+    });
+
     return {
+      // company_id - RLS için gerekli, default value olarak current_company_id() kullanılacak
+      // Manuel olarak set etmiyoruz, database default value kullanacak
+      
       // Temel fatura bilgileri
       fatura_no: outgoing.invoiceNumber,
       fatura_tarihi: outgoing.invoiceDate,
@@ -223,12 +247,17 @@ export class OutgoingInvoiceSyncService {
       // E-fatura bilgileri
       // Not: nilvera_invoice_id alanı hem Nilvera hem Veriban için kullanılır
       nilvera_invoice_id: outgoing.id, // Veriban outgoing_invoice.id - Eşleştirme anahtarı
-      einvoice_status: this.mapStatusToEinvoiceStatus(outgoing.status),
-      // Veriban durum bilgileri (elogo_status, elogo_code, elogo_description)
-      // Bu alanlar outgoing_invoices'tan gelecek, şimdilik null
-      einvoice_transfer_state: null,
-      einvoice_answer_type: null,
-      einvoice_error_message: null,
+      
+      // SINGLE SOURCE OF TRUTH: einvoice_status artık elogo_status ve answer_type'dan türetiliyor
+      einvoice_status: einvoiceStatus,
+      
+      // Veriban durum bilgileri - outgoing_invoices'tan aktar
+      elogo_status: stateCode,                              // StateCode (1-5) - SINGLE SOURCE OF TRUTH
+      answer_type: answerType,                              // KABUL/RED/IADE
+      elogo_code: outgoing.elogoCode || null,               // AnswerStateCode
+      elogo_description: outgoing.elogoDescription || null, // Durum açıklaması
+      
+      einvoice_error_message: outgoing.elogoDescription || null,
       einvoice_sent_at: outgoing.sentAt || null,
       einvoice_delivered_at: outgoing.deliveredAt || null,
       einvoice_xml_content: outgoing.xmlContent || null,
@@ -243,23 +272,6 @@ export class OutgoingInvoiceSyncService {
       // Timestamps - Supabase otomatik yönetir
       updated_at: new Date().toISOString()
     };
-  }
-
-  /**
-   * outgoing_invoices status değerini sales_invoices einvoice_status değerine dönüştürür
-   */
-  private mapStatusToEinvoiceStatus(status: string): string {
-    const statusMap: Record<string, string> = {
-      'sent': 'sent',
-      'delivered': 'delivered',
-      'approved': 'accepted',
-      'rejected': 'rejected',
-      'pending': 'sending',
-      'cancelled': 'cancelled',
-      'error': 'error'
-    };
-    
-    return statusMap[status?.toLowerCase()] || 'sent';
   }
 
   /**

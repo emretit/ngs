@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { showError } from "@/utils/toastUtils";
 import { IntegratorService } from "@/services/integratorService";
 import { supabase } from "@/integrations/supabase/client";
-import { outgoingInvoiceSyncService } from "@/services/outgoingInvoiceSyncService";
+// outgoingInvoiceSyncService import'u kaldırıldı - artık otomatik sync yok
 
 export interface OutgoingInvoice {
   id: string;
@@ -30,6 +30,12 @@ export interface OutgoingInvoice {
   paymentMeansCode?: string;
   payeeIban?: string;
   payeeBankName?: string;
+  // Veriban durum bilgileri
+  elogoStatus?: number | null;        // Veriban StateCode (0-7)
+  elogoCode?: number | null;          // Veriban AnswerStateCode (0-3)
+  elogoDescription?: string | null;   // Durum açıklaması
+  answerType?: string | null;         // KABUL/RED/IADE
+  isAnswered?: boolean;               // Cevap verildi mi?
 }
 
 export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?: string; customerTaxNumber?: string }, enabled = true) => {
@@ -84,6 +90,12 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
         paymentMeansCode: inv.payment_means_code || '',
         payeeIban: inv.payee_iban || '',
         payeeBankName: inv.payee_bank_name || '',
+        // Veriban durum bilgileri
+        elogoStatus: inv.elogo_status,
+        elogoCode: inv.elogo_code,
+        elogoDescription: inv.elogo_description,
+        answerType: inv.answer_type,
+        isAnswered: inv.is_answered || false,
       }));
     } catch (error) {
       console.error('Cache fetch error:', error);
@@ -127,17 +139,17 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
         throw new Error(result.error || 'Giden faturalar alınamadı');
       }
 
-      // 🔄 Otomatik senkronizasyon: Veriban verilerini sales_invoices'a aktar
-      if (result.invoices && result.invoices.length > 0) {
-        try {
-          console.log('🔄 [useOutgoingInvoices] Sales invoices senkronizasyonu başlatılıyor...');
-          const syncResult = await outgoingInvoiceSyncService.syncToSalesInvoices(result.invoices);
-          console.log('✅ [useOutgoingInvoices] Senkronizasyon tamamlandı:', syncResult);
-        } catch (syncError: any) {
-          // Senkronizasyon hataları kullanıcı deneyimini bozmamalı, sadece loglanır
-          console.error('⚠️ [useOutgoingInvoices] Senkronizasyon hatası:', syncError.message);
-        }
-      }
+      // ❌ Otomatik senkronizasyon KALDIRILDI
+      // Kullanıcı manuel olarak ProcessOutgoingInvoices sayfasından seçip ekleyebilir
+      // if (result.invoices && result.invoices.length > 0) {
+      //   try {
+      //     console.log('🔄 [useOutgoingInvoices] Sales invoices senkronizasyonu başlatılıyor...');
+      //     const syncResult = await outgoingInvoiceSyncService.syncToSalesInvoices(result.invoices);
+      //     console.log('✅ [useOutgoingInvoices] Senkronizasyon tamamlandı:', syncResult);
+      //   } catch (syncError: any) {
+      //     console.error('⚠️ [useOutgoingInvoices] Senkronizasyon hatası:', syncError.message);
+      //   }
+      // }
 
       return result.invoices || [];
     } catch (error: any) {

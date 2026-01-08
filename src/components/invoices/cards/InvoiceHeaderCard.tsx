@@ -118,6 +118,29 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
             )}
           </div>
 
+          {/* Fatura Numarası */}
+          <div className="col-span-2">
+            <Label className="text-xs">Fatura No</Label>
+            {(assignedInvoiceNumber || einvoiceStatus?.nilvera_invoice_id) ? (
+              <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-100">
+                <CheckIcon className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium text-green-700">
+                  {assignedInvoiceNumber || einvoiceStatus?.nilvera_invoice_id}
+                </span>
+                <Badge variant="outline" className="text-[10px] bg-green-100 text-green-700 border-green-200 py-0">
+                  Sistem Atandı
+                </Badge>
+              </div>
+            ) : (
+              <Input
+                value={formData.fatura_no || ""}
+                onChange={(e) => onFieldChange("fatura_no", e.target.value)}
+                placeholder="Fatura numarası (opsiyonel)"
+                className="h-9"
+              />
+            )}
+          </div>
+
           {/* Fatura Tarihi */}
           <div>
             <Label className="text-xs">Fatura Tarihi *</Label>
@@ -189,19 +212,6 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
             <span className="text-xs text-amber-600">
               1 {formData.para_birimi} = {formData.exchange_rate || 1} TRY
             </span>
-          </div>
-        )}
-
-        {/* Fatura Numarası - Readonly */}
-        {(assignedInvoiceNumber || einvoiceStatus?.nilvera_invoice_id) && (
-          <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-100">
-            <CheckIcon className="h-4 w-4 text-green-600" />
-            <span className="text-sm font-medium text-green-700">
-              Fatura No: {assignedInvoiceNumber || einvoiceStatus?.nilvera_invoice_id}
-            </span>
-            <Badge variant="outline" className="text-[10px] bg-green-100 text-green-700 border-green-200 py-0">
-              Nilvera
-            </Badge>
           </div>
         )}
 

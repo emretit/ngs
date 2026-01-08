@@ -296,9 +296,9 @@ export const FinancialAnalysisChart = memo(({ data, isLoading }: FinancialAnalys
       {/* Grid Layout: Grafik (Sol %75) + İstatistikler (Sağ %25) */}
       <div className="grid grid-cols-1 xl:grid-cols-[75%_1fr] gap-4">
         {/* Sol Taraf - Grafik */}
-        <div className="min-w-0">
+        <div className="min-w-0 w-full">
           {chartType === 'financial' ? (
-            <div id="financial-chart-container" className="h-[450px] w-full">
+            <div id="financial-chart-container" className="h-[450px] w-full min-w-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart 
                   data={comboChartData} 

@@ -8,24 +8,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { User, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { DatePicker } from "@/components/ui/date-picker";
+import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 
 interface NewLeaveDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-// İzin türü seçenekleri
-const LEAVE_TYPES = [
-  { value: "annual", label: "Yıllık İzin" },
-  { value: "sick", label: "Mazeret İzni" },
-  { value: "medical", label: "Raporlu İzin" },
-  { value: "unpaid", label: "Ücretsiz İzin" },
-  { value: "official", label: "Resmî İzin" },
-  { value: "other", label: "Diğer" },
-] as const;
+interface LeaveType {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  is_active: boolean;
+}
 
 const NewLeaveDialog: React.FC<NewLeaveDialogProps> = ({ isOpen, onClose }) => {
   const queryClient = useQueryClient();
@@ -41,21 +40,22 @@ const NewLeaveDialog: React.FC<NewLeaveDialogProps> = ({ isOpen, onClose }) => {
   const [status, setStatus] = useState<string>("approved"); // Admin kaydı direkt onaylı
   const [description, setDescription] = useState<string>("");
 
-  // Fetch employees
-  const { data: employees = [], isLoading: employeesLoading } = useQuery({
-    queryKey: ['employees', userData?.company_id],
+  // Fetch leave types from database
+  const { data: leaveTypes = [], isLoading: leaveTypesLoading } = useQuery({
+    queryKey: ['leave_types', userData?.company_id],
     queryFn: async () => {
-      if (!userData?.company_id) return [];
-      
+      // RLS policy otomatik olarak current_company() ile filtreler
       const { data, error } = await supabase
-        .from('employees')
-        .select('id, first_name, last_name, full_name')
-        .eq('tenant_id', userData.company_id)
-        .eq('status', 'aktif')
-        .order('first_name');
+        .from('leave_types')
+        .select('id, name, description, color, is_active')
+        .eq('is_active', true)
+        .order('name');
       
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        console.error("Error fetching leave types:", error);
+        throw error;
+      }
+      return data as LeaveType[] || [];
     },
     enabled: !!userData?.company_id && isOpen
   });
@@ -131,20 +131,17 @@ const NewLeaveDialog: React.FC<NewLeaveDialogProps> = ({ isOpen, onClose }) => {
 
     try {
       const leaveData = {
-        tenant_id: userData.company_id,
+        company_id: userData.company_id,
         employee_id: employeeId,
         leave_type: leaveType,
         start_date: startDate.toISOString().split("T")[0],
         end_date: endDate.toISOString().split("T")[0],
-        days: days,
         status: status,
         reason: description || null,
         created_at: new Date().toISOString(),
-        approved_by: userData.id,
-        approved_at: status === "approved" ? new Date().toISOString() : null,
       };
 
-      const { error } = await supabase.from("leave_requests").insert([leaveData]);
+      const { error } = await supabase.from("employee_leaves").insert([leaveData]);
 
       if (error) {
         console.error("Error creating leave:", error);
@@ -153,6 +150,7 @@ const NewLeaveDialog: React.FC<NewLeaveDialogProps> = ({ isOpen, onClose }) => {
       }
 
       toast.success("İzin kaydı başarıyla oluşturuldu");
+      queryClient.invalidateQueries({ queryKey: ["employee_leaves"] });
       queryClient.invalidateQueries({ queryKey: ["leaves"] });
       handleClose();
     } catch (err: any) {
@@ -175,26 +173,15 @@ const NewLeaveDialog: React.FC<NewLeaveDialogProps> = ({ isOpen, onClose }) => {
         <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 -mr-1">
           <div className="space-y-3">
             {/* Çalışan Seçimi */}
-            <div className="space-y-1.5">
-              <Label htmlFor="employee_id" className="text-sm font-medium text-gray-700">
-                Çalışan <span className="text-red-500">*</span>
-              </Label>
-              <Select value={employeeId} onValueChange={setEmployeeId} disabled={employeesLoading}>
-                <SelectTrigger id="employee_id" className="h-10">
-                  <SelectValue placeholder={employeesLoading ? "Çalışanlar yükleniyor..." : "Çalışan seçin"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id}>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span>{emp.full_name || `${emp.first_name} ${emp.last_name}`}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <EmployeeSelector
+              value={employeeId}
+              onChange={setEmployeeId}
+              label="Çalışan"
+              placeholder="Çalışan seçin"
+              searchPlaceholder="Çalışan ara..."
+              companyId={userData?.company_id}
+              className="space-y-1.5"
+            />
 
             {/* İzin Türü ve Durum */}
             <div className="grid grid-cols-2 gap-2">
@@ -202,14 +189,22 @@ const NewLeaveDialog: React.FC<NewLeaveDialogProps> = ({ isOpen, onClose }) => {
                 <Label htmlFor="leave_type" className="text-sm font-medium text-gray-700">
                   İzin Türü <span className="text-red-500">*</span>
                 </Label>
-                <Select value={leaveType} onValueChange={setLeaveType}>
+                <Select value={leaveType} onValueChange={setLeaveType} disabled={leaveTypesLoading}>
                   <SelectTrigger id="leave_type" className="h-10">
-                    <SelectValue placeholder="İzin türü seçin" />
+                    <SelectValue placeholder={leaveTypesLoading ? "Yükleniyor..." : "İzin türü seçin"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {LEAVE_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
+                    {leaveTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.name}>
+                        <div className="flex items-center gap-2">
+                          {type.color && (
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: type.color }}
+                            />
+                          )}
+                          <span>{type.name}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

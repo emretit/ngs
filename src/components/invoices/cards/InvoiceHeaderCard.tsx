@@ -331,51 +331,88 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
               </div>
             </div>
 
-            {/* İnternet Satış Bilgileri */}
+            {/* İnternet Satış Bilgileri - E-Arşiv için Geliştirilmiş */}
             {formData.sales_platform === "INTERNET" && (
               <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 space-y-2">
                 <div className="flex items-center gap-1.5 text-blue-700 text-xs font-medium">
                   <Globe className="h-3.5 w-3.5" />
-                  İnternet Satış Bilgileri
+                  İnternet Satış Bilgileri {formData.invoice_profile === "EARSIVFATURA" && "(E-Arşiv)"}
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   <div>
-                    <Label className="text-[10px]">Web Sitesi</Label>
+                    <Label className="text-[10px]">Web Sitesi URL</Label>
                     <Input
                       value={formData.internet_info?.website || ""}
                       onChange={(e) => onFieldChange("internet_info", { ...formData.internet_info, website: e.target.value })}
-                      placeholder="www.example.com"
+                      placeholder="www.ornek.com"
                       className="h-7 text-xs"
                     />
                   </div>
                   <div>
-                    <Label className="text-[10px]">Ödeme Yöntemi</Label>
-                    <Input
+                    <Label className="text-[10px]">Ödeme Şekli</Label>
+                    <select
                       value={formData.internet_info?.payment_method || ""}
                       onChange={(e) => onFieldChange("internet_info", { ...formData.internet_info, payment_method: e.target.value })}
-                      placeholder="KREDIKARTI"
-                      className="h-7 text-xs"
-                    />
+                      className="h-7 text-xs w-full border rounded-md px-2"
+                    >
+                      <option value="">Seçiniz</option>
+                      <option value="KREDIKARTI">Kredi Kartı</option>
+                      <option value="EFT">EFT/Havale</option>
+                      <option value="KAPIODEME">Kapıda Ödeme</option>
+                      <option value="ODEMEARACI">Ödeme Aracı</option>
+                    </select>
                   </div>
                   <div>
-                    <Label className="text-[10px]">Ödeme Yöntemi Adı</Label>
+                    <Label className="text-[10px]">Ödeme Şekli Adı</Label>
                     <Input
                       value={formData.internet_info?.payment_method_name || ""}
                       onChange={(e) => onFieldChange("internet_info", { ...formData.internet_info, payment_method_name: e.target.value })}
-                      placeholder="Kredi Kartı"
+                      placeholder="Kredi Kartı ile Ödeme"
                       className="h-7 text-xs"
                     />
                   </div>
                   <div>
-                    <Label className="text-[10px]">Ödeme Aracı</Label>
+                    <Label className="text-[10px]">Ödeme Aracı/Platform</Label>
                     <Input
                       value={formData.internet_info?.payment_agent_name || ""}
                       onChange={(e) => onFieldChange("internet_info", { ...formData.internet_info, payment_agent_name: e.target.value })}
-                      placeholder="iyzico, paytr"
+                      placeholder="iyzico, paytr, stripe"
                       className="h-7 text-xs"
                     />
                   </div>
                 </div>
+                {/* E-Arşiv için ek kargo bilgileri */}
+                {formData.invoice_profile === "EARSIVFATURA" && (
+                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-blue-200">
+                    <div>
+                      <Label className="text-[10px]">Taşıyıcı Firma</Label>
+                      <Input
+                        value={formData.internet_info?.carrier_name || ""}
+                        onChange={(e) => onFieldChange("internet_info", { ...formData.internet_info, carrier_name: e.target.value })}
+                        placeholder="Aras Kargo, MNG, Yurtiçi"
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[10px]">Gönderi Takip No</Label>
+                      <Input
+                        value={formData.internet_info?.tracking_number || ""}
+                        onChange={(e) => onFieldChange("internet_info", { ...formData.internet_info, tracking_number: e.target.value })}
+                        placeholder="1234567890"
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[10px]">Gönderi Tarihi</Label>
+                      <Input
+                        type="date"
+                        value={formData.internet_info?.shipment_date || ""}
+                        onChange={(e) => onFieldChange("internet_info", { ...formData.internet_info, shipment_date: e.target.value })}
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

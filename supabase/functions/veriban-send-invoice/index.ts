@@ -141,15 +141,52 @@ serve(async (req) => {
       });
     }
 
+    // 🆕 OTOMATİK INVOICE_PROFILE SEÇİMİ
+    // Müşteri mükellef durumuna göre otomatik olarak e-fatura veya e-arşiv seç
+    let finalInvoiceProfile = invoice.invoice_profile;
+    
+    if (!finalInvoiceProfile) {
+      // Eğer invoice_profile boşsa, müşteri durumuna göre otomatik belirle
+      if (invoice.customers?.is_einvoice_mukellef) {
+        // Müşteri e-fatura mükellefi ise TEMELFATURA
+        finalInvoiceProfile = 'TEMELFATURA';
+        console.log('✅ [Auto] Müşteri e-fatura mükellefi -> TEMELFATURA seçildi');
+      } else {
+        // Müşteri e-fatura mükellefi değilse EARSIVFATURA
+        finalInvoiceProfile = 'EARSIVFATURA';
+        console.log('✅ [Auto] Müşteri e-fatura mükellefi DEĞİL -> EARSIVFATURA seçildi');
+      }
+      
+      // Otomatik seçilen profili veritabanına kaydet
+      await supabase
+        .from('sales_invoices')
+        .update({
+          invoice_profile: finalInvoiceProfile,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', invoiceId);
+        
+      console.log(`📋 invoice_profile otomatik olarak '${finalInvoiceProfile}' olarak ayarlandı`);
+    } else {
+      console.log(`📋 Mevcut invoice_profile kullanılıyor: ${finalInvoiceProfile}`);
+    }
+    
+    // Invoice objesini güncelle
+    invoice.invoice_profile = finalInvoiceProfile;
+
     // Fatura numarası yoksa Veriban formatına göre üret
     let invoiceNumber = invoice.fatura_no;
     if (!invoiceNumber) {
       console.log('📝 Fatura numarası bulunamadı, Veriban formatına göre üretiliyor...');
       
       try {
-        // Veriban seri kodu kullan (veriban_invoice_number_format)
-        // Edge function'da generateNumber'ı kullanmak için manuel olarak implement ediyoruz
-        const formatKey = 'veriban_invoice_number_format';
+        // 🆕 E-Arşiv veya E-Fatura formatına göre seri kodu seç
+        let formatKey = 'veriban_invoice_number_format'; // Varsayılan: E-Fatura
+        
+        if (finalInvoiceProfile === 'EARSIVFATURA') {
+          formatKey = 'earchive_invoice_number_format'; // E-Arşiv için özel format
+          console.log('📋 E-Arşiv fatura için özel seri numarası formatı kullanılacak');
+        }
         
         // System parameters'dan seri kodunu al
         const { data: formatParam } = await supabase

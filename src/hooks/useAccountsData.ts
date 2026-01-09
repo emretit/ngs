@@ -1,5 +1,6 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface BankAccount {
   id: string;
@@ -51,13 +52,31 @@ interface PartnerAccount {
   updated_at: string;
 }
 
+// Query keys for better cache management
+export const accountQueryKeys = {
+  all: ['accounts'] as const,
+  bankAccounts: () => [...accountQueryKeys.all, 'bank-accounts'] as const,
+  creditCards: () => [...accountQueryKeys.all, 'credit-cards'] as const,
+  cashAccounts: () => [...accountQueryKeys.all, 'cash-accounts'] as const,
+  partnerAccounts: () => [...accountQueryKeys.all, 'partner-accounts'] as const,
+  allAccounts: () => [...accountQueryKeys.all, 'all-accounts'] as const,
+} as const;
+
+// Common query options for consistency
+const COMMON_QUERY_OPTIONS = {
+  staleTime: 1000 * 60 * 5, // 5 dakika cache
+  gcTime: 1000 * 60 * 30, // 30 dakika garbage collection
+  retry: 2,
+  retryDelay: 1000,
+} as const;
+
 export function useBankAccounts() {
   return useQuery({
-    queryKey: ['bank-accounts'],
+    queryKey: accountQueryKeys.bankAccounts(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bank_accounts')
-        .select('id, account_name, bank_name, account_type, currency, current_balance, available_balance, is_active')
+        .select('id, account_name, bank_name, account_type, currency, current_balance, available_balance, is_active, iban')
         .eq('is_active', true)
         .order('bank_name', { ascending: true });
 
@@ -65,16 +84,13 @@ export function useBankAccounts() {
       return (data as unknown as BankAccount[]) || [];
     },
     enabled: true, // RLS otomatik olarak company_id filtreler
-    staleTime: 1000 * 60 * 5, // 5 dakika cache
-    gcTime: 1000 * 60 * 30, // 30 dakika garbage collection
-    retry: 2,
-    retryDelay: 1000,
+    ...COMMON_QUERY_OPTIONS,
   });
 }
 
 export function useCreditCards() {
   return useQuery({
-    queryKey: ['credit-cards'],
+    queryKey: accountQueryKeys.creditCards(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('credit_cards')
@@ -86,16 +102,13 @@ export function useCreditCards() {
       return (data as unknown as CreditCard[]) || [];
     },
     enabled: true, // RLS otomatik olarak company_id filtreler
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
-    retry: 2,
-    retryDelay: 1000,
+    ...COMMON_QUERY_OPTIONS,
   });
 }
 
 export function useCashAccounts() {
   return useQuery({
-    queryKey: ['cash-accounts'],
+    queryKey: accountQueryKeys.cashAccounts(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('cash_accounts')
@@ -106,16 +119,13 @@ export function useCashAccounts() {
       return (data as unknown as CashAccount[]) || [];
     },
     enabled: true, // RLS otomatik olarak company_id filtreler
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
-    retry: 2,
-    retryDelay: 1000,
+    ...COMMON_QUERY_OPTIONS,
   });
 }
 
 export function usePartnerAccounts() {
   return useQuery({
-    queryKey: ['partner-accounts'],
+    queryKey: accountQueryKeys.partnerAccounts(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('partner_accounts')
@@ -127,23 +137,20 @@ export function usePartnerAccounts() {
       return (data as unknown as PartnerAccount[]) || [];
     },
     enabled: true, // RLS otomatik olarak company_id filtreler
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
-    retry: 2,
-    retryDelay: 1000,
+    ...COMMON_QUERY_OPTIONS,
   });
 }
 
 // Tüm hesapları paralel olarak çeken optimize edilmiş hook
 export function useAllAccounts() {
   return useQuery({
-    queryKey: ['all-accounts'],
+    queryKey: accountQueryKeys.allAccounts(),
     queryFn: async () => {
       // Tüm hesapları paralel olarak çek
       const [bankResult, creditResult, cashResult, partnerResult] = await Promise.all([
         supabase
           .from('bank_accounts')
-          .select('id, account_name, bank_name, account_type, currency, current_balance, available_balance, is_active')
+          .select('id, account_name, bank_name, account_type, currency, current_balance, available_balance, is_active, iban')
           .eq('is_active', true)
           .order('bank_name', { ascending: true }),
         
@@ -180,68 +187,101 @@ export function useAllAccounts() {
       };
     },
     enabled: true, // RLS otomatik olarak company_id filtreler
-    staleTime: 1000 * 60 * 5, // 5 dakika cache
-    gcTime: 1000 * 60 * 30, // 30 dakika garbage collection
-    retry: 2,
-    retryDelay: 1000,
+    ...COMMON_QUERY_OPTIONS,
   });
 }
 
-// Silme hook'ları
+// Optimize edilmiş silme hook'ları - useMutation ile
 export function useDeleteCashAccount() {
   const queryClient = useQueryClient();
   
-  const deleteAccount = async (id: string) => {
-    const { error } = await supabase
-      .from("cash_accounts")
-      .delete()
-      .eq("id", id);
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("cash_accounts")
+        .delete()
+        .eq("id", id);
 
-    if (error) throw error;
-    
-    // Cache'i güncelle
-    queryClient.invalidateQueries({ queryKey: ['cash-accounts'] });
-    queryClient.invalidateQueries({ queryKey: ['all-accounts'] });
-  };
-
-  return { deleteAccount };
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      // Cache'i otomatik güncelle
+      queryClient.invalidateQueries({ queryKey: accountQueryKeys.cashAccounts() });
+      queryClient.invalidateQueries({ queryKey: accountQueryKeys.allAccounts() });
+      toast.success("Nakit hesabı başarıyla silindi");
+    },
+    onError: (error: any) => {
+      toast.error("Hesap silinirken bir hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    },
+  });
 }
 
 export function useDeleteCreditCard() {
   const queryClient = useQueryClient();
   
-  const deleteCard = async (id: string) => {
-    const { error } = await supabase
-      .from("credit_cards")
-      .delete()
-      .eq("id", id);
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("credit_cards")
+        .delete()
+        .eq("id", id);
 
-    if (error) throw error;
-    
-    // Cache'i güncelle
-    queryClient.invalidateQueries({ queryKey: ['credit-cards'] });
-    queryClient.invalidateQueries({ queryKey: ['all-accounts'] });
-  };
-
-  return { deleteCard };
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: accountQueryKeys.creditCards() });
+      queryClient.invalidateQueries({ queryKey: accountQueryKeys.allAccounts() });
+      toast.success("Kredi kartı başarıyla silindi");
+    },
+    onError: (error: any) => {
+      toast.error("Kart silinirken bir hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    },
+  });
 }
 
 export function useDeletePartnerAccount() {
   const queryClient = useQueryClient();
-  
-  const deleteAccount = async (id: string) => {
-    const { error } = await supabase
-      .from("partner_accounts")
-      .delete()
-      .eq("id", id);
 
-    if (error) throw error;
-    
-    // Cache'i güncelle
-    queryClient.invalidateQueries({ queryKey: ['partner-accounts'] });
-    queryClient.invalidateQueries({ queryKey: ['all-accounts'] });
-  };
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("partner_accounts")
+        .delete()
+        .eq("id", id);
 
-  return { deleteAccount };
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: accountQueryKeys.partnerAccounts() });
+      queryClient.invalidateQueries({ queryKey: accountQueryKeys.allAccounts() });
+      toast.success("Ortak hesabı başarıyla silindi");
+    },
+    onError: (error: any) => {
+      toast.error("Hesap silinirken bir hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    },
+  });
+}
+
+export function useDeleteBankAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("bank_accounts")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: accountQueryKeys.bankAccounts() });
+      queryClient.invalidateQueries({ queryKey: accountQueryKeys.allAccounts() });
+      toast.success("Banka hesabı başarıyla silindi");
+    },
+    onError: (error: any) => {
+      toast.error("Hesap silinirken bir hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    },
+  });
 }
 

@@ -80,7 +80,7 @@ export const LeaveTypesManagement = () => {
       const { data: types, error: typesError } = await supabase
         .from("leave_types")
         .select("*")
-        .eq("tenant_id", userData.company_id)
+        .eq("company_id", userData.company_id)
         .order("created_at", { ascending: false });
 
       if (typesError) throw typesError;
@@ -133,7 +133,7 @@ export const LeaveTypesManagement = () => {
       const { data: newType, error } = await supabase
         .from("leave_types")
         .insert({
-          tenant_id: userData.company_id,
+          company_id: userData.company_id,
           name: data.name,
           description: data.description || null,
           color: data.color || "#3b82f6",
@@ -172,7 +172,7 @@ export const LeaveTypesManagement = () => {
       const { data: newRule, error } = await supabase
         .from("leave_type_rules")
         .insert({
-          tenant_id: userData.company_id,
+          company_id: userData.company_id,
           leave_type_id: data.leave_type_id,
           name: data.name,
           min_years_of_service: data.min_years_of_service || null,

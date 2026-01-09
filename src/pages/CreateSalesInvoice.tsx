@@ -326,8 +326,35 @@ const CreateSalesInvoice = () => {
         });
 
         // Müşteri seçildiğinde documentType'a göre invoice_profile'ı otomatik doldur
-        // Önce veritabanındaki einvoice_document_type alanını kontrol et
-        if (selected.einvoice_document_type) {
+        // 🆕 İYİLEŞTİRİLMİŞ: is_einvoice_mukellef alanını da kontrol et
+        
+        let autoSelectedProfile = "";
+        
+        // 1. ÖNCE: is_einvoice_mukellef alanını kontrol et (daha güvenilir)
+        if (selected.is_einvoice_mukellef !== undefined && selected.is_einvoice_mukellef !== null) {
+          if (selected.is_einvoice_mukellef === true) {
+            // Müşteri e-fatura mükellefi
+            autoSelectedProfile = "TEMELFATURA";
+            console.log("✅ [CreateSalesInvoice] Müşteri E-FATURA MÜKELLEFİ -> TEMELFATURA seçildi");
+          } else {
+            // Müşteri e-fatura mükellefi DEĞİL -> E-Arşiv
+            autoSelectedProfile = "EARSIVFATURA";
+            console.log("✅ [CreateSalesInvoice] Müşteri E-FATURA MÜKELLEFİ DEĞİL -> EARSIVFATURA seçildi");
+          }
+          
+          setInvoiceData(prev => ({
+            ...prev,
+            invoice_profile: autoSelectedProfile
+          }));
+          
+          // Kullanıcıya bilgi ver
+          const message = selected.is_einvoice_mukellef 
+            ? `✅ Müşteri e-fatura mükellefi - E-Fatura (${autoSelectedProfile}) otomatik seçildi`
+            : `ℹ️ Müşteri e-fatura mükellefi değil - E-Arşiv Fatura (${autoSelectedProfile}) otomatik seçildi`;
+          console.log(message);
+        }
+        // 2. SONRA: einvoice_document_type alanını kontrol et (yedek)
+        else if (selected.einvoice_document_type) {
           const documentType = selected.einvoice_document_type;
           console.log("✅ [CreateSalesInvoice] DocumentType veritabanından bulundu:", documentType);
           

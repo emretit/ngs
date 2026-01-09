@@ -24,7 +24,7 @@ import {
 
 interface LeaveSettingsData {
   id?: string;
-  tenant_id: string;
+  company_id: string;
   requires_approval: boolean;
   approval_model: string;
   default_approver_id?: string;
@@ -49,7 +49,7 @@ export const LeavePoliciesCard: React.FC<LeavePoliciesCardProps> = ({ onSaveRead
   const { workflows: approvalWorkflows, isLoading: isLoadingWorkflows } = useApprovalWorkflows();
 
   const [formData, setFormData] = useState<LeaveSettingsData>({
-    tenant_id: userData?.company_id || "",
+    company_id: userData?.company_id || "",
     requires_approval: true,
     approval_model: "single_manager",
     exclude_holidays: false,
@@ -64,7 +64,7 @@ export const LeavePoliciesCard: React.FC<LeavePoliciesCardProps> = ({ onSaveRead
       const { data, error } = await supabase
         .from("leave_settings")
         .select("*")
-        .eq("tenant_id", userData.company_id)
+        .eq("company_id", userData.company_id)
         .maybeSingle();
 
       if (error) throw error;
@@ -78,7 +78,7 @@ export const LeavePoliciesCard: React.FC<LeavePoliciesCardProps> = ({ onSaveRead
     if (settings) {
       setFormData({
         id: settings.id,
-        tenant_id: settings.tenant_id,
+        company_id: settings.company_id,
         requires_approval: settings.requires_approval ?? true,
         approval_model: settings.approval_model ?? "single_manager",
         default_approver_id: settings.default_approver_id,
@@ -107,7 +107,7 @@ export const LeavePoliciesCard: React.FC<LeavePoliciesCardProps> = ({ onSaveRead
       } else {
         // Insert new settings
         const { error } = await supabase.from("leave_settings").insert({
-          tenant_id: data.tenant_id,
+          company_id: data.company_id,
           requires_approval: data.requires_approval,
           approval_model: data.approval_model,
           default_approver_id: data.default_approver_id || null,

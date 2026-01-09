@@ -69,17 +69,17 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["employees", companyId || userData?.company_id],
     queryFn: async () => {
-      const targetCompanyId = companyId || userData?.company_id;
-      if (!targetCompanyId) return [];
-      
+      // RLS policy otomatik olarak current_company() ile filtreler
       const { data, error } = await supabase
         .from("employees")
         .select("id, first_name, last_name, position, department, email, phone")
-        .eq("company_id", targetCompanyId)
         .eq("status", "aktif")
         .order("first_name");
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching employees:", error);
+        throw error;
+      }
       return data as Employee[] || [];
     },
     enabled: !!(companyId || userData?.company_id),

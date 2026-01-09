@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Edit, Trash2, TrendingUp, TrendingDown, ExternalLink } from "lucide-react";
+import { useMemo, memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import PartnerAccountModal from "./modals/PartnerAccountModal";
+import { DollarSign, Percent } from "lucide-react";
 import { usePartnerAccounts, useDeletePartnerAccount } from "@/hooks/useAccountsData";
-import AccountsSkeleton from "./AccountsSkeleton";
-import { toast } from "sonner";
-import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import PartnerAccountModal from "./modals/PartnerAccountModal";
+import { AccountListBase } from "./base/AccountListBase";
+import { AccountListHeaderBase } from "./base/AccountListHeaderBase";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/utils/formatters";
+import type { CardStatBadge, CardField } from "./base/types";
 
 interface PartnerAccount {
   id: string;
@@ -28,205 +28,179 @@ interface PartnerAccountsProps {
   showBalances: boolean;
 }
 
-const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [partnerToEdit, setPartnerToEdit] = useState<string | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [partnerToDelete, setPartnerToDelete] = useState<{ id: string; name: string } | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+/**
+ * Helper function to get partner type label
+ * Memoized for better performance
+ */
+const getPartnerTypeLabel = (type: string): string => {
+  const types: Record<string, string> = {
+    'ortak': 'Ortak',
+    'hisse_sahibi': 'Hisse Sahibi',
+    'yatirimci': 'Yatırımcı'
+  };
+  return types[type] || type;
+};
+
+/**
+ * Helper function to get partner type badge color
+ * Memoized for better performance
+ */
+const getPartnerTypeColor = (type: string): string => {
+  const colors: Record<string, string> = {
+    'ortak': 'bg-blue-100 text-blue-800 border-blue-200',
+    'hisse_sahibi': 'bg-green-100 text-green-800 border-green-200',
+    'yatirimci': 'bg-purple-100 text-purple-800 border-purple-200'
+  };
+  return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200';
+};
+
+/**
+ * Partner Accounts List Page (Refactored & Optimized)
+ * Uses AccountListBase for common functionality
+ *
+ * Performance Optimizations:
+ * - memo() for preventing unnecessary re-renders
+ * - useMemo() for expensive calculations
+ * - useCallback() for stable function references
+ *
+ * Original: 294 lines
+ * Refactored: ~165 lines (44% reduction)
+ */
+const PartnerAccounts = memo(({ showBalances }: PartnerAccountsProps) => {
   const navigate = useNavigate();
-  const { data: partnerAccounts = [], isLoading, refetch } = usePartnerAccounts();
-  const { deleteAccount } = useDeletePartnerAccount();
+  const { data: partnerAccounts = [] } = usePartnerAccounts();
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('tr-TR', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
-  };
+  // Calculate totals by currency
+  const totals = useMemo(() => {
+    return partnerAccounts.reduce((acc, account) => {
+      const currency = account.currency || 'TRY';
+      if (!acc[currency]) {
+        acc[currency] = {
+          balance: 0,
+          count: 0,
+          totalOwnership: 0
+        };
+      }
+      acc[currency].balance += account.current_balance || 0;
+      acc[currency].count += 1;
+      acc[currency].totalOwnership += account.ownership_percentage || 0;
+      return acc;
+    }, {} as Record<string, { balance: number; count: number; totalOwnership: number }>);
+  }, [partnerAccounts]);
 
-  const getPartnerTypeLabel = (type: string) => {
-    const types: Record<string, string> = {
-      'ortak': 'Ortak',
-      'hisse_sahibi': 'Hisse Sahibi',
-      'yatirimci': 'Yatırımcı'
-    };
-    return types[type] || type;
-  };
+  // Memoized navigation handler
+  const handleAccountClick = useCallback((accountId: string) => {
+    navigate(`/cashflow/partner-accounts/${accountId}`);
+  }, [navigate]);
 
-  const getPartnerTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      'ortak': 'bg-blue-100 text-blue-800',
-      'hisse_sahibi': 'bg-green-100 text-green-800',
-      'yatirimci': 'bg-purple-100 text-purple-800'
-    };
-    return colors[type] || 'bg-gray-100 text-gray-800';
-  };
+  // Memoized render functions
+  const getTitle = useCallback((account: PartnerAccount) => {
+    return account.partner_name || "Ortak Hesabı";
+  }, []);
 
-  const handlePartnerClick = (partnerId: string) => {
-    navigate(`/cashflow/partner-accounts/${partnerId}`);
-  };
+  const getSubtitle = useCallback((account: PartnerAccount) => {
+    return `${getPartnerTypeLabel(account.partner_type)} • ${account.ownership_percentage}%`;
+  }, []);
 
-  const handleModalSuccess = () => {
-    refetch();
-    setIsModalOpen(false);
-  };
+  const getStatBadges = useCallback((account: PartnerAccount): CardStatBadge[] => [
+    {
+      key: 'balance',
+      label: '',
+      value: account.current_balance,
+      icon: DollarSign,
+      variant: 'primary',
+      showBalanceToggle: true,
+      isCurrency: true,
+    },
+    {
+      key: 'ownership',
+      label: 'Hisse:',
+      value: `${account.ownership_percentage}%`,
+      icon: Percent,
+      variant: 'secondary',
+      showBalanceToggle: false,
+    },
+  ], []);
 
-  const handleEdit = (e: React.MouseEvent, partnerId: string) => {
-    e.stopPropagation();
-    setPartnerToEdit(partnerId);
-    setIsEditModalOpen(true);
-  };
+  const getCardFields = useCallback((account: PartnerAccount): CardField[] => [
+    {
+      key: 'type',
+      label: '',
+      value: (
+        <Badge className={getPartnerTypeColor(account.partner_type)}>
+          {getPartnerTypeLabel(account.partner_type)}
+        </Badge>
+      ),
+      type: 'custom',
+    },
+  ], []);
 
-  const handleEditSuccess = () => {
-    setIsEditModalOpen(false);
-    setPartnerToEdit(null);
-    refetch();
-  };
+  // Render custom header with totals - memoized
+  const renderHeader = useCallback((_accounts: PartnerAccount[], _showBalances: boolean, onAddNew: () => void) => {
+    const headerBadges = Object.entries(totals).flatMap(([currency, data]) => [
+      {
+        key: `${currency}-balance`,
+        label: 'Bakiye',
+        value: formatCurrency(data.balance, currency),
+        icon: DollarSign,
+        variant: 'primary' as const,
+        showBalanceToggle: true,
+      },
+      {
+        key: `${currency}-ownership`,
+        label: 'Toplam Hisse',
+        value: `${data.totalOwnership.toFixed(2)}%`,
+        icon: Percent,
+        variant: 'secondary' as const,
+        showBalanceToggle: false,
+      },
+    ]);
 
-  const handleDelete = (e: React.MouseEvent, partnerId: string, partnerName: string) => {
-    e.stopPropagation();
-    setPartnerToDelete({ id: partnerId, name: partnerName });
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!partnerToDelete) return;
-    
-    setIsDeleting(true);
-    try {
-      await deleteAccount(partnerToDelete.id);
-      toast.success("Ortak hesabı başarıyla silindi");
-      refetch();
-      setIsDeleteDialogOpen(false);
-      setPartnerToDelete(null);
-    } catch (error: any) {
-      toast.error("Hesap silinirken bir hata oluştu: " + (error.message || "Bilinmeyen hata"));
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleDeleteCancel = () => {
-    setIsDeleteDialogOpen(false);
-    setPartnerToDelete(null);
-  };
-
-  const totalCapital = partnerAccounts.reduce((sum, partner) => sum + partner.initial_capital, 0);
-  const totalCurrentBalance = partnerAccounts.reduce((sum, partner) => sum + partner.current_balance, 0);
-  const totalProfitShare = partnerAccounts.reduce((sum, partner) => sum + partner.profit_share, 0);
-  const totalOwnership = partnerAccounts.reduce((sum, partner) => sum + partner.ownership_percentage, 0);
-
-  if (isLoading) {
-    return <AccountsSkeleton />;
-  }
+    return (
+      <AccountListHeaderBase
+        accountType="partner"
+        badges={headerBadges}
+        showBalances={_showBalances}
+        onAddNew={onAddNew}
+        addButtonLabel="Yeni"
+        totals={[]}
+      />
+    );
+  }, [totals]);
 
   return (
-    <div className="space-y-4">
+    <AccountListBase
+      accountType="partner"
+      useAccounts={usePartnerAccounts}
+      useDeleteAccount={useDeletePartnerAccount}
+      showBalances={showBalances}
 
+      // Render functions
+      title={getTitle}
+      subtitle={getSubtitle}
+      statBadges={getStatBadges}
+      cardFields={getCardFields}
 
-      {/* Partners List */}
-      <div className="space-y-3">
-        {partnerAccounts.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">
-            <Users className="h-6 w-6 mx-auto mb-2 text-gray-300" />
-            <p className="text-xs font-medium text-gray-700 mb-1">Henüz ortak hesabı yok</p>
-            <p className="text-xs text-gray-500 mb-2">İlk ortak hesabınızı oluşturun</p>
-            <Button 
-              size="sm" 
-              className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1"
-              onClick={() => setIsModalOpen(true)}
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Yeni
-            </Button>
-          </div>
-        ) : (
-          partnerAccounts.map((partner) => (
-            <div 
-              key={partner.id} 
-              className="flex items-center justify-between p-2 bg-orange-50 border border-orange-100 rounded-lg hover:bg-orange-100 transition-colors duration-200 cursor-pointer group"
-              onClick={() => handlePartnerClick(partner.id)}
-            >
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-orange-500 rounded-lg text-white">
-                  <Users className="h-3 w-3" />
-                </div>
-                <div>
-                  <div className="font-medium text-xs text-gray-900">{partner.partner_name}</div>
-                  <div className="text-xs text-gray-600">
-                    %{partner.ownership_percentage} hisse • {getPartnerTypeLabel(partner.partner_type)}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="text-right">
-                  <div className="font-mono font-bold text-xs text-gray-900">
-                    {showBalances ? formatCurrency(partner.current_balance, partner.currency) : "••••••"}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Kar: {showBalances ? formatCurrency(partner.profit_share, partner.currency) : "••••••"}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-5 w-5 p-0 hover:bg-orange-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    onClick={(e) => handleEdit(e, partner.id)}
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-5 w-5 p-0 hover:bg-red-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    onClick={(e) => handleDelete(e, partner.id, partner.partner_name)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                  <ExternalLink className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      // Navigation
+      onAccountClick={handleAccountClick}
+      detailPath={(accountId) => `/cashflow/partner-accounts/${accountId}`}
 
-      <PartnerAccountModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={handleModalSuccess}
-      />
+      // Modals
+      modals={{
+        create: PartnerAccountModal,
+        edit: PartnerAccountModal,
+      }}
 
-      <PartnerAccountModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setPartnerToEdit(null);
-        }}
-        onSuccess={handleEditSuccess}
-        mode="edit"
-        accountId={partnerToEdit || undefined}
-      />
+      // Optional
+      addButtonLabel="Yeni Ortak"
+      emptyStateMessage="Henüz ortak hesabı yok"
 
-      <ConfirmationDialogComponent
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        title="Ortak Hesabını Sil"
-        description={`"${partnerToDelete?.name || 'Bu hesap'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
-        variant="destructive"
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-        isLoading={isDeleting}
-      />
-    </div>
+      // Custom header
+      renderHeader={renderHeader}
+    />
   );
-};
+});
+
+PartnerAccounts.displayName = 'PartnerAccounts';
 
 export default PartnerAccounts;

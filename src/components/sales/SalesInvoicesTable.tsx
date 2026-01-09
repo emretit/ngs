@@ -495,19 +495,6 @@ const SalesInvoicesTable = ({
               </TableCell>
               <TableCell className="py-2 px-3 text-center">
                 <div className="flex justify-center space-x-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectInvoice(invoice);
-                    }}
-                    className="h-7 w-7"
-                    title="Görüntüle / Düzenle"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  
                   {hasPdfAvailable(invoice) && (
                     <Button
                       variant="ghost"

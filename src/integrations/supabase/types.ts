@@ -358,6 +358,7 @@ export type Database = {
           id: string
           insight_text: string
           insight_type: string
+          is_dismissed: boolean | null
           period_end: string
           period_start: string
         }
@@ -368,6 +369,7 @@ export type Database = {
           id?: string
           insight_text: string
           insight_type: string
+          is_dismissed?: boolean | null
           period_end: string
           period_start: string
         }
@@ -378,6 +380,7 @@ export type Database = {
           id?: string
           insight_text?: string
           insight_type?: string
+          is_dismissed?: boolean | null
           period_end?: string
           period_start?: string
         }
@@ -4771,6 +4774,7 @@ export type Database = {
       leave_settings: {
         Row: {
           approval_model: string | null
+          company_id: string
           created_at: string | null
           default_approver_id: string | null
           employee_cannot_approve_own: boolean | null
@@ -4779,11 +4783,11 @@ export type Database = {
           max_concurrent_leaves_per_department: number | null
           rejection_reason_required: boolean | null
           requires_approval: boolean | null
-          tenant_id: string
           updated_at: string | null
         }
         Insert: {
           approval_model?: string | null
+          company_id: string
           created_at?: string | null
           default_approver_id?: string | null
           employee_cannot_approve_own?: boolean | null
@@ -4792,11 +4796,11 @@ export type Database = {
           max_concurrent_leaves_per_department?: number | null
           rejection_reason_required?: boolean | null
           requires_approval?: boolean | null
-          tenant_id: string
           updated_at?: string | null
         }
         Update: {
           approval_model?: string | null
+          company_id?: string
           created_at?: string | null
           default_approver_id?: string | null
           employee_cannot_approve_own?: boolean | null
@@ -4805,7 +4809,6 @@ export type Database = {
           max_concurrent_leaves_per_department?: number | null
           rejection_reason_required?: boolean | null
           requires_approval?: boolean | null
-          tenant_id?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -4818,7 +4821,7 @@ export type Database = {
           },
           {
             foreignKeyName: "leave_settings_tenant_id_fkey"
-            columns: ["tenant_id"]
+            columns: ["company_id"]
             isOneToOne: true
             referencedRelation: "companies"
             referencedColumns: ["id"]
@@ -4827,6 +4830,7 @@ export type Database = {
       }
       leave_type_rules: {
         Row: {
+          company_id: string
           created_at: string | null
           days_entitled: number
           description: string | null
@@ -4836,10 +4840,10 @@ export type Database = {
           min_years_of_service: number | null
           name: string
           priority: number | null
-          tenant_id: string
           updated_at: string | null
         }
         Insert: {
+          company_id: string
           created_at?: string | null
           days_entitled: number
           description?: string | null
@@ -4849,10 +4853,10 @@ export type Database = {
           min_years_of_service?: number | null
           name: string
           priority?: number | null
-          tenant_id: string
           updated_at?: string | null
         }
         Update: {
+          company_id?: string
           created_at?: string | null
           days_entitled?: number
           description?: string | null
@@ -4862,7 +4866,6 @@ export type Database = {
           min_years_of_service?: number | null
           name?: string
           priority?: number | null
-          tenant_id?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -4875,7 +4878,7 @@ export type Database = {
           },
           {
             foreignKeyName: "leave_type_rules_tenant_id_fkey"
-            columns: ["tenant_id"]
+            columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
@@ -4885,38 +4888,38 @@ export type Database = {
       leave_types: {
         Row: {
           color: string | null
+          company_id: string
           created_at: string | null
           description: string | null
           id: string
           is_active: boolean | null
           name: string
-          tenant_id: string
           updated_at: string | null
         }
         Insert: {
           color?: string | null
+          company_id: string
           created_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
           name: string
-          tenant_id: string
           updated_at?: string | null
         }
         Update: {
           color?: string | null
+          company_id?: string
           created_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
-          tenant_id?: string
           updated_at?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "leave_types_tenant_id_fkey"
-            columns: ["tenant_id"]
+            columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
@@ -6148,9 +6151,18 @@ export type Database = {
           company_id: string | null
           created_at: string | null
           currency: string | null
+          customer_address_city: string | null
+          customer_address_country: string | null
+          customer_address_district: string | null
+          customer_address_postal_zone: string | null
+          customer_address_street: string | null
           customer_alias: string | null
+          customer_contact_email: string | null
+          customer_contact_name: string | null
+          customer_contact_telephone: string | null
           customer_name: string
           customer_tax_number: string | null
+          customer_tax_office: string | null
           delivered_at: string | null
           document_type: string | null
           due_date: string | null
@@ -6162,19 +6174,36 @@ export type Database = {
           html_content: string | null
           id: string
           invoice_date: string
+          invoice_note: string | null
           invoice_number: string
           invoice_profile: string | null
+          invoice_time: string | null
           invoice_type: string | null
           is_answered: boolean | null
+          line_extension_amount: number | null
           notes: string | null
           payable_amount: number | null
+          payee_bank_name: string | null
+          payee_iban: string | null
+          payment_channel_code: string | null
+          payment_means_code: string | null
+          payment_terms_note: string | null
           pdf_url: string | null
           ref_id: number | null
           scenario: string | null
           sent_at: string | null
           status: string
+          supplier_address_city: string | null
+          supplier_address_district: string | null
+          supplier_address_street: string | null
+          supplier_contact_email: string | null
+          supplier_contact_telephone: string | null
+          supplier_name: string | null
+          supplier_tax_number: string | null
+          supplier_tax_office: string | null
           tax_exclusive_amount: number | null
           tax_total_amount: number | null
+          total_discount_amount: number | null
           updated_at: string | null
           xml_content: string | null
           xml_data: Json | null
@@ -6186,9 +6215,18 @@ export type Database = {
           company_id?: string | null
           created_at?: string | null
           currency?: string | null
+          customer_address_city?: string | null
+          customer_address_country?: string | null
+          customer_address_district?: string | null
+          customer_address_postal_zone?: string | null
+          customer_address_street?: string | null
           customer_alias?: string | null
+          customer_contact_email?: string | null
+          customer_contact_name?: string | null
+          customer_contact_telephone?: string | null
           customer_name: string
           customer_tax_number?: string | null
+          customer_tax_office?: string | null
           delivered_at?: string | null
           document_type?: string | null
           due_date?: string | null
@@ -6200,19 +6238,36 @@ export type Database = {
           html_content?: string | null
           id?: string
           invoice_date: string
+          invoice_note?: string | null
           invoice_number: string
           invoice_profile?: string | null
+          invoice_time?: string | null
           invoice_type?: string | null
           is_answered?: boolean | null
+          line_extension_amount?: number | null
           notes?: string | null
           payable_amount?: number | null
+          payee_bank_name?: string | null
+          payee_iban?: string | null
+          payment_channel_code?: string | null
+          payment_means_code?: string | null
+          payment_terms_note?: string | null
           pdf_url?: string | null
           ref_id?: number | null
           scenario?: string | null
           sent_at?: string | null
           status?: string
+          supplier_address_city?: string | null
+          supplier_address_district?: string | null
+          supplier_address_street?: string | null
+          supplier_contact_email?: string | null
+          supplier_contact_telephone?: string | null
+          supplier_name?: string | null
+          supplier_tax_number?: string | null
+          supplier_tax_office?: string | null
           tax_exclusive_amount?: number | null
           tax_total_amount?: number | null
+          total_discount_amount?: number | null
           updated_at?: string | null
           xml_content?: string | null
           xml_data?: Json | null
@@ -6224,9 +6279,18 @@ export type Database = {
           company_id?: string | null
           created_at?: string | null
           currency?: string | null
+          customer_address_city?: string | null
+          customer_address_country?: string | null
+          customer_address_district?: string | null
+          customer_address_postal_zone?: string | null
+          customer_address_street?: string | null
           customer_alias?: string | null
+          customer_contact_email?: string | null
+          customer_contact_name?: string | null
+          customer_contact_telephone?: string | null
           customer_name?: string
           customer_tax_number?: string | null
+          customer_tax_office?: string | null
           delivered_at?: string | null
           document_type?: string | null
           due_date?: string | null
@@ -6238,19 +6302,36 @@ export type Database = {
           html_content?: string | null
           id?: string
           invoice_date?: string
+          invoice_note?: string | null
           invoice_number?: string
           invoice_profile?: string | null
+          invoice_time?: string | null
           invoice_type?: string | null
           is_answered?: boolean | null
+          line_extension_amount?: number | null
           notes?: string | null
           payable_amount?: number | null
+          payee_bank_name?: string | null
+          payee_iban?: string | null
+          payment_channel_code?: string | null
+          payment_means_code?: string | null
+          payment_terms_note?: string | null
           pdf_url?: string | null
           ref_id?: number | null
           scenario?: string | null
           sent_at?: string | null
           status?: string
+          supplier_address_city?: string | null
+          supplier_address_district?: string | null
+          supplier_address_street?: string | null
+          supplier_contact_email?: string | null
+          supplier_contact_telephone?: string | null
+          supplier_name?: string | null
+          supplier_tax_number?: string | null
+          supplier_tax_office?: string | null
           tax_exclusive_amount?: number | null
           tax_total_amount?: number | null
+          total_discount_amount?: number | null
           updated_at?: string | null
           xml_content?: string | null
           xml_data?: Json | null
@@ -8786,6 +8867,7 @@ export type Database = {
       sales_invoices: {
         Row: {
           aciklama: string | null
+          answer_type: string | null
           ara_toplam: number
           banka_bilgileri: string | null
           company_id: string | null
@@ -8806,6 +8888,9 @@ export type Database = {
           einvoice_transfer_state: number | null
           einvoice_xml_content: string | null
           ek_belgeler: Json | null
+          elogo_code: number | null
+          elogo_description: string | null
+          elogo_status: number | null
           employee_id: string | null
           exchange_rate: number | null
           fatura_no: string | null
@@ -8826,6 +8911,7 @@ export type Database = {
           odenen_tutar: number
           order_id: string | null
           other_terms: string | null
+          outgoing_invoice_id: string | null
           para_birimi: string
           payment_terms: string | null
           pdf_url: string | null
@@ -8843,6 +8929,7 @@ export type Database = {
         }
         Insert: {
           aciklama?: string | null
+          answer_type?: string | null
           ara_toplam?: number
           banka_bilgileri?: string | null
           company_id?: string | null
@@ -8863,6 +8950,9 @@ export type Database = {
           einvoice_transfer_state?: number | null
           einvoice_xml_content?: string | null
           ek_belgeler?: Json | null
+          elogo_code?: number | null
+          elogo_description?: string | null
+          elogo_status?: number | null
           employee_id?: string | null
           exchange_rate?: number | null
           fatura_no?: string | null
@@ -8883,6 +8973,7 @@ export type Database = {
           odenen_tutar?: number
           order_id?: string | null
           other_terms?: string | null
+          outgoing_invoice_id?: string | null
           para_birimi?: string
           payment_terms?: string | null
           pdf_url?: string | null
@@ -8900,6 +8991,7 @@ export type Database = {
         }
         Update: {
           aciklama?: string | null
+          answer_type?: string | null
           ara_toplam?: number
           banka_bilgileri?: string | null
           company_id?: string | null
@@ -8920,6 +9012,9 @@ export type Database = {
           einvoice_transfer_state?: number | null
           einvoice_xml_content?: string | null
           ek_belgeler?: Json | null
+          elogo_code?: number | null
+          elogo_description?: string | null
+          elogo_status?: number | null
           employee_id?: string | null
           exchange_rate?: number | null
           fatura_no?: string | null
@@ -8940,6 +9035,7 @@ export type Database = {
           odenen_tutar?: number
           order_id?: string | null
           other_terms?: string | null
+          outgoing_invoice_id?: string | null
           para_birimi?: string
           payment_terms?: string | null
           pdf_url?: string | null
@@ -8982,6 +9078,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_invoices_outgoing_invoice_id_fkey"
+            columns: ["outgoing_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "outgoing_invoices"
             referencedColumns: ["id"]
           },
           {
@@ -13202,6 +13305,10 @@ export type Database = {
       }
       base64_decode_with_padding: { Args: { data: string }; Returns: string }
       base64_encode_no_padding: { Args: { data: string }; Returns: string }
+      calculate_annual_leave_days: {
+        Args: { p_company_id: string; p_employee_id: string }
+        Returns: number
+      }
       calculate_next_recurrence_date: {
         Args: {
           base_date: string

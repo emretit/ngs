@@ -47,14 +47,55 @@ export const EmployeeLeaveTab = ({ employee }: EmployeeLeaveTabProps) => {
   const { toast } = useToast();
   const { userData } = useCurrentUser();
 
-  // Çalışma yılını hesapla
+  // Çalışma yılını hesapla (ondalıklı)
   const calculateYearsOfService = (hireDate: string | null): number => {
     if (!hireDate) return 0;
     const hire = new Date(hireDate);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - hire.getTime());
     const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365.25);
-    return Math.floor(diffYears);
+    return Math.floor(diffYears); // Tam yıl olarak hesapla
+  };
+
+  // Çalışma süresini okunabilir formatta göster
+  const formatYearsOfService = (hireDate: string | null): string => {
+    if (!hireDate) return '0 yıl';
+    const hire = new Date(hireDate);
+    const now = new Date();
+    
+    let years = now.getFullYear() - hire.getFullYear();
+    let months = now.getMonth() - hire.getMonth();
+    
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+    
+    if (years === 0) {
+      return `${months} ay`;
+    } else if (months === 0) {
+      return `${years} yıl`;
+    } else {
+      return `${years} yıl ${months} ay`;
+    }
+  };
+
+  // Bir sonraki yıl dönümü (izin hak ediş tarihi)
+  const getNextAnniversary = (hireDate: string | null): string => {
+    if (!hireDate) return '-';
+    const hire = new Date(hireDate);
+    const now = new Date();
+    
+    // Bir sonraki yıl dönümünü hesapla
+    const nextAnniversary = new Date(hire);
+    nextAnniversary.setFullYear(now.getFullYear());
+    
+    // Eğer bu yılın yıl dönümü geçtiyse, gelecek yılınkini al
+    if (nextAnniversary < now) {
+      nextAnniversary.setFullYear(now.getFullYear() + 1);
+    }
+    
+    return nextAnniversary.toLocaleDateString('tr-TR');
   };
 
   // İzin haklarını hesapla
@@ -110,24 +151,74 @@ export const EmployeeLeaveTab = ({ employee }: EmployeeLeaveTabProps) => {
         let ruleName = 'Kural tanımlı değil';
 
         if (applicableRule) {
-          daysEntitled = applicableRule.days_entitled;
-          ruleName = applicableRule.name;
+          // Yıllık izin için: Toplam birikmiş izin hesaplama
+          // Her yıl için hangi kural geçerliyse o kural üzerinden hesaplama yap
+          if (leaveType.name === 'Yıllık İzin' && yearsOfService > 0) {
+            // Tüm kuralları sırala
+            const sortedRules = (rules || []).sort((a, b) => (a.min_years_of_service || 0) - (b.min_years_of_service || 0));
+            
+            let totalDays = 0;
+            let yearsCalculated = 0;
+            
+            // Her kural için kaç yıl geçerli olduğunu hesapla
+            for (const rule of sortedRules) {
+              const minYears = rule.min_years_of_service ?? 0;
+              const maxYears = rule.max_years_of_service ?? Infinity;
+              
+              if (yearsCalculated >= yearsOfService) break;
+              
+              // Bu kural altında kaç yıl çalışıldı?
+              const yearsInThisRule = Math.min(
+                yearsOfService - yearsCalculated,
+                maxYears - minYears
+              );
+              
+              if (yearsInThisRule > 0) {
+                totalDays += yearsInThisRule * rule.days_entitled;
+                yearsCalculated += yearsInThisRule;
+              }
+            }
+            
+            daysEntitled = totalDays;
+            ruleName = `Toplam birikmiş: ${yearsOfService} yıl`;
+          } else {
+            // Diğer izin türleri için: sadece yıllık hak
+            daysEntitled = applicableRule.days_entitled;
+            ruleName = applicableRule.name;
+          }
         }
 
-        // Kullanılan izinleri hesapla (bu yıl için)
+        // Kullanılan izinleri hesapla (tüm zamanlar için - toplam birikmiş kullanım)
         const currentYear = new Date().getFullYear();
-        const { data: usedLeaves, error: usedLeavesError } = await supabase
+        
+        // Toplam hak için tüm yılları kontrol et
+        const { data: allLeaves, error: usedLeavesError } = await supabase
           .from('employee_leaves')
           .select('*')
           .eq('employee_id', employee.id)
-          .eq('leave_type', leaveType.name)
-          .gte('start_date', `${currentYear}-01-01`)
-          .lte('start_date', `${currentYear}-12-31`)
           .in('status', ['approved', 'pending']);
 
         if (usedLeavesError) {
           console.error('Error fetching used leaves:', usedLeavesError);
         }
+
+        // İzin türü eşleştirmesi için mapping
+        const leaveTypeMapping: { [key: string]: string } = {
+          'annual': 'Yıllık İzin',
+          'sick': 'Raporlu İzin',
+          'parental': 'Mazeret İzni',
+          'unpaid': 'Ücretsiz İzin',
+          'other': 'Diğer'
+        };
+
+        // Bu izin türüne ait kayıtları filtrele
+        const usedLeaves = (allLeaves || []).filter(leave => {
+          // leave_type text ise direkt eşleştir
+          if (leave.leave_type === leaveType.name) return true;
+          // Mapping ile eşleştir
+          const mappedType = leaveTypeMapping[leave.leave_type];
+          return mappedType === leaveType.name;
+        });
 
         // Kullanılan gün sayısını hesapla
         let daysUsed = 0;
@@ -182,6 +273,17 @@ export const EmployeeLeaveTab = ({ employee }: EmployeeLeaveTabProps) => {
     fetchLeaves();
   }, [employee.id, toast]);
 
+  const getLeaveTypeDisplayName = (leaveType: string): string => {
+    const leaveTypeMapping: { [key: string]: string } = {
+      'annual': 'Yıllık İzin',
+      'sick': 'Raporlu İzin',
+      'parental': 'Mazeret İzni',
+      'unpaid': 'Ücretsiz İzin',
+      'other': 'Diğer'
+    };
+    return leaveTypeMapping[leaveType] || leaveType;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
@@ -199,134 +301,115 @@ export const EmployeeLeaveTab = ({ employee }: EmployeeLeaveTabProps) => {
 
   if (isLoading || isLoadingEntitlements) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Calendar className="h-5 w-5 mr-2 text-primary" />
-            Leave Management
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-            <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-            <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-3">
+        <div className="h-20 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* İzin Hakları Kartları */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Award className="h-5 w-5 text-primary" />
-              Hak Edilen İzinler
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Çalışma Süresi: <strong>{yearsOfService} yıl</strong>
-              {employee.hire_date && (
-                <span className="ml-2">
-                  (Başlangıç: {new Date(employee.hire_date).toLocaleDateString('tr-TR')})
-                </span>
-              )}
-            </p>
+    <div className="space-y-4">
+      {/* İzin Hakları - Kompakt Tablo */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
+              <Award className="h-4 w-4 text-primary" />
+              İzin Hakları
+            </CardTitle>
+            <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
+              <span>Çalışma: {formatYearsOfService(employee.hire_date)}</span>
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                Sonraki Hak: {getNextAnniversary(employee.hire_date)}
+              </span>
+            </div>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        </CardHeader>
+        <CardContent className="pt-0">
           {leaveEntitlements.length > 0 ? (
-            leaveEntitlements.map((entitlement) => (
-              <Card key={entitlement.leave_type.id} className="border-l-4" style={{ borderLeftColor: entitlement.leave_type.color || '#3b82f6' }}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      {entitlement.leave_type.color && (
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: entitlement.leave_type.color }}
-                        />
-                      )}
-                      {entitlement.leave_type.name}
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">Hak Edilen:</span>
-                      <span className="text-sm font-semibold">{entitlement.days_entitled} gün</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">Kullanılan:</span>
-                      <span className="text-sm font-medium text-orange-600">{entitlement.days_used} gün</span>
-                    </div>
-                    <div className="flex justify-between items-center pt-2 border-t">
-                      <span className="text-xs text-muted-foreground">Kalan:</span>
-                      <span className="text-lg font-bold text-green-600">{entitlement.days_remaining} gün</span>
-                    </div>
-                    <div className="pt-2">
-                      <Badge variant="outline" className="text-xs">
-                        {entitlement.rule_name}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 px-2 font-medium">İzin Türü</th>
+                    <th className="text-center py-2 px-2 font-medium">Hak</th>
+                    <th className="text-center py-2 px-2 font-medium">Kullanılan</th>
+                    <th className="text-center py-2 px-2 font-medium">Kalan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaveEntitlements.map((entitlement) => (
+                    <tr key={entitlement.leave_type.id} className="border-b last:border-0">
+                      <td className="py-2 px-2">
+                        <div className="flex items-center gap-2">
+                          {entitlement.leave_type.color && (
+                            <div
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: entitlement.leave_type.color }}
+                            />
+                          )}
+                          <span className="text-sm">{entitlement.leave_type.name}</span>
+                        </div>
+                      </td>
+                      <td className="text-center py-2 px-2 font-medium">{entitlement.days_entitled}</td>
+                      <td className="text-center py-2 px-2 text-orange-600">{entitlement.days_used}</td>
+                      <td className="text-center py-2 px-2 font-semibold text-green-600">{entitlement.days_remaining}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">Bu çalışan için henüz izin türü tanımlanmamış.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* İzin Geçmişi - Kompakt Liste */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              İzin Geçmişi
+            </CardTitle>
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+              <PlusCircle className="h-3 w-3" />
+              Yeni İzin
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {leaves.length > 0 ? (
+            <div className="space-y-2">
+              {leaves.slice(0, 5).map((leave) => (
+                <div key={leave.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{getLeaveTypeDisplayName(leave.leave_type)}</span>
+                      <Badge variant="secondary" className={`h-5 text-xs ${getStatusColor(leave.status)}`}>
+                        {leave.status === 'approved' ? 'Onaylandı' : leave.status === 'rejected' ? 'Reddedildi' : 'Bekliyor'}
                       </Badge>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card className="col-span-full">
-              <CardContent className="text-center py-8 text-muted-foreground">
-                <p>Bu çalışan için henüz izin türü tanımlanmamış.</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* İzin Geçmişi */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center">
-            <Calendar className="h-5 w-5 mr-2 text-primary" />
-            İzin Geçmişi
-          </CardTitle>
-          <Button size="sm" variant="outline" className="gap-1">
-            <PlusCircle className="h-4 w-4" />
-            Yeni İzin Talebi
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {leaves.length > 0 ? (
-            <div className="divide-y">
-              {leaves.map((leave) => (
-                <div key={leave.id} className="py-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium">{leave.leave_type}</h3>
-                      <p className="text-sm text-gray-500">
-                        {new Date(leave.start_date).toLocaleDateString('tr-TR')} - {new Date(leave.end_date).toLocaleDateString('tr-TR')}
-                      </p>
-                      {leave.reason && (
-                        <p className="text-sm mt-1">{leave.reason}</p>
-                      )}
-                    </div>
-                    <Badge className={getStatusColor(leave.status)}>
-                      {leave.status === 'approved' ? 'Onaylandı' : leave.status === 'rejected' ? 'Reddedildi' : 'Bekliyor'}
-                    </Badge>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {new Date(leave.start_date).toLocaleDateString('tr-TR')} - {new Date(leave.end_date).toLocaleDateString('tr-TR')}
+                    </p>
                   </div>
                 </div>
               ))}
+              {leaves.length > 5 && (
+                <p className="text-xs text-center text-muted-foreground pt-2">
+                  +{leaves.length - 5} izin daha
+                </p>
+              )}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <p>Bu çalışan için henüz izin kaydı bulunmuyor.</p>
-              <Button variant="outline" className="mt-4">
-                <PlusCircle className="h-4 w-4 mr-2" />
+            <div className="text-center py-6">
+              <p className="text-sm text-gray-500 mb-3">Henüz izin kaydı bulunmuyor.</p>
+              <Button variant="outline" size="sm" className="text-xs">
+                <PlusCircle className="h-3 w-3 mr-1" />
                 İlk İzni Oluştur
               </Button>
             </div>

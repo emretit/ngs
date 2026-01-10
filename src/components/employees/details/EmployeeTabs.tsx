@@ -9,6 +9,7 @@ import {
   CustomTabsTrigger 
 } from "@/components/ui/custom-tabs";
 import { EmployeeSalaryTab } from "./tabs/EmployeeSalaryTab";
+import { EmployeeLeaveTab } from "./EmployeeLeaveTab";
 import { Employee } from "@/types/employee";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,11 +142,7 @@ export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: Emp
       </CustomTabsContent>
 
       <CustomTabsContent value="leave">
-        <EmptyState
-          icon={<Calendar className="w-8 h-8 text-gray-400" />}
-          title="İzin Kayıtları"
-          description="Çalışanın izin kayıtları ve kullanım durumu burada görüntülenecek."
-        />
+        <EmployeeLeaveTab employee={employee} />
       </CustomTabsContent>
 
       <CustomTabsContent value="performance">

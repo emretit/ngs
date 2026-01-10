@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { sendMessageToGemini } from '@/services/geminiService';
+import { chatWithAIStreaming, checkGeminiStatus } from '@/services/geminiService';
 import { getQuickPromptsForModule, buildContextAwarePrompt } from '@/services/contextDetectionService';
 import { RoleSelector, RoleBadge } from '@/components/ai/RoleSelector';
 import { RoleBasedPrompts } from '@/components/ai/RoleBasedPrompts';
@@ -47,6 +47,10 @@ export function EmbeddedAIWidget() {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [apiStatus, setApiStatus] = useState<{ configured: boolean; checked: boolean }>({ 
+    configured: true, 
+    checked: false 
+  });
 
   const createConversation = useCreateConversation();
   const saveMessage = useSaveMessage();
@@ -77,6 +81,22 @@ export function EmbeddedAIWidget() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleWidget]);
+
+  // API status check when widget opens
+  useEffect(() => {
+    if (isWidgetOpen && !apiStatus.checked) {
+      checkGeminiStatus().then(status => {
+        setApiStatus({ configured: status.configured, checked: true });
+        if (!status.configured) {
+          toast({
+            title: 'AI Yapılandırma Uyarısı',
+            description: 'Gemini API yapılandırılmamış. Lütfen yöneticinize başvurun.',
+            variant: 'destructive'
+          });
+        }
+      });
+    }
+  }, [isWidgetOpen, apiStatus.checked, toast]);
 
   const handleSendMessage = async (messageText?: string) => {
     const text = messageText || input.trim();
@@ -126,36 +146,59 @@ export function EmbeddedAIWidget() {
         }
       });
 
-      // Get AI response with context
+      // Get AI response with streaming
       const contextPrompt = pageContext && companyId
         ? buildContextAwarePrompt(pageContext, companyId)
         : undefined;
 
-      // Filter out system messages and map to expected format for Gemini
       const geminiMessages = messages
         .filter(m => m.role !== 'system')
         .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
-      const aiResponse = await sendMessageToGemini(
-        text,
-        geminiMessages,
-        contextPrompt,
-        pageContext || undefined,
-        currentRole
-      );
+      // Add system message if context exists
+      const fullMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
+      if (contextPrompt) {
+        fullMessages.push({ role: 'system', content: contextPrompt });
+      }
+      fullMessages.push(...(geminiMessages as any));
+      fullMessages.push({ role: 'user', content: text });
 
-      // Add AI message
+      // Create placeholder for streaming response
+      let streamingContent = '';
       addMessage({
         role: 'assistant',
-        content: aiResponse || 'Üzgünüm, bir yanıt oluşturamadım.',
+        content: '',
         timestamp: new Date()
       });
 
-      // Save AI message to DB
+      // Stream the response
+      await chatWithAIStreaming(
+        fullMessages,
+        'gemini-2.5-flash',
+        pageContext || undefined,
+        currentRole,
+        (chunk: string) => {
+          streamingContent += chunk;
+          // Update the last message (assistant) with streaming content
+          setMessages((prev) => {
+            const newMessages = [...prev];
+            const lastIndex = newMessages.length - 1;
+            if (newMessages[lastIndex]?.role === 'assistant') {
+              newMessages[lastIndex] = {
+                ...newMessages[lastIndex],
+                content: streamingContent
+              };
+            }
+            return newMessages;
+          });
+        }
+      );
+
+      // Save AI message to DB after streaming completes
       await saveMessage.mutateAsync({
         conversationId,
         role: 'assistant',
-        content: aiResponse || 'Üzgünüm, bir yanıt oluşturamadım.'
+        content: streamingContent || 'Üzgünüm, bir yanıt oluşturamadım.'
       });
 
       // Auto-generate title if first message
@@ -164,16 +207,39 @@ export function EmbeddedAIWidget() {
       }
     } catch (error: any) {
       console.error('Message send error:', error);
+      
+      let errorMessage = 'Mesaj gönderilemedi';
+      
+      // Rate limit hatası
+      if (error.message?.includes('429') || error.message?.toLowerCase().includes('rate limit')) {
+        errorMessage = 'Çok fazla istek gönderildi. Lütfen birkaç saniye bekleyin.';
+      } 
+      // Ödeme/kota hatası
+      else if (error.message?.includes('402') || error.message?.toLowerCase().includes('payment') || error.message?.toLowerCase().includes('quota')) {
+        errorMessage = 'AI kullanım kotası aşıldı. Lütfen yöneticinize başvurun.';
+      }
+      // Bağlantı hatası
+      else if (error.message?.includes('fetch') || error.message?.toLowerCase().includes('network')) {
+        errorMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.';
+      }
+
       toast({
         title: 'Hata',
-        description: error.message || 'Mesaj gönderilemedi',
+        description: errorMessage,
         variant: 'destructive'
       });
 
-      addMessage({
-        role: 'assistant',
-        content: 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
-        timestamp: new Date()
+      // Remove the empty assistant message and add error message
+      setMessages((prev) => {
+        const filtered = prev.filter((_, i) => i !== prev.length - 1 || prev[i].role !== 'assistant' || prev[i].content !== '');
+        return [
+          ...filtered,
+          {
+            role: 'assistant',
+            content: 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
+            timestamp: new Date()
+          }
+        ];
       });
     } finally {
       setIsLoading(false);
@@ -226,6 +292,17 @@ export function EmbeddedAIWidget() {
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-xs">AI Asistan</h3>
               <RoleBadge role={currentRole} />
+              {apiStatus.checked && (
+                <div className="flex items-center gap-1">
+                  <div className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    apiStatus.configured ? "bg-green-500" : "bg-red-500"
+                  )} />
+                  <span className="text-[9px] text-muted-foreground">
+                    {apiStatus.configured ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+              )}
             </div>
             {pageContext && (
               <p className="text-[10px] text-muted-foreground truncate">
@@ -338,16 +415,19 @@ export function EmbeddedAIWidget() {
                   </div>
                 ))}
 
-                {isLoading && (
-                  <div className="flex gap-2">
+                {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
+                  <div className="flex gap-2 animate-in fade-in">
                     <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-blue-500 shadow-md">
-                      <Bot className="h-3 w-3 text-white" />
+                      <Bot className="h-3 w-3 text-white animate-pulse" />
                     </div>
                     <div className="flex-1 rounded-lg px-3 py-2 bg-white border border-gray-200 shadow-sm">
-                      <div className="flex gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">AI düşünüyor...</span>
                       </div>
                     </div>
                   </div>

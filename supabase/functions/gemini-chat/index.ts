@@ -206,18 +206,22 @@ Sadece kullanıcının kendi şirketinin verilerine erişilmelidir.
 ${companyId ? `\nŞİRKET FİLTRESİ: Tüm sorgularda WHERE company_id = '${companyId}' kullanılmalıdır.` : '\nŞİRKET FİLTRESİ: Tüm sorgularda WHERE company_id filtresi kullanılmalıdır.'}
 `;
 
-// Available Gemini models - using Gemini 2.0 experimental models
+// Available Gemini models - updated to latest stable versions
 const GEMINI_MODELS: Record<string, string> = {
-  'gemini-2.0-flash-exp': 'gemini-2.0-flash-exp',
-  'gemini-exp-1206': 'gemini-exp-1206',
-  'gemini-2.0-flash-thinking-exp': 'gemini-2.0-flash-thinking-exp',
-  // Fallback for old model names
-  'gemini-1.5-flash': 'gemini-2.0-flash-exp',
-  'gemini-1.5-pro': 'gemini-exp-1206',
-  'gemini-1.5-flash-8b': 'gemini-2.0-flash-exp',
-  'gemini-2.5-flash': 'gemini-2.0-flash-exp',
-  'gemini-2.5-pro': 'gemini-exp-1206',
-  'gemini-2.5-flash-lite': 'gemini-2.0-flash-exp',
+  // New stable models (2025+)
+  'gemini-2.5-flash': 'gemini-2.5-flash',
+  'gemini-2.5-pro': 'gemini-2.5-pro',
+  'gemini-2.5-flash-lite': 'gemini-2.5-flash-lite',
+  'gemini-3-flash-preview': 'gemini-3-flash-preview',
+  'gemini-3-pro-preview': 'gemini-3-pro-preview',
+  
+  // Legacy fallbacks (deprecated models redirect to new versions)
+  'gemini-2.0-flash-exp': 'gemini-2.5-flash',
+  'gemini-exp-1206': 'gemini-2.5-pro',
+  'gemini-2.0-flash-thinking-exp': 'gemini-2.5-pro',
+  'gemini-1.5-flash': 'gemini-2.5-flash',
+  'gemini-1.5-pro': 'gemini-2.5-pro',
+  'gemini-1.5-flash-8b': 'gemini-2.5-flash-lite',
 };
 
 serve(async (req) => {
@@ -233,7 +237,7 @@ serve(async (req) => {
   try {
     const body: GeminiRequest = await req.json();
     console.log('Request body type:', body.type);
-    const { type, model = 'gemini-2.0-flash-exp', stream = false } = body;
+    const { type, model = 'gemini-2.5-flash', stream = false } = body;
 
     // Status check - no JWT required
     if (type === 'status') {
@@ -294,7 +298,7 @@ serve(async (req) => {
     }
 
     // Get actual model name
-    const actualModel = GEMINI_MODELS[model] || GEMINI_MODELS['gemini-2.0-flash-exp'];
+    const actualModel = GEMINI_MODELS[model] || GEMINI_MODELS['gemini-2.5-flash'];
 
     let systemInstruction = '';
     let userContent = '';

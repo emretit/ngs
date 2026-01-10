@@ -123,7 +123,7 @@ const analyzeWithAI = async (
         tableName,
         data: data.slice(0, 10), // İlk 10 kayıt
         summary,
-        model: 'gemini-2.0-flash-exp'
+        model: 'gemini-2.5-flash'
       }
     });
 

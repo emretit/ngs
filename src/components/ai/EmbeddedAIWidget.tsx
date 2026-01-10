@@ -31,6 +31,7 @@ export function EmbeddedAIWidget() {
     messages,
     addMessage,
     clearMessages,
+    setMessages,
     setIsLoading,
     isLoading,
     pageContext,

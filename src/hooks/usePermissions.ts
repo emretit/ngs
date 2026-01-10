@@ -60,8 +60,17 @@ export const usePermissions = () => {
   });
 
   const hasModuleAccess = (module: string): boolean => {
-    // Eğer rol atanmamışsa, tüm modüllere erişim ver (varsayılan davranış)
-    if (!permissions) return true;
+    // Fail-closed: deny access during loading or errors
+    if (isLoading || error) return false;
+    
+    // Owner/admin explicitly granted full access (null permissions after successful query)
+    if (!permissions && user?.id) {
+      return true;
+    }
+    
+    // No user or permissions data means no access
+    if (!permissions) return false;
+    
     return permissions?.[module]?.access === true;
   };
 

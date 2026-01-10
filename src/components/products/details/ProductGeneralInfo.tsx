@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Maximize2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Product } from "@/types/product";
+import DOMPurify from "dompurify";
 
 interface ProductGeneralInfoProps {
   product: Pick<Product, 
@@ -72,7 +72,9 @@ const ProductGeneralInfo = ({ product, onUpdate }: ProductGeneralInfoProps) => {
               <div 
                 className="mt-1 prose prose-sm max-w-none text-xs"
                 dangerouslySetInnerHTML={{ 
-                  __html: product.formatted_description?.html || product.description || "Açıklama bulunmuyor" 
+                  __html: DOMPurify.sanitize(
+                    product.formatted_description?.html || product.description || "Açıklama bulunmuyor"
+                  )
                 }}
               />
             </div>

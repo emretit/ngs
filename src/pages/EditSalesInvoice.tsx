@@ -160,13 +160,20 @@ const EditSalesInvoice = () => {
   }, [integratorStatus, sendVeribanInvoice, sendNilveraInvoice]);
 
   // State
-  const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
   const [editingItemData, setEditingItemData] = useState<any>(null);
+
+  // Source data (order/proposal) - for tracking origin
+  const [sourceData, setSourceData] = useState<{
+    type: 'order' | 'proposal' | null;
+    data: any;
+  }>({ type: null, data: null });
+  const orderId = sourceData.type === 'order' && sourceData.data?.id ? sourceData.data.id : null;
+  const proposalId = sourceData.type === 'proposal' && sourceData.data?.id ? sourceData.data.id : null;
 
   // Loading state for data population
   const [invoiceLoaded, setInvoiceLoaded] = useState(false);
@@ -690,8 +697,8 @@ const EditSalesInvoice = () => {
     handleFieldChange(mappedField, value);
   }, [handleFieldChange]);
 
-  // Save invoice
-  const handleSave = async () => {
+  // Save invoice (update)
+  const handleUpdate = async () => {
     console.log("💾 [EditSalesInvoice] Updating invoice...");
     try {
       // Validation
@@ -713,7 +720,6 @@ const EditSalesInvoice = () => {
       }
 
       console.log("  → Validation passed, starting save...");
-      setSaving(true);
 
       // Calculate totals
       const primaryCurrency = financialData.currency;
@@ -843,14 +849,12 @@ const EditSalesInvoice = () => {
     } catch (error) {
       console.error('❌ [CreateSalesInvoice] Error saving invoice:', error);
       toast.error("Fatura kaydedilirken bir hata oluştu");
-    } finally {
-      setSaving(false);
     }
   };
 
-  // Smart save - artık kullanmıyoruz, doğrudan handleSave çağrılacak
+  // Smart save - use handleUpdate instead of hook's handleSave for custom logic
   const handleSmartSave = () => {
-    handleSave();
+    handleUpdate();
   };
 
   // Loading state
@@ -913,7 +917,7 @@ const EditSalesInvoice = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Kaydetme</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleSave()} className="gap-2 cursor-pointer">
+                <DropdownMenuItem onClick={() => handleUpdate()} className="gap-2 cursor-pointer">
                   <Save className="h-4 w-4 text-slate-500" />
                   <span>Kaydet</span>
                 </DropdownMenuItem>

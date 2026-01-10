@@ -401,9 +401,9 @@ export function AccountDetailBase<TAccount extends BaseAccount, TTransaction ext
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialogComponent
-        isOpen={isDeleteDialogOpen}
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => { if (!open) handleDeleteCancel(); }}
         onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
         title="İşlemi Sil"
         description={`Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve hesap bakiyesi güncellenecektir.`}
         confirmText="Sil"

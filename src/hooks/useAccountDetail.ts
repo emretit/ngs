@@ -8,8 +8,8 @@ interface CashAccount {
   current_balance: number;
   currency: string;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface BankAccount {
@@ -24,8 +24,8 @@ interface BankAccount {
   available_balance: number;
   credit_limit?: number;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface CreditCard {
@@ -39,8 +39,10 @@ interface CreditCard {
   available_limit: number;
   status: string;
   expiry_date: string;
-  created_at: string;
-  updated_at: string;
+  currency: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface PartnerAccount {
@@ -53,8 +55,8 @@ interface PartnerAccount {
   ownership_percentage: number;
   currency: string;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface Transaction {

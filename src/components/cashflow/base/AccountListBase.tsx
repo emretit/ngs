@@ -163,9 +163,9 @@ export function AccountListBase<TAccount extends BaseAccount>({
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialogComponent
-        isOpen={isDeleteDialogOpen}
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => { if (!open) handleDeleteCancel(); }}
         onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
         title="Hesabı Sil"
         description={`"${accountToDelete?.name}" hesabını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
         confirmText="Sil"

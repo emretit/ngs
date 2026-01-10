@@ -7,12 +7,14 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-interface CreditCardIncomeModalProps {
+export interface CreditCardIncomeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  cardId: string;
-  cardName: string;
+  cardId?: string;
+  cardName?: string;
+  accountId?: string;
+  accountName?: string;
   currency: string;
 }
 
@@ -22,7 +24,9 @@ interface IncomeFormData {
   transaction_date: Date | null;
 }
 
-const CreditCardIncomeModal = ({ isOpen, onClose, onSuccess, cardId, cardName, currency }: CreditCardIncomeModalProps) => {
+const CreditCardIncomeModal = ({ isOpen, onClose, onSuccess, cardId, cardName, accountId, accountName, currency }: CreditCardIncomeModalProps) => {
+  const effectiveCardId = cardId || accountId || '';
+  const effectiveCardName = cardName || accountName || '';
   const formRef = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState<IncomeFormData>({
     amount: 0,
@@ -69,7 +73,7 @@ const CreditCardIncomeModal = ({ isOpen, onClose, onSuccess, cardId, cardName, c
       const { error: transactionError } = await supabase
         .from('card_transactions')
         .insert({
-          card_id: cardId,
+          card_id: effectiveCardId,
           amount: formData.amount,
           transaction_type: 'payment',
           description: formData.description,
@@ -82,7 +86,7 @@ const CreditCardIncomeModal = ({ isOpen, onClose, onSuccess, cardId, cardName, c
 
       // Kredi kartı bakiyesini güncelle
       const { error: balanceError } = await supabase.rpc('update_credit_card_balance', {
-        card_id: cardId,
+        card_id: effectiveCardId,
         amount: formData.amount,
         transaction_type: 'income'
       });
@@ -122,7 +126,7 @@ const CreditCardIncomeModal = ({ isOpen, onClose, onSuccess, cardId, cardName, c
       title={
         <div>
           <div className="text-lg font-semibold">Kredi Kartına Ödeme Ekle</div>
-          <div className="text-xs text-gray-600 font-normal mt-0.5">Kart: {cardName}</div>
+          <div className="text-xs text-gray-600 font-normal mt-0.5">Kart: {effectiveCardName}</div>
         </div>
       }
       maxWidth="2xl"

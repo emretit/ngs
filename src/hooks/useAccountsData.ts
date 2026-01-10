@@ -13,17 +13,17 @@ interface BankAccount {
   is_active: boolean;
 }
 
-interface CreditCard {
+export interface CreditCard {
   id: string;
   card_name: string;
-  card_number: string;
+  card_number: string | null;
   card_type: string;
-  bank_name: string;
-  current_balance: number;
-  credit_limit: number;
-  available_limit: number;
+  bank_name: string | null;
+  current_balance: number | null;
+  credit_limit: number | null;
+  available_limit: number | null;
   currency: string;
-  status: string;
+  status: string | null;
   expiry_date: string;
 }
 

@@ -249,7 +249,7 @@ export class OutgoingInvoiceSyncService {
       nilvera_invoice_id: outgoing.id, // Veriban outgoing_invoice.id - Eşleştirme anahtarı
       
       // SINGLE SOURCE OF TRUTH: einvoice_status artık elogo_status ve answer_type'dan türetiliyor
-      einvoice_status: einvoiceStatus,
+      einvoice_status: einvoiceStatus === 'pending' ? 'sending' : einvoiceStatus as any,
       
       // Veriban durum bilgileri - outgoing_invoices'tan aktar
       elogo_status: stateCode,                              // StateCode (1-5) - SINGLE SOURCE OF TRUTH
@@ -259,19 +259,13 @@ export class OutgoingInvoiceSyncService {
       
       einvoice_error_message: outgoing.elogoDescription || null,
       einvoice_sent_at: outgoing.sentAt || null,
-      einvoice_delivered_at: outgoing.deliveredAt || null,
-      einvoice_xml_content: outgoing.xmlContent || null,
-      
-      // Fatura tipleri
-      invoice_type: outgoing.invoiceType || null,
-      invoice_profile: outgoing.invoiceProfile || null,
       
       // Doküman tipi - e-fatura olarak işaretle
       document_type: 'e_fatura',
       
       // Timestamps - Supabase otomatik yönetir
       updated_at: new Date().toISOString()
-    };
+    } as any; // Use type assertion for extra Veriban-specific fields
   }
 
   /**

@@ -334,10 +334,15 @@ export function AccountDetailBase<TAccount extends BaseAccount, TTransaction ext
             onAddIncome={() => setIsIncomeModalOpen(true)}
             onAddExpense={() => setIsExpenseModalOpen(true)}
             onDelete={onDeleteTransaction || handleDelete}
-            initialBalance={transactionHistoryConfig.initialBalance?.(account) || 0}
+            initialBalance={typeof transactionHistoryConfig?.initialBalance === 'function' 
+              ? transactionHistoryConfig.initialBalance(account) 
+              : (transactionHistoryConfig?.initialBalance || 0)}
+            currentBalance={typeof transactionHistoryConfig?.currentBalance === 'function'
+              ? transactionHistoryConfig.currentBalance(account)
+              : transactionHistoryConfig?.currentBalance}
             hideHeader={true}
             isDeleting={deleteTransactionMutation.isPending}
-            {...transactionHistoryConfig}
+            hideUsdColumns={transactionHistoryConfig?.hideUsdColumns}
           />
         </div>
       </div>

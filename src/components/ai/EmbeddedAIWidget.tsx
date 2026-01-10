@@ -270,7 +270,7 @@ export function EmbeddedAIWidget() {
           <span className="sr-only">AI Asistan</span>
         </Button>
         {/* Pulse animation */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 animate-ping opacity-20" />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 animate-ping opacity-20 pointer-events-none" />
       </div>
     );
   }

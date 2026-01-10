@@ -149,12 +149,16 @@ export interface IncomeModalProps extends BaseModalProps {
   accountId: string;
   accountName: string;
   currency: string;
+  cardId?: string;
+  cardName?: string;
 }
 
 export interface ExpenseModalProps extends BaseModalProps {
   accountId: string;
   accountName: string;
   currency: string;
+  cardId?: string;
+  cardName?: string;
 }
 
 export interface TransferModalProps extends BaseModalProps {

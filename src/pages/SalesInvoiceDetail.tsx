@@ -114,6 +114,7 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
   
   // Determine which integrator to use and get sending state
   const usingVeriban = integratorStatus?.selected === 'veriban';
+  const usingNilvera = integratorStatus?.selected === 'nilvera';
   const isSending = usingVeriban ? isSendingVeriban : isSendingNilvera;
 
   useEffect(() => {

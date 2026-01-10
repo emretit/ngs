@@ -473,32 +473,33 @@ const EditSalesInvoice = () => {
         });
       }
 
-      // Set invoice data
+      // Set invoice data - use type assertion since invoice comes from hook with additional properties
+      const invoiceAny = invoice as any;
       setInvoiceData({
-        invoice_date: invoice.fatura_tarihi ? new Date(invoice.fatura_tarihi) : new Date(),
-        invoice_number: invoice.fatura_no || "",
-        issue_time: invoice.issue_time || "",
-        due_date: invoice.vade_tarihi ? new Date(invoice.vade_tarihi) : null,
-        invoice_type: invoice.invoice_type || "SATIS",
-        invoice_profile: invoice.invoice_profile || "TEMELFATURA",
-        send_type: invoice.send_type || "ELEKTRONIK",
-        sales_platform: invoice.sales_platform || "NORMAL",
-        is_despatch: invoice.is_despatch || false,
-        description: invoice.aciklama || "",
-        notes: invoice.notlar || "",
-        banka_bilgileri: invoice.banka_bilgileri || "",
+        invoice_date: invoiceAny.fatura_tarihi ? new Date(invoiceAny.fatura_tarihi) : new Date(),
+        invoice_number: invoiceAny.fatura_no || "",
+        issue_time: invoiceAny.issue_time || "",
+        due_date: invoiceAny.vade_tarihi ? new Date(invoiceAny.vade_tarihi) : null,
+        invoice_type: invoiceAny.invoice_type || "SATIS",
+        invoice_profile: invoiceAny.invoice_profile || "TEMELFATURA",
+        send_type: invoiceAny.send_type || "ELEKTRONIK",
+        sales_platform: invoiceAny.sales_platform || "NORMAL",
+        is_despatch: invoiceAny.is_despatch || false,
+        description: invoiceAny.aciklama || "",
+        notes: invoiceAny.notlar || "",
+        banka_bilgileri: invoiceAny.banka_bilgileri || "",
       });
 
       // Set financial data
       setFinancialData({
-        currency: invoice.para_birimi || DEFAULT_CURRENCY,
+        currency: invoiceAny.para_birimi || DEFAULT_CURRENCY,
         exchange_rate: 1,
         vat_percentage: DEFAULT_VAT_PERCENTAGE,
       });
 
       // Load items
-      if (invoice.items && invoice.items.length > 0) {
-        const invoiceItems = invoice.items.map((item: any, index: number) => ({
+      if (invoiceAny.items && invoiceAny.items.length > 0) {
+        const invoiceItems = invoiceAny.items.map((item: any, index: number) => ({
           id: item.id || (index + 1).toString(),
           row_number: item.sira_no || index + 1,
           name: item.urun_adi,
@@ -509,7 +510,7 @@ const EditSalesInvoice = () => {
           tax_rate: parseFloat(item.kdv_orani) || DEFAULT_VAT_PERCENTAGE,
           discount_rate: parseFloat(item.indirim_orani) || 0,
           total_price: parseFloat(item.satir_toplami),
-          currency: item.para_birimi || invoice.para_birimi || DEFAULT_CURRENCY,
+          currency: item.para_birimi || invoiceAny.para_birimi || DEFAULT_CURRENCY,
         }));
         setItems(invoiceItems);
       }

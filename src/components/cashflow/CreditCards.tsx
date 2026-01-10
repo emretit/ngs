@@ -1,29 +1,12 @@
 import { useMemo, memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Target, DollarSign, TrendingUp } from "lucide-react";
-import { useCreditCards, useDeleteCreditCard } from "@/hooks/useAccountsData";
+import { useCreditCards, useDeleteCreditCard, CreditCard } from "@/hooks/useAccountsData";
 import CreditCardModal from "./modals/CreditCardModal";
 import { AccountListBase } from "./base/AccountListBase";
 import { AccountListHeaderBase } from "./base/AccountListHeaderBase";
 import { formatCurrency } from "@/utils/formatters";
 import type { CardStatBadge, CardField } from "./base/types";
-
-interface CreditCardAccount {
-  id: string;
-  card_name: string;
-  card_number: string;
-  bank_name: string;
-  card_type: "credit" | "debit" | "corporate";
-  credit_limit: number;
-  current_balance: number;
-  available_limit: number;
-  currency: string;
-  expiry_date: string;
-  is_active: boolean;
-  status?: "active" | "inactive";
-  created_at: string;
-  updated_at: string;
-}
 
 interface CreditCardsProps {
   showBalances: boolean;
@@ -82,19 +65,19 @@ const CreditCards = memo(({ showBalances }: CreditCardsProps) => {
   }, [navigate]);
 
   // Memoized render functions
-  const getTitle = useCallback((card: CreditCardAccount) => {
+  const getTitle = useCallback((card: CreditCard) => {
     return card.card_name;
   }, []);
 
-  const getSubtitle = useCallback((card: CreditCardAccount) => {
-    return `${card.bank_name}${card.card_number ? ` • ${formatCardNumber(card.card_number)}` : ''}`;
+  const getSubtitle = useCallback((card: CreditCard) => {
+    return `${card.bank_name || ''}${card.card_number ? ` • ${formatCardNumber(card.card_number)}` : ''}`;
   }, []);
 
-  const getStatBadges = useCallback((card: CreditCardAccount): CardStatBadge[] => [
+  const getStatBadges = useCallback((card: CreditCard): CardStatBadge[] => [
     {
       key: 'available',
       label: '',
-      value: card.available_limit,
+      value: card.available_limit || 0,
       icon: Target,
       variant: 'primary',
       showBalanceToggle: true,
@@ -103,7 +86,7 @@ const CreditCards = memo(({ showBalances }: CreditCardsProps) => {
     {
       key: 'limit',
       label: '/',
-      value: card.credit_limit,
+      value: card.credit_limit || 0,
       icon: Target,
       variant: 'secondary',
       showBalanceToggle: true,
@@ -111,7 +94,7 @@ const CreditCards = memo(({ showBalances }: CreditCardsProps) => {
     },
   ], []);
 
-  const getCardFields = useCallback((card: CreditCardAccount): CardField[] => [
+  const getCardFields = useCallback((card: CreditCard): CardField[] => [
     {
       key: 'progress',
       label: '',
@@ -119,7 +102,7 @@ const CreditCards = memo(({ showBalances }: CreditCardsProps) => {
         <div className="w-12 bg-gray-200 rounded-full h-1 mt-0.5">
           <div
             className="bg-purple-500 h-1 rounded-full transition-all duration-300"
-            style={{ width: `${Math.min((card.current_balance / card.credit_limit) * 100, 100)}%` }}
+            style={{ width: `${Math.min(((card.current_balance || 0) / (card.credit_limit || 1)) * 100, 100)}%` }}
           />
         </div>
       ),
@@ -128,7 +111,7 @@ const CreditCards = memo(({ showBalances }: CreditCardsProps) => {
   ], []);
 
   // Render custom header with totals - memoized
-  const renderHeader = useCallback((_accounts: CreditCardAccount[], _showBalances: boolean, onAddNew: () => void) => {
+  const renderHeader = useCallback((_accounts: CreditCard[], _showBalances: boolean, onAddNew: () => void) => {
     const headerBadges = Object.entries(totals).flatMap(([currency, data]) => [
       {
         key: `${currency}-limit`,

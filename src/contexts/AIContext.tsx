@@ -44,7 +44,7 @@ interface AIContextType {
   setCurrentConversationId: (id: string | null) => void;
   addMessage: (message: AIMessage) => void;
   clearMessages: () => void;
-  setMessages: (messages: AIMessage[]) => void;
+  setMessages: React.Dispatch<React.SetStateAction<AIMessage[]>>;
   setIsLoading: (loading: boolean) => void;
 
   // Context controls

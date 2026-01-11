@@ -194,7 +194,7 @@ const ProposalTable = ({
         notes: fullProposal.notes,
         terms: fullProposal.terms,
         currency: fullProposal.currency || 'TRY',
-        exchange_rate: (fullProposal as any).exchange_rate,
+        exchange_rate: fullProposal.exchange_rate,
         total_amount: fullProposal.total_amount,
         items: fullProposal.items?.map(item => ({
           ...item,
@@ -202,7 +202,7 @@ const ProposalTable = ({
         })) || [],
       };
 
-      const { data: newProposal, error } = await createProposal(copyData as any);
+      const { data: newProposal, error } = await createProposal(copyData);
       
       if (error) throw error;
 
@@ -264,7 +264,7 @@ const ProposalTable = ({
         notes: fullProposal.notes,
         terms: fullProposal.terms,
         currency: fullProposal.currency || 'TRY',
-        exchange_rate: (fullProposal as any).exchange_rate,
+        exchange_rate: fullProposal.exchange_rate,
         total_amount: fullProposal.total_amount,
         items: fullProposal.items?.map(item => ({
           ...item,
@@ -272,7 +272,7 @@ const ProposalTable = ({
         })) || [],
       };
 
-      const { data: newProposal, error } = await createProposal(copyData as any);
+      const { data: newProposal, error } = await createProposal(copyData);
       
       if (error) throw error;
 
@@ -319,7 +319,7 @@ const ProposalTable = ({
       }
 
       // Orijinal teklifi belirle (bu zaten bir revizyon mu?)
-      const originalProposalId = (fullProposal as any).parent_proposal_id || fullProposal.id;
+      const originalProposalId = fullProposal.parent_proposal_id || fullProposal.id;
 
       // Mevcut revizyonların sayısını al (database fonksiyonu kullanarak)
       const { data: revisionCount } = await import('@/integrations/supabase/client').then(m =>
@@ -362,7 +362,7 @@ const ProposalTable = ({
         revision_number: nextRevisionNumber,
       };
 
-      const { data: newProposal, error } = await createProposal(revisionData as any);
+      const { data: newProposal, error } = await createProposal(revisionData);
 
       if (error) {
         throw error;

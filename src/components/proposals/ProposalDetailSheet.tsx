@@ -127,7 +127,7 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
                 <StatusBadge status={proposal.status} size="sm" />
               </div>
               <p className="text-sm font-medium text-foreground truncate">
-                {(proposal as any).subject || proposal.title || "Konu belirtilmemiş"}
+                {proposal.subject || proposal.title || "Konu belirtilmemiş"}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {proposal.customer?.company || proposal.customer?.name || proposal.customer_name || "Müşteri yok"}
@@ -179,7 +179,7 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">Teklif Tarihi</p>
-              <p className="font-medium text-sm">{formatDate((proposal as any).offer_date || proposal.created_at)}</p>
+              <p className="font-medium text-sm">{formatDate(proposal.offer_date || proposal.created_at)}</p>
             </div>
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">Geçerlilik</p>
@@ -195,11 +195,11 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
               <p className="text-xs text-muted-foreground">Para Birimi</p>
               <p className="font-medium text-sm">{proposal.currency || "TRY"}</p>
             </div>
-            {(proposal as any).exchange_rate && proposal.currency !== "TRY" && (
+            {proposal.exchange_rate && proposal.currency !== "TRY" && (
               <div className="space-y-0.5 col-span-2">
                 <p className="text-xs text-muted-foreground">Döviz Kuru</p>
                 <p className="font-medium text-sm">
-                  1 {proposal.currency} = {(proposal as any).exchange_rate} TRY
+                  1 {proposal.currency} = {proposal.exchange_rate} TRY
                 </p>
               </div>
             )}
@@ -233,7 +233,7 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
                 {proposal.items.slice(0, 5).map((item, index) => (
                   <div key={item.id || index} className="flex justify-between items-center p-1.5 bg-muted/30 rounded text-sm">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate text-sm">{item.name || (item as any).product_name || 'Ürün'}</p>
+                      <p className="font-medium truncate text-sm">{item.name || 'Ürün'}</p>
                       <p className="text-xs text-muted-foreground">
                         {item.quantity} adet × {formatMoney(item.unit_price)}
                       </p>
@@ -365,8 +365,8 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
               <AccordionContent className="pt-1.5 pb-0">
                 <div className="space-y-2">
                   {/* History entries from database */}
-                  {(proposal as any).history && Array.isArray((proposal as any).history) && (proposal as any).history.length > 0 ? (
-                    (proposal as any).history
+                  {proposal.history && Array.isArray(proposal.history) && proposal.history.length > 0 ? (
+                    proposal.history
                       .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
                       .map((entry: any, index: number) => (
                         <div key={index} className="flex items-start gap-2">

@@ -139,14 +139,14 @@ export const useServiceQueries = (): ServiceQueriesResult => {
 
       return {
         ...data,
-        customer_data: (data as any).customers ? {
-          id: (data as any).customers.id,
-          name: (data as any).customers.name,
-          company: (data as any).customers.company,
-          email: (data as any).customers.email,
-          mobile_phone: (data as any).customers.mobile_phone,
-          office_phone: (data as any).customers.office_phone,
-          address: (data as any).customers.address
+        customer_data: data.customers ? {
+          id: data.customers.id,
+          name: data.customers.name,
+          company: data.customers.company,
+          email: data.customers.email,
+          mobile_phone: data.customers.mobile_phone,
+          office_phone: data.customers.office_phone,
+          address: data.customers.address
         } : null,
         attachments: Array.isArray(data.attachments) 
           ? data.attachments.map((att: any) => ({

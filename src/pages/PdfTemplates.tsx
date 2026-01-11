@@ -76,7 +76,7 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
     if (searchQuery) {
       filtered = filtered.filter(template => {
         const name = template.name?.toLowerCase() || '';
-        const description = (template as any).description?.toLowerCase() || '';
+        const description = template.description?.toLowerCase() || '';
         const query = searchQuery.toLowerCase();
         return name.includes(query) || description.includes(query);
       });
@@ -189,14 +189,12 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
         toast.success('Servis şablonu başarıyla kopyalandı');
       } else {
         const pdfTemplate = template as PdfTemplate;
+        const { id, created_at, updated_at, ...templateWithoutMeta } = pdfTemplate;
         const newTemplate = {
-          ...pdfTemplate,
+          ...templateWithoutMeta,
           name: `${pdfTemplate.name} - Kopya`,
           version: 1,
         };
-        delete (newTemplate as any).id;
-        delete (newTemplate as any).created_at;
-        delete (newTemplate as any).updated_at;
         await PdfExportService.saveTemplate(newTemplate);
         toast.success('PDF şablonu başarıyla kopyalandı');
       }
@@ -348,7 +346,7 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         title="Şablonu Sil"
-        description={`"${(templateToDelete as any)?.name || 'Bu şablon'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        description={`"${templateToDelete?.name || 'Bu şablon'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
         confirmText="Sil"
         cancelText="İptal"
         variant="destructive"
@@ -362,9 +360,9 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
         template={templateToPreview}
         open={isPreviewModalOpen}
         onOpenChange={setIsPreviewModalOpen}
-        onEdit={(template) => handleEditTemplate(template as any)}
-        onDuplicate={(template) => handleDuplicateTemplate(template as any)}
-        onDelete={(template) => handleDeleteTemplateClick(template as any)}
+        onEdit={handleEditTemplate}
+        onDuplicate={handleDuplicateTemplate}
+        onDelete={handleDeleteTemplateClick}
       />
 
       {/* Template Type Selection Modal */}

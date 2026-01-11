@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Order, OrderItem, UpdateOrderData } from "@/types/orders";
 import { useOrders } from "./useOrders";
 
@@ -10,12 +10,16 @@ export const useOrderEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { getOrderWithItems, updateOrderMutation } = useOrders();
+  const { fetchOrderWithItems, updateOrder } = useOrders();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const { data: orderData, isLoading } = getOrderWithItems(id || "");
+  const { data: orderData, isLoading } = useQuery({
+    queryKey: ['order', id],
+    queryFn: () => fetchOrderWithItems(id || ""),
+    enabled: !!id
+  });
 
   useEffect(() => {
     if (orderData) {
@@ -74,7 +78,7 @@ export const useOrderEdit = () => {
         }))
       };
 
-      await updateOrderMutation.mutateAsync({ id, data: updateData });
+      await updateOrder({ id, data: updateData });
       toast.success("Sipariş başarıyla güncellendi");
       
       // Refresh order data

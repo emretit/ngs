@@ -108,18 +108,33 @@ const OpexMatrix = () => {
         accident_insurance_amount: number;
       }>);
 
-      const personnelDataArray = Object.entries(departmentTotals || {}).map(([department, data]) => ({
-        department,
-        total_employer_cost: data.total_cost,
-        employee_count: data.count,
-        gross_salary: data.gross_salary,
-        net_salary: data.net_salary,
-        meal_allowance: data.meal_allowance,
-        transport_allowance: data.transport_allowance,
-        manual_employer_sgk_cost: data.manual_employer_sgk_cost,
-        unemployment_employer_amount: data.unemployment_employer_amount,
-        accident_insurance_amount: data.accident_insurance_amount
-      }));
+      type DeptTotals = { 
+        total_cost: number; 
+        count: number;
+        gross_salary: number;
+        net_salary: number;
+        meal_allowance: number;
+        transport_allowance: number;
+        manual_employer_sgk_cost: number;
+        unemployment_employer_amount: number;
+        accident_insurance_amount: number;
+      };
+      
+      const personnelDataArray = Object.entries(departmentTotals || {} as Record<string, DeptTotals>).map(([department, data]) => {
+        const typedData = data as DeptTotals;
+        return {
+          department,
+          total_employer_cost: typedData.total_cost,
+          employee_count: typedData.count,
+          gross_salary: typedData.gross_salary,
+          net_salary: typedData.net_salary,
+          meal_allowance: typedData.meal_allowance,
+          transport_allowance: typedData.transport_allowance,
+          manual_employer_sgk_cost: typedData.manual_employer_sgk_cost,
+          unemployment_employer_amount: typedData.unemployment_employer_amount,
+          accident_insurance_amount: typedData.accident_insurance_amount
+        };
+      });
 
       setPersonnelData(personnelDataArray);
     } catch (error) {

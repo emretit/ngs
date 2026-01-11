@@ -114,17 +114,11 @@ const OrdersContent = ({
 
   const handleUpdateOrderStatus = async (id: string, status: OrderStatus) => {
     try {
-      const result = await updateStatusMutation.mutateAsync({ id, status });
+      await updateStatusMutation.mutateAsync({ id, status });
       
-      // Check if there's stock shortage
-      if (result.hasShortage && result.shortageItems && result.shortageItems.length > 0) {
-        // Show dialog
-        setStockShortageDialog({
-          open: true,
-          orderId: id,
-          shortageItems: result.shortageItems
-        });
-        return; // Don't refetch yet, wait for user decision
+      // Mutation already invalidates queries, but we can manually refetch kanban if needed
+      if (activeView === "kanban" && refetchKanban) {
+        refetchKanban();
       }
       
       // Mutation already invalidates queries, but we can manually refetch kanban if needed

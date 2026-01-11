@@ -124,7 +124,7 @@ export interface CreateOrderItemData {
   tax_rate?: number;
   discount_rate?: number;
   item_group?: string;
-  stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock';
+  stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'pending';
   sort_order?: number;
 }
 

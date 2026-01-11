@@ -94,23 +94,24 @@ const queryData = async (
  * Get table name based on report type
  */
 const getTableName = (reportType: ReportType): string => {
-  const tableMap: Record<ReportType, string> = {
+  const tableMap: Partial<Record<ReportType, string>> = {
     customers: 'customers',
     sales: 'sales_invoices',
     invoices: 'sales_invoices',
     inventory: 'products',
     suppliers: 'suppliers',
+    payroll: 'employees',
     custom: 'customers' // fallback
   };
 
-  return tableMap[reportType];
+  return tableMap[reportType] || 'customers';
 };
 
 /**
  * Get columns based on report type
  */
 const getColumns = (reportType: ReportType): ExcelColumn[] => {
-  const columnMap: Record<ReportType, ExcelColumn[]> = {
+  const columnMap: Partial<Record<ReportType, ExcelColumn[]>> = {
     customers: [
       { header: 'Müşteri Adı', key: 'name', width: 30 },
       { header: 'Email', key: 'email', width: 30 },

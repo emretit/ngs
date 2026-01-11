@@ -24,6 +24,23 @@ export const usePurchaseInvoices = () => {
     deleteInvoice: crud.deleteInvoice,
     isCreating: crud.isCreating,
     isUpdating: crud.isUpdating,
+    // Full mutation objects for components that need .mutate
+    createInvoiceMutation: { 
+      mutate: (data: any, options?: any) => crud.createInvoice(data).then(options?.onSuccess).catch(options?.onError),
+      mutateAsync: crud.createInvoice 
+    },
+    updateInvoiceMutation: { 
+      mutate: (data: any, options?: any) => crud.updateInvoice(data).then(options?.onSuccess).catch(options?.onError),
+      mutateAsync: crud.updateInvoice 
+    },
+    recordPaymentMutation: { 
+      mutate: (data: any, options?: any) => crud.recordPayment(data).then(options?.onSuccess).catch(options?.onError),
+      mutateAsync: crud.recordPayment 
+    },
+    deleteInvoiceMutation: {
+      mutate: (id: string, options?: any) => crud.deleteInvoice(id).then(options?.onSuccess).catch(options?.onError),
+      mutateAsync: crud.deleteInvoice
+    },
   };
 };
 
@@ -66,22 +83,20 @@ export const usePurchaseInvoicesInfiniteScroll = (filters?: PurchaseInvoiceFilte
     };
   }, [userData?.company_id, filters]);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, error, refetch } =
-    useInfiniteScroll({
-      queryKey: ['purchase-invoices-infinite', userData?.company_id, filters],
-      fetchFn: fetchInvoices,
-      pageSize,
-      enabled: !!userData?.company_id,
-    });
+  const result = useInfiniteScroll(
+    ['purchase-invoices-infinite', userData?.company_id || '', JSON.stringify(filters)],
+    fetchInvoices,
+    { pageSize, enabled: !!userData?.company_id }
+  );
 
   return {
-    invoices: data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    error,
-    refetch,
+    invoices: result.data,
+    fetchNextPage: result.loadMore,
+    hasNextPage: result.hasNextPage,
+    isFetchingNextPage: result.isLoadingMore,
+    isLoading: result.isLoading,
+    error: result.error,
+    refetch: result.refresh,
   };
 };
 

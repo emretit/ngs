@@ -34,9 +34,15 @@ export const capitalizeFirstLetter = (string: string): string => {
  * Formats a number as currency with the Turkish Lira symbol
  * @param amount The amount to format
  * @param currency The currency code (default: 'TRY')
+ * @param _options Additional options (for backward compatibility, ignored)
  * @returns The formatted currency string
  */
-export const formatCurrency = (amount: number | null | undefined, currency = 'TRY'): string => {
+export const formatCurrency = (
+  amount: number | null | undefined, 
+  currency = 'TRY',
+  // Backward compatibility - additional args are ignored
+  ..._args: any[]
+): string => {
   // Handle NaN, undefined, null, or invalid numbers
   const validAmount = (amount === null || amount === undefined || isNaN(amount) || !isFinite(amount)) ? 0 : amount;
   const currencyCode = normalizeCurrency(currency);

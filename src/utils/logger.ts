@@ -17,10 +17,10 @@ interface LogContext {
 }
 
 interface Logger {
-  debug: (message: string, data?: any) => void;
-  info: (message: string, data?: any) => void;
-  warn: (message: string, data?: any) => void;
-  error: (message: string, error?: any, data?: any) => void;
+  debug: (message: string, ...data: any[]) => void;
+  info: (message: string, ...data: any[]) => void;
+  warn: (message: string, ...data: any[]) => void;
+  error: (message: string, ...args: any[]) => void;
   setContext: (context: Partial<LogContext>) => void;
   clearContext: () => void;
   startTimer: (label: string) => void;
@@ -110,19 +110,25 @@ class AppLogger implements Logger {
     }
   }
 
-  debug(message: string, data?: any): void {
-    this.log('debug', message, data);
+  debug(message: string, ...data: any[]): void {
+    const combinedData = data.length === 1 ? data[0] : data.length > 1 ? data : undefined;
+    this.log('debug', message, combinedData);
   }
 
-  info(message: string, data?: any): void {
-    this.log('info', message, data);
+  info(message: string, ...data: any[]): void {
+    const combinedData = data.length === 1 ? data[0] : data.length > 1 ? data : undefined;
+    this.log('info', message, combinedData);
   }
 
-  warn(message: string, data?: any): void {
-    this.log('warn', message, data);
+  warn(message: string, ...data: any[]): void {
+    const combinedData = data.length === 1 ? data[0] : data.length > 1 ? data : undefined;
+    this.log('warn', message, combinedData);
   }
 
-  error(message: string, error?: any, data?: any): void {
+  error(message: string, ...args: any[]): void {
+    // Support both (message, error) and (message, error, data) signatures
+    const error = args[0];
+    const data = args[1];
     this.log('error', message, data, error);
   }
 }

@@ -73,7 +73,7 @@ import { TaskListMessage } from '@/components/ai/TaskListMessage';
 interface MessageWithFunctionCall {
   role: "user" | "assistant";
   content: string;
-  timestamp?: Date;
+  timestamp: Date;
   functionCall?: {
     name: string;
     status: "pending" | "success" | "error";

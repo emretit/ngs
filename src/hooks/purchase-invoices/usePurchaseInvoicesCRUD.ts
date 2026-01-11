@@ -139,7 +139,9 @@ export const usePurchaseInvoicesCRUD = () => {
         .single();
 
       if (supplier) {
-        const newBalance = (supplier.balance || 0) - (invoice.remaining_amount || 0);
+        // Calculate remaining amount: total - paid
+        const remainingAmount = (invoice.total_amount || 0) - (invoice.paid_amount || 0);
+        const newBalance = (supplier.balance || 0) - remainingAmount;
         await supabase
           .from("suppliers")
           .update({ balance: newBalance })

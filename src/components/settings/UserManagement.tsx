@@ -123,7 +123,6 @@ export const UserManagement = () => {
             department
           )
         `)
-        .eq('company_id', profile.company_id)
         .order('created_at', { ascending: true });
       
       if (profilesError) throw profilesError;
@@ -190,7 +189,6 @@ export const UserManagement = () => {
       const { data, error } = await supabase
         .from('roles')
         .select('*')
-        .eq('company_id', profile.company_id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;

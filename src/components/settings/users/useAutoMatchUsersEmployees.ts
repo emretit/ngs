@@ -23,7 +23,6 @@ export const useAutoMatchUsersEmployees = () => {
       const { data: unmatchedUsers, error: usersError } = await supabase
         .from("profiles")
         .select("id, email, employee_id")
-        .eq("company_id", profile.company_id)
         .is("employee_id", null);
 
       if (usersError) throw usersError;
@@ -32,7 +31,6 @@ export const useAutoMatchUsersEmployees = () => {
       const { data: unmatchedEmployees, error: employeesError } = await supabase
         .from("employees")
         .select("id, email, user_id")
-        .eq("company_id", profile.company_id)
         .is("user_id", null);
 
       if (employeesError) throw employeesError;

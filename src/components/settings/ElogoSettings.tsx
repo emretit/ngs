@@ -47,7 +47,6 @@ export const ElogoSettings = () => {
       const { data, error } = await supabase
         .from('elogo_auth')
         .select('username, webservice_url, test_mode, is_active')
-        .eq('company_id', profile.company_id)
         .maybeSingle();
 
       if (data && !error) {
@@ -148,8 +147,7 @@ export const ElogoSettings = () => {
 
       const { error } = await supabase
         .from('elogo_auth')
-        .delete()
-        .eq('company_id', profile.company_id);
+        .delete();
 
       if (error) throw error;
 

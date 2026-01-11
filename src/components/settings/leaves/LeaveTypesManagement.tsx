@@ -81,7 +81,6 @@ export const LeaveTypesManagement = () => {
       const { data: types, error: typesError } = await supabase
         .from("leave_types")
         .select("*")
-        .eq("company_id", userData.company_id)
         .order("created_at", { ascending: false });
 
       if (typesError) throw typesError;

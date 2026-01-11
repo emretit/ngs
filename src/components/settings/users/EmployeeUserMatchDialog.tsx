@@ -73,7 +73,6 @@ export const EmployeeUserMatchDialog = ({
       const { data, error } = await supabase
         .from("employees")
         .select("*")
-        .eq("company_id", profile.company_id)
         .order("first_name");
 
       if (error) throw error;

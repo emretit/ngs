@@ -47,7 +47,6 @@ export const NilveraSettings = () => {
       const { data, error } = await supabase
         .from('nilvera_auth')
         .select('*')
-        .eq('company_id', profile.company_id)
         .maybeSingle();
 
       if (data && !error) {
@@ -142,8 +141,7 @@ export const NilveraSettings = () => {
 
       const { error } = await supabase
         .from('nilvera_auth')
-        .delete()
-        .eq('company_id', profile.company_id);
+        .delete();
 
       if (error) throw error;
 

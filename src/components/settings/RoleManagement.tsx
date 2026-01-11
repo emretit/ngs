@@ -23,7 +23,6 @@ export const RoleManagement = () => {
           *,
           user_roles(count)
         `)
-        .eq('company_id', userData?.company_id)
         .order('priority', { ascending: false })
         .order('name');
 

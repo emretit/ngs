@@ -60,7 +60,6 @@ export const VeribanSettings = () => {
       const { data, error } = await supabase
         .from('veriban_auth')
         .select('*')
-        .eq('company_id', profile.company_id)
         .maybeSingle();
 
       if (data && !error) {
@@ -121,7 +120,6 @@ export const VeribanSettings = () => {
       const { data: existing } = await supabase
         .from('veriban_auth')
         .select('id, password')
-        .eq('company_id', profile.company_id)
         .maybeSingle();
 
       // Password boşsa ve kayıtlı veri varsa, mevcut password'u kullan
@@ -154,8 +152,7 @@ export const VeribanSettings = () => {
             test_mode: testMode,
             is_active: false, // Kaydetme sırasında bağlı değil
             updated_at: new Date().toISOString()
-          })
-          .eq('company_id', profile.company_id);
+          });
 
         if (error) throw error;
       } else {
@@ -242,7 +239,6 @@ export const VeribanSettings = () => {
       const { data: authData } = await supabase
         .from('veriban_auth')
         .select('username, password, test_mode, webservice_url')
-        .eq('company_id', profile.company_id)
         .maybeSingle();
 
       if (!authData) {
@@ -329,8 +325,7 @@ export const VeribanSettings = () => {
         // Update is_active to true
         const { error: updateError } = await supabase
           .from('veriban_auth')
-          .update({ is_active: true })
-          .eq('company_id', profile.company_id);
+          .update({ is_active: true });
 
         if (updateError) {
           logger.error('is_active güncelleme hatası:', updateError);
@@ -405,7 +400,6 @@ export const VeribanSettings = () => {
       const { data: authData } = await supabase
         .from('veriban_auth')
         .select('username, password, test_mode')
-        .eq('company_id', profile.company_id)
         .maybeSingle();
 
       if (!authData) {
@@ -469,8 +463,7 @@ export const VeribanSettings = () => {
       // Sadece is_active'i false yap, kayıtları silme
       const { error } = await supabase
         .from('veriban_auth')
-        .update({ is_active: false })
-        .eq('company_id', profile.company_id);
+        .update({ is_active: false });
 
       if (error) throw error;
 

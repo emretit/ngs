@@ -220,16 +220,17 @@ const createWorkbook = (data: any[], reportType: ReportType): XLSX.WorkBook => {
  * Get sheet name based on report type
  */
 const getSheetName = (reportType: ReportType): string => {
-  const sheetNameMap: Record<ReportType, string> = {
+  const sheetNameMap: Partial<Record<ReportType, string>> = {
     customers: 'Müşteriler',
     sales: 'Satışlar',
     invoices: 'Faturalar',
     inventory: 'Ürünler',
     suppliers: 'Tedarikçiler',
+    payroll: 'Bordro',
     custom: 'Veri'
   };
 
-  return sheetNameMap[reportType];
+  return sheetNameMap[reportType] || 'Veri';
 };
 
 /**

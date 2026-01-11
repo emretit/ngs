@@ -85,19 +85,19 @@ export const useEmployeeTransactionsWithBalance = ({
         const lastBeforeFilter = beforeFilterTransactions[beforeFilterTransactions.length - 1];
         const openingBalance = balanceMap.get(lastBeforeFilter.id) ?? 0;
 
-        // Devir bakiye satırı oluştur
-        const openingBalanceTransaction: UnifiedEmployeeTransaction = {
+        // Devir bakiye satırı oluştur - ensure balanceAfter is always set
+        const openingBalanceTransaction = {
           id: 'opening-balance',
-          type: 'tahakkuk', // Dummy type
+          type: 'tahakkuk' as const, // Dummy type
           date: firstFilteredTransaction.date,
           amount: 0,
           description: 'Devir Bakiye',
-          status: 'tamamlandi',
+          status: 'tamamlandi' as const,
           balanceAfter: openingBalance,
         };
 
         // Devir bakiyeyi en başa ekle
-        result.unshift(openingBalanceTransaction);
+        result.unshift(openingBalanceTransaction as typeof result[0]);
       }
     }
 

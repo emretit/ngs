@@ -1,5 +1,3 @@
-import { logger } from '@/utils/logger';
-
 /**
  * Enhanced Logger Utility
  *
@@ -99,16 +97,16 @@ class AppLogger implements Logger {
     }
 
     if (level === 'error') {
-      logger.error(formattedMessage, logData);
+      console.error(formattedMessage, logData);
       if (error instanceof Error) {
-        logger.error('Stack trace:', error.stack);
+        console.error('Stack trace:', error.stack);
       }
     } else if (level === 'warn') {
-      logger.warn(formattedMessage, logData);
+      console.warn(formattedMessage, logData);
     } else if (level === 'info') {
       console.info(formattedMessage, logData);
     } else {
-      logger.debug(formattedMessage, logData);
+      console.debug(formattedMessage, logData);
     }
   }
 

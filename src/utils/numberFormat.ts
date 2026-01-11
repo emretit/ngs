@@ -15,7 +15,7 @@ export const getNumberFormat = async (formatKey: string, companyId?: string): Pr
       .from('system_parameters')
       .select('parameter_value')
       .eq('parameter_key', formatKey)
-      .eq('company_id', companyId)
+      
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = not found
@@ -139,7 +139,7 @@ export const getNextSequentialNumber = async (
       .from('system_parameters')
       .select('parameter_value')
       .eq('parameter_key', sequenceParamKey)
-      .eq('company_id', companyId)
+      
       .maybeSingle();
 
     let nextNumber = 1;
@@ -272,7 +272,7 @@ const checkNumberExists = async (
       .from(tableInfo.table)
       .select('id')
       .eq(tableInfo.column, number)
-      .eq('company_id', companyId)
+      
       .limit(1)
       .maybeSingle();
 
@@ -348,7 +348,7 @@ const getMaxNumberFromDatabase = async (
       const { data, error } = await supabase
         .from(tableInfo.table)
         .select(tableInfo.column)
-        .eq('company_id', companyId)
+        
         .like(tableInfo.column, `${prefix}%`)
         .order(tableInfo.column, { ascending: false })
         .limit(100);
@@ -391,7 +391,7 @@ const getMaxNumberFromDatabase = async (
     const { data, error } = await supabase
       .from(tableInfo.table)
       .select(tableInfo.column)
-      .eq('company_id', companyId)
+      
       .like(tableInfo.column, `${prefix}%`)
       .order(tableInfo.column, { ascending: false })
       .limit(100);

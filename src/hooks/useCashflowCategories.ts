@@ -45,7 +45,7 @@ export const useCashflowCategories = () => {
       const { data, error } = await supabase
         .from('cashflow_categories')
         .select('*')
-        .eq('company_id', profile.company_id)
+        
         .order('name');
 
       if (error) throw error;

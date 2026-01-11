@@ -50,7 +50,7 @@ export function WarrantyDialog({ open, onOpenChange, warranty, equipment }: Warr
       const { data, error } = await supabase
         .from('customers')
         .select('id, name, company')
-        .eq('company_id', userData.company_id)
+        
         .order('name');
       if (error) throw error;
       return data;

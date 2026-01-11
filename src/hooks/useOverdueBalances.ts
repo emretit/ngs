@@ -30,7 +30,7 @@ export const useOverdueBalances = () => {
       const { data: salesInvoices, error: salesError } = await supabase
         .from("sales_invoices")
         .select("id, customer_id, toplam_tutar, vade_tarihi, para_birimi, odeme_durumu, customers(name)")
-        .eq("company_id", companyId)
+        
         .in("odeme_durumu", ["odenmedi", "kismi_odendi"])
         .not("vade_tarihi", "is", null);
 
@@ -41,7 +41,7 @@ export const useOverdueBalances = () => {
       const { data: allocations, error: allocError } = await supabase
         .from("invoice_payment_allocations")
         .select("invoice_id, allocated_amount")
-        .eq("company_id", companyId)
+        
         .eq("invoice_type", "sales")
         .in("invoice_id", invoiceIds);
 

@@ -37,7 +37,7 @@ export function useExpenseCategories() {
         .from('cashflow_categories')
         .select('id, name')
         .eq('type', 'expense')
-        .eq('company_id', profile.company_id)
+        
         .order('name');
 
       if (error) throw error;

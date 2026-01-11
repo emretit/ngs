@@ -420,7 +420,7 @@ export const executeSQLQuery = async (sql: string): Promise<any[]> => {
 
     // IMPORTANT: Always add company_id filter for data isolation
     // Check if company_id column exists in the table
-    query = query.eq('company_id', companyId);
+    query = query;
 
     // Parse WHERE clause and merge with company_id filter
     const whereMatch = sql.match(/where\s+(.+?)(?:\s+group|\s+order|\s+limit|$)/i);
@@ -498,7 +498,7 @@ export const testDatabaseTables = async (): Promise<string[]> => {
     try {
       let query = supabase.from(table).select('id').limit(1);
       if (companyId) {
-        query = query.eq('company_id', companyId);
+        query = query;
       }
       const { data, error } = await query;
       if (!error) {

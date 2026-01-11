@@ -113,7 +113,7 @@ export const useSystemParameters = () => {
       let query = supabase
         .from('system_parameters')
         .select('*')
-        .eq('company_id', companyId)
+        
         .order('category', { ascending: true })
         .order('parameter_key', { ascending: true });
 
@@ -309,7 +309,7 @@ export const useSystemParameters = () => {
       const { error: deleteError } = await supabase
         .from('system_parameters')
         .delete()
-        .eq('company_id', companyId)
+        
         .eq('is_editable', true);
 
       if (deleteError) throw deleteError;

@@ -79,14 +79,14 @@ const InventoryDashboard = ({ isCollapsed, setIsCollapsed }: InventoryDashboardP
         supabase
           .from('products')
           .select('stock_quantity, price', { count: 'exact', head: false })
-          .eq('company_id', userData.company_id)
+          
           .eq('is_active', true),
         
         // Warehouses count
         supabase
           .from('warehouses')
           .select('id', { count: 'exact', head: true })
-          .eq('company_id', userData.company_id)
+          
           .eq('is_active', true),
         
         // Transactions count and pending count
@@ -99,7 +99,7 @@ const InventoryDashboard = ({ isCollapsed, setIsCollapsed }: InventoryDashboardP
         supabase
           .from('products')
           .select('id', { count: 'exact', head: true })
-          .eq('company_id', userData.company_id)
+          
           .eq('is_active', true)
           .not('min_stock_level', 'is', null)
           .gte('min_stock_level', 0),
@@ -118,7 +118,7 @@ const InventoryDashboard = ({ isCollapsed, setIsCollapsed }: InventoryDashboardP
       const { data: productsWithMinLevel } = await supabase
         .from('products')
         .select('id, stock_quantity, min_stock_level')
-        .eq('company_id', userData.company_id)
+        
         .eq('is_active', true)
         .not('min_stock_level', 'is', null)
         .gte('min_stock_level', 0)
@@ -134,7 +134,7 @@ const InventoryDashboard = ({ isCollapsed, setIsCollapsed }: InventoryDashboardP
           .from('warehouse_stock')
           .select('product_id, quantity')
           .in('product_id', productIds)
-          .eq('company_id', userData.company_id);
+          ;
 
         // Create stock map
         const stockMap = new Map<string, number>();

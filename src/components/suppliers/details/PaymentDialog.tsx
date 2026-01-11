@@ -89,9 +89,9 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
 
       const [cashRes, bankRes, cardRes, partnerRes] = await Promise.all([
         supabase.from('cash_accounts').select('id, name').eq('company_id', profile.company_id),
-        supabase.from('bank_accounts').select('id, account_name, bank_name').eq('company_id', profile.company_id).eq("is_active", true),
+        supabase.from('bank_accounts').select('id, account_name, bank_name').eq("is_active", true),
         supabase.from('credit_cards').select('id, card_name').eq('company_id', profile.company_id),
-        supabase.from('partner_accounts').select('id, partner_name').eq('company_id', profile.company_id)
+        supabase.from('partner_accounts').select('id, partner_name')
       ]);
 
       return {

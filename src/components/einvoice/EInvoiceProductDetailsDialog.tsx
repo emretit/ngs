@@ -142,7 +142,7 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
       const { data, error } = await supabase
         .from('warehouses')
         .select('id, name, code, warehouse_type')
-        .eq('company_id', profile.company_id)
+        
         .eq('is_active', true)
         .order('name');
 
@@ -171,7 +171,7 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
         .from('warehouse_stock')
         .select('warehouse_id, quantity')
         .eq('product_id', selectedProduct.id)
-        .eq('company_id', profile.company_id);
+        ;
 
       if (error) throw error;
       return data || [];

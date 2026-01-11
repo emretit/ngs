@@ -44,7 +44,7 @@ async function fetchProductData(productIds: string[], companyId: string | null) 
       .in('id', productIds);
     
     if (companyId) {
-      query = query.eq('company_id', companyId);
+      query = query;
     }
     
     const { data } = await query;

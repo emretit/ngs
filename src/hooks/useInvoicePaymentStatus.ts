@@ -39,7 +39,7 @@ export const useInvoicePaymentStatus = (invoiceId: string, invoiceType: "sales" 
         .from(tableName)
         .select(`${amountField}, odeme_durumu, ${dueDateField}`)
         .eq("id", invoiceId)
-        .eq("company_id", companyId)
+        
         .single();
 
       if (invoiceError || !invoice) return null;
@@ -50,7 +50,7 @@ export const useInvoicePaymentStatus = (invoiceId: string, invoiceType: "sales" 
       const { data: allocations, error: allocError } = await supabase
         .from("invoice_payment_allocations")
         .select("id, payment_id, allocated_amount, allocation_type, allocation_date, notes")
-        .eq("company_id", companyId)
+        
         .eq("invoice_id", invoiceId)
         .eq("invoice_type", invoiceType)
         .order("allocation_date", { ascending: false });
@@ -108,7 +108,7 @@ export const useMultipleInvoicePaymentStatus = (invoiceIds: string[], invoiceTyp
       const { data: invoices, error: invoiceError } = await supabase
         .from(tableName)
         .select(`id, ${amountField}`)
-        .eq("company_id", companyId)
+        
         .in("id", invoiceIds);
 
       if (invoiceError) throw invoiceError;
@@ -117,7 +117,7 @@ export const useMultipleInvoicePaymentStatus = (invoiceIds: string[], invoiceTyp
       const { data: allocations, error: allocError } = await supabase
         .from("invoice_payment_allocations")
         .select("id, invoice_id, payment_id, allocated_amount, allocation_type, allocation_date, notes")
-        .eq("company_id", companyId)
+        
         .eq("invoice_type", invoiceType)
         .in("invoice_id", invoiceIds);
 

@@ -53,7 +53,7 @@ const WorkOrderForm: React.FC<WorkOrderFormProps> = ({ workOrderId, onClose }) =
       const { data, error } = await supabase
         .from("boms")
         .select("id, name, product_name")
-        .eq("company_id", profile.company_id)
+        
         .order("name");
       
       if (error) {

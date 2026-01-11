@@ -78,7 +78,7 @@ export default function NewInventoryCount() {
       const { data, error } = await supabase
         .from("warehouses")
         .select("id, name, code")
-        .eq("company_id", profile.company_id)
+        
         .eq("is_active", true)
         .order("name");
 
@@ -124,7 +124,7 @@ export default function NewInventoryCount() {
           )
         `)
         .eq("warehouse_id", warehouseId)
-        .eq("company_id", profile.company_id)
+        
         .gt("quantity", 0);
 
       if (stockError) throw stockError;

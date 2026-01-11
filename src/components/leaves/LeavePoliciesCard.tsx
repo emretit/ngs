@@ -65,7 +65,7 @@ export const LeavePoliciesCard: React.FC<LeavePoliciesCardProps> = ({ onSaveRead
       const { data, error } = await supabase
         .from("leave_settings")
         .select("*")
-        .eq("company_id", userData.company_id)
+        
         .maybeSingle();
 
       if (error) throw error;

@@ -222,7 +222,7 @@ export const useProductFormActions = (
           const { data: warehouses, error: warehouseError } = await supabase
             .from("warehouses")
             .select("id")
-            .eq("company_id", preparedData.company_id)
+            
             .eq("warehouse_type", "main")
             .eq("is_active", true)
             .limit(1)

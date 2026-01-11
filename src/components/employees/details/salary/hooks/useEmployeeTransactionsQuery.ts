@@ -69,7 +69,7 @@ export const useEmployeeTransactionsQuery = (employeeId: string) => {
       const { data: cashTransactions } = await supabase
         .from('cash_transactions')
         .select('*')
-        .eq('company_id', userData.company_id)
+        
         .like('reference', referencePattern)
         .order('transaction_date', { ascending: false });
 

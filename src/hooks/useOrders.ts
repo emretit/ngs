@@ -45,7 +45,7 @@ export const useOrders = () => {
         employee:employees(id, first_name, last_name, email, department),
         proposal:proposals(id, number, title, status)
       `)
-      .eq("company_id", userData.company_id)
+      
       .order("created_at", { ascending: false });
 
     // Status filtresi
@@ -300,7 +300,7 @@ export const useOrders = () => {
       .from("orders")
       .select("status")
       .eq("id", id)
-      .eq("company_id", userData.company_id)
+      
       .single();
 
     if (fetchError) {
@@ -315,7 +315,7 @@ export const useOrders = () => {
       .from("orders")
       .update({ status })
       .eq("id", id)
-      .eq("company_id", userData.company_id);
+      ;
 
     if (error) {
       toast.error("Sipariş durumu güncellenirken hata oluştu");
@@ -388,7 +388,7 @@ export const useOrders = () => {
       .from("orders")
       .delete()
       .eq("id", id)
-      .eq("company_id", userData.company_id);
+      ;
 
     if (error) {
       toast.error("Sipariş silinirken hata oluştu");
@@ -419,7 +419,7 @@ export const useOrders = () => {
     const { data: orders, error } = await supabase
       .from("orders")
       .select("status, total_amount")
-      .eq("company_id", userData.company_id);
+      ;
 
     if (error) {
       logger.error("Order stats error:", error);
@@ -596,7 +596,7 @@ export const useOrdersInfiniteScroll = (filters?: OrderFilters, pageSize: number
         employee:employees(id, first_name, last_name, email, department),
         proposal:proposals(id, number, title, status)
       `, { count: 'exact' })
-      .eq("company_id", userData.company_id);
+      ;
     
     // Apply filters
     if (filters?.status && filters.status !== 'all') {

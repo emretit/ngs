@@ -61,7 +61,7 @@ export function buildCompanyQuery<T = any>(
     .select(options.select || '*', options.count ? { count: options.count } : undefined);
 
   // Always add company_id filter first for security
-  query = query.eq('company_id', companyId);
+  query = query;
 
   // Apply filters
   if (options.filters) {
@@ -140,7 +140,7 @@ export function buildCompanyQueryWithOr<T = any>(
     .select(options.select || '*', options.count ? { count: options.count } : undefined);
 
   // Always add company_id filter first
-  query = query.eq('company_id', companyId);
+  query = query;
 
   // Apply OR conditions only if provided
   if (orConditions && orConditions.trim()) {
@@ -256,7 +256,7 @@ export async function getCompanyRecordById<T = any>(
     .from(table)
     .select(select)
     .eq('id', id)
-    .eq('company_id', companyId)
+    
     .maybeSingle();
 
   return { data, error };

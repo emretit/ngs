@@ -51,7 +51,7 @@ export function useTechnicianPerformance(startDate?: Date, endDate?: Date) {
       const { data: technicians, error: techError } = await supabase
         .from('employees')
         .select('id, first_name, last_name')
-        .eq('company_id', userData.company_id)
+        
         .eq('is_technical', true)
         .eq('status', 'aktif');
 
@@ -70,7 +70,7 @@ export function useTechnicianPerformance(startDate?: Date, endDate?: Date) {
       let serviceQuery = supabase
         .from('service_requests')
         .select('*')
-        .eq('company_id', userData.company_id)
+        
         .not('assigned_technician', 'is', null);
 
       if (startDate) {
@@ -230,7 +230,7 @@ export function useSingleTechnicianPerformance(technicianId: string, startDate?:
       let serviceQuery = supabase
         .from('service_requests')
         .select('*')
-        .eq('company_id', userData.company_id)
+        
         .eq('assigned_technician', technicianId);
 
       if (startDate) {

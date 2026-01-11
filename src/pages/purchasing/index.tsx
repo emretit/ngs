@@ -162,14 +162,14 @@ const PurchasingDashboard = () => {
         supabase
           .from('purchase_requests')
           .select('id, request_number, status, created_at')
-          .eq('company_id', userData.company_id)
+          
           .order('created_at', { ascending: false })
           .limit(5),
         
         supabase
           .from('purchase_orders')
           .select('id, order_number, status, total_amount, supplier_id, suppliers!purchase_orders_supplier_id_fkey(name)')
-          .eq('company_id', userData.company_id)
+          
           .order('created_at', { ascending: false })
           .limit(5),
       ]);

@@ -136,7 +136,7 @@ export default function ServiceTemplateEdit() {
       const { data, error } = await supabase
         .from('employees')
         .select('id, first_name, last_name')
-        .eq('company_id', userData.company_id)
+        
         .eq('status', 'aktif')
         .order('first_name');
       if (error) {

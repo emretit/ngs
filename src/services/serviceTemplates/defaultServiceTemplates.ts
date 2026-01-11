@@ -107,7 +107,7 @@ export async function createDefaultServiceTemplates(companyId: string) {
       const { data: existing } = await supabase
         .from('service_templates')
         .select('id')
-        .eq('company_id', companyId)
+        
         .eq('name', template.name)
         .maybeSingle();
 
@@ -152,7 +152,7 @@ export async function ensureDefaultServiceTemplates(companyId: string) {
     const { data: existingTemplates } = await supabase
       .from('service_templates')
       .select('id, name')
-      .eq('company_id', companyId);
+      ;
 
     if (!existingTemplates || existingTemplates.length === 0) {
       logger.info(`No service templates found for company ${companyId}, creating defaults`);

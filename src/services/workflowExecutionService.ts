@@ -279,7 +279,7 @@ export class WorkflowExecutionService {
     let query = supabase
       .from(table)
       .select(select || '*')
-      .eq('company_id', this.companyId);
+      ;
 
     // Apply filters
     if (filters) {
@@ -536,7 +536,7 @@ export async function startWorkflowExecution(
     .from('ai_workflows')
     .select('*')
     .eq('id', workflowId)
-    .eq('company_id', companyId)
+    
     .eq('is_active', true)
     .single();
 
@@ -587,7 +587,7 @@ export async function resumeWorkflowExecution(
     .from('ai_workflow_executions')
     .select('*, ai_workflows(*)')
     .eq('id', executionId)
-    .eq('company_id', companyId)
+    
     .single();
 
   if (executionError || !execution) {

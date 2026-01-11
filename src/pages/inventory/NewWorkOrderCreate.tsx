@@ -65,7 +65,7 @@ const NewWorkOrderCreate = () => {
       const { data, error } = await supabase
         .from("boms")
         .select("id, name, product_name, description")
-        .eq("company_id", profile.company_id)
+        
         .order("name");
       
       if (error) {

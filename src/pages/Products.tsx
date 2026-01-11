@@ -92,7 +92,7 @@ const Products = () => {
       const { count: totalCount, error: countError } = await supabase
         .from("products")
         .select("*", { count: "exact", head: true })
-        .eq("company_id", companyId);
+        ;
 
       if (countError) {
         logger.error("Error counting products for statistics:", countError);
@@ -114,7 +114,7 @@ const Products = () => {
       const { count: activeCount, error: activeError } = await supabase
         .from("products")
         .select("*", { count: "exact", head: true })
-        .eq("company_id", companyId)
+        
         .eq("is_active", true);
 
       if (activeError) {
@@ -134,7 +134,7 @@ const Products = () => {
         const { data: pageData, error: productIdsError } = await supabase
           .from("products")
           .select("id")
-          .eq("company_id", companyId)
+          
           .range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (productIdsError) {
@@ -176,7 +176,7 @@ const Products = () => {
               .from("warehouse_stock")
               .select("product_id, quantity")
               .in("product_id", batchIds)
-              .eq("company_id", companyId);
+              ;
 
             if (batchStockError) {
               logger.error(`Error fetching warehouse stock batch ${i + 1}/${totalBatches}:`, batchStockError);
@@ -311,7 +311,7 @@ const Products = () => {
 
       // Apply company filter
       if (companyId) {
-        query = query.eq("company_id", companyId);
+        query = query;
       }
 
       // Stok filtrelemesi varsa, warehouse_stock ile birleştir
@@ -333,7 +333,7 @@ const Products = () => {
           .in("product_id", productIds);
 
         if (companyId) {
-          stockQuery = stockQuery.eq("company_id", companyId);
+          stockQuery = stockQuery;
         }
 
         const { data: stockData } = await stockQuery;

@@ -30,7 +30,7 @@ const YearlyParametersSection: React.FC<YearlyParametersSectionProps> = ({
       const { data, error } = await supabase
         .from("payroll_year_parameters")
         .select("*")
-        .eq("company_id", companyId)
+        
         .eq("year", year)
         .eq("is_active", true)
         .order("version", { ascending: false })

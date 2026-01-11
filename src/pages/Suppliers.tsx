@@ -81,7 +81,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
       const { count: totalCount, error: countError } = await supabase
         .from("suppliers")
         .select("*", { count: 'exact', head: true })
-        .eq("company_id", companyId);
+        ;
 
       if (countError) throw countError;
 
@@ -96,7 +96,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         const { data: suppliersPage, error: suppliersError } = await supabase
           .from("suppliers")
           .select("balance")
-          .eq("company_id", companyId)
+          
           .range(from, from + pageSize - 1);
 
         if (suppliersError) throw suppliersError;

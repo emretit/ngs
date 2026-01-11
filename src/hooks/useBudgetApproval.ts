@@ -66,7 +66,7 @@ export const useBudgetApproval = (year?: number) => {
       let query = supabase
         .from("budget_revisions")
         .select("*")
-        .eq("company_id", companyId)
+        
         .order("created_at", { ascending: false });
 
       if (year) {

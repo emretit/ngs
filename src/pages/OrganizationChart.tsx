@@ -29,7 +29,7 @@ export default function OrganizationChart() {
       const { data, error } = await supabase
         .from("departments")
         .select("id, name, description, head_id, parent_id")
-        .eq("company_id", companyId)
+        
         .eq("is_active", true)
         .order("sort_order", { ascending: true })
         .order("name");
@@ -49,7 +49,7 @@ export default function OrganizationChart() {
       const { data, error } = await supabase
         .from("employees")
         .select("id, first_name, last_name, email, position, department, manager_id, status")
-        .eq("company_id", companyId)
+        
         .order("first_name");
 
       if (error) throw error;

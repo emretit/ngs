@@ -79,7 +79,7 @@ export const useProductsInfiniteScroll = (filters: UseProductsFilters = {}) => {
 
     // Apply company filter
     if (companyId) {
-      query = query.eq("company_id", companyId);
+      query = query;
     }
 
     // Stok filtrelemesi veya sıralaması varsa, önce tüm ürünleri çekip sonra filtreleyip sıralayacağız
@@ -133,7 +133,7 @@ export const useProductsInfiniteScroll = (filters: UseProductsFilters = {}) => {
         .in("product_id", productIds);
 
       if (companyId) {
-        stockQuery = stockQuery.eq("company_id", companyId);
+        stockQuery = stockQuery;
       }
 
       const { data: stockData, error: stockError } = await stockQuery;
@@ -208,7 +208,7 @@ export const useProductsInfiniteScroll = (filters: UseProductsFilters = {}) => {
       .in("product_id", allProductIds);
 
     if (companyId) {
-      stockQuery = stockQuery.eq("company_id", companyId);
+      stockQuery = stockQuery;
     }
 
     const { data: stockData, error: stockError } = await stockQuery;

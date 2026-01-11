@@ -21,7 +21,7 @@ export const useEmployeeDepartments = () => {
       const { data, error } = await supabase
         .from('departments')
         .select('id, name, description, created_at')
-        .eq('company_id', userData.company_id)
+        
         .order('name', { ascending: true });
 
       if (error) {

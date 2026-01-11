@@ -110,22 +110,22 @@ const TransferModal = ({
           supabase
             .from('cash_accounts')
             .select('id, name, current_balance, currency')
-            .eq('company_id', profile.company_id)
+            
             .eq('is_active', true),
           supabase
             .from('bank_accounts')
             .select('id, account_name, bank_name, current_balance, currency')
-            .eq('company_id', profile.company_id)
+            
             .eq('is_active', true),
           supabase
             .from('credit_cards')
             .select('id, card_name, bank_name, current_balance, currency')
-            .eq('company_id', profile.company_id)
+            
             .eq('status', 'active'),
           supabase
             .from('partner_accounts')
             .select('id, partner_name, current_balance, currency')
-            .eq('company_id', profile.company_id)
+            
             .eq('is_active', true)
         ]);
 

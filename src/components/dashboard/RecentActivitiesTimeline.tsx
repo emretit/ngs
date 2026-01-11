@@ -36,7 +36,7 @@ const RecentActivitiesTimeline = () => {
       const { data, error } = await supabase
         .from("activities")
         .select("id, title, type, created_at")
-        .eq("company_id", userData.company_id)
+        
         .eq("assignee_id", userData.employee_id)
         .order("created_at", { ascending: false })
         .limit(5);

@@ -73,7 +73,7 @@ const EInvoiceProductSelector = ({
 
       // Apply company filter
       if (companyId) {
-        query = query.eq("company_id", companyId);
+        query = query;
       }
 
       const { data: productsData, error } = await query;
@@ -88,7 +88,7 @@ const EInvoiceProductSelector = ({
       const { data: warehousesData } = await supabase
         .from("warehouses")
         .select("id, name, code")
-        .eq("company_id", companyId)
+        
         .eq("is_active", true);
 
       // Warehouse_stock tablosundan depo bazında stok bilgilerini çek
@@ -106,7 +106,7 @@ const EInvoiceProductSelector = ({
           .from("warehouse_stock")
           .select("product_id, warehouse_id, quantity")
           .in("product_id", productIds)
-          .eq("company_id", companyId);
+          ;
 
         if (stockData) {
           stockData.forEach((stock: { product_id: string; warehouse_id: string; quantity: number }) => {

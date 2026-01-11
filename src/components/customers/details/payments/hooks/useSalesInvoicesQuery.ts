@@ -19,7 +19,7 @@ export const useSalesInvoicesQuery = (customer: Customer) => {
         .from('sales_invoices')
         .select('*')
         .eq('customer_id', customer.id)
-        .eq('company_id', userData.company_id)
+        
         .order('fatura_tarihi', { ascending: false });
 
       if (error) {

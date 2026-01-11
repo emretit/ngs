@@ -22,7 +22,7 @@ export default function ServiceMapPage() {
       const { data, error } = await supabase
         .from("employees")
         .select("id, first_name, last_name, position, department, status")
-        .eq("company_id", userData.company_id)
+        
         .eq("status", "aktif");
       if (error) throw error;
       return data || [];

@@ -60,7 +60,7 @@ export async function getConversations(
       .from('ai_conversations')
       .select('*')
       .eq('user_id', userId)
-      .eq('company_id', companyId)
+      
       .order('updated_at', { ascending: false })
       .limit(limit);
 

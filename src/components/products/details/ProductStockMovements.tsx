@@ -71,7 +71,7 @@ export const ProductStockMovements = ({ productId }: ProductStockMovementsProps)
           notes
         `)
         .in('id', transactionIds)
-        .eq('company_id', profile.company_id)
+        
         .order('transaction_date', { ascending: false })
         .limit(50);
 

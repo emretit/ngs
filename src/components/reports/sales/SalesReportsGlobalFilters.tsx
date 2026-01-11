@@ -72,7 +72,7 @@ export default function SalesReportsGlobalFilters({
       const { data } = await supabase
         .from('employees')
         .select('id, first_name, last_name')
-        .eq('company_id', companyId)
+        
         .eq('status', 'aktif')
         .order('first_name');
       return data || [];
@@ -87,7 +87,7 @@ export default function SalesReportsGlobalFilters({
       const { data } = await supabase
         .from('customers')
         .select('id, name')
-        .eq('company_id', companyId)
+        
         .order('name');
       return data || [];
     }
@@ -101,7 +101,7 @@ export default function SalesReportsGlobalFilters({
       const { data } = await supabase
         .from('opportunities')
         .select('project_type')
-        .eq('company_id', companyId)
+        
         .not('project_type', 'is', null);
       
       if (!data) return [];

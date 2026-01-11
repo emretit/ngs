@@ -98,7 +98,7 @@ export const useSupplierForm = () => {
           .from('suppliers')
           .select('*')
           .eq('id', id)
-          .eq('company_id', companyId)
+          
           .maybeSingle(),
         {
           operation: 'Tedarikçi bilgileri yükleme',

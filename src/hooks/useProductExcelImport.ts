@@ -306,7 +306,7 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
               const { data: warehouses } = await supabase
                 .from("warehouses")
                 .select("id")
-                .eq("company_id", companyId)
+                
                 .eq("warehouse_type", "main")
                 .eq("is_active", true)
                 .limit(1)

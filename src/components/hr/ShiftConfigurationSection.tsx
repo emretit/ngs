@@ -32,7 +32,7 @@ const ShiftConfigurationSection: React.FC<ShiftConfigurationSectionProps> = ({
       const { data, error } = await supabase
         .from("shifts")
         .select("*")
-        .eq("company_id", companyId)
+        
         .order("name");
       if (error) throw error;
       return data || [];
@@ -47,7 +47,7 @@ const ShiftConfigurationSection: React.FC<ShiftConfigurationSectionProps> = ({
       const { data, error } = await supabase
         .from("shift_assignments")
         .select("*, shifts(*), employees(id, first_name, last_name)")
-        .eq("company_id", companyId)
+        
         .eq("is_active", true)
         .order("effective_date", { ascending: false });
       if (error) throw error;
@@ -63,7 +63,7 @@ const ShiftConfigurationSection: React.FC<ShiftConfigurationSectionProps> = ({
       const { data, error } = await supabase
         .from("employees")
         .select("id, first_name, last_name")
-        .eq("company_id", companyId)
+        
         .eq("status", "aktif")
         .order("first_name");
       if (error) throw error;

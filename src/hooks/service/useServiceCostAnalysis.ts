@@ -60,7 +60,7 @@ export function useServiceCostAnalysis(startDate?: Date, endDate?: Date) {
       let query = supabase
         .from('service_requests')
         .select('labor_cost, parts_cost, total_cost, service_status')
-        .eq('company_id', userData.company_id);
+        ;
 
       if (startDate) {
         query = query.gte('created_at', startDate.toISOString());
@@ -168,7 +168,7 @@ export function useMonthlyCostTrends(months: number = 6) {
         const { data: services, error } = await supabase
           .from('service_requests')
           .select('labor_cost, parts_cost, total_cost')
-          .eq('company_id', userData.company_id)
+          
           .gte('created_at', monthStart.toISOString())
           .lte('created_at', monthEnd.toISOString());
 

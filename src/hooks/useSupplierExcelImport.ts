@@ -196,7 +196,7 @@ export const useSupplierExcelImport = (onSuccess?: () => void) => {
         const { data: existing } = await supabase
            .from('suppliers')
            .select('id')
-           .eq('company_id', companyId)
+           
            .eq('name', row.name.trim())
            .maybeSingle();
            

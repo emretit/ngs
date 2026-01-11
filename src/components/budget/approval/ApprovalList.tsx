@@ -55,7 +55,7 @@ const ApprovalList = ({ filters }: ApprovalListProps) => {
       const { data, error } = await supabase
         .from("budget_revisions")
         .select("*")
-        .eq("company_id", profile.company_id)
+        
         .eq("year", filters.year)
         .order("created_at", { ascending: false });
 

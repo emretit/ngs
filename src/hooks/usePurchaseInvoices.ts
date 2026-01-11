@@ -237,7 +237,7 @@ export const usePurchaseInvoices = () => {
         )
       `)
       .eq("reference_number", invoice.invoice_number)
-      .eq("company_id", profile.company_id)
+      
       .eq("transaction_type", "giris");
 
     if (stockTransactionsError) {
@@ -261,7 +261,7 @@ export const usePurchaseInvoices = () => {
                 .select("id, quantity")
                 .eq("product_id", item.product_id)
                 .eq("warehouse_id", transaction.warehouse_id)
-                .eq("company_id", profile.company_id)
+                
                 .maybeSingle();
 
               if (existingStock) {
@@ -371,7 +371,7 @@ export const usePurchaseInvoices = () => {
       const { data: allTransactions } = await supabase
         .from("inventory_transactions")
         .select("id, transaction_number, reference_number")
-        .eq("company_id", profile.company_id)
+        
         .eq("transaction_type", "giris")
         .limit(10);
       
@@ -548,7 +548,7 @@ export const usePurchaseInvoicesInfiniteScroll = (filters?: PurchaseInvoiceFilte
         customer:customers(id, name, company, tax_number, email),
         purchase_order:purchase_orders(id, order_number)
       `, { count: 'exact' })
-      .eq('company_id', userData.company_id);
+      ;
 
     // Apply filters
     if (filters?.status && filters.status !== 'all') {

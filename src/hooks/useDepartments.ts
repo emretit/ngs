@@ -11,7 +11,7 @@ export const useDepartments = () => {
       const { data, error } = await supabase
         .from('departments')
         .select('name')
-        .eq('company_id', userData?.company_id)
+        
         .order('name');
       
       if (error) throw error;

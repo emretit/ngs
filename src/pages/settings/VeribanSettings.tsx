@@ -33,7 +33,7 @@ const VeribanSettingsPage = ({ isCollapsed, setIsCollapsed }: VeribanSettingsPag
       const { data, error } = await supabase
         .from('incoming_invoices')
         .select('*')
-        .eq('company_id', profile.company_id)
+        
         .order('invoice_date', { ascending: false })
         .limit(50);
 

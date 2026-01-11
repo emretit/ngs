@@ -35,10 +35,10 @@ export default function ReportsInventorySection({ isExpanded, onToggle, searchPa
       const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user?.id).single();
       if (!profile?.company_id) return { totalValue: 0, totalCost: 0, profit: 0, productCount: 0 };
 
-      const { data: products } = await supabase.from('products').select('id, price, purchase_price').eq('company_id', profile.company_id);
+      const { data: products } = await supabase.from('products').select('id, price, purchase_price');
       if (!products?.length) return { totalValue: 0, totalCost: 0, profit: 0, productCount: 0 };
 
-      const { data: stockData } = await supabase.from('warehouse_stock').select('product_id, quantity').in('product_id', products.map(p => p.id)).eq('company_id', profile.company_id);
+      const { data: stockData } = await supabase.from('warehouse_stock').select('product_id, quantity').in('product_id', products.map(p => p.id));
 
       const stockMap = new Map<string, number>();
       stockData?.forEach((s: any) => stockMap.set(s.product_id, (stockMap.get(s.product_id) || 0) + Number(s.quantity || 0)));
@@ -58,7 +58,7 @@ export default function ReportsInventorySection({ isExpanded, onToggle, searchPa
       const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user?.id).single();
       if (!profile?.company_id) return [];
 
-      const { data: products } = await supabase.from('products').select('category_id, price, product_categories(name)').eq('company_id', profile.company_id);
+      const { data: products } = await supabase.from('products').select('category_id, price, product_categories(name)');
 
       const catData = (products || []).reduce((acc: Record<string, { name: string; value: number }>, p) => {
         const catName = (p.product_categories as any)?.name || 'Diğer';
@@ -79,10 +79,10 @@ export default function ReportsInventorySection({ isExpanded, onToggle, searchPa
       const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user?.id).single();
       if (!profile?.company_id) return [];
 
-      const { data: products } = await supabase.from('products').select('id, name, min_stock_level').eq('company_id', profile.company_id);
+      const { data: products } = await supabase.from('products').select('id, name, min_stock_level');
       if (!products?.length) return [];
 
-      const { data: stockData } = await supabase.from('warehouse_stock').select('product_id, quantity').in('product_id', products.map(p => p.id)).eq('company_id', profile.company_id);
+      const { data: stockData } = await supabase.from('warehouse_stock').select('product_id, quantity').in('product_id', products.map(p => p.id));
 
       const stockMap = new Map<string, number>();
       stockData?.forEach((s: any) => stockMap.set(s.product_id, (stockMap.get(s.product_id) || 0) + Number(s.quantity || 0)));
@@ -103,7 +103,7 @@ export default function ReportsInventorySection({ isExpanded, onToggle, searchPa
       const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user?.id).single();
       if (!profile?.company_id) return [];
 
-      const { data } = await supabase.from('warehouse_stock').select('quantity, warehouses(name)').eq('company_id', profile.company_id);
+      const { data } = await supabase.from('warehouse_stock').select('quantity, warehouses(name)');
 
       const whData = (data || []).reduce((acc: Record<string, number>, s) => {
         const name = (s.warehouses as any)?.name || 'Ana Depo';

@@ -124,7 +124,7 @@ export const useBudgetMatrix = (config: MatrixConfig) => {
           )
         `)
         .in("type", ["expense", "income"])
-        .eq("company_id", companyId)
+        
         .order("name");
 
       if (cashflowCategoryError) throw cashflowCategoryError;
@@ -139,7 +139,7 @@ export const useBudgetMatrix = (config: MatrixConfig) => {
           subcategory,
           cashflow_categories!category_id(name)
         `)
-        .eq("company_id", companyId)
+        
         .eq("type", "expense")
         .gte("date", startDate)
         .lte("date", endDate);
@@ -154,7 +154,7 @@ export const useBudgetMatrix = (config: MatrixConfig) => {
           fatura_tarihi,
           para_birimi
         `)
-        .eq("company_id", companyId)
+        
         .eq("para_birimi", config.currency)
         .eq("durum", "onaylandi")
         .gte("fatura_tarihi", startDate)

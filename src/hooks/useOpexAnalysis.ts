@@ -92,7 +92,7 @@ export const useOpexAnalysis = (filters: OpexAnalysisFilters) => {
           month,
           year
         `)
-        .eq("company_id", userData.company_id)
+        
         .eq("year", filters.year);
 
       if (filters.month) {
@@ -122,7 +122,7 @@ export const useOpexAnalysis = (filters: OpexAnalysisFilters) => {
           subcategory,
           cashflow_categories(id, name)
         `)
-        .eq("company_id", userData.company_id)
+        
         .eq("type", "expense")
         .gte("date", startDate)
         .lte("date", endDate);

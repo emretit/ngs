@@ -80,7 +80,7 @@ export async function savePayrollRun(options: SavePayrollRunOptions) {
     const { data: existingRun, error: checkError } = await supabase
       .from('payroll_runs')
       .select('id, status')
-      .eq('company_id', companyId)
+      
       .eq('payroll_period_year', year)
       .eq('payroll_period_month', month)
       .maybeSingle();

@@ -63,7 +63,7 @@ async function detectSalesAnomalies(companyId: string): Promise<Insight[]> {
     const { data: recentSales, error } = await supabase
       .from('sales_invoices')
       .select('total_amount, created_at')
-      .eq('company_id', companyId)
+      
       .gte('created_at', thirtyDaysAgo.toISOString())
       .order('created_at', { ascending: false });
 
@@ -174,7 +174,7 @@ async function detectFinanceRisks(companyId: string): Promise<Insight[]> {
     const { data: overdueInvoices, error } = await supabase
       .from('sales_invoices')
       .select('id, invoice_number, total_amount, due_date, customer_id')
-      .eq('company_id', companyId)
+      
       .eq('payment_status', 'unpaid')
       .lt('due_date', new Date().toISOString())
       .order('due_date', { ascending: true });
@@ -222,7 +222,7 @@ async function detectFinanceRisks(companyId: string): Promise<Insight[]> {
     const { data: upcomingExpenses } = await supabase
       .from('purchase_invoices')
       .select('total_amount, due_date')
-      .eq('company_id', companyId)
+      
       .eq('payment_status', 'unpaid')
       .gte('due_date', new Date().toISOString())
       .lte('due_date', new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString());
@@ -230,7 +230,7 @@ async function detectFinanceRisks(companyId: string): Promise<Insight[]> {
     const { data: bankAccounts } = await supabase
       .from('bank_accounts')
       .select('balance')
-      .eq('company_id', companyId)
+      
       .eq('is_active', true);
 
     if (upcomingExpenses && bankAccounts) {
@@ -286,7 +286,7 @@ async function predictInventoryIssues(companyId: string): Promise<Insight[]> {
     const { data: products, error } = await supabase
       .from('products')
       .select('id, name, current_stock, reorder_point')
-      .eq('company_id', companyId)
+      
       .eq('track_stock', true)
       .order('current_stock', { ascending: true });
 
@@ -350,7 +350,7 @@ async function generateHROptimizations(companyId: string): Promise<Insight[]> {
     const { data: employees, error } = await supabase
       .from('employees')
       .select('id, full_name, annual_leave_balance, sick_leave_balance')
-      .eq('company_id', companyId)
+      
       .eq('status', 'active');
 
     if (!error && employees) {
@@ -449,7 +449,7 @@ export async function getInsights(
     let query = supabase
       .from('ai_insights')
       .select('*')
-      .eq('company_id', companyId)
+      
       .order('created_at', { ascending: false });
 
     if (filters?.category) {

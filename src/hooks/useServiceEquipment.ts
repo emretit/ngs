@@ -52,7 +52,7 @@ export function useServiceEquipment() {
             company
           )
         `)
-        .eq('company_id', userData.company_id)
+        
         .order('created_at', { ascending: false });
 
       if (error) throw error;

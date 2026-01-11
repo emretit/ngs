@@ -52,7 +52,7 @@ export class ServiceTemplateService {
     let query = supabase
       .from('service_templates')
       .select('*')
-      .eq('company_id', companyId)
+      
       .order('usage_count', { ascending: false })
       .order('created_at', { ascending: false });
 

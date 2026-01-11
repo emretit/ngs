@@ -42,7 +42,7 @@ export const useOrgChartData = (
       const { data, error } = await supabase
         .from("departments")
         .select("id, name, description, head_id, parent_id")
-        .eq("company_id", companyId)
+        
         .eq("is_active", true)
         .order("sort_order", { ascending: true })
         .order("name");
@@ -62,7 +62,7 @@ export const useOrgChartData = (
       const { data, error } = await supabase
         .from("employees")
         .select("id, first_name, last_name, email, position, department, manager_id, status, avatar_url")
-        .eq("company_id", companyId)
+        
         .order("first_name");
 
       if (error) throw error;

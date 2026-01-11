@@ -152,7 +152,7 @@ export const useCheckVendorDuplicate = () => {
       let query = supabase
         .from('suppliers')
         .select('id, name, tax_number')
-        .eq('company_id', profile.company_id);
+        ;
 
       if (excludeId) {
         query = query.neq('id', excludeId);

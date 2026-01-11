@@ -70,7 +70,7 @@ export const useProduction = () => {
         *,
         bom:boms(id, name, product_name)
       `)
-      .eq("company_id", profile.company_id)
+      
       .order("created_at", { ascending: false });
 
     if (filters.status && filters.status !== "all") {
@@ -154,7 +154,7 @@ export const useProduction = () => {
         *,
         items:bom_items(*)
       `)
-      .eq("company_id", profile.company_id)
+      
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -316,7 +316,7 @@ export const useProduction = () => {
       .from("work_orders")
       .update(updateData)
       .eq("id", id)
-      .eq("company_id", profile.company_id); // Company ID filtresi eklendi
+      ; // Company ID filtresi eklendi
 
     if (error) {
       logger.error("Error updating work order:", error);

@@ -345,7 +345,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         .from('purchase_invoices')
         .select('*')
         .eq('supplier_id', supplier.id)
-        .eq('company_id', userData.company_id)
+        
         .order('invoice_date', { ascending: false });
 
       if (error) {
@@ -372,7 +372,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         .from('sales_invoices')
         .select('*')
         .eq('customer_id', supplier.id)
-        .eq('company_id', userData.company_id)
+        
         .order('fatura_tarihi', { ascending: false });
 
       if (error) {

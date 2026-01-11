@@ -146,7 +146,7 @@ export const usePurchaseInvoiceEdit = () => {
         .from("inventory_transactions")
         .select("id, warehouse_id")
         .eq("reference_number", currentInvoice.invoice_number)
-        .eq("company_id", profile.company_id)
+        
         .eq("transaction_type", "giris");
 
       if (transactionError) {
@@ -190,7 +190,7 @@ export const usePurchaseInvoiceEdit = () => {
             .select("id, quantity")
             .eq("product_id", removedItem.product_id)
             .eq("warehouse_id", inventoryTransaction.warehouse_id)
-            .eq("company_id", profile.company_id)
+            
             .maybeSingle();
 
           if (existingStock) {
@@ -261,7 +261,7 @@ export const usePurchaseInvoiceEdit = () => {
             .select("id, quantity")
             .eq("product_id", addedItem.product_id)
             .eq("warehouse_id", inventoryTransaction.warehouse_id)
-            .eq("company_id", profile.company_id)
+            
             .maybeSingle();
 
           if (existingStock) {
@@ -328,7 +328,7 @@ export const usePurchaseInvoiceEdit = () => {
             .select("id, quantity")
             .eq("product_id", modifiedItem.product_id)
             .eq("warehouse_id", inventoryTransaction.warehouse_id)
-            .eq("company_id", profile.company_id)
+            
             .maybeSingle();
 
           if (existingStock) {

@@ -66,7 +66,7 @@ export const useVknToCustomer = () => {
         .from('customers')
         .select('id, name, company')
         .eq('tax_number', vknData.taxNumber)
-        .eq('company_id', profile.company_id)
+        
         .maybeSingle();
 
       if (checkError) {

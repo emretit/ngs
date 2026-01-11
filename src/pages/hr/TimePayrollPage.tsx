@@ -149,7 +149,7 @@ const TimePayrollPage: React.FC = () => {
       const { data, error } = await supabase
         .from("employees")
         .select("id, first_name, last_name, department, gross_salary")
-        .eq("company_id", companyId)
+        
         .eq("status", "aktif")
         .order("first_name");
       if (error) throw error;
@@ -166,7 +166,7 @@ const TimePayrollPage: React.FC = () => {
       const { data, error } = await supabase
         .from("departments")
         .select("id, name")
-        .eq("company_id", companyId)
+        
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
@@ -184,7 +184,7 @@ const TimePayrollPage: React.FC = () => {
       let query = supabase
         .from("timesheet_days")
         .select("*")
-        .eq("company_id", companyId)
+        
         .gte("work_date", `${filters.periodYear}-${String(filters.periodMonth).padStart(2, "0")}-01`)
         .lte("work_date", `${filters.periodYear}-${String(filters.periodMonth).padStart(2, "0")}-${getDaysInMonth(new Date(filters.periodYear, filters.periodMonth - 1))}`);
 
@@ -195,7 +195,7 @@ const TimePayrollPage: React.FC = () => {
         const { data: deptEmployees } = await supabase
           .from("employees")
           .select("id")
-          .eq("company_id", companyId)
+          
           .eq("department", filters.departmentId);
         if (deptEmployees && deptEmployees.length > 0) {
           query = query.in("employee_id", deptEmployees.map(e => e.id));
@@ -223,7 +223,7 @@ const TimePayrollPage: React.FC = () => {
       const { data, error } = await supabase
         .from("payroll_runs")
         .select("*")
-        .eq("company_id", companyId)
+        
         .eq("payroll_period_year", filters.periodYear)
         .eq("payroll_period_month", filters.periodMonth)
         .maybeSingle();

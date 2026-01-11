@@ -48,7 +48,7 @@ const ProductWarehouseStock = ({
       const { data, error } = await supabase
         .from("warehouses")
         .select("id, name, code, warehouse_type")
-        .eq("company_id", profile.company_id)
+        
         .eq("is_active", true)
         .order("name");
 
@@ -88,7 +88,7 @@ const ProductWarehouseStock = ({
           )
         `)
         .eq("product_id", productId)
-        .eq("company_id", profile.company_id)
+        
         .order("warehouses(name)");
 
       if (stockError) throw stockError;
@@ -98,7 +98,7 @@ const ProductWarehouseStock = ({
         const { data: warehouses, error: warehousesError } = await supabase
           .from("warehouses")
           .select("id, name, code, warehouse_type")
-          .eq("company_id", profile.company_id)
+          
           .eq("is_active", true)
           .order("name");
 
@@ -194,7 +194,7 @@ const ProductWarehouseStock = ({
             last_transaction_date: new Date().toISOString()
           })
           .eq("id", warehouseStockId)
-          .eq("company_id", profile.company_id);
+          ;
 
         if (error) throw error;
       } else {
@@ -252,7 +252,7 @@ const ProductWarehouseStock = ({
         .select("id, quantity")
         .eq("product_id", productId)
         .eq("warehouse_id", selectedWarehouseId)
-        .eq("company_id", profile.company_id)
+        
         .maybeSingle();
 
       if (existingStock) {

@@ -47,7 +47,7 @@ export const useDeliveries = () => {
         delivered_by_employee:employees!deliveries_delivered_by_fkey(id, first_name, last_name),
         items:delivery_items(*)
       `)
-      .eq("company_id", profile?.company_id)
+      
       .order("created_at", { ascending: false });
 
     // Status filtresi
@@ -157,7 +157,7 @@ export const useDeliveries = () => {
     const { count } = await supabase
       .from("deliveries")
       .select("*", { count: "exact", head: true })
-      .eq("company_id", profile?.company_id);
+      ;
 
     const deliveryNumber = `TES-${String((count || 0) + 1).padStart(6, "0")}`;
 
@@ -270,7 +270,7 @@ export const useDeliveries = () => {
     const { data, error } = await supabase
       .from("deliveries")
       .select("status")
-      .eq("company_id", profile?.company_id);
+      ;
 
     if (error) {
       throw error;

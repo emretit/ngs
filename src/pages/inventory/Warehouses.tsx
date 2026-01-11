@@ -105,7 +105,7 @@ const Warehouses = () => {
       let query = supabase
         .from("warehouses")
         .select("*", { count: 'exact' })
-        .eq("company_id", profile?.company_id);
+        ;
 
       // Apply search filter
       if (debouncedSearchQuery) {
@@ -196,7 +196,7 @@ const Warehouses = () => {
         .from("warehouse_stock")
         .select("id")
         .eq("warehouse_id", warehouseToDelete.id)
-        .eq("company_id", profile.company_id)
+        
         .limit(1);
 
       if (stockError) {
@@ -216,7 +216,7 @@ const Warehouses = () => {
         .from("inventory_transactions")
         .select("id")
         .or(`warehouse_id.eq.${warehouseToDelete.id},from_warehouse_id.eq.${warehouseToDelete.id},to_warehouse_id.eq.${warehouseToDelete.id}`)
-        .eq("company_id", profile.company_id)
+        
         .limit(1);
 
       if (transactionError) {
@@ -236,7 +236,7 @@ const Warehouses = () => {
         .from("warehouses")
         .delete()
         .eq("id", warehouseToDelete.id)
-        .eq("company_id", profile.company_id);
+        ;
 
       if (error) {
         logger.error("Depo silme hatası:", error);
@@ -301,7 +301,7 @@ const Warehouses = () => {
             .from("warehouse_stock")
             .select("id")
             .eq("warehouse_id", warehouse.id)
-            .eq("company_id", profile.company_id)
+            
             .limit(1);
 
           if (stockData && stockData.length > 0) {
@@ -315,7 +315,7 @@ const Warehouses = () => {
             .from("inventory_transactions")
             .select("id")
             .or(`warehouse_id.eq.${warehouse.id},from_warehouse_id.eq.${warehouse.id},to_warehouse_id.eq.${warehouse.id}`)
-            .eq("company_id", profile.company_id)
+            
             .limit(1);
 
           if (transactionData && transactionData.length > 0) {
@@ -329,7 +329,7 @@ const Warehouses = () => {
             .from("warehouses")
             .delete()
             .eq("id", warehouse.id)
-            .eq("company_id", profile.company_id);
+            ;
 
           if (error) {
             errors.push(`${warehouse.name}: ${error.message}`);
@@ -418,7 +418,7 @@ const Warehouses = () => {
       const { data: allWarehouses, error: warehousesError } = await supabase
         .from("warehouses")
         .select("is_active, warehouse_type")
-        .eq("company_id", companyId);
+        ;
 
       if (warehousesError) throw warehousesError;
       if (!allWarehouses || allWarehouses.length === 0) {

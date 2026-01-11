@@ -78,7 +78,7 @@ export const useBudgetsList = (filters: UseBudgetsFilters = {}) => {
     let budgetsQuery = supabase
       .from("budgets")
       .select("year, currency, status, created_at, updated_at, budget_amount, actual_amount, forecast_amount")
-      .eq("company_id", companyId);
+      ;
 
     if (filters.year) {
       budgetsQuery = budgetsQuery.eq("year", filters.year);

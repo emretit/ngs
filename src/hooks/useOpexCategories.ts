@@ -63,7 +63,7 @@ export const useOpexCategories = () => {
           )
         `)
         .eq('type', 'expense')
-        .eq('company_id', companyId)
+        
         .order('name');
 
       if (categoriesError) throw categoriesError;

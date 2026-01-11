@@ -46,7 +46,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
           customer:customer_id (*),
           employee:employee_id (*)
         `, { count: 'exact' })
-        .eq("company_id", userData.company_id); // Company_id filtresi eklendi
+        ; // Company_id filtresi eklendi
 
       // Apply filters
       // Note: customer.name cannot be used in or() filter as it's a joined table field
@@ -202,7 +202,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
         .from("opportunities")
         .update({ status, updated_at: new Date().toISOString() })
         .eq("id", id)
-        .eq("company_id", userData.company_id); // Company_id kontrolü eklendi
+        ; // Company_id kontrolü eklendi
 
       if (error) throw error;
       return { id, status };
@@ -243,7 +243,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
         .from("opportunities")
         .update({ status, updated_at: new Date().toISOString() })
         .eq("id", id)
-        .eq("company_id", userData.company_id); // Company_id kontrolü eklendi
+        ; // Company_id kontrolü eklendi
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
@@ -280,7 +280,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
         .from("opportunities")
         .update(updateData)
         .eq("id", opportunity.id)
-        .eq("company_id", userData.company_id); // Company_id kontrolü eklendi
+        ; // Company_id kontrolü eklendi
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });

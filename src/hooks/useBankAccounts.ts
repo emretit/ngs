@@ -91,7 +91,7 @@ export const useBankAccounts = () => {
       const { data, error } = await supabase
         .from("bank_accounts")
         .select("*")
-        .eq('company_id', profile.company_id)
+        
         .order("created_at", { ascending: false });
 
       if (error) throw error;

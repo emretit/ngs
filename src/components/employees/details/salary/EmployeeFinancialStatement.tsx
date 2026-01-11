@@ -254,7 +254,7 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
               const { data: cashTransactions } = await supabase
                 .from('cash_transactions')
                 .select('*')
-                .eq('company_id', profile.company_id)
+                
                 .in('reference', referenceValues);
               
               if (cashTransactions) {

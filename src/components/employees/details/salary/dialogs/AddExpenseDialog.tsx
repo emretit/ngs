@@ -43,7 +43,7 @@ export const AddExpenseDialog = ({ open, onOpenChange, employee }: AddExpenseDia
       const { data, error } = await supabase
         .from('cashflow_categories')
         .select('id, name')
-        .eq('company_id', userData.company_id)
+        
         .eq('type', 'expense')
         .order('name');
       if (error) throw error;

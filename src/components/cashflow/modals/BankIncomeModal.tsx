@@ -59,7 +59,7 @@ const BankIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
       const { data, error } = await supabase
         .from('cashflow_categories')
         .select('id, name')
-        .eq('company_id', profile.company_id)
+        
         .eq('type', 'income')
         .order('name');
 

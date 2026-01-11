@@ -56,7 +56,7 @@ export async function getHistoricalRevenue(
     const { data: invoices, error } = await supabase
       .from('sales_invoices')
       .select('invoice_date, total_amount')
-      .eq('company_id', companyId)
+      
       .gte('invoice_date', startDate.toISOString())
       .lte('invoice_date', endDate.toISOString())
       .order('invoice_date', { ascending: true });

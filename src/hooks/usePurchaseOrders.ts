@@ -465,7 +465,7 @@ export const usePurchaseOrdersInfiniteScroll = (filters?: PurchaseOrderFilters, 
         supplier:suppliers!purchase_orders_supplier_id_fkey(id, name, email, phone, address),
         items:purchase_order_items(*)
       `, { count: 'exact' })
-      .eq('company_id', userData.company_id);
+      ;
 
     // Apply filters
     if (filters?.status && filters.status !== 'all') {

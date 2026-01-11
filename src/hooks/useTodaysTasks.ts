@@ -48,7 +48,7 @@ export function useTodaysTasks() {
           related_item_title,
           opportunity_id
         `)
-        .eq("company_id", companyId)
+        
         .gte("due_date", todayStart)
         .lte("due_date", todayEnd)
         .order("due_date", { ascending: true })

@@ -119,7 +119,7 @@ const CustomerInvoicesTab = ({ customerId, customerName }: CustomerInvoicesTabPr
             supplier:suppliers(name, company),
             customer:customers(name, company)
           `)
-          .eq('company_id', userData.company_id)
+          
           .eq('customer_id', customerId)
           .order('created_at', { ascending: false }),
         // Müşteri aynı zamanda tedarikçi ise (supplier_id ile)
@@ -130,7 +130,7 @@ const CustomerInvoicesTab = ({ customerId, customerName }: CustomerInvoicesTabPr
             supplier:suppliers(name, company),
             customer:customers(name, company)
           `)
-          .eq('company_id', userData.company_id)
+          
           .eq('supplier_id', customerId)
           .order('created_at', { ascending: false })
       ]);

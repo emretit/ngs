@@ -23,7 +23,7 @@ export const useExpenses = ({ startDate, endDate }: UseExpensesOptions) => {
         .from('expenses')
         .select(`*, category:cashflow_categories(id, name), employee:employees(first_name, last_name, department)`)
         .eq('type', 'expense')
-        .eq('company_id', userData.company_id)
+        
         .gte('date', format(startDate, 'yyyy-MM-dd'))
         .lte('date', format(endDate, 'yyyy-MM-dd'))
         .order('date', { ascending: false });

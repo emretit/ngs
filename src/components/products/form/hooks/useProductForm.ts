@@ -107,7 +107,7 @@ export const useProductForm = () => {
               .from("warehouse_stock")
               .select("quantity")
               .eq("product_id", id)
-              .eq("company_id", companyId);
+              ;
 
             if (stockData && stockData.length > 0) {
               stockQuantity = stockData.reduce((sum, stock) => sum + (Number(stock.quantity) || 0), 0);

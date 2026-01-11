@@ -262,7 +262,7 @@ export async function getPDKSLogsForDate(
   const { data, error } = await supabase
     .from("pdks_logs")
     .select("*")
-    .eq("company_id", companyId)
+    
     .eq("employee_id", employeeId)
     .gte("log_timestamp", startOfDay.toISOString())
     .lte("log_timestamp", endOfDay.toISOString())
@@ -285,7 +285,7 @@ export async function getShiftForEmployee(
   const { data, error } = await supabase
     .from("shift_assignments")
     .select("shift_id, shifts(*)")
-    .eq("company_id", companyId)
+    
     .eq("employee_id", employeeId)
     .eq("is_active", true)
     .lte("effective_date", dateStr)

@@ -50,7 +50,7 @@ export const useCriticalAlerts = () => {
       const { data: dueChecks } = await supabase
         .from("checks")
         .select("id, check_number, issuer_name, payee, amount, due_date")
-        .eq("company_id", companyId)
+        
         .in("status", ["pending", "in_portfolio"])
         .gte("due_date", today)
         .lte("due_date", nextWeek)
@@ -77,7 +77,7 @@ export const useCriticalAlerts = () => {
       const { data: pendingApprovals } = await supabase
         .from("approvals")
         .select("id, object_type, object_id, created_at")
-        .eq("company_id", companyId)
+        
         .eq("status", "pending")
         .order("created_at", { ascending: true })
         .limit(5);
@@ -102,7 +102,7 @@ export const useCriticalAlerts = () => {
       const { data: overdueTasks } = await supabase
         .from("activities")
         .select("id, title, due_date, priority")
-        .eq("company_id", companyId)
+        
         .eq("type", "task")
         .neq("status", "completed")
         .lt("due_date", today)

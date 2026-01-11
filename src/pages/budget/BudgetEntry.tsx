@@ -103,7 +103,7 @@ const BudgetEntry = () => {
         .from("budgets")
         .select("*")
         .eq("year", sourceYear)
-        .eq("company_id", companyId);
+        ;
 
       if (fetchError) throw fetchError;
 
@@ -178,7 +178,7 @@ const BudgetEntry = () => {
           .from("budgets")
           .select("status")
           .eq("year", filters.year)
-          .eq("company_id", profile.company_id)
+          
           .limit(1)
           .single();
 
@@ -228,7 +228,7 @@ const BudgetEntry = () => {
         .from("budgets")
         .update({ status: "approved" })
         .eq("year", filters.year)
-        .eq("company_id", profile.company_id)
+        
         .eq("status", "draft");
 
       if (error) throw error;

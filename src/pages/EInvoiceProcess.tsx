@@ -387,7 +387,7 @@ export default function EInvoiceProcess() {
         .from('purchase_invoices')
         .select('id, invoice_number')
         .eq('invoice_number', invoice.invoice_number)
-        .eq('company_id', userProfile.company_id)
+        
         .maybeSingle();
 
       if (checkInvoiceError && checkInvoiceError.code !== 'PGRST116') {
@@ -558,7 +558,7 @@ export default function EInvoiceProcess() {
       const { data: warehouses } = await supabase
         .from('warehouses')
         .select('id, name, warehouse_type')
-        .eq('company_id', userProfile.company_id)
+        
         .eq('is_active', true)
         .order('warehouse_type', { ascending: true }) // 'main' önce gelir
         .order('name', { ascending: true })
@@ -573,7 +573,7 @@ export default function EInvoiceProcess() {
         const { data: existingTransactions } = await supabase
           .from('inventory_transactions')
           .select('transaction_number')
-          .eq('company_id', userProfile.company_id)
+          
           .like('transaction_number', `STG-${year}-%`)
           .order('transaction_number', { ascending: false })
           .limit(1);
@@ -660,7 +660,7 @@ export default function EInvoiceProcess() {
                   .select('id, quantity')
                   .eq('product_id', item.matched_product_id)
                   .eq('warehouse_id', defaultWarehouseId)
-                  .eq('company_id', userProfile.company_id)
+                  
                   .maybeSingle();
 
                 const quantity = Number(item.invoice_item.quantity) || 0;

@@ -77,7 +77,7 @@ const ProductInventory = ({
       const { data, error } = await supabase
         .from("warehouses")
         .select("id, name, code, warehouse_type")
-        .eq("company_id", profile.company_id)
+        
         .eq("is_active", true)
         .order("name");
 
@@ -117,7 +117,7 @@ const ProductInventory = ({
           )
         `)
         .eq("product_id", productId)
-        .eq("company_id", profile.company_id)
+        
         .order("warehouses(name)");
 
       if (stockError) throw stockError;
@@ -127,7 +127,7 @@ const ProductInventory = ({
         const { data: warehouses, error: warehousesError } = await supabase
           .from("warehouses")
           .select("id, name, code, warehouse_type")
-          .eq("company_id", profile.company_id)
+          
           .eq("is_active", true)
           .order("name");
 
@@ -206,7 +206,7 @@ const ProductInventory = ({
             last_transaction_date: new Date().toISOString()
           })
           .eq("id", warehouseStockId)
-          .eq("company_id", profile.company_id);
+          ;
 
         if (error) throw error;
       } else {
@@ -262,7 +262,7 @@ const ProductInventory = ({
         .select("id, quantity")
         .eq("product_id", productId)
         .eq("warehouse_id", selectedWarehouseId)
-        .eq("company_id", profile.company_id)
+        
         .maybeSingle();
 
       if (existingStock) {
@@ -336,7 +336,7 @@ const ProductInventory = ({
         .select("id, quantity")
         .eq("product_id", productId)
         .eq("warehouse_id", transferFromWarehouseId)
-        .eq("company_id", profile.company_id)
+        
         .maybeSingle();
 
       if (!fromStock || Number(fromStock.quantity) < transferQuantity) {
@@ -361,7 +361,7 @@ const ProductInventory = ({
         .select("id, quantity")
         .eq("product_id", productId)
         .eq("warehouse_id", transferToWarehouseId)
-        .eq("company_id", profile.company_id)
+        
         .maybeSingle();
 
       if (toStock) {

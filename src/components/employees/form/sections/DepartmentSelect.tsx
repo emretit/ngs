@@ -51,7 +51,7 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
       const { data, error } = await supabase
         .from('departments')
         .select('*')
-        .eq('company_id', userData.company_id)
+        
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
@@ -153,7 +153,7 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
         .from('departments')
         .update({ is_active: false })
         .eq('id', departmentToDelete.id)
-        .eq('company_id', userData.company_id);
+        ;
 
       if (error) throw error;
 

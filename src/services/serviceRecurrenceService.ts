@@ -111,7 +111,7 @@ export class ServiceRecurrenceService {
     const { data, error } = await supabase
       .from('service_requests')
       .select('*')
-      .eq('company_id', companyId)
+      
       .eq('is_recurring', true)
       .eq('is_recurring_instance', false)
       .order('created_at', { ascending: false });

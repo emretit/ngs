@@ -52,7 +52,7 @@ export class ServicePartsInventoryService {
         .from('warehouse_stock')
         .select('id, quantity, warehouse_id')
         .eq('product_id', part.productId)
-        .eq('company_id', service.company_id)
+        
         .gt('quantity', 0)
         .order('quantity', { ascending: false }); // Use warehouse with most stock first
 
@@ -133,7 +133,7 @@ export class ServicePartsInventoryService {
         .from('warehouse_stock')
         .select('quantity')
         .eq('product_id', part.productId)
-        .eq('company_id', companyId);
+        ;
 
       if (error) {
         logger.error(`Error checking stock for product ${part.productId}:`, error);
@@ -168,7 +168,7 @@ export class ServicePartsInventoryService {
     const { data: serviceParts, error: partsError } = await supabase
       .from('service_requests')
       .select('service_details')
-      .eq('company_id', companyId)
+      
       .not('service_details', 'is', null);
 
     if (partsError) {
@@ -195,7 +195,7 @@ export class ServicePartsInventoryService {
           name
         )
       `)
-      .eq('company_id', companyId)
+      
       .lt('quantity', supabase.raw('products.min_stock_level'));
 
     if (stockError) {
@@ -237,7 +237,7 @@ export class ServicePartsInventoryService {
           sku
         )
       `)
-      .eq('company_id', companyId)
+      
       .eq('reference_type', 'service_request')
       .eq('transaction_type', 'out');
 

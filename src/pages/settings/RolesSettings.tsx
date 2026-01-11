@@ -72,7 +72,7 @@ const RolesSettings = () => {
             department
           )
         `)
-        .eq('company_id', profile.company_id)
+        
         .order('created_at', { ascending: false });
 
       if (error) throw error;

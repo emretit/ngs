@@ -47,13 +47,13 @@ export const useCompanyFinancials = (companyId: string) => {
     const { data: salesInvoices } = await supabase
       .from('sales_invoices')
       .select('toplam_tutar, odenen_tutar')
-      .eq('company_id', companyId);
+      ;
 
     // Fetch purchase invoices summary
     const { data: purchaseInvoices } = await supabase
       .from('purchase_invoices')
       .select('total_amount, paid_amount')
-      .eq('company_id', companyId);
+      ;
 
     // Calculate sales totals
     const totalSalesInvoices = salesInvoices?.length || 0;
@@ -97,7 +97,7 @@ export const useCompanyFinancials = (companyId: string) => {
         para_birimi,
         customer:customers(name)
       `)
-      .eq('company_id', companyId)
+      
       .order('fatura_tarihi', { ascending: false })
       .limit(50);
 
@@ -128,7 +128,7 @@ export const useCompanyFinancials = (companyId: string) => {
         currency,
         supplier:suppliers(name)
       `)
-      .eq('company_id', companyId)
+      
       .order('invoice_date', { ascending: false })
       .limit(50);
 

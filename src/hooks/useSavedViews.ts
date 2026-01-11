@@ -27,7 +27,7 @@ export function useSavedViews(reportType: ReportCategory) {
         .from('saved_report_views')
         .select('*')
         .eq('user_id', user.id)
-        .eq('company_id', companyId)
+        
         .eq('report_type', reportType)
         .order('created_at', { ascending: false });
 
@@ -53,7 +53,7 @@ export function useSavedViews(reportType: ReportCategory) {
           .from('saved_report_views')
           .update({ is_default: false })
           .eq('user_id', user.id)
-          .eq('company_id', companyId)
+          
           .eq('report_type', reportType);
       }
 
@@ -106,7 +106,7 @@ export function useSavedViews(reportType: ReportCategory) {
           .from('saved_report_views')
           .update({ is_default: false })
           .eq('user_id', user.id)
-          .eq('company_id', companyId)
+          
           .eq('report_type', reportType)
           .neq('id', viewId);
       }

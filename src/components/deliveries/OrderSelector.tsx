@@ -66,7 +66,7 @@ const OrderSelector: React.FC<OrderSelectorProps> = ({
           status,
           customer:customers(id, name, company)
         `)
-        .eq("company_id", userData.company_id)
+        
         .order("created_at", { ascending: false });
       
       if (error) throw error;

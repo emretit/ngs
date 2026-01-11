@@ -63,7 +63,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
       const { data, error } = await supabase
         .from("employees")
         .select("id, first_name, last_name, position, department, email, phone, manager_id")
-        .eq("company_id", companyId)
+        
         .eq("status", "aktif")
         .order("first_name");
       

@@ -67,7 +67,7 @@ export const useUserEmailCheck = (): UseUserEmailCheckReturn => {
         .from("profiles")
         .select("id, email, full_name")
         .eq("email", email.toLowerCase().trim())
-        .eq("company_id", profile.company_id)
+        
         .maybeSingle();
 
       if (error) {

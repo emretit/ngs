@@ -36,35 +36,35 @@ export function useWorkflowPipeline() {
         supabase
           .from("opportunities")
           .select("id, value, expected_close_date")
-          .eq("company_id", companyId)
+          
           .in("status", ["new", "contacted", "qualified", "negotiation"]),
         
         // Pending proposals
         supabase
           .from("proposals")
           .select("id, total_amount, valid_until")
-          .eq("company_id", companyId)
+          
           .in("status", ["draft", "sent", "pending"]),
         
         // Active orders
         supabase
           .from("orders")
           .select("id, total_amount, delivery_date")
-          .eq("company_id", companyId)
+          
           .in("status", ["pending", "confirmed", "processing"]),
         
         // Pending deliveries
         supabase
           .from("deliveries")
           .select("id, planned_delivery_date")
-          .eq("company_id", companyId)
+          
           .in("status", ["pending", "prepared", "shipped"]),
         
         // Unpaid invoices
         supabase
           .from("sales_invoices")
           .select("id, toplam_tutar, vade_tarihi")
-          .eq("company_id", companyId)
+          
           .neq("odeme_durumu", "odendi")
       ]);
 

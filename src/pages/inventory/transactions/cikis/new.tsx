@@ -78,7 +78,7 @@ export default function NewStockExit() {
       const { data, error } = await supabase
         .from("warehouses")
         .select("id, name, code")
-        .eq("company_id", profile.company_id)
+        
         .eq("is_active", true)
         .order("name");
 
@@ -115,7 +115,7 @@ export default function NewStockExit() {
           )
         `)
         .eq("warehouse_id", selectedWarehouseId)
-        .eq("company_id", profile.company_id)
+        
         .gt("quantity", 0);
 
       if (error) throw error;

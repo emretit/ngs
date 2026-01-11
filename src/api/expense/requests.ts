@@ -24,7 +24,7 @@ export const fetchExpenseRequests = async (companyId: string): Promise<ExpenseRe
     const { data, error } = await supabase
       .from("expense_requests")
       .select("*")
-      .eq("company_id", companyId)
+      
       .order("created_at", { ascending: false });
 
     if (error) {

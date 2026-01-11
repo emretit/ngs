@@ -47,7 +47,7 @@ export const generateSmartSuggestions = async (): Promise<SmartSuggestion[]> => 
     const { data: lowStockProducts } = await supabase
       .from('products')
       .select('id, name, stock_quantity')
-      .eq('company_id', companyId)
+      
       .lt('stock_quantity', 10)
       .limit(5);
 
@@ -73,7 +73,7 @@ export const generateSmartSuggestions = async (): Promise<SmartSuggestion[]> => 
     const { data: overdueTasks } = await supabase
       .from('tasks')
       .select('id, title, due_date')
-      .eq('company_id', companyId)
+      
       .neq('status', 'completed')
       .lt('due_date', new Date().toISOString())
       .limit(5);
@@ -100,7 +100,7 @@ export const generateSmartSuggestions = async (): Promise<SmartSuggestion[]> => 
     const { data: pendingInvoices } = await supabase
       .from('sales_invoices')
       .select('id, invoice_number, grand_total')
-      .eq('company_id', companyId)
+      
       .eq('status', 'draft')
       .limit(10);
 
@@ -155,7 +155,7 @@ export const generateSmartSuggestions = async (): Promise<SmartSuggestion[]> => 
     const { data: completedTasks } = await supabase
       .from('tasks')
       .select('id')
-      .eq('company_id', companyId)
+      
       .eq('status', 'completed')
       .gte('completed_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 

@@ -106,7 +106,7 @@ export const usePurchaseRequestsInfiniteScroll = (filters?: PurchaseRequestFilte
         department:department_id(id, name),
         items:purchase_request_items(*)
       `, { count: 'exact' })
-      .eq('company_id', userData.company_id);
+      ;
     
     // Apply filters
     if (filters?.status && filters.status !== 'all') {

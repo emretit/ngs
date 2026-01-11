@@ -61,7 +61,7 @@ const TimeTrackingCellDetail: React.FC<TimeTrackingCellDetailProps> = ({
       const { data, error } = await supabase
         .from("timesheet_days")
         .select("*")
-        .eq("company_id", companyId)
+        
         .eq("employee_id", employeeId)
         .eq("work_date", date.toISOString().split("T")[0])
         .maybeSingle();
@@ -100,7 +100,7 @@ const TimeTrackingCellDetail: React.FC<TimeTrackingCellDetailProps> = ({
       const { data, error } = await supabase
         .from("audit_logs")
         .select("*")
-        .eq("company_id", companyId)
+        
         .eq("entity_type", "timesheet_days")
         .eq("entity_id", timesheet.id)
         .order("created_at", { ascending: false })

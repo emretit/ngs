@@ -555,21 +555,21 @@ export class IntegratorService {
       const { data: nilveraAuth } = await supabase
         .from('nilvera_auth')
         .select('is_active')
-        .eq('company_id', profile.company_id)
+        
         .maybeSingle();
 
       // Check e-Logo
       const { data: elogoAuth } = await supabase
         .from('elogo_auth')
         .select('is_active')
-        .eq('company_id', profile.company_id)
+        
         .maybeSingle();
 
       // Check Veriban
       const { data: veribanAuth } = await supabase
         .from('veriban_auth')
         .select('is_active')
-        .eq('company_id', profile.company_id)
+        
         .maybeSingle();
 
       // Get selected integrator

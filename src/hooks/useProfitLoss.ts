@@ -73,7 +73,7 @@ export const useProfitLoss = (filters: ProfitLossFilters) => {
       let incomeQuery = supabase
         .from("sales_invoices")
         .select("toplam_tutar, fatura_tarihi, para_birimi")
-        .eq("company_id", userData.company_id)
+        
         .eq("para_birimi", filters.currency)
         .gte("fatura_tarihi", startDate)
         .lte("fatura_tarihi", endDate)
@@ -100,7 +100,7 @@ export const useProfitLoss = (filters: ProfitLossFilters) => {
       let expensesQuery = supabase
         .from("expenses")
         .select("amount, date, category_id, cashflow_categories(name)")
-        .eq("company_id", userData.company_id)
+        
         .eq("type", "expense")
         .gte("date", startDate)
         .lte("date", endDate);

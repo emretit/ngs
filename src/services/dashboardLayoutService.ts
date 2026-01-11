@@ -28,7 +28,7 @@ export async function saveLayout(
       .from('user_dashboard_layouts')
       .select('id')
       .eq('user_id', userId)
-      .eq('company_id', companyId)
+      
       .eq('layout_name', layoutName)
       .single();
 
@@ -84,7 +84,7 @@ export async function loadLayout(
       .from('user_dashboard_layouts')
       .select('layout_config')
       .eq('user_id', userId)
-      .eq('company_id', companyId)
+      
       .eq('layout_name', layoutName)
       .eq('is_active', true)
       .single();
@@ -116,7 +116,7 @@ export async function getAllLayouts(
       .from('user_dashboard_layouts')
       .select('*')
       .eq('user_id', userId)
-      .eq('company_id', companyId)
+      
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -163,14 +163,14 @@ export async function setActiveLayout(
       .from('user_dashboard_layouts')
       .update({ is_active: false })
       .eq('user_id', userId)
-      .eq('company_id', companyId);
+      ;
 
     // Then activate the specified layout
     const { error } = await supabase
       .from('user_dashboard_layouts')
       .update({ is_active: true })
       .eq('user_id', userId)
-      .eq('company_id', companyId)
+      
       .eq('layout_name', layoutName);
 
     if (error) throw error;
@@ -195,7 +195,7 @@ export async function resetToDefaultLayout(
       .from('user_dashboard_layouts')
       .delete()
       .eq('user_id', userId)
-      .eq('company_id', companyId)
+      
       .eq('layout_name', layoutName);
 
     if (error) throw error;

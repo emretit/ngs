@@ -61,7 +61,7 @@ const queryData = async (
     throw new Error('Şirket bilgisi bulunamadı');
   }
 
-  let query = supabase.from(getTableName(reportType)).select('*').eq('company_id', companyId);
+  let query = supabase.from(getTableName(reportType)).select('*');
 
   // Apply date range filter
   if (filters.dateRange) {

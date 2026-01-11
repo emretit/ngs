@@ -14,7 +14,7 @@ export const getLastVeribanInvoiceNumber = async (
     const { data: invoices, error } = await supabase
       .from('sales_invoices')
       .select('fatura_no')
-      .eq('company_id', companyId)
+      
       .in('einvoice_status', ['sent', 'delivered'])
       .not('fatura_no', 'is', null)
       .order('fatura_no', { ascending: false })

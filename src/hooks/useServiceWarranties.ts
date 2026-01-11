@@ -66,7 +66,7 @@ export function useServiceWarranties() {
             company
           )
         `)
-        .eq('company_id', userData.company_id)
+        
         .order('end_date', { ascending: true });
 
       if (error) throw error;

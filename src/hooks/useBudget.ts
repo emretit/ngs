@@ -278,7 +278,7 @@ export const useBudget = (filters?: BudgetFilters) => {
         .from("budgets")
         .update({ status: "locked" })
         .eq("year", year)
-        .eq("company_id", profile?.company_id);
+        ;
 
       if (updateError) throw updateError;
 
@@ -319,7 +319,7 @@ export const useBudget = (filters?: BudgetFilters) => {
         .from("budgets")
         .select("*")
         .eq("year", sourceYear)
-        .eq("company_id", companyId);
+        ;
 
       if (fetchError) throw fetchError;
 

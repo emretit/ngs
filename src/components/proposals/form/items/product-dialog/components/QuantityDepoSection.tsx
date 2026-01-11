@@ -51,7 +51,7 @@ const QuantityDepoSection: React.FC<QuantityDepoSectionProps> = ({
       const { data, error } = await supabase
         .from('warehouses')
         .select('id, name, code, warehouse_type')
-        .eq('company_id', profile.company_id)
+        
         .eq('is_active', true)
         .order('name');
 
@@ -79,7 +79,7 @@ const QuantityDepoSection: React.FC<QuantityDepoSectionProps> = ({
         .from('warehouse_stock')
         .select('warehouse_id, quantity')
         .eq('product_id', productId)
-        .eq('company_id', profile.company_id);
+        ;
 
       if (error) {
         logger.error('Error fetching warehouse stocks:', error);

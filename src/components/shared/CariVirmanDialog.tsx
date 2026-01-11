@@ -88,7 +88,7 @@ export default function CariVirmanDialog({
       let customersQuery = supabase
         .from("customers")
         .select("id, name, company, mobile_phone, office_phone, tax_number")
-        .eq("company_id", userData.company_id);
+        ;
 
       // Sadece customerId varsa filtrele
       if (customerId) {
@@ -114,7 +114,7 @@ export default function CariVirmanDialog({
       let suppliersQuery = supabase
         .from("suppliers")
         .select("id, name, company, mobile_phone, office_phone, tax_number")
-        .eq("company_id", userData.company_id);
+        ;
 
       // Sadece supplierId varsa filtrele
       if (supplierId) {

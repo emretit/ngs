@@ -37,7 +37,7 @@ const ActiveTasksList = () => {
       const { data, error } = await supabase
         .from("activities")
         .select("id, title, status, priority, due_date, type")
-        .eq("company_id", companyId)
+        
         .in("status", ["todo", "in_progress"])
         .order("due_date", { ascending: true, nullsFirst: false })
         .limit(5);

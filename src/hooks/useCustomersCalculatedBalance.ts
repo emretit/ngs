@@ -44,7 +44,7 @@ export const useCustomersCalculatedBalance = (customers: Customer[]) => {
         supabase
           .from('purchase_invoices')
           .select('id, customer_id, supplier_id, invoice_date, total_amount, currency')
-          .eq('company_id', userData.company_id)
+          
           .or(`customer_id.in.(${customerIds.join(',')}),supplier_id.in.(${customerIds.join(',')})`)
       ]);
 

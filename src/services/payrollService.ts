@@ -93,7 +93,7 @@ export async function getPayrollYearParameters(
   const { data, error } = await supabase
     .from("payroll_year_parameters")
     .select("*")
-    .eq("company_id", companyId)
+    
     .eq("year", year)
     .eq("is_active", true)
     .order("version", { ascending: false })
@@ -310,7 +310,7 @@ export async function calculatePayrollRun(
   const { data: timesheets, error: tsError } = await supabase
     .from("timesheet_days")
     .select("*")
-    .eq("company_id", companyId)
+    
     .in("approval_status", ["manager_approved", "hr_locked"])
     .gte("work_date", startDate)
     .lte("work_date", endDate);
@@ -321,7 +321,7 @@ export async function calculatePayrollRun(
   const { data: employees, error: empError } = await supabase
     .from("employees")
     .select("id, gross_salary, salary_amount")
-    .eq("company_id", companyId)
+    
     .eq("status", "aktif");
 
   if (empError) throw empError;

@@ -74,7 +74,7 @@ export default function ServiceDashboard() {
       const { data, error } = await supabase
         .from('employees')
         .select('*')
-        .eq('company_id', userData.company_id)
+        
         .eq('is_technical', true)
         .eq('status', 'aktif');
       if (error) throw error;

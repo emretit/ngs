@@ -78,7 +78,7 @@ export function useServiceAnalytics(startDate?: Date, endDate?: Date) {
             name
           )
         `)
-        .eq('company_id', userData.company_id);
+        ;
 
       if (startDate) {
         query = query.gte('created_at', startDate.toISOString());

@@ -196,7 +196,7 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
           )
         `)
         .eq("reference_number", invoice.invoice_number)
-        .eq("company_id", profile.company_id)
+        
         .eq("transaction_type", "giris")
         .order("transaction_date", { ascending: false });
 

@@ -67,7 +67,7 @@ export default function CheckTransferDialog({
           issuer_customer:customers!checks_issuer_customer_id_fkey(id, name, company),
           issuer_supplier:suppliers!checks_issuer_supplier_id_fkey(id, name, company)
         `)
-        .eq("company_id", userData.company_id)
+        
         .eq("status", "portfoyde")
         .order("due_date", { ascending: true });
 

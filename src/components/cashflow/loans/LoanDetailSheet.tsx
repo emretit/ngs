@@ -159,7 +159,7 @@ const LoanDetailSheet: React.FC<LoanDetailSheetProps> = ({
         .from('accounts')
         .select('id, name, account_type, bank_name')
         .eq('is_active', true)
-        .eq('company_id', profile.company_id)
+        
         .order('account_type', { ascending: true })
         .order('name', { ascending: true });
 

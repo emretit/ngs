@@ -41,7 +41,7 @@ export function usePendingApprovals() {
             avatar_url
           )
         `)
-        .eq("company_id", companyId)
+        
         .eq("status", "pending")
         .order("created_at", { ascending: false })
         .limit(10);

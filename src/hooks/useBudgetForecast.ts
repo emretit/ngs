@@ -55,7 +55,7 @@ export const useBudgetForecast = (filters?: ForecastFilters) => {
       let query = supabase
         .from("budget_forecasts")
         .select("*")
-        .eq("company_id", companyId)
+        
         .order("category")
         .order("month");
 

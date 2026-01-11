@@ -73,7 +73,7 @@ export const useActivities = (filters: UseActivitiesFilters = {}) => {
         `,
           { count: "exact" }
         )
-        .eq("company_id", userData.company_id);
+        ;
 
       // Tarih filtresi
       if (filters.startDate) {

@@ -80,7 +80,7 @@ export const useProductSearchDialog = (
 
         // Apply company filter
         if (companyId) {
-          query = query.eq("company_id", companyId);
+          query = query;
         }
 
         const { data, error } = await query;
@@ -112,7 +112,7 @@ export const useProductSearchDialog = (
               .in("product_id", batchIds);
 
             if (companyId) {
-              stockQuery = stockQuery.eq("company_id", companyId);
+              stockQuery = stockQuery;
             }
 
             const { data: batchStockData, error: batchStockError } = await stockQuery;

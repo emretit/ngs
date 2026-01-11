@@ -52,7 +52,7 @@ export async function fetchSalesAnalysisData(
     const { data: opportunities, error: oppError } = await supabase
       .from('opportunities')
       .select('id, created_at, value, customer_id')
-      .eq('company_id', companyId)
+      
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString())
       .order('created_at');
@@ -63,7 +63,7 @@ export async function fetchSalesAnalysisData(
     const { data: proposals, error: propError } = await supabase
       .from('proposals')
       .select('id, created_at, total_amount, customer_id')
-      .eq('company_id', companyId)
+      
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString())
       .order('created_at');
@@ -74,7 +74,7 @@ export async function fetchSalesAnalysisData(
     const { data: orders, error: ordError } = await supabase
       .from('orders')
       .select('id, order_date, total_amount, customer_id')
-      .eq('company_id', companyId)
+      
       .gte('order_date', format(startDate, 'yyyy-MM-dd'))
       .lte('order_date', format(endDate, 'yyyy-MM-dd'))
       .order('order_date');

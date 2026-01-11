@@ -148,7 +148,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       if (!user) return;
       const { data: profile } = await supabase.from('profiles').select('company_id').eq('id', user.id).single();
       if (!profile?.company_id) return;
-      const { data, error } = await supabase.from('cashflow_categories').select('id, name').eq('type', 'expense').eq('company_id', profile.company_id).order('name');
+      const { data, error } = await supabase.from('cashflow_categories').select('id, name').eq('type', 'expense').order('name');
       if (!error) setCategories(data || []);
     } catch (error) {
       logger.error('Error fetching categories:', error);

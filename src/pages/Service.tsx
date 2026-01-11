@@ -248,7 +248,7 @@ const ServicePage = ({ defaultView = "dashboard", hideHeader = false }: ServiceP
       const { data, error } = await supabase
         .from('employees')
         .select('*')
-        .eq('company_id', userData.company_id)
+        
         .eq('is_technical', true)
         .eq('status', 'aktif');
       if (error) throw error;
@@ -267,7 +267,7 @@ const ServicePage = ({ defaultView = "dashboard", hideHeader = false }: ServiceP
       const { data, error } = await supabase
         .from('customers')
         .select('id, name, company')
-        .eq('company_id', userData.company_id);
+        ;
       if (error) throw error;
       return data;
     },

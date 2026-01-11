@@ -128,7 +128,7 @@ export class ElogoService {
       const { data: elogoAuth } = await supabase
         .from('elogo_auth')
         .select('is_active')
-        .eq('company_id', profile.company_id)
+        
         .single();
 
       return elogoAuth?.is_active || false;

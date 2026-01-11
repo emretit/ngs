@@ -219,7 +219,7 @@ export class VeribanService {
       const { data: veribanAuth } = await supabase
         .from('veriban_auth')
         .select('is_active')
-        .eq('company_id', profile.company_id)
+        
         .maybeSingle();
 
       return veribanAuth?.is_active || false;

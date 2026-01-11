@@ -77,7 +77,7 @@ export async function generateBulkPayroll(
     let employeesQuery = supabase
       .from('employees')
       .select('id, first_name, last_name, department, gross_salary, salary_amount')
-      .eq('company_id', companyId)
+      
       .eq('status', 'aktif');
 
     if (departmentFilter) {
@@ -109,7 +109,7 @@ export async function generateBulkPayroll(
     const { data: timesheetDays, error: timesheetError } = await supabase
       .from('timesheet_days')
       .select('*')
-      .eq('company_id', companyId)
+      
       .in('employee_id', employees.map(e => e.id))
       .gte('work_date', startDate)
       .lte('work_date', endDate);
@@ -319,7 +319,7 @@ export async function checkPayrollRunExists(
   const { data: payrollRun, error } = await supabase
     .from('payroll_runs')
     .select('*, payroll_items(count)')
-    .eq('company_id', companyId)
+    
     .eq('payroll_period_year', year)
     .eq('payroll_period_month', month)
     .maybeSingle();

@@ -75,7 +75,7 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
       const { data, error } = await supabase
         .from("opportunities")
         .select("id, title, status, value, currency, customer:customer_id(id, name, company)")
-        .eq("company_id", targetCompanyId)
+        
         .order("created_at", { ascending: false });
 
       if (error) throw error;

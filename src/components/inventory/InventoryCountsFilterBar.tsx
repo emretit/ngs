@@ -44,7 +44,7 @@ const InventoryCountsFilterBar = ({
       const { data, error } = await supabase
         .from("warehouses")
         .select("id, name, code")
-        .eq("company_id", profile?.company_id)
+        
         .eq("is_active", true)
         .order("name");
 

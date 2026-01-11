@@ -77,7 +77,7 @@ export default function NewStockEntry() {
       const { data, error } = await supabase
         .from("warehouses")
         .select("id, name, code")
-        .eq("company_id", profile.company_id)
+        
         .eq("is_active", true)
         .order("name");
 
@@ -103,7 +103,7 @@ export default function NewStockEntry() {
         .from("products")
         .select("*")
         .eq("is_active", true)
-        .eq("company_id", profile.company_id)
+        
         .order("name")
         .limit(50);
 

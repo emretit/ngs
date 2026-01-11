@@ -80,7 +80,7 @@ export const ActivitiesList = ({ customer }: ActivitiesListProps) => {
           )
         `
         )
-        .eq("company_id", userData.company_id)
+        
         .eq("related_item_type", "customer")
         .eq("related_item_id", customer.id);
 

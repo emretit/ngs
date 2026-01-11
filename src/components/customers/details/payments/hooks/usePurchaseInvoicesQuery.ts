@@ -21,14 +21,14 @@ export const usePurchaseInvoicesQuery = (customer: Customer) => {
         supabase
           .from('purchase_invoices')
           .select('*')
-          .eq('company_id', userData.company_id)
+          
           .eq('customer_id', customer.id)
           .order('invoice_date', { ascending: false }),
         // Müşteri aynı zamanda tedarikçi ise (supplier_id ile)
         supabase
           .from('purchase_invoices')
           .select('*')
-          .eq('company_id', userData.company_id)
+          
           .eq('supplier_id', customer.id)
           .order('invoice_date', { ascending: false })
       ]);

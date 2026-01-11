@@ -117,7 +117,7 @@ export async function createDefaultTemplates(companyId: string) {
     const { data: existing } = await supabase
       .from('pdf_templates')
       .select('id')
-      .eq('company_id', companyId)
+      
       .eq('type', template.type)
       .eq('name', template.name)
       .maybeSingle();

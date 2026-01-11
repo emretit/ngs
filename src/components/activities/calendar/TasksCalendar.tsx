@@ -65,7 +65,7 @@ const TasksCalendar = ({
             avatar_url
           )
         `)
-        .eq("company_id", userData.company_id);
+        ;
 
       // Tarih filtresi
       if (startDate) {

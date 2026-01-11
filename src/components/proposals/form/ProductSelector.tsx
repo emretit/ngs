@@ -69,7 +69,7 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
         .from("products")
         .select("*", { count: "exact" })
         .eq("is_active", true)
-        .eq("company_id", companyId)
+        
         .order("name")
         .range(from, to);
 
@@ -97,7 +97,7 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
             .from("warehouse_stock")
             .select("product_id, quantity")
             .in("product_id", productIds)
-            .eq("company_id", companyId);
+            ;
 
           if (stockData) {
             stockData.forEach((stock: { product_id: string; quantity: number }) => {

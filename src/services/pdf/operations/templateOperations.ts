@@ -52,7 +52,7 @@ export async function ensureDefaultTemplates() {
   const { data: existingTemplates } = await supabase
     .from('pdf_templates')
     .select('type')
-    .eq('company_id', companyId);
+    ;
 
   const existingTypes = new Set(existingTemplates?.map(t => t.type) || []);
 
@@ -62,7 +62,7 @@ export async function ensureDefaultTemplates() {
     const { data: allTemplates } = await supabase
       .from('pdf_templates')
       .select('type, name')
-      .eq('company_id', companyId);
+      ;
 
     const hasQuote = allTemplates?.some(t => t.type === 'quote' && t.name === 'Hazır Teklif Şablonu');
     const hasInvoice = allTemplates?.some(t => t.type === 'invoice' && t.name === 'Hazır Fatura Şablonu');
@@ -91,7 +91,7 @@ export async function getTemplates(companyId?: string, type?: 'quote' | 'invoice
 
   // Always filter by company_id
   if (targetCompanyId) {
-    query = query.eq('company_id', targetCompanyId);
+    query = query;
   } else {
     query = query.is('company_id', null);
   }
@@ -110,7 +110,7 @@ export async function getTemplates(companyId?: string, type?: 'quote' | 'invoice
     let retryQuery = supabase
       .from('pdf_templates')
       .select('*')
-      .eq('company_id', targetCompanyId);
+      ;
     
     if (type) {
       retryQuery = retryQuery.eq('type', type);
@@ -141,7 +141,7 @@ export async function getDefaultTemplate(type: 'quote' | 'invoice' | 'proposal' 
     .limit(1);
 
   if (companyId) {
-    query = query.eq('company_id', companyId);
+    query = query;
   } else {
     query = query.is('company_id', null);
   }
@@ -248,7 +248,7 @@ export async function getServiceTemplates(): Promise<ServicePdfTemplate[]> {
   let query = supabase
     .from('service_templates')
     .select('*')
-    .eq('company_id', companyId)
+    
     .order('usage_count', { ascending: false })
     .order('created_at', { ascending: false });
 

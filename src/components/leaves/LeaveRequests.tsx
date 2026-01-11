@@ -114,7 +114,7 @@ const LeaveRequests = () => {
           .order("created_at", { ascending: false });
 
         // Tenant/Company filter
-        query = query.eq("company_id", userData.company_id);
+        query = query;
 
         // Status filter
         if (statusFilter !== "all") {

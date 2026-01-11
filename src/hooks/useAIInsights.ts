@@ -29,7 +29,7 @@ export const useAIInsights = () => {
       const { data, error } = await supabase
         .from('ai_insights')
         .select('id, company_id, insight_text, insight_type, data_summary, created_at, period_start, period_end')
-        .eq('company_id', userData.company_id)
+        
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -53,7 +53,7 @@ export const useAIInsights = () => {
       const { data, error } = await supabase
         .from('ai_insights')
         .select('id, company_id, insight_text, insight_type, data_summary, created_at, period_start, period_end')
-        .eq('company_id', userData.company_id)
+        
         .order('created_at', { ascending: false })
         .limit(10);
 

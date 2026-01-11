@@ -85,7 +85,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
           .from('customers')
           .select('*')
           .eq('id', id)
-          .eq('company_id', companyId)
+          
           .maybeSingle(),
         {
           operation: 'Müşteri bilgileri yükleme',

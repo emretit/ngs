@@ -70,12 +70,12 @@ export async function calculateCashFlowRisk(): Promise<RiskFactor> {
     const { data: bankAccounts } = await supabase
       .from('bank_accounts')
       .select('current_balance')
-      .eq('company_id', companyId);
+      ;
 
     const { data: cashAccounts } = await supabase
       .from('cash_accounts')
       .select('current_balance')
-      .eq('company_id', companyId);
+      ;
 
     const totalCash =
       (bankAccounts?.reduce((sum, acc) => sum + (acc.current_balance || 0), 0) || 0) +
@@ -85,7 +85,7 @@ export async function calculateCashFlowRisk(): Promise<RiskFactor> {
     const { data: payables } = await supabase
       .from('einvoices')
       .select('remaining_amount')
-      .eq('company_id', companyId)
+      
       .gt('remaining_amount', 0);
 
     const totalPayables = payables?.reduce((sum, p) => sum + (p.remaining_amount || 0), 0) || 0;
@@ -153,7 +153,7 @@ export async function calculateReceivablesRisk(): Promise<RiskFactor> {
     const { data: customers } = await supabase
       .from('customers')
       .select('balance')
-      .eq('company_id', companyId);
+      ;
 
     const totalReceivables = customers?.reduce((sum, c) => sum + (c.balance || 0), 0) || 0;
 
@@ -161,7 +161,7 @@ export async function calculateReceivablesRisk(): Promise<RiskFactor> {
     const { data: invoices } = await supabase
       .from('sales_invoices')
       .select('invoice_date, total_amount, paid_amount')
-      .eq('company_id', companyId);
+      ;
 
     let overdueAmount = 0;
     const now = new Date();
@@ -252,7 +252,7 @@ export async function calculateConcentrationRisk(): Promise<RiskFactor> {
     const { data: invoices } = await supabase
       .from('sales_invoices')
       .select('customer_id, total_amount')
-      .eq('company_id', companyId)
+      
       .gte('invoice_date', oneYearAgo.toISOString());
 
     if (!invoices || invoices.length === 0) {
@@ -345,7 +345,7 @@ export async function calculateInventoryRisk(): Promise<RiskFactor> {
     const { data: products } = await supabase
       .from('products')
       .select('current_stock, min_stock_level')
-      .eq('company_id', companyId);
+      ;
 
     if (!products || products.length === 0) {
       return {

@@ -49,7 +49,7 @@ export function AttachmentsTab({ objectType, objectId }: AttachmentsTabProps) {
       const { data, error } = await supabase
         .from('purchasing_attachments')
         .select('*')
-        .eq('company_id', profile.company_id)
+        
         .eq('object_type', objectType)
         .eq('object_id', objectId)
         .order('created_at', { ascending: false });

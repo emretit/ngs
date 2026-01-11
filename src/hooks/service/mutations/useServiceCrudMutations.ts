@@ -204,7 +204,7 @@ export const useServiceCrudMutations = () => {
         .from('service_requests')
         .update(updatePayload)
         .eq('id', id)
-        .eq('company_id', userData.company_id)
+        
         .select()
         .single();
 

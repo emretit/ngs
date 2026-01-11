@@ -35,7 +35,7 @@ const WarehouseEdit = () => {
         .from("warehouses")
         .select("*")
         .eq("id", id)
-        .eq("company_id", profile?.company_id)
+        
         .single();
 
       if (error) throw error;

@@ -38,7 +38,7 @@ export const EditableEmployeeDetails = ({
       const { data } = await supabase
         .from('departments')
         .select('name')
-        .eq('company_id', userData.company_id)
+        
         .order('name');
       
       setDepartments(data || []);

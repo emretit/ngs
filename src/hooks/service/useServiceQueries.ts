@@ -35,7 +35,7 @@ export const useServiceQueries = (): ServiceQueriesResult => {
             address
           )
         `)
-        .eq('company_id', userData.company_id)
+        
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -124,7 +124,7 @@ export const useServiceQueries = (): ServiceQueriesResult => {
           )
         `)
         .eq('id', id)
-        .eq('company_id', userData.company_id)
+        
         .single();
 
       if (error) {

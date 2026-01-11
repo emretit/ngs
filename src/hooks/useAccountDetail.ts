@@ -146,7 +146,7 @@ export function useCashAccountDetail(accountId: string | undefined) {
         .from('cash_accounts')
         .select('id, name, description, current_balance, currency, is_active, location, responsible_person, created_at, updated_at')
         .eq('id', accountId)
-        .eq('company_id', companyId)
+        
         .single();
 
       if (error) throw error;
@@ -176,7 +176,7 @@ export function useCashAccountTransactions(accountId: string | undefined, limit:
           .from('cash_transactions')
           .select('*')
           .eq('account_id', accountId)
-          .eq('company_id', companyId)
+          
           .order('transaction_date', { ascending: false })
           .limit(limit),
         
@@ -815,7 +815,7 @@ export function usePaymentCashAccounts() {
       const { data, error } = await supabase
         .from('cash_accounts')
         .select('id, name')
-        .eq('company_id', companyId)
+        
         .eq('is_active', true)
         .order('name');
       
@@ -836,7 +836,7 @@ export function usePaymentBankAccounts() {
       const { data, error } = await supabase
         .from('bank_accounts')
         .select('id, account_name, bank_name')
-        .eq('company_id', companyId)
+        
         .eq('is_active', true)
         .order('account_name');
       
@@ -860,7 +860,7 @@ export function usePaymentCreditCards() {
       const { data, error } = await supabase
         .from('credit_cards')
         .select('id, card_name')
-        .eq('company_id', companyId)
+        
         .eq('status', 'active')
         .order('card_name');
       
@@ -881,7 +881,7 @@ export function usePaymentPartnerAccounts() {
       const { data, error } = await supabase
         .from('partner_accounts')
         .select('id, partner_name')
-        .eq('company_id', companyId)
+        
         .eq('is_active', true)
         .order('partner_name');
       

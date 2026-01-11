@@ -109,7 +109,7 @@ export const EmployeeLeaveTab = ({ employee }: EmployeeLeaveTabProps) => {
       const { data: leaveTypes, error: leaveTypesError } = await supabase
         .from('leave_types')
         .select('*')
-        .eq('company_id', userData.company_id)
+        
         .eq('is_active', true)
         .order('name');
 

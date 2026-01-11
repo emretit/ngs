@@ -57,7 +57,7 @@ export const useActivitiesInfiniteScroll = (
         `,
           { count: "exact" }
         )
-        .eq("company_id", userData.company_id);
+        ;
 
       // Tarih filtresi
       if (filters.startDate) {
@@ -116,7 +116,7 @@ export const useActivitiesInfiniteScroll = (
         const { count: totalCount, error: countError } = await client
           .from("activities")
           .select("*", { count: "exact", head: true })
-          .eq("company_id", userData.company_id);
+          ;
 
         if (countError) {
           error = countError;
@@ -143,7 +143,7 @@ export const useActivitiesInfiniteScroll = (
                   created_at
                 )
               `)
-              .eq("company_id", userData.company_id)
+              
               .eq("status", status);
 
             // Apply same filters

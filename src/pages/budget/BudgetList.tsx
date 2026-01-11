@@ -77,7 +77,7 @@ const BudgetList = memo(() => {
       const { data: allBudgets, error: budgetsError } = await supabase
         .from("budgets")
         .select("year, budget_amount, actual_amount, currency")
-        .eq("company_id", companyId);
+        ;
 
       if (budgetsError) throw budgetsError;
 

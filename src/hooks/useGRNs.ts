@@ -150,7 +150,7 @@ export const useCreateGRN = () => {
               .select('id, quantity')
               .eq('product_id', poLine.product_id)
               .eq('warehouse_id', formData.warehouse_id)
-              .eq('company_id', profile.company_id)
+              
               .maybeSingle();
 
             if (existingStock) {

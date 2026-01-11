@@ -53,7 +53,7 @@ const ProductionBOMs = () => {
       const { data, error } = await supabase
         .from("products")
         .select("id, name")
-        .eq("company_id", profile.company_id)
+        
         .order("name");
       
       if (error) {

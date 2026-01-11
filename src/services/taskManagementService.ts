@@ -105,7 +105,7 @@ export const listTasks = async (filters: TaskFilters = {}): Promise<Task[]> => {
   let query = supabase
     .from('tasks')
     .select('*')
-    .eq('company_id', companyId);
+    ;
 
   // Apply filters
   if (filters.status && filters.status.length > 0) {
@@ -151,7 +151,7 @@ export const getTask = async (taskId: string): Promise<Task | null> => {
     .from('tasks')
     .select('*')
     .eq('id', taskId)
-    .eq('company_id', companyId)
+    
     .single();
 
   if (error) {
@@ -176,7 +176,7 @@ export const updateTaskStatus = async (
     .from('tasks')
     .update({ status })
     .eq('id', taskId)
-    .eq('company_id', companyId)
+    
     .select()
     .single();
 
@@ -211,7 +211,7 @@ export const updateTask = async (
     .from('tasks')
     .update(updateData)
     .eq('id', taskId)
-    .eq('company_id', companyId)
+    
     .select()
     .single();
 
@@ -237,7 +237,7 @@ export const deleteTask = async (taskId: string): Promise<boolean> => {
     .from('tasks')
     .delete()
     .eq('id', taskId)
-    .eq('company_id', companyId)
+    
     .eq('user_id', user.id);
 
   if (error) {
@@ -264,7 +264,7 @@ export const getTaskStatistics = async (): Promise<{
   const { data, error } = await supabase
     .from('tasks')
     .select('status, due_date')
-    .eq('company_id', companyId);
+    ;
 
   if (error) {
     logger.error('Task statistics error:', error);

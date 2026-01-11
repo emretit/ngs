@@ -32,7 +32,7 @@ const CompanyUsersTab = ({ companyId }: CompanyUsersTabProps) => {
             role
           )
         `)
-        .eq('company_id', companyId)
+        
         .order('created_at', { ascending: false });
 
       if (error) throw error;

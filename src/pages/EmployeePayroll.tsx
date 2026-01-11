@@ -102,7 +102,7 @@ export const EmployeePayrollContent = ({
         .from("timesheet_days")
         .select("*")
         .eq("employee_id", employeeId)
-        .eq("company_id", companyId)
+        
         .gte("work_date", startDate)
         .lte("work_date", endDate);
 

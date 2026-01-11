@@ -17,7 +17,7 @@ export const useApprovalWorkflows = () => {
       const { data, error } = await supabase
         .from("approval_workflows")
         .select("*")
-        .eq("company_id", companyId)
+        
         .order("created_at", { ascending: false });
 
       if (error) throw error;

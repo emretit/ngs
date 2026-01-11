@@ -41,7 +41,7 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       let query = supabase
         .from('cashflow_subcategories')
         .select('*')
-        .eq('company_id', profile.company_id)
+        
         .order('name');
 
       if (catId) {

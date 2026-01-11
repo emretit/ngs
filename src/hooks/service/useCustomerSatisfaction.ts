@@ -76,7 +76,7 @@ export function useCustomerSatisfaction(startDate?: Date, endDate?: Date) {
             last_name
           )
         `)
-        .eq('company_id', userData.company_id)
+        
         .not('customer_rating', 'is', null)
         .eq('service_status', 'completed');
 
@@ -259,7 +259,7 @@ export function useRecentRatings(limit: number = 10) {
             name
           )
         `)
-        .eq('company_id', userData.company_id)
+        
         .not('customer_rating', 'is', null)
         .eq('service_status', 'completed')
         .order('completion_date', { ascending: false })

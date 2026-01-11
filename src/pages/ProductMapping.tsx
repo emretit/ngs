@@ -111,7 +111,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
           .from('warehouse_stock')
           .select('product_id, quantity')
           .in('product_id', productIds)
-          .eq('company_id', companyId);
+          ;
 
         if (stockData) {
           stockData.forEach((stock: { product_id: string; quantity: number }) => {
@@ -340,7 +340,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
               const { data: existingStock } = await supabase
                 .from("warehouse_stock")
                 .select("id, quantity")
-                .eq("company_id", companyId)
+                
                 .eq("product_id", updatedProduct.id)
                 .eq("warehouse_id", mapping.selectedWarehouseId)
                 .maybeSingle();

@@ -178,7 +178,7 @@ export const useIncomeExpenseAnalysis = (filters: IncomeExpenseFilters) => {
           customer_id,
           customers(name, company)
         `)
-        .eq("company_id", userData.company_id)
+        
         .eq("para_birimi", filters.currency)
         .gte("fatura_tarihi", startDate)
         .lte("fatura_tarihi", endDate)
@@ -196,7 +196,7 @@ export const useIncomeExpenseAnalysis = (filters: IncomeExpenseFilters) => {
       const { data: previousYearInvoices } = await supabase
         .from("sales_invoices")
         .select("toplam_tutar")
-        .eq("company_id", userData.company_id)
+        
         .eq("para_birimi", filters.currency)
         .gte("fatura_tarihi", previousYearStart)
         .lte("fatura_tarihi", previousYearEnd)
@@ -212,7 +212,7 @@ export const useIncomeExpenseAnalysis = (filters: IncomeExpenseFilters) => {
           subcategory,
           cashflow_categories(name)
         `)
-        .eq("company_id", userData.company_id)
+        
         .eq("type", "expense")
         .gte("date", startDate)
         .lte("date", endDate);
@@ -228,7 +228,7 @@ export const useIncomeExpenseAnalysis = (filters: IncomeExpenseFilters) => {
       const { data: previousYearExpensesData } = await supabase
         .from("expenses")
         .select("amount")
-        .eq("company_id", userData.company_id)
+        
         .eq("type", "expense")
         .gte("date", previousYearStart)
         .lte("date", previousYearEnd);

@@ -74,7 +74,7 @@ export default function InventoryTransactionDetail() {
         .from("warehouse_stock")
         .select("product_id, quantity")
         .eq("warehouse_id", transaction.warehouse_id)
-        .eq("company_id", profile.company_id)
+        
         .in("product_id", productIds);
 
       if (stockData) {

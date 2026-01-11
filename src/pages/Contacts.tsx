@@ -79,7 +79,7 @@ const Contacts = memo(() => {
       const { count: totalCount, error: countError } = await supabase
         .from("customers")
         .select("*", { count: 'exact', head: true })
-        .eq("company_id", companyId);
+        ;
 
       if (countError) throw countError;
 
@@ -94,7 +94,7 @@ const Contacts = memo(() => {
         const { data: customersPage, error: customersError } = await supabase
           .from("customers")
           .select("balance")
-          .eq("company_id", companyId)
+          
           .range(from, from + pageSize - 1);
 
         if (customersError) throw customersError;

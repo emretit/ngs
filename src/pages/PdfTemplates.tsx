@@ -76,7 +76,7 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
     if (searchQuery) {
       filtered = filtered.filter(template => {
         const name = template.name?.toLowerCase() || '';
-        const description = template.description?.toLowerCase() || '';
+        const description = ('description' in template ? (template as any).description : '')?.toLowerCase() || '';
         const query = searchQuery.toLowerCase();
         return name.includes(query) || description.includes(query);
       });
@@ -361,8 +361,8 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
         open={isPreviewModalOpen}
         onOpenChange={setIsPreviewModalOpen}
         onEdit={handleEditTemplate}
-        onDuplicate={handleDuplicateTemplate}
-        onDelete={handleDeleteTemplateClick}
+        onDuplicate={(t: any) => handleDuplicateTemplate({ ...t, templateType: t.templateType || 'pdf' })}
+        onDelete={(t: any) => handleDeleteTemplateClick({ ...t, templateType: t.templateType || 'pdf' })}
       />
 
       {/* Template Type Selection Modal */}

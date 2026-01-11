@@ -118,7 +118,7 @@ export const generatePayrollPdf = async (options: PayrollPdfOptions): Promise<vo
   doc.text('BRÜT MAAŞ HESAPLAMASI', 15, yPos);
   yPos += 5;
 
-  const grossData = [
+  const grossData: any[][] = [
     ['Aylık Maaş Tabanı', formatCurrency(calculation.base_salary)],
   ];
 
@@ -139,8 +139,8 @@ export const generatePayrollPdf = async (options: PayrollPdfOptions): Promise<vo
   }
 
   grossData.push([
-    { content: 'TOPLAM BRÜT MAAŞ', styles: { fontStyle: 'bold' } },
-    { content: formatCurrency(calculation.gross_salary), styles: { fontStyle: 'bold', fillColor: [220, 252, 231] } }
+    { content: 'TOPLAM BRÜT MAAŞ', styles: { fontStyle: 'bold' as const } },
+    { content: formatCurrency(calculation.gross_salary), styles: { fontStyle: 'bold' as const, fillColor: [220, 252, 231] as [number, number, number] } }
   ]);
 
   autoTable(doc, {
@@ -163,12 +163,12 @@ export const generatePayrollPdf = async (options: PayrollPdfOptions): Promise<vo
   doc.text('KESİNTİLER', 15, yPos);
   yPos += 5;
 
-  const deductionsData = [
-    [{ content: 'SGK Kesintileri', styles: { fontStyle: 'bold', fillColor: [245, 245, 245] } }, ''],
+  const deductionsData: any[][] = [
+    [{ content: 'SGK Kesintileri', styles: { fontStyle: 'bold' as const, fillColor: [245, 245, 245] as [number, number, number] } }, ''],
     [`  SGK Matrah Tabanı`, formatCurrency(calculation.sgk_base)],
     [`  SGK Primi (%14)`, `-${formatCurrency(calculation.sgk_employee_share)}`],
     [`  İşsizlik Primi (%1)`, `-${formatCurrency(calculation.unemployment_employee)}`],
-    [{ content: 'Vergi Kesintileri', styles: { fontStyle: 'bold', fillColor: [245, 245, 245] } }, ''],
+    [{ content: 'Vergi Kesintileri', styles: { fontStyle: 'bold' as const, fillColor: [245, 245, 245] as [number, number, number] } }, ''],
     [`  Gelir Vergisi Matrahı`, formatCurrency(calculation.income_tax_base)],
   ];
 
@@ -191,7 +191,7 @@ export const generatePayrollPdf = async (options: PayrollPdfOptions): Promise<vo
   }
 
   if (calculation.advances > 0 || calculation.garnishments > 0) {
-    deductionsData.push([{ content: 'Diğer Kesintiler', styles: { fontStyle: 'bold', fillColor: [245, 245, 245] } }, '']);
+    deductionsData.push([{ content: 'Diğer Kesintiler', styles: { fontStyle: 'bold' as const, fillColor: [245, 245, 245] as [number, number, number] } }, '']);
     
     if (calculation.advances > 0) {
       deductionsData.push([`  Avanslar`, `-${formatCurrency(calculation.advances)}`]);
@@ -203,8 +203,8 @@ export const generatePayrollPdf = async (options: PayrollPdfOptions): Promise<vo
   }
 
   deductionsData.push([
-    { content: 'TOPLAM KESİNTİLER', styles: { fontStyle: 'bold' } },
-    { content: `-${formatCurrency(calculation.total_deductions)}`, styles: { fontStyle: 'bold', fillColor: [254, 226, 226] } }
+    { content: 'TOPLAM KESİNTİLER', styles: { fontStyle: 'bold' as const } },
+    { content: `-${formatCurrency(calculation.total_deductions)}`, styles: { fontStyle: 'bold' as const, fillColor: [254, 226, 226] as [number, number, number] } }
   ]);
 
   autoTable(doc, {
@@ -247,14 +247,14 @@ export const generatePayrollPdf = async (options: PayrollPdfOptions): Promise<vo
   doc.text('İŞVEREN MALİYETİ', 15, yPos);
   yPos += 5;
 
-  const employerData = [
+  const employerData: any[][] = [
     ['Brüt Maaş', formatCurrency(calculation.gross_salary)],
     ['İşveren SGK Primi (%20,5)', `+${formatCurrency(calculation.sgk_employer_share)}`],
     ['İşveren İşsizlik Primi (%2)', `+${formatCurrency(calculation.unemployment_employer)}`],
     ['İş Kazası Sigortası', `+${formatCurrency(calculation.accident_insurance)}`],
     [
-      { content: 'TOPLAM İŞVEREN MALİYETİ', styles: { fontStyle: 'bold' } },
-      { content: formatCurrency(calculation.total_employer_cost), styles: { fontStyle: 'bold', fillColor: [224, 231, 255] } }
+      { content: 'TOPLAM İŞVEREN MALİYETİ', styles: { fontStyle: 'bold' as const } },
+      { content: formatCurrency(calculation.total_employer_cost), styles: { fontStyle: 'bold' as const, fillColor: [224, 231, 255] as [number, number, number] } }
     ]
   ];
 

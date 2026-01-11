@@ -56,6 +56,8 @@ interface InvoiceData {
   send_type: string;
   sales_platform: string;
   is_despatch: boolean;
+  internet_info: any;
+  return_invoice_info: any;
   description: string;
   notes: string;
   banka_bilgileri: string;
@@ -124,6 +126,8 @@ const ServiceToInvoiceCreate = () => {
       send_type: "ELEKTRONIK",
       sales_platform: "NORMAL",
       is_despatch: false,
+      internet_info: null,
+      return_invoice_info: null,
       description: "",
       notes: "",
       banka_bilgileri: "",

@@ -537,8 +537,9 @@ const TimePayrollPage: React.FC = () => {
                     Çalışma saati bilgilerini görüntüleyin ve düzenleyin
                   </SheetDescription>
                 </SheetHeader>
-                {selectedCell && (
+                {selectedCell && companyId && (
                   <TimeTrackingCellDetail
+                    companyId={companyId}
                     employeeId={selectedCell.employeeId}
                     date={selectedCell.date}
                     isLocked={isLocked}

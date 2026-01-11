@@ -205,15 +205,15 @@ export class OutgoingInvoiceSyncService {
     // StateCode (elogo_status) ve AnswerType'dan einvoice_status'u türet
     const stateCode = outgoing.elogoStatus || null;
     const answerType = outgoing.answerType || null;
-    const einvoiceStatus = getInvoiceStatusFromStateCode(
-      stateCode,
-      answerType
+    const invoiceStatus = getInvoiceStatusFromStateCode(
+      stateCode as any,
+      answerType as any
     );
 
     logger.debug(`📊 [OutgoingInvoiceSync] ${outgoing.invoiceNumber} mapping:`, {
       stateCode,
       answerType,
-      derivedStatus: einvoiceStatus,
+      derivedStatus: invoiceStatus,
       oldStatus: outgoing.status
     });
 
@@ -250,7 +250,11 @@ export class OutgoingInvoiceSyncService {
       nilvera_invoice_id: outgoing.id, // Veriban outgoing_invoice.id - Eşleştirme anahtarı
       
       // SINGLE SOURCE OF TRUTH: einvoice_status artık elogo_status ve answer_type'dan türetiliyor
-      einvoice_status: einvoiceStatus === 'pending' ? 'sending' : einvoiceStatus,
+      // Map returned to rejected for DB compatibility
+      einvoice_status: invoiceStatus === 'pending' ? 'sending' : 
+                       invoiceStatus === 'returned' ? 'rejected' :
+                       invoiceStatus === 'unknown' ? 'error' :
+                       invoiceStatus as 'draft' | 'sending' | 'sent' | 'delivered' | 'accepted' | 'rejected' | 'cancelled' | 'error',
       
       // Veriban durum bilgileri - outgoing_invoices'tan aktar
       elogo_status: stateCode,                              // StateCode (1-5) - SINGLE SOURCE OF TRUTH

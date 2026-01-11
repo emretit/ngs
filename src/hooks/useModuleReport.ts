@@ -31,6 +31,9 @@ export function useModuleReport() {
   const excel = useModuleReportExcel();
   const pdf = useModuleReportPDF();
 
+  // Import moduleConfig for external usage
+  const { moduleConfig: config } = require('./module-report/config');
+
   return {
     // Data operations
     fetchModuleData: data.fetchModuleData,
@@ -39,5 +42,8 @@ export function useModuleReport() {
     // Export operations
     exportToExcel: excel.exportToExcel,
     exportToPDF: pdf.exportToPDF,
+    
+    // Config
+    moduleConfig: config,
   };
 }

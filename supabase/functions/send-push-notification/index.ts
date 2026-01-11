@@ -93,15 +93,69 @@ Deno.serve(async (req) => {
     let notificationTitle: string;
     let notificationBody: string;
     let notificationData: Record<string, string> = {};
+    let isWebhook = false;
     
     if (payload.user_id) {
-      // Mobil uygulamadan gelen format
+      // Mobil uygulamadan gelen format - Authentication gerekli
+      const authHeader = req.headers.get('authorization');
+      
+      if (!authHeader) {
+        console.error('❌ Authorization header bulunamadı');
+        return new Response(JSON.stringify({ 
+          error: 'Yetkilendirme gerekli',
+          details: 'Authorization header eksik'
+        }), {
+          headers: corsHeaders,
+          status: 401
+        });
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+      if (userError || !user) {
+        console.error('❌ Geçersiz token:', userError);
+        return new Response(JSON.stringify({ 
+          error: 'Geçersiz yetkilendirme token\'ı',
+          details: userError?.message || 'Token doğrulanamadı'
+        }), {
+          headers: corsHeaders,
+          status: 401
+        });
+      }
+
+      // Kullanıcı sadece kendisine bildirim gönderebilir (veya admin ise başkasına)
+      const targetUserId = payload.user_id;
+      
+      // Admin kontrolü - user_roles tablosundan kontrol et
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      
+      const isAdmin = userRoles?.some(r => r.role === 'admin' || r.role === 'owner');
+      
+      if (targetUserId !== user.id && !isAdmin) {
+        console.error('❌ Yetki hatası: Kullanıcı başkasına bildirim gönderemez');
+        return new Response(JSON.stringify({ 
+          error: 'Yetki hatası',
+          details: 'Sadece kendinize bildirim gönderebilirsiniz'
+        }), {
+          headers: corsHeaders,
+          status: 403
+        });
+      }
+
+      console.log('✅ Kullanıcı doğrulandı:', user.id);
+      
       userId = payload.user_id;
       notificationTitle = payload.title || 'Bildirim';
       notificationBody = payload.body || '';
       notificationData = payload.data || {};
     } else if (payload.record) {
       // Webhook'tan gelen format (service_requests tablosu güncellendiğinde)
+      // Webhook'lar internal olarak çağrıldığı için auth gerekmez
+      isWebhook = true;
       const serviceRequest = payload.record;
       
       // assigned_technician değiştiyse teknisyene bildirim gönder

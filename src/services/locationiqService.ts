@@ -1,15 +1,10 @@
 import { logger } from '@/utils/logger';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * LocationIQ API Service
- * Provides address autocomplete and geocoding functionality
- * 
- * Note: API key should be configured via environment variable VITE_LOCATIONIQ_API_KEY
- * For production, set it in your deployment platform (Vercel, Netlify, etc.)
+ * Proxies all requests through a Supabase Edge Function to keep API key server-side
  */
-
-const LOCATIONIQ_API_KEY = import.meta.env.VITE_LOCATIONIQ_API_KEY || '';
-const BASE_URL = 'https://api.locationiq.com/v1';
 
 export interface LocationIQAutocompleteResult {
   place_id: string;
@@ -48,15 +43,6 @@ export interface GeocodingResult {
 }
 
 class LocationIQService {
-  private apiKey: string;
-
-  constructor() {
-    this.apiKey = LOCATIONIQ_API_KEY || '';
-    if (!this.apiKey) {
-      logger.warn('LocationIQ API key not configured. Set LOCATIONIQ_API_KEY constant or use Supabase Secrets in production.');
-    }
-  }
-
   /**
    * Search for addresses with autocomplete
    * @param query - Search query
@@ -67,34 +53,25 @@ class LocationIQService {
     query: string,
     countryCode: string = 'tr'
   ): Promise<LocationIQAutocompleteResult[]> {
-    if (!this.apiKey) {
-      throw new Error('LocationIQ API key is not configured');
-    }
-
     if (!query || query.length < 3) {
       return [];
     }
 
     try {
-      const params = new URLSearchParams({
-        key: this.apiKey,
-        q: query,
-        format: 'json',
-        countrycodes: countryCode,
-        addressdetails: '1',
-        limit: '10',
-        dedupe: '1',
+      const { data, error } = await supabase.functions.invoke('geocode', {
+        body: {
+          action: 'autocomplete',
+          query,
+          countryCode
+        }
       });
 
-      const response = await fetch(`${BASE_URL}/autocomplete.php?${params}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`LocationIQ API error: ${response.status} - ${errorText}`);
+      if (error) {
+        logger.error('LocationIQ autocomplete error:', error);
+        throw new Error(error.message || 'Adres arama başarısız oldu');
       }
 
-      const data = await response.json();
-      return data;
+      return data || [];
     } catch (error) {
       logger.error('LocationIQ autocomplete error:', error);
       throw error;
@@ -111,38 +88,29 @@ class LocationIQService {
     address: string,
     countryCode: string = 'tr'
   ): Promise<GeocodingResult | null> {
-    if (!this.apiKey) {
-      throw new Error('LocationIQ API key is not configured');
-    }
-
     if (!address) {
       return null;
     }
 
     try {
-      const params = new URLSearchParams({
-        key: this.apiKey,
-        q: address,
-        format: 'json',
-        countrycodes: countryCode,
-        addressdetails: '1',
-        limit: '1',
+      const { data, error } = await supabase.functions.invoke('geocode', {
+        body: {
+          action: 'geocode',
+          query: address,
+          countryCode
+        }
       });
 
-      const response = await fetch(`${BASE_URL}/search.php?${params}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`LocationIQ geocoding error: ${response.status} - ${errorText}`);
+      if (error) {
+        logger.error('LocationIQ geocoding error:', error);
+        throw new Error(error.message || 'Geocoding başarısız oldu');
       }
-
-      const data = await response.json();
       
-      if (!data || data.length === 0) {
+      if (!data || (Array.isArray(data) && data.length === 0)) {
         return null;
       }
 
-      const result = data[0];
+      const result = Array.isArray(data) ? data[0] : data;
       
       return {
         address,
@@ -167,37 +135,29 @@ class LocationIQService {
    * @returns Address information
    */
   async reverseGeocode(lat: number, lon: number): Promise<GeocodingResult | null> {
-    if (!this.apiKey) {
-      throw new Error('LocationIQ API key is not configured');
-    }
-
     try {
-      const params = new URLSearchParams({
-        key: this.apiKey,
-        lat: lat.toString(),
-        lon: lon.toString(),
-        format: 'json',
-        addressdetails: '1',
+      const { data, error } = await supabase.functions.invoke('geocode', {
+        body: {
+          action: 'reverse',
+          lat,
+          lon
+        }
       });
 
-      const response = await fetch(`${BASE_URL}/reverse.php?${params}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`LocationIQ reverse geocoding error: ${response.status} - ${errorText}`);
+      if (error) {
+        logger.error('LocationIQ reverse geocoding error:', error);
+        throw new Error(error.message || 'Reverse geocoding başarısız oldu');
       }
-
-      const result = await response.json();
       
       return {
-        address: result.display_name,
+        address: data.display_name,
         latitude: lat,
         longitude: lon,
-        display_name: result.display_name,
-        city: result.address?.city || result.address?.county || result.address?.state,
-        district: result.address?.suburb || result.address?.county,
-        country: result.address?.country,
-        postal_code: result.address?.postcode,
+        display_name: data.display_name,
+        city: data.address?.city || data.address?.county || data.address?.state,
+        district: data.address?.suburb || data.address?.county,
+        country: data.address?.country,
+        postal_code: data.address?.postcode,
       };
     } catch (error) {
       logger.error('LocationIQ reverse geocoding error:', error);
@@ -206,25 +166,11 @@ class LocationIQService {
   }
 
   /**
-   * Check if API key is configured
+   * Check if service is available (always true since we use edge function)
    */
   isConfigured(): boolean {
-    return !!this.apiKey;
+    return true;
   }
 }
 
 export const locationiqService = new LocationIQService();
-
-
-
-
-
-
-
-
-
-
-
-
-
-

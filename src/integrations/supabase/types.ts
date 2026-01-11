@@ -852,6 +852,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "boms_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
         ]
       }
       budget_approvals: {
@@ -2301,6 +2308,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "delivery_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
         ]
       }
       departments: {
@@ -2473,6 +2487,13 @@ export type Database = {
             columns: ["matched_stock_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "e_fatura_stok_eslestirme_matched_stock_id_fkey"
+            columns: ["matched_stock_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
             referencedColumns: ["id"]
           },
         ]
@@ -4537,6 +4558,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "inventory_transaction_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "inventory_transaction_items_transaction_id_fkey"
             columns: ["transaction_id"]
             isOneToOne: false
@@ -5866,6 +5894,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
         ]
       }
       orders: {
@@ -7179,6 +7214,7 @@ export type Database = {
           product_type: string
           purchase_price: number | null
           purchase_price_includes_vat: boolean | null
+          reserved_quantity: number | null
           sku: string | null
           status: string
           stock_quantity: number | null
@@ -7214,6 +7250,7 @@ export type Database = {
           product_type?: string
           purchase_price?: number | null
           purchase_price_includes_vat?: boolean | null
+          reserved_quantity?: number | null
           sku?: string | null
           status?: string
           stock_quantity?: number | null
@@ -7249,6 +7286,7 @@ export type Database = {
           product_type?: string
           purchase_price?: number | null
           purchase_price_includes_vat?: boolean | null
+          reserved_quantity?: number | null
           sku?: string | null
           status?: string
           stock_quantity?: number | null
@@ -7624,6 +7662,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "purchase_invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "purchase_invoice_items_purchase_invoice_id_fkey"
             columns: ["purchase_invoice_id"]
             isOneToOne: false
@@ -7791,6 +7836,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "purchase_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
         ]
       }
       purchase_orders: {
@@ -7950,6 +8002,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_request_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
             referencedColumns: ["id"]
           },
           {
@@ -8234,6 +8293,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
             referencedColumns: ["id"]
           },
           {
@@ -8856,6 +8922,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "sales_invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sales_invoice_items_sales_invoice_id_fkey"
             columns: ["sales_invoice_id"]
             isOneToOne: false
@@ -8920,6 +8993,7 @@ export type Database = {
           return_invoice_info: Json | null
           sales_platform: string | null
           send_type: string | null
+          service_request_id: string | null
           supplier_id: string | null
           toplam_tutar: number
           updated_at: string
@@ -8982,6 +9056,7 @@ export type Database = {
           return_invoice_info?: Json | null
           sales_platform?: string | null
           send_type?: string | null
+          service_request_id?: string | null
           supplier_id?: string | null
           toplam_tutar?: number
           updated_at?: string
@@ -9044,6 +9119,7 @@ export type Database = {
           return_invoice_info?: Json | null
           sales_platform?: string | null
           send_type?: string | null
+          service_request_id?: string | null
           supplier_id?: string | null
           toplam_tutar?: number
           updated_at?: string
@@ -9052,6 +9128,13 @@ export type Database = {
           xml_data?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_sales_invoices_service_request"
+            columns: ["service_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_invoices_company_id_fkey"
             columns: ["company_id"]
@@ -9490,6 +9573,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
             referencedColumns: ["id"]
           },
           {
@@ -12336,6 +12426,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "warehouse_stock_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "warehouse_stock_warehouse_id_fkey"
             columns: ["warehouse_id"]
             isOneToOne: false
@@ -12770,6 +12867,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "wo_parts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "wo_parts_work_order_id_fkey"
             columns: ["work_order_id"]
             isOneToOne: false
@@ -13062,6 +13166,144 @@ export type Database = {
         }
         Relationships: []
       }
+      products_with_stock_info: {
+        Row: {
+          attachments: Json | null
+          available_stock: number | null
+          barcode: string | null
+          category_id: string | null
+          category_type: string | null
+          company_id: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          dimensions: string | null
+          discount_rate: number | null
+          id: string | null
+          image_url: string | null
+          is_active: boolean | null
+          max_stock_level: number | null
+          min_stock_level: number | null
+          name: string | null
+          price: number | null
+          price_includes_vat: boolean | null
+          product_type: string | null
+          purchase_price: number | null
+          purchase_price_includes_vat: boolean | null
+          reserved: number | null
+          reserved_quantity: number | null
+          sku: string | null
+          status: string | null
+          stock: number | null
+          stock_quantity: number | null
+          stock_status: string | null
+          stock_threshold: number | null
+          supplier_id: string | null
+          tags: string[] | null
+          tax_rate: number | null
+          unit: string | null
+          updated_at: string | null
+          vat_included: boolean | null
+          warranty_period: number | null
+          weight: number | null
+        }
+        Insert: {
+          attachments?: Json | null
+          available_stock?: never
+          barcode?: string | null
+          category_id?: string | null
+          category_type?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          dimensions?: string | null
+          discount_rate?: number | null
+          id?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          max_stock_level?: number | null
+          min_stock_level?: number | null
+          name?: string | null
+          price?: number | null
+          price_includes_vat?: boolean | null
+          product_type?: string | null
+          purchase_price?: number | null
+          purchase_price_includes_vat?: boolean | null
+          reserved?: never
+          reserved_quantity?: number | null
+          sku?: string | null
+          status?: string | null
+          stock?: never
+          stock_quantity?: number | null
+          stock_status?: never
+          stock_threshold?: number | null
+          supplier_id?: string | null
+          tags?: string[] | null
+          tax_rate?: number | null
+          unit?: string | null
+          updated_at?: string | null
+          vat_included?: boolean | null
+          warranty_period?: number | null
+          weight?: number | null
+        }
+        Update: {
+          attachments?: Json | null
+          available_stock?: never
+          barcode?: string | null
+          category_id?: string | null
+          category_type?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          dimensions?: string | null
+          discount_rate?: number | null
+          id?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          max_stock_level?: number | null
+          min_stock_level?: number | null
+          name?: string | null
+          price?: number | null
+          price_includes_vat?: boolean | null
+          product_type?: string | null
+          purchase_price?: number | null
+          purchase_price_includes_vat?: boolean | null
+          reserved?: never
+          reserved_quantity?: number | null
+          sku?: string | null
+          status?: string | null
+          stock?: never
+          stock_quantity?: number | null
+          stock_status?: never
+          stock_threshold?: number | null
+          supplier_id?: string | null
+          tags?: string[] | null
+          tax_rate?: number | null
+          unit?: string | null
+          updated_at?: string | null
+          vat_included?: boolean | null
+          warranty_period?: number | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_stock_view: {
         Row: {
           customer_name: string | null
@@ -13319,6 +13561,10 @@ export type Database = {
         }
         Returns: string
       }
+      check_available_stock: {
+        Args: { p_product_id: string; p_quantity: number }
+        Returns: boolean
+      }
       check_category_or_subcategory_exists: {
         Args: { cat_id: string }
         Returns: boolean
@@ -13574,6 +13820,7 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_available_stock: { Args: { p_product_id: string }; Returns: number }
       get_cities: {
         Args: never
         Returns: {

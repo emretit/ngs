@@ -90,30 +90,30 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
       const loadFormData = async () => {
         // İl/İlçe çözümleme
         let cityName = "";
-        if ((customer as any).city_id) {
-          cityName = await resolveCityName((customer as any).city_id);
+        if (customer.city_id) {
+          cityName = await resolveCityName(customer.city_id);
         } else {
           cityName = customer.city || customer.einvoice_city || "";
         }
         
         let districtName = "";
-        if ((customer as any).district_id) {
-          districtName = await resolveDistrictName((customer as any).district_id, (customer as any).city_id);
+        if (customer.district_id) {
+          districtName = await resolveDistrictName(customer.district_id, customer.city_id);
         } else {
           districtName = customer.district || customer.einvoice_district || "";
         }
         
         // İkinci adres çözümleme
         let secondCityName = "";
-        if ((customer as any).second_city_id) {
-          secondCityName = await resolveCityName((customer as any).second_city_id);
+        if (customer.second_city_id) {
+          secondCityName = await resolveCityName(customer.second_city_id);
         } else {
           secondCityName = customer.second_city || "";
         }
         
         let secondDistrictName = "";
-        if ((customer as any).second_district_id) {
-          secondDistrictName = await resolveDistrictName((customer as any).second_district_id, (customer as any).second_city_id);
+        if (customer.second_district_id) {
+          secondDistrictName = await resolveDistrictName(customer.second_district_id, customer.second_city_id);
         } else {
           secondDistrictName = customer.second_district || "";
         }

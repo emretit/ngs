@@ -20,7 +20,9 @@ export interface Supplier {
   tax_number: string | null;
   tax_office: string | null;
   city: string | null;
+  city_id: number | null;
   district: string | null;
+  district_id: number | null;
   country: string | null;
   postal_code: string | null;
   apartment_number: string | null;
@@ -60,6 +62,7 @@ export interface Supplier {
   second_country: string | null;
   second_postal_code: string | null;
   payment_terms: string | null;
+  einvoice_document_type: string | null;
   created_at: string;
   updated_at: string;
   company_id: string | null;

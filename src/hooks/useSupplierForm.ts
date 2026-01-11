@@ -82,30 +82,30 @@ export const useSupplierForm = () => {
       const loadFormData = async () => {
         // İl/İlçe çözümleme
         let cityName = "";
-        if ((supplier as any).city_id) {
-          cityName = await resolveCityName((supplier as any).city_id);
+        if (supplier.city_id) {
+          cityName = await resolveCityName(supplier.city_id);
         } else {
           cityName = supplier.city || "";
         }
         
         let districtName = "";
-        if ((supplier as any).district_id) {
-          districtName = await resolveDistrictName((supplier as any).district_id, (supplier as any).city_id);
+        if (supplier.district_id) {
+          districtName = await resolveDistrictName(supplier.district_id, supplier.city_id);
         } else {
           districtName = supplier.district || "";
         }
         
         // İkinci adres çözümleme
         let secondCityName = "";
-        if ((supplier as any).second_city_id) {
-          secondCityName = await resolveCityName((supplier as any).second_city_id);
+        if (supplier.second_city_id) {
+          secondCityName = await resolveCityName(supplier.second_city_id);
         } else {
           secondCityName = supplier.second_city || "";
         }
         
         let secondDistrictName = "";
-        if ((supplier as any).second_district_id) {
-          secondDistrictName = await resolveDistrictName((supplier as any).second_district_id, (supplier as any).second_city_id);
+        if (supplier.second_district_id) {
+          secondDistrictName = await resolveDistrictName(supplier.second_district_id, supplier.second_city_id);
         } else {
           secondDistrictName = supplier.second_district || "";
         }
@@ -158,7 +158,7 @@ export const useSupplierForm = () => {
           supplier_source: supplier.supplier_source ?? "",
           notes: supplier.notes ?? "",
           first_contact_position: supplier.first_contact_position ?? "",
-          einvoice_document_type: (supplier as any).einvoice_document_type ?? "",
+          einvoice_document_type: supplier.einvoice_document_type ?? "",
         };
 
         logger.debug('✅ Form data set successfully');

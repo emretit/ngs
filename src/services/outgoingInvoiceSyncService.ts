@@ -206,8 +206,8 @@ export class OutgoingInvoiceSyncService {
     const stateCode = outgoing.elogoStatus || null;
     const answerType = outgoing.answerType || null;
     const einvoiceStatus = getInvoiceStatusFromStateCode(
-      stateCode as any,
-      answerType as any
+      stateCode,
+      answerType
     );
 
     logger.debug(`📊 [OutgoingInvoiceSync] ${outgoing.invoiceNumber} mapping:`, {
@@ -250,7 +250,7 @@ export class OutgoingInvoiceSyncService {
       nilvera_invoice_id: outgoing.id, // Veriban outgoing_invoice.id - Eşleştirme anahtarı
       
       // SINGLE SOURCE OF TRUTH: einvoice_status artık elogo_status ve answer_type'dan türetiliyor
-      einvoice_status: einvoiceStatus === 'pending' ? 'sending' : einvoiceStatus as any,
+      einvoice_status: einvoiceStatus === 'pending' ? 'sending' : einvoiceStatus,
       
       // Veriban durum bilgileri - outgoing_invoices'tan aktar
       elogo_status: stateCode,                              // StateCode (1-5) - SINGLE SOURCE OF TRUTH
@@ -266,7 +266,7 @@ export class OutgoingInvoiceSyncService {
       
       // Timestamps - Supabase otomatik yönetir
       updated_at: new Date().toISOString()
-    } as any; // Use type assertion for extra Veriban-specific fields
+    };
   }
 
   /**
@@ -316,13 +316,13 @@ export class OutgoingInvoiceSyncService {
         company_id: profile?.company_id || null,
         urun_adi: item.product_name || item.description || `Ürün ${index + 1}`,
         aciklama: item.description || null,
-        miktar: parseFloat(item.quantity as any) || 1,
+        miktar: typeof item.quantity === 'string' ? parseFloat(item.quantity) : (item.quantity || 1),
         birim: item.unit || 'Adet',
-        birim_fiyat: parseFloat(item.unit_price as any) || 0,
-        kdv_orani: parseFloat(item.tax_rate as any) || 18,
-        indirim_orani: parseFloat(item.discount_rate as any) || 0,
-        satir_toplami: parseFloat(item.line_total as any) || 0,
-        kdv_tutari: parseFloat(item.tax_amount as any) || 0,
+        birim_fiyat: typeof item.unit_price === 'string' ? parseFloat(item.unit_price) : (item.unit_price || 0),
+        kdv_orani: typeof item.tax_rate === 'string' ? parseFloat(item.tax_rate) : (item.tax_rate || 18),
+        indirim_orani: typeof item.discount_rate === 'string' ? parseFloat(item.discount_rate) : (item.discount_rate || 0),
+        satir_toplami: typeof item.line_total === 'string' ? parseFloat(item.line_total) : (item.line_total || 0),
+        kdv_tutari: typeof item.tax_amount === 'string' ? parseFloat(item.tax_amount) : (item.tax_amount || 0),
         para_birimi: item.unit_price ? 'TRY' : null,
         sira_no: item.line_number || (index + 1),
       }));

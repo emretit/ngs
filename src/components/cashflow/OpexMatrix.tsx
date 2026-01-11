@@ -110,15 +110,15 @@ const OpexMatrix = () => {
 
       const personnelDataArray = Object.entries(departmentTotals || {}).map(([department, data]) => ({
         department,
-        total_employer_cost: (data as any).total_cost,
-        employee_count: (data as any).count,
-        gross_salary: (data as any).gross_salary,
-        net_salary: (data as any).net_salary,
-        meal_allowance: (data as any).meal_allowance,
-        transport_allowance: (data as any).transport_allowance,
-        manual_employer_sgk_cost: (data as any).manual_employer_sgk_cost,
-        unemployment_employer_amount: (data as any).unemployment_employer_amount,
-        accident_insurance_amount: (data as any).accident_insurance_amount
+        total_employer_cost: data.total_cost,
+        employee_count: data.count,
+        gross_salary: data.gross_salary,
+        net_salary: data.net_salary,
+        meal_allowance: data.meal_allowance,
+        transport_allowance: data.transport_allowance,
+        manual_employer_sgk_cost: data.manual_employer_sgk_cost,
+        unemployment_employer_amount: data.unemployment_employer_amount,
+        accident_insurance_amount: data.accident_insurance_amount
       }));
 
       setPersonnelData(personnelDataArray);
@@ -148,8 +148,8 @@ const OpexMatrix = () => {
       // Group expenses by category, subcategory, and month
       const expenseMatrix: Record<string, Record<number, number>> = {};
       
-      data?.forEach(expense => {
-        const categoryName = (expense.cashflow_categories as any)?.name;
+      data?.forEach((expense: any) => {
+        const categoryName = expense.cashflow_categories?.name;
         const date = new Date(expense.date);
         const month = date.getMonth() + 1;
         const amount = expense.amount;

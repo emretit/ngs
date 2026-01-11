@@ -175,8 +175,8 @@ export default function ServiceTemplateEdit() {
       }
 
       // PDF schema yükle (service_details.pdf_schema'dan veya pdf_schema'dan)
-      const pdfSchema = (existingTemplate as any).pdf_schema || 
-                       (existingTemplate.service_details as any)?.pdf_schema;
+      const pdfSchema = existingTemplate.pdf_schema || 
+                       existingTemplate.service_details?.pdf_schema;
       if (pdfSchema && typeof pdfSchema === 'object' && pdfSchema.header) {
         // Header settings yükle
         setHeaderSettings(prev => ({
@@ -377,7 +377,8 @@ export default function ServiceTemplateEdit() {
           default_location: defaults.default_location,
           default_technician_id: defaults.default_technician_id,
           service_priority: defaults.service_priority,
-        } as any,
+          service_type: defaults.service_type,
+        },
       };
       return ServiceTemplateService.createTemplate(
         userData.company_id,
@@ -405,7 +406,7 @@ export default function ServiceTemplateEdit() {
       );
 
       // Mevcut pdf_schema'yı al veya default kullan
-      const existingPdfSchema = (existingTemplate?.service_details as any)?.pdf_schema || defaultServiceTemplateSchema;
+      const existingPdfSchema = existingTemplate?.service_details?.pdf_schema || defaultServiceTemplateSchema;
       
       // Tam pdf_schema yapısını oluştur (Flutter uyumlu)
       const pdfSchema: ServiceTemplateSchema = {
@@ -448,7 +449,7 @@ export default function ServiceTemplateEdit() {
       // Eski yapıdan yeni yapıya migrate et
       // Eğer parts_list root seviyede varsa, service_details'e taşı
       const existingPartsList = currentServiceDetails.parts_list || 
-                                (existingTemplate as any)?.parts_list || 
+                                existingTemplate?.parts_list || 
                                 [];
       
       // Mevcut parts_list ile yeni parts_list'i birleştir (yeni olanlar öncelikli)
@@ -458,23 +459,23 @@ export default function ServiceTemplateEdit() {
       const migratedDefaults = {
         estimated_duration: defaults.estimated_duration ?? 
                            currentServiceDetails.estimated_duration ?? 
-                           (existingTemplate as any)?.estimated_duration ?? 
+                           existingTemplate?.estimated_duration ?? 
                            undefined,
         default_location: defaults.default_location ?? 
                          currentServiceDetails.default_location ?? 
-                         (existingTemplate as any)?.default_location ?? 
+                         existingTemplate?.default_location ?? 
                          undefined,
         default_technician_id: defaults.default_technician_id ?? 
                              currentServiceDetails.default_technician_id ?? 
-                             (existingTemplate as any)?.default_technician_id ?? 
+                             existingTemplate?.default_technician_id ?? 
                              undefined,
         service_type: currentServiceDetails.service_type ?? 
-                     (existingTemplate as any)?.service_type ?? 
+                     existingTemplate?.service_type ?? 
                      undefined,
         service_priority: defaults.service_priority ?? 
                          currentServiceDetails.service_priority ?? 
-                         (existingTemplate as any)?.service_priority ?? 
-                         'medium',
+                         existingTemplate?.service_priority ?? 
+                         'medium' as const,
       };
       
       const templateData: Partial<CreateServiceTemplateData> = {
@@ -485,7 +486,7 @@ export default function ServiceTemplateEdit() {
           pdf_schema: pdfSchema,
           parts_list: finalPartsList,
           ...migratedDefaults,
-        } as any,
+        },
       };
       return ServiceTemplateService.updateTemplate(id, templateData);
     },

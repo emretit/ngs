@@ -6,7 +6,7 @@ import { ArrowLeft, FileText, CheckCircle2, XCircle, Clock } from "lucide-react"
 import BudgetFilters from "@/components/budget/BudgetFilters";
 import RevisionForm from "@/components/budget/approval/RevisionForm";
 import ApprovalList from "@/components/budget/approval/ApprovalList";
-import { BudgetFiltersState } from "@/pages/BudgetManagement";
+import { BudgetFiltersState } from "@/pages/budget/BudgetDashboard";
 
 const BudgetApprovals = () => {
   const navigate = useNavigate();

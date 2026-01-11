@@ -6,12 +6,14 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from '@/utils/logger';
 import { 
   calculateEmployeePayroll,
   getPayrollYearParameters,
   type PayrollCalculationResult 
 } from "./payrollService";
 import { savePayrollRun, syncPayrollToFinance } from "./payrollFinanceService";
+import { createPayrollAccruals } from "./payrollAccrualService";
 
 export interface BulkPayrollOptions {
   companyId: string;
@@ -21,6 +23,8 @@ export interface BulkPayrollOptions {
   employeeIds?: string[]; // Belirli çalışanlar için
   requireApprovedTimesheets?: boolean;
   autoSync?: boolean; // Finance'e otomatik sync
+  createAccruals?: boolean; // Hakediş oluştur (default: true)
+  defaultWorkingDays?: number; // Default puantaj gün sayısı (default: 30)
   userId?: string;
 }
 
@@ -52,6 +56,8 @@ export async function generateBulkPayroll(
     employeeIds,
     requireApprovedTimesheets = true,
     autoSync = false,
+    createAccruals = true,
+    defaultWorkingDays = 30,
     userId,
   } = options;
 
@@ -65,7 +71,7 @@ export async function generateBulkPayroll(
   };
 
   try {
-    console.log('🚀 Toplu bordro oluşturma başlatıldı:', { companyId, year, month });
+    logger.debug('🚀 Toplu bordro oluşturma başlatıldı:', { companyId, year, month, defaultWorkingDays });
 
     // 1. Yıl parametrelerini al
     const yearParams = await getPayrollYearParameters(companyId, year);
@@ -99,7 +105,7 @@ export async function generateBulkPayroll(
       return result;
     }
 
-    console.log(`✓ ${employees.length} aktif çalışan bulundu`);
+      logger.debug(`✓ ${employees.length} aktif çalışan bulundu`);
 
     // 3. Puantaj verilerini al (tüm çalışanlar için toplu)
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -115,9 +121,11 @@ export async function generateBulkPayroll(
       .lte('work_date', endDate);
 
     if (timesheetError) {
-      console.error('Puantaj verileri alınamadı:', timesheetError);
-      result.warnings.push('Puantaj verileri alınamadı, brüt maaş üzerinden hesaplanacak');
+      logger.error('Puantaj verileri alınamadı:', timesheetError);
+      result.warnings.push('Puantaj verileri alınamadı, otomatik puantaj oluşturulacak');
     }
+
+    logger.debug(`✓ Puantaj verileri alındı. Default ${defaultWorkingDays} gün üzerinden hesaplanacak (puantaj yoksa)`);
 
     // 4. Her çalışan için bordro hesapla
     const employeeCalculations: Array<{
@@ -134,10 +142,35 @@ export async function generateBulkPayroll(
           ts => ts.employee_id === employee.id
         ) || [];
 
-        // Onaylı puantaj kontrolü
+        // **PUANTAJ YOKSA 30 GÜN VARSAY**
+        let timesheetsToUse = employeeTimesheets;
+        
+        if (employeeTimesheets.length === 0) {
+          logger.debug(`⚠️ ${employee.first_name} ${employee.last_name} - Puantaj yok, ${defaultWorkingDays} gün varsayılacak`);
+          
+          // Otomatik puantaj oluştur (30 gün * 8 saat = 240 saat = 14400 dakika)
+          const daysInMonth = lastDay;
+          const workingDaysToAssume = Math.min(defaultWorkingDays, daysInMonth);
+          const totalMinutes = workingDaysToAssume * 8 * 60; // 8 saat/gün
+          
+          // Simule edilmiş puantaj (tek kayıt olarak - toplam)
+          timesheetsToUse = [{
+            employee_id: employee.id,
+            work_date: endDate,
+            net_working_minutes: totalMinutes,
+            overtime_minutes: 0,
+            approval_status: 'auto_approved',
+          } as any];
+          
+          result.warnings.push(`${employee.first_name} ${employee.last_name}: ${defaultWorkingDays} gün otomatik puantaj`);
+        }
+
+        // Onaylı puantaj kontrolü (eğer gerekliyse)
         if (requireApprovedTimesheets && employeeTimesheets.length > 0) {
           const hasUnapprovedTimesheets = employeeTimesheets.some(
-            ts => ts.approval_status !== 'manager_approved' && ts.approval_status !== 'hr_locked'
+            ts => ts.approval_status !== 'manager_approved' && 
+                  ts.approval_status !== 'hr_locked' &&
+                  ts.approval_status !== 'auto_approved'
           );
 
           if (hasUnapprovedTimesheets) {
@@ -167,7 +200,7 @@ export async function generateBulkPayroll(
         const calculation = calculateEmployeePayroll(
           employee.id,
           baseSalary,
-          employeeTimesheets,
+          timesheetsToUse, // Otomatik puantaj veya gerçek puantaj
           yearParams,
           {
             allowances: [],
@@ -184,7 +217,7 @@ export async function generateBulkPayroll(
 
         result.successCount++;
       } catch (error: any) {
-        console.error(`❌ ${employee.first_name} ${employee.last_name} bordro hatası:`, error);
+        logger.error(`❌ ${employee.first_name} ${employee.last_name} bordro hatası:`, error);
         result.failedCount++;
         result.failedEmployees.push({
           employeeId: employee.id,
@@ -194,7 +227,7 @@ export async function generateBulkPayroll(
       }
     }
 
-    console.log(`✓ ${result.successCount}/${result.processedCount} çalışan hesaplandı`);
+    logger.debug(`✓ ${result.successCount}/${result.processedCount} çalışan hesaplandı`);
 
     // 5. Bordroları kaydet
     if (employeeCalculations.length > 0) {
@@ -209,15 +242,30 @@ export async function generateBulkPayroll(
 
       if (saveResult.success) {
         result.payrollRunId = saveResult.payrollRunId;
-        console.log(`✓ Bordro run kaydedildi: ${saveResult.payrollRunId}`);
+        logger.debug(`✓ Bordro run kaydedildi: ${saveResult.payrollRunId}`);
 
-        // 6. Finance sync (opsiyonel)
+        // 6. Hakediş oluştur (opsiyonel)
+        if (createAccruals) {
+          try {
+            const accrualResult = await createPayrollAccruals({
+              payrollRunId: saveResult.payrollRunId!,
+              companyId,
+              userId,
+            });
+            logger.debug(`✓ ${accrualResult.accrualCount} hakediş kaydı oluşturuldu`);
+          } catch (accrualError: any) {
+            logger.error('Hakediş oluşturma hatası:', accrualError);
+            result.warnings.push(`Hakediş oluşturulamadı: ${accrualError.message}`);
+          }
+        }
+
+        // 7. Finance sync (opsiyonel)
         if (autoSync) {
           try {
             await syncPayrollToFinance(saveResult.payrollRunId!, userId);
-            console.log(`✓ Finance sync tamamlandı`);
+            logger.debug(`✓ Finance sync tamamlandı`);
           } catch (syncError: any) {
-            console.error('Finance sync hatası:', syncError);
+            logger.error('Finance sync hatası:', syncError);
             result.warnings.push(`Finance sync başarısız: ${syncError.message}`);
           }
         }
@@ -229,7 +277,7 @@ export async function generateBulkPayroll(
     result.success = true;
     return result;
   } catch (error: any) {
-    console.error('❌ generateBulkPayroll error:', error);
+    logger.error('❌ generateBulkPayroll error:', error);
     result.warnings.push(error.message);
     return result;
   }
@@ -238,6 +286,7 @@ export async function generateBulkPayroll(
 /**
  * Aylık otomatik bordro oluşturma (Cron job için)
  * Her ay sonu otomatik olarak çalıştırılabilir
+ * Hakediş oluşturma DAHİL
  */
 export async function generateMonthlyPayrollForCompany(
   companyId: string,
@@ -247,14 +296,16 @@ export async function generateMonthlyPayrollForCompany(
   const year = targetMonth?.year || now.getFullYear();
   const month = targetMonth?.month || now.getMonth() + 1; // JavaScript 0-based
 
-  console.log(`📅 Otomatik aylık bordro: ${companyId} için ${year}/${month}`);
+  logger.debug(`📅 Otomatik aylık bordro: ${companyId} için ${year}/${month}`);
 
   return generateBulkPayroll({
     companyId,
     year,
     month,
-    requireApprovedTimesheets: true,
+    requireApprovedTimesheets: false, // Ay sonu otomatik olduğu için onay beklemeden
     autoSync: false, // Manuel onay gerektir
+    createAccruals: true, // Hakediş OLUŞTUR
+    defaultWorkingDays: 30, // 30 gün varsayılan
   });
 }
 

@@ -33,7 +33,7 @@ import {
   ComposedChart,
 } from "recharts";
 import IncomeExpenseFilterBar from "@/components/budget/IncomeExpenseFilterBar";
-import { BudgetFiltersState } from "@/pages/BudgetManagement";
+import { BudgetFiltersState } from "@/pages/budget/BudgetDashboard";
 import { useIncomeExpenseAnalysis } from "@/hooks/useIncomeExpenseAnalysis";
 import { useBudgetMatrix } from "@/hooks/useBudgetMatrix";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";

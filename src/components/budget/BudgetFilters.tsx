@@ -1,5 +1,5 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BudgetFiltersState } from "@/pages/BudgetManagement";
+import { BudgetFiltersState } from "@/pages/budget/BudgetDashboard";
 
 interface BudgetFiltersProps {
   filters: BudgetFiltersState;

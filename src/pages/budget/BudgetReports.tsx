@@ -7,7 +7,7 @@ import BudgetFilters from "@/components/budget/BudgetFilters";
 import BudgetKPIs from "@/components/budget/BudgetKPIs";
 import VarianceChart from "@/components/budget/comparison/VarianceChart";
 import CategoryDistributionChart from "@/components/budget/reports/CategoryDistributionChart";
-import { BudgetFiltersState } from "@/pages/BudgetManagement";
+import { BudgetFiltersState } from "@/pages/budget/BudgetDashboard";
 import { useBudgetMatrix } from "@/hooks/useBudgetMatrix";
 
 const BudgetReports = () => {

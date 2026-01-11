@@ -2,7 +2,7 @@ import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useBudgetMatrix, MatrixRow } from "@/hooks/useBudgetMatrix";
-import { BudgetFiltersState } from "@/pages/BudgetManagement";
+import { BudgetFiltersState } from "@/pages/budget/BudgetDashboard";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
 

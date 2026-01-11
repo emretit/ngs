@@ -9,7 +9,7 @@ import BudgetFilters from "@/components/budget/BudgetFilters";
 import VarianceAnalysis from "@/components/budget/VarianceAnalysis";
 import OpexMatrix from "@/components/cashflow/OpexMatrix";
 import { useBudgetMatrix } from "@/hooks/useBudgetMatrix";
-import { BudgetFiltersState } from "@/pages/BudgetManagement";
+import { BudgetFiltersState } from "@/pages/budget/BudgetDashboard";
 
 // Lazy load timeline view for better performance
 const BudgetTimelineView = lazy(() => import("@/components/budget/views/BudgetTimelineView"));

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useBudgetMatrix, MatrixCell, MatrixRow } from "@/hooks/useBudgetMatrix";
 import { cn } from "@/lib/utils";
-import { BudgetFiltersState } from "@/pages/BudgetManagement";
+import { BudgetFiltersState } from "@/pages/budget/BudgetDashboard";
 
 interface BudgetMatrixViewProps {
   filters: BudgetFiltersState;

@@ -17,7 +17,7 @@ import {
   Calculator
 } from "lucide-react";
 import { useBudgetMatrix, MatrixRow } from "@/hooks/useBudgetMatrix";
-import { BudgetFiltersState } from "@/pages/BudgetManagement";
+import { BudgetFiltersState } from "@/pages/budget/BudgetDashboard";
 import { cn } from "@/lib/utils";
 
 interface BudgetGridProps {

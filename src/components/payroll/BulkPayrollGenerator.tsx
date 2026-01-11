@@ -53,6 +53,8 @@ export const BulkPayrollGenerator = ({
   const [selectedMonth, setSelectedMonth] = useState(initialMonth || currentDate.getMonth() + 1);
   const [requireApproved, setRequireApproved] = useState(true);
   const [autoSync, setAutoSync] = useState(false);
+  const [createAccruals, setCreateAccruals] = useState(true); // Hakediş oluştur
+  const [defaultWorkingDays, setDefaultWorkingDays] = useState(30); // Default puantaj günü
   
   const [checkResult, setCheckResult] = useState<{ exists: boolean; itemCount?: number } | null>(null);
   const [checking, setChecking] = useState(false);
@@ -109,6 +111,8 @@ export const BulkPayrollGenerator = ({
         month: selectedMonth,
         requireApprovedTimesheets: requireApproved,
         autoSync,
+        createAccruals,
+        defaultWorkingDays,
       });
 
       return result;
@@ -252,6 +256,21 @@ export const BulkPayrollGenerator = ({
 
             <div className="flex items-center space-x-2">
               <Checkbox
+                id="createAccruals"
+                checked={createAccruals}
+                onCheckedChange={(checked) => setCreateAccruals(!!checked)}
+              />
+              <Label
+                htmlFor="createAccruals"
+                className="text-sm font-normal cursor-pointer"
+              >
+                <span className="font-semibold text-primary">Çalışanlara hakediş olarak ekle</span>
+                {" "}(payroll_records)
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
                 id="autoSync"
                 checked={autoSync}
                 onCheckedChange={(checked) => setAutoSync(!!checked)}
@@ -263,6 +282,31 @@ export const BulkPayrollGenerator = ({
                 Finance modülüne otomatik aktar
               </Label>
             </div>
+
+            {/* Default Puantaj Günü */}
+            <div className="space-y-2 pt-2 border-t">
+              <Label htmlFor="workingDays" className="text-sm font-medium">
+                Otomatik Puantaj Gün Sayısı (puantaj yoksa)
+              </Label>
+              <Select
+                value={defaultWorkingDays.toString()}
+                onValueChange={(value) => setDefaultWorkingDays(parseInt(value))}
+              >
+                <SelectTrigger id="workingDays" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="20">20 gün</SelectItem>
+                  <SelectItem value="22">22 gün</SelectItem>
+                  <SelectItem value="25">25 gün</SelectItem>
+                  <SelectItem value="26">26 gün (4 hafta)</SelectItem>
+                  <SelectItem value="30">30 gün (standart)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Puantaj girişi olmayan çalışanlar için varsayılan gün sayısı
+              </p>
+            </div>
           </div>
 
           {/* Açıklama */}
@@ -271,8 +315,9 @@ export const BulkPayrollGenerator = ({
             <AlertDescription className="text-sm">
               <ul className="list-disc list-inside space-y-1 mt-2">
                 <li>Tüm aktif çalışanlar için bordro hesaplanacak</li>
-                <li>Puantajlar ve yıl parametreleri kullanılacak</li>
-                <li>Hesaplanan bordrolar <strong>onay bekleyecek</strong></li>
+                <li><strong>Puantaj yoksa {defaultWorkingDays} gün varsayılacak</strong></li>
+                <li>Hesaplanan bordrolar <strong>{createAccruals ? 'hakediş olarak eklenecek' : 'sadece bordro kaydı'}</strong></li>
+                <li>Hakediş: payroll_records tablosuna status='tahakkuk_edildi'</li>
                 <li>Onaydan sonra Finance'e aktarılabilir</li>
               </ul>
             </AlertDescription>

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BudgetFiltersState } from "@/pages/BudgetManagement";
+import { BudgetFiltersState } from "@/pages/budget/BudgetDashboard";
 import { TrendingUp, TrendingDown, AlertTriangle, DollarSign, ArrowUpCircle, ArrowDownCircle, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfitLoss } from "@/hooks/useProfitLoss";

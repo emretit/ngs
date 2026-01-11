@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import BudgetGrid from "@/components/budget/entry/BudgetGrid";
 import BudgetFilters from "@/components/budget/BudgetFilters";
-import { BudgetFiltersState } from "@/pages/BudgetManagement";
+import { BudgetFiltersState } from "@/pages/budget/BudgetDashboard";
 import { useBudgetMatrix } from "@/hooks/useBudgetMatrix";
 import { useBudget } from "@/hooks/useBudget";
 import { useBudgetApproval } from "@/hooks/useBudgetApproval";

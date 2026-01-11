@@ -1,4 +1,4 @@
-import { BudgetFiltersState } from "@/pages/BudgetManagement";
+import { BudgetFiltersState } from "@/pages/budget/BudgetDashboard";
 import OpexMatrix from "@/components/cashflow/OpexMatrix";
 
 interface OpexTabProps {

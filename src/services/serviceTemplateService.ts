@@ -1,18 +1,41 @@
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
+import { ServiceTemplateSchema } from '@/types/service-template';
+
+export interface ServiceDetails {
+  pdf_schema?: ServiceTemplateSchema;
+  estimated_duration?: number;
+  default_location?: string;
+  default_technician_id?: string;
+  service_type?: string;
+  service_priority?: 'low' | 'medium' | 'high' | 'urgent';
+  parts_list?: Array<{
+    id?: string;
+    product_id?: string | null;
+    name: string;
+    description?: string;
+    quantity: number;
+    unit: string;
+    unit_price: number;
+    tax_rate?: number;
+    discount_rate?: number;
+    total_price?: number;
+    currency?: string;
+  }>;
+}
 
 export interface ServiceTemplate {
   id: string;
   name: string;
   description?: string;
-  service_details?: any;
+  service_details?: ServiceDetails;
   company_id: string;
   usage_count: number;
   is_active: boolean;
   created_by?: string;
   created_at: string;
   updated_at: string;
-  // Additional fields used in UI components
+  // Additional fields used in UI components (for backward compatibility)
   service_request_description?: string;
   service_type?: string;
   service_priority?: 'low' | 'medium' | 'high' | 'urgent';
@@ -32,13 +55,13 @@ export interface ServiceTemplate {
   }>;
   default_location?: string;
   default_technician_id?: string;
-  pdf_schema?: any;
+  pdf_schema?: ServiceTemplateSchema;
 }
 
 export interface CreateServiceTemplateData {
   name: string;
   description?: string;
-  service_details?: any;
+  service_details?: ServiceDetails;
 }
 
 /**

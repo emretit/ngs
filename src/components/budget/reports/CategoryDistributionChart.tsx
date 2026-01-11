@@ -8,7 +8,7 @@ import {
   Tooltip,
 } from "recharts";
 import { useBudgetMatrix } from "@/hooks/useBudgetMatrix";
-import { BudgetFiltersState } from "@/pages/BudgetManagement";
+import { BudgetFiltersState } from "@/pages/budget/BudgetDashboard";
 
 interface CategoryDistributionChartProps {
   filters: BudgetFiltersState;

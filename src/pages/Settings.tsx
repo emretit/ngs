@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Settings2, Users, UserCheck, Zap, Wrench, FileText, CreditCard, ClipboardList, UsersRound } from "lucide-react";
+import { Settings2, Users, UserCheck, Zap, Wrench, FileText, CreditCard, ClipboardList, UsersRound, Building } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface SettingsProps {
@@ -63,6 +63,25 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Şirket Bilgileri */}
+              <div 
+                onClick={() => navigate("/settings/company-info")}
+                className="p-6 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer group bg-gradient-to-br from-blue-50 to-sky-50"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                    <Building className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      Şirket Bilgileri
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Şirket bilgilerinizi düzenleyin
+                    </p>
+                  </div>
+                </div>
+              </div>
               {/* Birleşik Kullanıcı & Çalışan Yönetimi */}
               <div 
                 onClick={() => navigate("/settings/unified-management")}

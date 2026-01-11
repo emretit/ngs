@@ -60,8 +60,8 @@ export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: Emp
   });
 
   const handlePayrollTabClick = () => {
-    // Navigate to payroll page with employee filter
-    navigate(`/employees/payroll?employeeId=${employee.id}`);
+    // Navigate to payroll page with tab and employee selected
+    navigate(`/hr/time-payroll?tab=payroll&payrollEmployeeId=${employee.id}`);
   };
 
   const TabTrigger = ({ value, icon, label, count }: { 

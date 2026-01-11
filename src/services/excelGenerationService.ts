@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
-export type ReportType = 'customers' | 'sales' | 'invoices' | 'inventory' | 'suppliers' | 'custom';
+export type ReportType = 'customers' | 'sales' | 'invoices' | 'inventory' | 'suppliers' | 'payroll' | 'custom';
 
 export interface ReportFilters {
   dateRange?: {
@@ -332,6 +332,179 @@ export const saveGeneratedFileRecord = async (
   } catch (error) {
     console.error('Error saving file record:', error);
     // Don't throw - file generation succeeded even if logging failed
+  }
+};
+
+/**
+ * Generate payroll Excel file from calculation result
+ */
+export const generatePayrollExcel = async (
+  employee: {
+    first_name: string;
+    last_name: string;
+    employee_number?: string;
+    position?: string;
+    department?: string;
+  },
+  period: {
+    month: number;
+    year: number;
+  },
+  calculation: any // PayrollCalculationResult type
+): Promise<GeneratedFile> => {
+  try {
+    const months = [
+      'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+    ];
+
+    const formatCurrency = (amount: number) => {
+      return amount.toLocaleString('tr-TR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + ' ₺';
+    };
+
+    // Create data arrays
+    const headerData = [
+      ['BORDRO FİŞİ'],
+      [],
+      ['Çalışan:', `${employee.first_name} ${employee.last_name}`],
+      ['Pozisyon:', employee.position || '-'],
+      ['Departman:', employee.department || '-'],
+      ['Dönem:', `${months[period.month - 1]} ${period.year}`],
+      [],
+    ];
+
+    const grossData = [
+      ['BRÜT MAAŞ HESAPLAMASI', ''],
+      ['Aylık Maaş Tabanı', formatCurrency(calculation.base_salary)],
+    ];
+
+    if (calculation.overtime_pay > 0) {
+      grossData.push(['Fazla Mesai Ücreti', formatCurrency(calculation.overtime_pay)]);
+    }
+
+    if (calculation.bonus_premium > 0) {
+      grossData.push(['Prim ve İkramiye', formatCurrency(calculation.bonus_premium)]);
+    }
+
+    if (calculation.allowances_cash > 0) {
+      grossData.push(['Yan Ödemeler (Vergiye Tabi)', formatCurrency(calculation.allowances_cash)]);
+    }
+
+    if (calculation.allowances_in_kind > 0) {
+      grossData.push(['Yan Ödemeler (Vergisiz)', formatCurrency(calculation.allowances_in_kind)]);
+    }
+
+    grossData.push(
+      [],
+      ['TOPLAM BRÜT MAAŞ', formatCurrency(calculation.gross_salary)]
+    );
+
+    const deductionsData = [
+      [],
+      ['KESİNTİLER', ''],
+      ['SGK Kesintileri', ''],
+      ['  SGK Matrah Tabanı', formatCurrency(calculation.sgk_base)],
+      ['  SGK Primi (%14)', `-${formatCurrency(calculation.sgk_employee_share)}`],
+      ['  İşsizlik Primi (%1)', `-${formatCurrency(calculation.unemployment_employee)}`],
+      [],
+      ['Vergi Kesintileri', ''],
+      ['  Gelir Vergisi Matrahı', formatCurrency(calculation.income_tax_base)],
+      ['  Gelir Vergisi', `-${formatCurrency(calculation.income_tax_amount)}`],
+      ['  Damga Vergisi (‰7,59)', `-${formatCurrency(calculation.stamp_tax_amount)}`],
+    ];
+
+    if (calculation.advances > 0 || calculation.garnishments > 0) {
+      deductionsData.push([], ['Diğer Kesintiler', '']);
+      
+      if (calculation.advances > 0) {
+        deductionsData.push(['  Avanslar', `-${formatCurrency(calculation.advances)}`]);
+      }
+      
+      if (calculation.garnishments > 0) {
+        deductionsData.push(['  Hacizler', `-${formatCurrency(calculation.garnishments)}`]);
+      }
+    }
+
+    deductionsData.push(
+      [],
+      ['TOPLAM KESİNTİLER', `-${formatCurrency(calculation.total_deductions)}`],
+      [],
+      ['NET MAAŞ', formatCurrency(calculation.net_salary)]
+    );
+
+    const employerData = [
+      [],
+      ['İŞVEREN MALİYETİ', ''],
+      ['Brüt Maaş', formatCurrency(calculation.gross_salary)],
+      ['İşveren SGK Primi (%20,5)', `+${formatCurrency(calculation.sgk_employer_share)}`],
+      ['İşveren İşsizlik Primi (%2)', `+${formatCurrency(calculation.unemployment_employer)}`],
+      ['İş Kazası Sigortası', `+${formatCurrency(calculation.accident_insurance)}`],
+      [],
+      ['TOPLAM İŞVEREN MALİYETİ', formatCurrency(calculation.total_employer_cost)]
+    ];
+
+    // Combine all data
+    const allData = [
+      ...headerData,
+      ...grossData,
+      ...deductionsData,
+      ...employerData,
+    ];
+
+    // Add warnings if any
+    if (calculation.warnings && calculation.warnings.length > 0) {
+      allData.push([]);
+      allData.push(['Uyarılar:', '']);
+      calculation.warnings.forEach((warning: string) => {
+        allData.push([`  • ${warning}`, '']);
+      });
+    }
+
+    // Add exemption notice
+    if (calculation.is_minimum_wage_exemption_applied) {
+      allData.push([]);
+      allData.push(['ℹ Asgari ücret muafiyeti uygulanmıştır', '']);
+    }
+
+    // Create worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet(allData);
+
+    // Set column widths
+    worksheet['!cols'] = [
+      { wch: 40 }, // Column A
+      { wch: 25 }, // Column B
+    ];
+
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Bordro');
+
+    // Generate blob
+    const fileBuffer = XLSX.write(workbook, { 
+      bookType: 'xlsx', 
+      type: 'array' 
+    });
+
+    const blob = new Blob(
+      [fileBuffer], 
+      { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+    );
+
+    const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
+    const filename = `bordro_${employee.first_name}_${employee.last_name}_${months[period.month - 1]}_${period.year}_${timestamp}.xlsx`;
+
+    return {
+      filename,
+      blob,
+      size: blob.size,
+      type: blob.type
+    };
+  } catch (error) {
+    console.error('Payroll Excel generation error:', error);
+    throw error;
   }
 };
 

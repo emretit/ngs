@@ -414,7 +414,7 @@ export const navItems = [
         translationKey: "nav.employeesList",
       },
       {
-        path: "/employees/payroll",
+        path: "/hr/time-payroll",
         icon: Calculator,
         label: "Puantaj ve Bordro",
         translationKey: "nav.payroll",
@@ -519,6 +519,12 @@ export const navItems = [
     translationKey: "nav.settings",
     hasDropdown: true,
     items: [
+      {
+        path: "/settings/company-info",
+        icon: Building,
+        label: "Şirket Bilgileri",
+        translationKey: "nav.companyInfo",
+      },
       {
         path: "/settings/unified-management",
         icon: Users2,

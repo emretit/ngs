@@ -19,6 +19,22 @@ export interface PayrollYearParameters {
   unemployment_employer_rate: number;
   accident_insurance_rate: number;
   stamp_tax_rate: number;
+  minimum_wage?: number; // For exemption calculations
+}
+
+export interface Allowance {
+  id?: string;
+  type: 'meal' | 'transportation' | 'other';
+  description: string;
+  amount: number;
+  is_taxable: boolean;
+}
+
+export interface Advance {
+  id?: string;
+  description: string;
+  amount: number;
+  date?: string;
 }
 
 export interface TimesheetDay {
@@ -44,14 +60,18 @@ export interface PayrollCalculationResult {
   bonus_premium: number;
   allowances_cash: number;
   allowances_in_kind: number;
+  allowances_detail?: Allowance[];
   gross_salary: number;
   sgk_base: number;
   income_tax_base: number;
   sgk_employee_share: number;
   unemployment_employee: number;
   income_tax_amount: number;
+  income_tax_exemption: number;
   stamp_tax_amount: number;
+  stamp_tax_exemption: number;
   advances: number;
+  advances_detail?: Advance[];
   garnishments: number;
   total_deductions: number;
   net_salary: number;
@@ -60,6 +80,7 @@ export interface PayrollCalculationResult {
   accident_insurance: number;
   total_employer_cost: number;
   warnings: string[];
+  is_minimum_wage_exemption_applied: boolean;
 }
 
 /**
@@ -111,17 +132,32 @@ export function calculateIncomeTax(
 }
 
 /**
- * Calculate payroll for a single employee
+ * Calculate payroll for a single employee with support for allowances, advances and exemptions
  */
 export function calculateEmployeePayroll(
   employeeId: string,
   baseSalary: number,
   approvedTimesheets: TimesheetDay[],
   yearParams: PayrollYearParameters,
-  overtimeRate: number = 1.5,
-  monthlyHours: number = 180
+  options?: {
+    overtimeRate?: number;
+    monthlyHours?: number;
+    allowances?: Allowance[];
+    advances?: Advance[];
+    bonusPremium?: number;
+    garnishments?: number;
+    manualOverrides?: {
+      overtimePay?: number;
+      baseSalary?: number;
+    };
+  }
 ): PayrollCalculationResult {
+  const overtimeRate = options?.overtimeRate ?? 1.5;
+  const monthlyHours = options?.monthlyHours ?? 180;
   const warnings: string[] = [];
+
+  // Apply manual overrides if provided
+  const effectiveBaseSalary = options?.manualOverrides?.baseSalary ?? baseSalary;
 
   // Calculate overtime pay
   const totalOvertimeMinutes = approvedTimesheets.reduce(
@@ -129,14 +165,24 @@ export function calculateEmployeePayroll(
     0
   );
   const overtimeHours = totalOvertimeMinutes / 60;
-  const hourlyRate = baseSalary / monthlyHours;
-  const overtimePay = Math.round((overtimeHours * hourlyRate * overtimeRate) * 100) / 100;
+  const hourlyRate = effectiveBaseSalary / monthlyHours;
+  const calculatedOvertimePay = Math.round((overtimeHours * hourlyRate * overtimeRate) * 100) / 100;
+  const overtimePay = options?.manualOverrides?.overtimePay ?? calculatedOvertimePay;
 
-  // Calculate gross salary
-  const bonusPremium = 0; // TODO: Get from employee bonuses
-  const allowancesCash = 0; // TODO: Get from employee allowances
-  const allowancesInKind = 0; // TODO: Get from employee allowances
-  const grossSalary = baseSalary + overtimePay + bonusPremium + allowancesCash + allowancesInKind;
+  // Calculate allowances
+  const allowancesList = options?.allowances ?? [];
+  const allowancesCash = allowancesList
+    .filter(a => a.is_taxable)
+    .reduce((sum, a) => sum + a.amount, 0);
+  const allowancesInKind = allowancesList
+    .filter(a => !a.is_taxable)
+    .reduce((sum, a) => sum + a.amount, 0);
+
+  // Bonus and premium
+  const bonusPremium = options?.bonusPremium ?? 0;
+
+  // Calculate gross salary (base + overtime + bonuses + taxable allowances)
+  const grossSalary = effectiveBaseSalary + overtimePay + bonusPremium + allowancesCash + allowancesInKind;
 
   // Apply SGK base limits
   let sgkBase = grossSalary;
@@ -153,15 +199,36 @@ export function calculateEmployeePayroll(
   const unemploymentEmployee = Math.round(sgkBase * yearParams.unemployment_employee_rate * 100) / 100;
   const incomeTaxBase = grossSalary - sgkEmployeeShare - unemploymentEmployee;
 
+  // Check for minimum wage exemption (2026: 33.030 TL)
+  const minimumWage = yearParams.minimum_wage ?? 33030;
+  const isMinimumWageExemption = grossSalary <= minimumWage;
+
   // Calculate income tax using progressive brackets
-  const incomeTaxAmount = calculateIncomeTax(incomeTaxBase, yearParams.income_tax_brackets);
+  let incomeTaxAmount = calculateIncomeTax(incomeTaxBase, yearParams.income_tax_brackets);
+  let incomeTaxExemption = 0;
+  
+  if (isMinimumWageExemption) {
+    incomeTaxExemption = incomeTaxAmount;
+    incomeTaxAmount = 0;
+    warnings.push('Asgari ücret muafiyeti uygulandı - Gelir vergisi yok');
+  }
 
   // Calculate stamp tax (on gross salary)
-  const stampTaxAmount = Math.round(grossSalary * yearParams.stamp_tax_rate * 100) / 100;
+  let stampTaxAmount = Math.round(grossSalary * yearParams.stamp_tax_rate * 100) / 100;
+  let stampTaxExemption = 0;
+  
+  if (isMinimumWageExemption) {
+    stampTaxExemption = stampTaxAmount;
+    stampTaxAmount = 0;
+    warnings.push('Asgari ücret muafiyeti uygulandı - Damga vergisi yok');
+  }
 
-  // Other deductions
-  const advances = 0; // TODO: Get from employee advances
-  const garnishments = 0; // TODO: Get from employee garnishments
+  // Calculate advances
+  const advancesList = options?.advances ?? [];
+  const advances = advancesList.reduce((sum, a) => sum + a.amount, 0);
+
+  // Garnishments
+  const garnishments = options?.garnishments ?? 0;
 
   // Total deductions
   const totalDeductions =
@@ -193,19 +260,23 @@ export function calculateEmployeePayroll(
 
   return {
     employee_id: employeeId,
-    base_salary: baseSalary,
+    base_salary: effectiveBaseSalary,
     overtime_pay: overtimePay,
     bonus_premium: bonusPremium,
     allowances_cash: allowancesCash,
     allowances_in_kind: allowancesInKind,
+    allowances_detail: allowancesList,
     gross_salary: grossSalary,
     sgk_base: sgkBase,
     income_tax_base: incomeTaxBase,
     sgk_employee_share: sgkEmployeeShare,
     unemployment_employee: unemploymentEmployee,
     income_tax_amount: incomeTaxAmount,
+    income_tax_exemption: incomeTaxExemption,
     stamp_tax_amount: stampTaxAmount,
+    stamp_tax_exemption: stampTaxExemption,
     advances: advances,
+    advances_detail: advancesList,
     garnishments: garnishments,
     total_deductions: totalDeductions,
     net_salary: netSalary,
@@ -214,6 +285,7 @@ export function calculateEmployeePayroll(
     accident_insurance: accidentInsurance,
     total_employer_cost: totalEmployerCost,
     warnings,
+    is_minimum_wage_exemption_applied: isMinimumWageExemption,
   };
 }
 

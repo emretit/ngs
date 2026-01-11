@@ -18,7 +18,10 @@ export const employeeRoutes: RouteConfig[] = [
   { path: "/employees", component: Employees, protected: true },
   { path: "/add-employee", component: AddEmployee, protected: true },
   { path: "/employees/leaves/settings", component: LeaveSettingsPage, protected: true }, // Most specific first
-  { path: "/employees/payroll", component: TimePayrollPage, protected: true },
+  
+  // HR/Payroll routes
+  { path: "/hr/time-payroll", component: TimePayrollPage, protected: true }, // Puantaj ve bordro (birleşik)
+  
   { path: "/employees/leaves", component: EmployeeLeaves, protected: true },
   { path: "/employees/documents", component: EmployeeDocuments, protected: true },
   { path: "/organization-chart", component: OrganizationChart, protected: true },

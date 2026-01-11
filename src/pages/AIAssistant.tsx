@@ -16,17 +16,45 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Zap,
-  FileText,
-  ListTodo,
-  TrendingUp,
-  Users,
-  Package
+  Trash2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { sendMessageToGemini } from "@/services/geminiService";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompany } from "@/hooks/useCompany";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { format } from "date-fns";
+import { tr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+
+// AIContext
+import { useAI } from '@/contexts/AIContext';
+
+// Streaming service
+import { chatWithAIStreaming } from '@/services/geminiService';
+
+// Role components
+import { RoleSelector, RoleBadge } from '@/components/ai/RoleSelector';
+import { RoleBasedPrompts } from '@/components/ai/RoleBasedPrompts';
+import { getRoleQuickActions } from '@/services/aiPersonalityService';
+import type { AIRole } from '@/services/aiPersonalityService';
+
+// Conversation components
+import { useConversationMessages } from '@/hooks/useConversation';
 import {
   useCreateConversation,
   useSaveMessage,
@@ -34,21 +62,14 @@ import {
   useUserConversations,
   useDeleteConversation
 } from "@/hooks/useConversation";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { detectFunctionCall, executeFunctionCall, formatFunctionResponse } from "@/services/aiFunctionService";
-import { downloadFile, GeneratedFile } from "@/services/excelGenerationService";
-import { FileGenerationMessage } from "@/components/ai/FileGenerationMessage";
-import { TaskListMessage } from "@/components/ai/TaskListMessage";
 
-interface Message {
+// Function call (mevcut)
+import { detectFunctionCall, executeFunctionCall, formatFunctionResponse } from '@/services/aiFunctionService';
+import { downloadFile, GeneratedFile } from "@/services/excelGenerationService";
+import { FileGenerationMessage } from '@/components/ai/FileGenerationMessage';
+import { TaskListMessage } from '@/components/ai/TaskListMessage';
+
+interface MessageWithFunctionCall {
   role: "user" | "assistant";
   content: string;
   timestamp?: Date;
@@ -59,21 +80,28 @@ interface Message {
   };
 }
 
-const quickActions = [
-  { icon: Users, label: "Müşteri Listesi", prompt: "Müşteri listesini Excel'e aktar" },
-  { icon: TrendingUp, label: "Satış Raporu", prompt: "Bu ayki satışları raporla" },
-  { icon: Package, label: "Stok Durumu", prompt: "Stok raporunu oluştur" },
-  { icon: ListTodo, label: "Görevlerim", prompt: "Bekleyen görevlerimi göster" },
-  { icon: FileText, label: "Faturalar", prompt: "Bu ayki faturaları listele" },
-  { icon: Zap, label: "Hızlı Özet", prompt: "Bugünün iş özetini ver" },
-];
-
 export default function AIAssistant() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  // AIContext - global state
+  const {
+    messages,
+    addMessage,
+    setMessages,
+    clearMessages,
+    isLoading,
+    setIsLoading,
+    currentConversationId,
+    setCurrentConversationId,
+    currentRole,
+    setCurrentRole,
+    pageContext,
+    updatePageContext
+  } = useAI();
+
+  // Local UI state
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [roleChangeDialogOpen, setRoleChangeDialogOpen] = useState(false);
+  const [pendingRole, setPendingRole] = useState<AIRole | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -88,6 +116,31 @@ export default function AIAssistant() {
   const autoTitle = useAutoTitleConversation();
   const { data: conversations = [] } = useUserConversations(user?.id, companyId);
   const deleteConversation = useDeleteConversation();
+
+  // Load conversation messages when conversation changes
+  const { data: conversationMessages } = useConversationMessages(currentConversationId);
+
+  // Set page context on mount
+  useEffect(() => {
+    updatePageContext({
+      route: '/ai-assistant',
+      module: 'ai_assistant',
+      entities: [],
+      pageData: {}
+    });
+  }, [updatePageContext]);
+
+  // Load messages when conversation is selected
+  useEffect(() => {
+    if (conversationMessages && conversationMessages.length > 0) {
+      const formattedMessages = conversationMessages.map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+        timestamp: new Date(m.created_at)
+      }));
+      setMessages(formattedMessages);
+    }
+  }, [conversationMessages, setMessages]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -119,13 +172,13 @@ export default function AIAssistant() {
     setIsLoading(true);
 
     // Add user message
-    const userMessage: Message = {
+    const userMessage: MessageWithFunctionCall = {
       role: "user",
       content: text,
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    addMessage(userMessage);
 
     try {
       // Create conversation if needed
@@ -152,7 +205,7 @@ export default function AIAssistant() {
 
       if (functionDetection.shouldCall && functionDetection.functionName) {
         // Add pending function call message
-        const pendingMessage: Message = {
+        const pendingMessage: MessageWithFunctionCall = {
           role: "assistant",
           content: "İşleminiz gerçekleştiriliyor...",
           timestamp: new Date(),
@@ -161,7 +214,7 @@ export default function AIAssistant() {
             status: "pending"
           }
         };
-        setMessages(prev => [...prev, pendingMessage]);
+        addMessage(pendingMessage);
 
         // Execute function
         const result = await executeFunctionCall(
@@ -170,7 +223,7 @@ export default function AIAssistant() {
         );
 
         // Update message with result
-        const updatedMessage: Message = {
+        const updatedMessage: MessageWithFunctionCall = {
           role: "assistant",
           content: formatFunctionResponse(functionDetection.functionName, result),
           timestamp: new Date(),
@@ -194,22 +247,52 @@ export default function AIAssistant() {
           content: updatedMessage.content
         });
       } else {
-        // Regular AI response
-        const aiResponse = await sendMessageToGemini(text, messages);
+        // Regular AI response with streaming
+        const geminiMessages = messages
+          .filter(m => m.role !== 'system')
+          .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
-        const assistantMessage: Message = {
-          role: "assistant",
-          content: aiResponse || "Üzgünüm, bir yanıt oluşturamadım.",
+        const fullMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+          ...(geminiMessages as any),
+          { role: 'user', content: text }
+        ];
+
+        // Create placeholder for streaming response
+        let streamingContent = '';
+        addMessage({
+          role: 'assistant',
+          content: '',
           timestamp: new Date()
-        };
+        });
 
-        setMessages(prev => [...prev, assistantMessage]);
+        // Stream the response
+        await chatWithAIStreaming(
+          fullMessages,
+          'gemini-2.5-flash',
+          pageContext || undefined,
+          currentRole,
+          (chunk: string) => {
+            streamingContent += chunk;
+            // Update the last message (assistant) with streaming content
+            setMessages((prev) => {
+              const newMessages = [...prev];
+              const lastIndex = newMessages.length - 1;
+              if (newMessages[lastIndex]?.role === 'assistant') {
+                newMessages[lastIndex] = {
+                  ...newMessages[lastIndex],
+                  content: streamingContent
+                };
+              }
+              return newMessages;
+            });
+          }
+        );
 
         // Save assistant message
         await saveMessage.mutateAsync({
           conversationId,
           role: "assistant",
-          content: assistantMessage.content
+          content: streamingContent || 'Üzgünüm, bir yanıt oluşturamadım.'
         });
 
         // Auto-generate title if first message
@@ -219,31 +302,51 @@ export default function AIAssistant() {
       }
     } catch (error: any) {
       console.error("Message send error:", error);
+      
+      let errorMessage = 'Mesaj gönderilemedi';
+      
+      // Rate limit hatası
+      if (error.message?.includes('429') || error.message?.toLowerCase().includes('rate limit')) {
+        errorMessage = 'Çok fazla istek gönderildi. Lütfen birkaç saniye bekleyin.';
+      } 
+      // Ödeme/kota hatası
+      else if (error.message?.includes('402') || error.message?.toLowerCase().includes('payment') || error.message?.toLowerCase().includes('quota')) {
+        errorMessage = 'AI kullanım kotası aşıldı. Lütfen yöneticinize başvurun.';
+      }
+      // Bağlantı hatası
+      else if (error.message?.includes('fetch') || error.message?.toLowerCase().includes('network')) {
+        errorMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.';
+      }
+
       toast({
         title: "Hata",
-        description: error.message || "Mesaj gönderilemedi",
+        description: errorMessage,
         variant: "destructive"
       });
 
-      const errorMessage: Message = {
+      const errorMsg: MessageWithFunctionCall = {
         role: "assistant",
         content: "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.",
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, errorMessage]);
+      
+      setMessages((prev) => {
+        const filtered = prev.filter((_, i) => i !== prev.length - 1 || prev[i].role !== 'assistant' || prev[i].content !== '');
+        return [...filtered, errorMsg];
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleNewChat = () => {
-    setMessages([]);
+    clearMessages();
     setCurrentConversationId(null);
   };
 
   const handleLoadConversation = (convId: string) => {
-    // TODO: Load conversation messages
     setCurrentConversationId(convId);
+    // Messages will be loaded automatically by useEffect
   };
 
   const handleDeleteConversation = async (convId: string) => {
@@ -281,6 +384,28 @@ export default function AIAssistant() {
     }
   };
 
+  const handleRoleChange = (newRole: AIRole) => {
+    if (messages.length > 0) {
+      // Ask user if they want to start a new conversation
+      setPendingRole(newRole);
+      setRoleChangeDialogOpen(true);
+    } else {
+      setCurrentRole(newRole);
+    }
+  };
+
+  const confirmRoleChange = (startNew: boolean) => {
+    if (pendingRole) {
+      setCurrentRole(pendingRole);
+      if (startNew) {
+        clearMessages();
+        setCurrentConversationId(null);
+      }
+    }
+    setRoleChangeDialogOpen(false);
+    setPendingRole(null);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -288,20 +413,23 @@ export default function AIAssistant() {
     }
   };
 
+  const quickActions = getRoleQuickActions(currentRole);
+
   return (
     <div className="flex h-[calc(100vh-120px)] bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
       {/* Collapsible Sidebar */}
       <div
         className={cn(
           "relative border-r bg-white transition-all duration-300 flex flex-col",
-          isSidebarOpen ? "w-72" : "w-0"
+          isSidebarOpen ? "w-80" : "w-0",
+          "max-lg:absolute max-lg:z-20 max-lg:h-full max-lg:shadow-xl"
         )}
       >
         {isSidebarOpen && (
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full overflow-hidden">
             {/* Sidebar Header */}
             <div className="p-4 border-b bg-gradient-to-r from-violet-50 to-blue-50">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500 to-blue-500">
                     <Sparkles className="h-4 w-4 text-white" />
@@ -314,12 +442,36 @@ export default function AIAssistant() {
               </div>
               <Button
                 onClick={handleNewChat}
-                className="w-full bg-gradient-to-r from-violet-500 to-blue-500 hover:from-violet-600 hover:to-blue-600"
+                className="w-full bg-gradient-to-r from-violet-500 to-blue-500 hover:from-violet-600 hover:to-blue-600 mb-3"
                 size="sm"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Yeni Sohbet
               </Button>
+
+              {/* Role Selector */}
+              <div className="mb-3">
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                  AI Rolü
+                </label>
+                <RoleSelector
+                  currentRole={currentRole}
+                  onRoleChange={handleRoleChange}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Quick Actions */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                  Hızlı Eylemler
+                </label>
+                <RoleBasedPrompts
+                  role={currentRole}
+                  onPromptClick={handleSendMessage}
+                  maxPrompts={3}
+                />
+              </div>
             </div>
 
             {/* Conversations List */}
@@ -356,12 +508,20 @@ export default function AIAssistant() {
                               size="sm"
                               variant="ghost"
                               className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <MoreVertical className="h-3.5 w-3.5" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleDeleteConversation(conv.id)}>
+                            <DropdownMenuItem 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteConversation(conv.id);
+                              }}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-2" />
                               Sil
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -379,7 +539,10 @@ export default function AIAssistant() {
         <Button
           variant="ghost"
           size="sm"
-          className="absolute -right-3 top-4 h-6 w-6 p-0 rounded-full bg-white border shadow-sm z-10"
+          className={cn(
+            "absolute top-4 h-6 w-6 p-0 rounded-full bg-white border shadow-sm z-10",
+            isSidebarOpen ? "-right-3" : "right-3"
+          )}
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         >
           {isSidebarOpen ? (
@@ -391,7 +554,7 @@ export default function AIAssistant() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <div className="border-b bg-white/80 backdrop-blur-sm px-4 py-3">
           <div className="flex items-center justify-between max-w-5xl mx-auto">
@@ -400,16 +563,19 @@ export default function AIAssistant() {
                 <Bot className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h1 className="font-semibold text-base">AI Agent</h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-semibold text-base">AI Agent</h1>
+                  <RoleBadge role={currentRole} />
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Excel oluşturma, veri analizi, görev takibi
+                  Streaming yanıtlar, Excel oluşturma, görev takibi
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" className="gap-2">
                 <Settings className="h-4 w-4" />
-                Ayarlar
+                <span className="max-sm:hidden">Ayarlar</span>
               </Button>
               <Badge variant="secondary" className="gap-1 text-xs h-6 px-3">
                 <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -434,108 +600,115 @@ export default function AIAssistant() {
                 <h2 className="text-xl font-bold mb-2 bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">
                   AI Agent'a Hoş Geldiniz
                 </h2>
-                <p className="text-muted-foreground text-center mb-6 max-w-md text-sm">
-                  Excel raporları oluşturun, veri analizi yapın, görev oluşturun
+                <p className="text-muted-foreground text-center mb-2 max-w-md text-sm">
+                  Streaming yanıtlar, Excel raporları, veri analizi, görev oluşturma
+                </p>
+                <p className="text-xs text-muted-foreground text-center mb-6">
+                  <strong>{getRoleQuickActions(currentRole)[0]?.split(' ')[0]}</strong> AI rolü ile çalışıyorsunuz
                 </p>
 
-                {/* Quick Actions */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 w-full max-w-2xl">
-                  {quickActions.map((action, index) => (
+                {/* Quick Actions Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
+                  {quickActions.slice(0, 4).map((action, index) => (
                     <button
                       key={index}
-                      onClick={() => handleSendMessage(action.prompt)}
-                      className="group p-3 rounded-xl border-2 border-gray-200 hover:border-violet-300 bg-white hover:bg-gradient-to-br hover:from-violet-50 hover:to-blue-50 transition-all duration-200 hover:shadow-lg hover:scale-105"
+                      onClick={() => handleSendMessage(action)}
+                      className="group p-3 rounded-xl border-2 border-gray-200 hover:border-violet-300 bg-white hover:bg-gradient-to-br hover:from-violet-50 hover:to-blue-50 transition-all duration-200 hover:shadow-lg text-left"
                     >
-                      <action.icon className="h-5 w-5 mb-2 text-violet-500 group-hover:scale-110 transition-transform mx-auto" />
-                      <p className="text-sm font-medium text-gray-700">{action.label}</p>
+                      <p className="text-sm font-medium text-gray-700 group-hover:text-violet-700">
+                        {action}
+                      </p>
                     </button>
                   ))}
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={cn(
-                      "flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300",
-                      message.role === "user" && "flex-row-reverse"
-                    )}
-                  >
-                    {/* Avatar */}
-                    <div className="flex-shrink-0">
-                      {message.role === "assistant" ? (
-                        <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-blue-500 shadow-md">
-                          <Bot className="h-4 w-4 text-white" />
-                        </div>
-                      ) : (
-                        <div className="p-1.5 rounded-lg bg-gradient-to-br from-gray-700 to-gray-600 shadow-md">
-                          <User className="h-4 w-4 text-white" />
-                        </div>
+                {messages.map((message, index) => {
+                  const msg = message as MessageWithFunctionCall;
+                  return (
+                    <div
+                      key={index}
+                      className={cn(
+                        "flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300",
+                        msg.role === "user" && "flex-row-reverse"
                       )}
-                    </div>
-
-                    {/* Message Content */}
-                    <div className="flex-1 space-y-1.5 max-w-3xl">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold">
-                          {message.role === "assistant" ? "AI Agent" : "Siz"}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {format(message.timestamp || new Date(), "HH:mm", { locale: tr })}
-                        </span>
+                    >
+                      {/* Avatar */}
+                      <div className="flex-shrink-0">
+                        {msg.role === "assistant" ? (
+                          <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-blue-500 shadow-md">
+                            <Bot className="h-4 w-4 text-white" />
+                          </div>
+                        ) : (
+                          <div className="p-1.5 rounded-lg bg-gradient-to-br from-gray-700 to-gray-600 shadow-md">
+                            <User className="h-4 w-4 text-white" />
+                          </div>
+                        )}
                       </div>
 
-                      {/* Function Call Results */}
-                      {message.functionCall ? (
-                        <>
-                          {message.functionCall.name === "generate_excel" && (
-                            <FileGenerationMessage
-                              status={message.functionCall.status}
-                              filename={message.functionCall.result?.filename}
-                              fileSize={message.functionCall.result?.size}
-                              error={message.functionCall.status === "error" ? "Dosya oluşturulamadı" : undefined}
-                              onDownload={
-                                message.functionCall.status === "success" && message.functionCall.result
-                                  ? () => handleDownloadFile(message.functionCall!.result)
-                                  : undefined
-                              }
-                            />
-                          )}
-                          {message.functionCall.name === "manage_tasks" && message.functionCall.result?.data && (
-                            <TaskListMessage
-                              tasks={message.functionCall.result.data.tasks || []}
-                              stats={message.functionCall.result.data.stats || { total: 0, pending: 0, in_progress: 0, completed: 0, overdue: 0 }}
-                            />
-                          )}
-                          {message.content && (
-                            <div
-                              className={cn(
-                                "rounded-xl px-3 py-2 prose prose-sm max-w-none text-sm",
-                                message.role === "assistant"
-                                  ? "bg-white border border-gray-200 shadow-sm"
-                                  : "bg-gradient-to-br from-gray-700 to-gray-600 text-white"
-                              )}
-                            >
-                              <p className="whitespace-pre-wrap m-0">{message.content}</p>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div
-                          className={cn(
-                            "rounded-xl px-3 py-2 prose prose-sm max-w-none text-sm",
-                            message.role === "assistant"
-                              ? "bg-white border border-gray-200 shadow-sm"
-                              : "bg-gradient-to-br from-gray-700 to-gray-600 text-white prose-invert"
-                          )}
-                        >
-                          <p className="whitespace-pre-wrap m-0">{message.content}</p>
+                      {/* Message Content */}
+                      <div className="flex-1 space-y-1.5 max-w-3xl">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold">
+                            {msg.role === "assistant" ? "AI Agent" : "Siz"}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(msg.timestamp || new Date(), "HH:mm", { locale: tr })}
+                          </span>
                         </div>
-                      )}
+
+                        {/* Function Call Results */}
+                        {msg.functionCall ? (
+                          <>
+                            {msg.functionCall.name === "generate_excel" && (
+                              <FileGenerationMessage
+                                status={msg.functionCall.status}
+                                filename={msg.functionCall.result?.filename}
+                                fileSize={msg.functionCall.result?.size}
+                                error={msg.functionCall.status === "error" ? "Dosya oluşturulamadı" : undefined}
+                                onDownload={
+                                  msg.functionCall.status === "success" && msg.functionCall.result
+                                    ? () => handleDownloadFile(msg.functionCall!.result)
+                                    : undefined
+                                }
+                              />
+                            )}
+                            {msg.functionCall.name === "manage_tasks" && msg.functionCall.result?.data && (
+                              <TaskListMessage
+                                tasks={msg.functionCall.result.data.tasks || []}
+                                stats={msg.functionCall.result.data.stats || { total: 0, pending: 0, in_progress: 0, completed: 0, overdue: 0 }}
+                              />
+                            )}
+                            {msg.content && (
+                              <div
+                                className={cn(
+                                  "rounded-xl px-3 py-2 prose prose-sm max-w-none text-sm",
+                                  msg.role === "assistant"
+                                    ? "bg-white border border-gray-200 shadow-sm"
+                                    : "bg-gradient-to-br from-gray-700 to-gray-600 text-white"
+                                )}
+                              >
+                                <p className="whitespace-pre-wrap m-0">{msg.content}</p>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div
+                            className={cn(
+                              "rounded-xl px-3 py-2 prose prose-sm max-w-none text-sm",
+                              msg.role === "assistant"
+                                ? "bg-white border border-gray-200 shadow-sm"
+                                : "bg-gradient-to-br from-gray-700 to-gray-600 text-white prose-invert"
+                            )}
+                          >
+                            <p className="whitespace-pre-wrap m-0">{msg.content}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {isLoading && (
                   <div className="flex gap-3">
@@ -591,11 +764,31 @@ export default function AIAssistant() {
               </Button>
             </div>
             <p className="text-[10px] text-muted-foreground text-center">
-              AI Agent bazen yanlış bilgi verebilir.
+              AI Agent bazen yanlış bilgi verebilir. Streaming yanıtlar aktif.
             </p>
           </div>
         </div>
       </div>
+
+      {/* Role Change Confirmation Dialog */}
+      <AlertDialog open={roleChangeDialogOpen} onOpenChange={setRoleChangeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>AI Rolünü Değiştir</AlertDialogTitle>
+            <AlertDialogDescription>
+              Mevcut konuşmanız devam ediyor. Yeni bir konuşma başlatmak ister misiniz yoksa mevcut konuşmayla devam etmek mi istersiniz?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => confirmRoleChange(false)}>
+              Mevcut konuşmayla devam et
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmRoleChange(true)}>
+              Yeni konuşma başlat
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

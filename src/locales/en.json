@@ -355,6 +355,7 @@
     "subscriptionBilling": "Subscription & Billing",
     "rolesPermissions": "Roles & Permissions",
     "eInvoiceIntegrator": "E-Invoice Integrator",
+    "companyInfo": "Company Info",
     "systemSettings": "System Settings",
     "systemParameters": "System Parameters",
     "pdfTemplates": "PDF Templates",

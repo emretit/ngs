@@ -11,6 +11,7 @@ const VeribanSettingsPage = React.lazy(() => import("@/pages/settings/VeribanSet
 const IntegratorSettings = React.lazy(() => import("@/pages/settings/IntegratorSettings"));
 const SystemSettingsPage = React.lazy(() => import("@/pages/settings/SystemSettings"));
 const SystemParametersPage = React.lazy(() => import("@/pages/settings/SystemParameters"));
+const CompanyInfoSettings = React.lazy(() => import("@/pages/settings/CompanyInfoSettings"));
 const PdfTemplates = React.lazy(() => import("@/pages/PdfTemplates"));
 const PdfTemplateEditor = React.lazy(() => import("@/pages/templates/PdfTemplateEditor"));
 const ServiceTemplateEditor = React.lazy(() => import("@/pages/templates/ServiceTemplateEditor"));
@@ -37,6 +38,7 @@ export const settingsRoutes: RouteConfig[] = [
   { path: "/settings/veriban", component: VeribanSettingsPage, protected: true },
   { path: "/settings/system", component: SystemSettingsPage, protected: true },
   { path: "/settings/system-parameters", component: SystemParametersPage, protected: true },
+  { path: "/settings/company-info", component: CompanyInfoSettings, protected: true },
   { path: "/settings/pdf-templates", component: PdfTemplates, protected: true },
   // Service template routes MUST come before general pdf-templates routes (more specific first)
   { path: "/settings/pdf-templates/service/new", component: ServiceTemplateEditor, protected: true },

@@ -1,16 +1,19 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from "react";
+import { Building } from "lucide-react";
+import { CompanyInfoCard } from "@/components/settings/CompanyInfoCard";
 import { useCompanies, Company } from "@/hooks/useCompanies";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 
-export const CompanySettingsTab = () => {
+interface CompanyInfoSettingsProps {
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
+}
+
+const CompanyInfoSettings = ({ isCollapsed, setIsCollapsed }: CompanyInfoSettingsProps) => {
   const { company } = useCompanies();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
@@ -33,10 +36,35 @@ export const CompanySettingsTab = () => {
     
     setIsSaving(true);
     try {
-      // Define allowed updatable fields - only system settings
+      // Define allowed updatable fields based on Supabase companies table schema
       const allowedFields = [
+        'name',
+        'address',
+        'phone',
+        'email',
+        'tax_number',
+        'tax_office',
+        'logo_url',
         'default_currency',
         'email_settings',
+        'domain',
+        'website',
+        'is_active',
+        // Address details
+        'city',
+        'district',
+        'country',
+        'postal_code',
+        // Business information
+        'trade_registry_number',
+        'mersis_number',
+        'einvoice_alias_name',
+        'sector',
+        'establishment_date',
+        // Bank information
+        'bank_name',
+        'iban',
+        'account_number',
       ];
       
       // Build update object with only allowed fields
@@ -56,6 +84,13 @@ export const CompanySettingsTab = () => {
       if (updateData.email_settings && typeof updateData.email_settings === 'object') {
         updateData.email_settings = updateData.email_settings;
       }
+      
+      // Remove empty string values that might cause issues (keep null values)
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === '') {
+          updateData[key] = null;
+        }
+      });
       
       const { error, data } = await supabase
         .from('companies')
@@ -83,12 +118,12 @@ export const CompanySettingsTab = () => {
       }
       
       setIsDirty(false);
-      toast.success('Sistem ayarları başarıyla kaydedildi', {
+      toast.success('Şirket bilgileri başarıyla kaydedildi', {
         duration: 1000,
       });
     } catch (error: any) {
-      console.error('Error saving system settings:', error);
-      const errorMessage = error?.message || error?.details || 'Sistem ayarları kaydedilirken hata oluştu';
+      console.error('Error saving company info:', error);
+      const errorMessage = error?.message || error?.details || 'Şirket bilgileri kaydedilirken hata oluştu';
       toast.error(`Hata: ${errorMessage}`);
     } finally {
       setIsSaving(false);
@@ -97,57 +132,31 @@ export const CompanySettingsTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Sistem Ayarları */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Sistem Ayarları
-          </CardTitle>
-          <CardDescription>
-            Genel sistem tercihleri ve bildirim ayarları
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Varsayılan Para Birimi</Label>
-              <Select
-                value={formData?.default_currency || 'TRY'}
-                onValueChange={(value) => handleFieldChange('default_currency', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Para birimi seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TRY">Türk Lirası (₺)</SelectItem>
-                  <SelectItem value="USD">US Dollar ($)</SelectItem>
-                  <SelectItem value="EUR">Euro (€)</SelectItem>
-                  <SelectItem value="GBP">British Pound (£)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>E-posta Bildirimleri</Label>
-                <div className="text-sm text-muted-foreground">
-                  Sistem bildirimleri için e-posta gönderimi
-                </div>
-              </div>
-              <Switch
-                checked={formData?.email_settings?.notifications_enabled || false}
-                onCheckedChange={(checked) =>
-                  handleFieldChange('email_settings', { 
-                    ...formData?.email_settings,
-                    notifications_enabled: checked 
-                  })
-                }
-              />
-            </div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
+        {/* Sol taraf - Başlık */}
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white shadow-lg">
+            <Building className="h-5 w-5" />
           </div>
-        </CardContent>
-      </Card>
+          <div className="space-y-0.5">
+            <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              Şirket Bilgileri
+            </h1>
+            <p className="text-xs text-muted-foreground/70">
+              Şirket bilgilerinizi düzenleyin ve güncelleyin
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <CompanyInfoCard 
+        company={company}
+        formData={formData}
+        onFieldChange={handleFieldChange}
+        isDirty={isDirty}
+      />
 
       {/* Kaydet Butonu */}
       <div className="flex justify-end">
@@ -158,7 +167,7 @@ export const CompanySettingsTab = () => {
           size="lg"
         >
           <Save className="h-4 w-4" />
-          {isSaving ? 'Kaydediliyor...' : isDirty ? `Değişiklikleri Kaydet` : 'Ayarları Kaydet'}
+          {isSaving ? 'Kaydediliyor...' : isDirty ? `Değişiklikleri Kaydet` : 'Kaydet'}
         </Button>
         {!isDirty && (
           <p className="text-xs text-muted-foreground mt-2">
@@ -169,3 +178,5 @@ export const CompanySettingsTab = () => {
     </div>
   );
 };
+
+export default CompanyInfoSettings;

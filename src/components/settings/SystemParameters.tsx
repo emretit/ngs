@@ -1,6 +1,10 @@
 import { NumberFormatSettings } from './NumberFormatSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText } from 'lucide-react';
+import { FileText, Calendar } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCurrentCompany } from "@/hooks/useCurrentCompany";
+import YearlyParametersSection from "@/components/hr/YearlyParametersSection";
+import { useState } from "react";
 
 const FORMAT_VARIABLES = [
   { key: '{YYYY}', description: '4 haneli yıl (2025)', example: '2025' },
@@ -15,39 +19,77 @@ const FORMAT_VARIABLES = [
 
 // Sistem parametreleri bileşeni
 export const SystemParameters = () => {
-  return (
-    <div className="space-y-4">
-      {/* Format Değişkenleri Kartı */}
-      <Card className="border-gray-200 hover:shadow-md transition-shadow">
-        <CardHeader className="pb-2 pt-3 px-3">
-          <CardTitle className="text-sm font-medium">Format Değişkenleri</CardTitle>
-        </CardHeader>
-        <CardContent className="px-3 pb-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1.5">
-            {FORMAT_VARIABLES.map((variable) => (
-              <div key={variable.key} className="p-2 border rounded-md bg-muted/30">
-                <div className="font-mono font-semibold text-xs">{variable.key}</div>
-                <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{variable.description}</div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+  const { companyId } = useCurrentCompany();
+  const [activeTab, setActiveTab] = useState("formats");
+  const currentYear = new Date().getFullYear();
 
-      {/* Numara Formatları Kartı */}
-      <Card className="border-gray-200 hover:shadow-md transition-shadow">
-        <CardHeader className="pb-2 pt-3 px-3">
-          <CardTitle className="flex items-center gap-2 text-sm font-medium">
-            <div className="p-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white">
-              <FileText className="h-3.5 w-3.5" />
+  return (
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="formats" className="gap-2">
+          <FileText className="w-4 h-4" />
+          Format Ayarları
+        </TabsTrigger>
+        <TabsTrigger value="payroll" className="gap-2">
+          <Calendar className="w-4 h-4" />
+          Bordro Parametreleri
+        </TabsTrigger>
+      </TabsList>
+
+      {/* Format Ayarları Tab */}
+      <TabsContent value="formats" className="space-y-4 mt-4">
+        {/* Format Değişkenleri Kartı */}
+        <Card className="border-gray-200 hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2 pt-3 px-3">
+            <CardTitle className="text-sm font-medium">Format Değişkenleri</CardTitle>
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1.5">
+              {FORMAT_VARIABLES.map((variable) => (
+                <div key={variable.key} className="p-2 border rounded-md bg-muted/30">
+                  <div className="font-mono font-semibold text-xs">{variable.key}</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{variable.description}</div>
+                </div>
+              ))}
             </div>
-            <span>Numara Formatları</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-3 pb-3">
-          <NumberFormatSettings />
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+
+        {/* Numara Formatları Kartı */}
+        <Card className="border-gray-200 hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2 pt-3 px-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium">
+              <div className="p-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white">
+                <FileText className="h-3.5 w-3.5" />
+              </div>
+              <span>Numara Formatları</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
+            <NumberFormatSettings />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      {/* Bordro Parametreleri Tab */}
+      <TabsContent value="payroll" className="mt-4">
+        <Card className="border-gray-200 hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2 pt-3 px-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium">
+              <div className="p-1 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-white">
+                <Calendar className="h-3.5 w-3.5" />
+              </div>
+              <span>Yıllık Bordro Parametreleri</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
+            <YearlyParametersSection 
+              companyId={companyId || ""} 
+              year={currentYear}
+            />
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
   );
 };

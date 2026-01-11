@@ -78,6 +78,8 @@
     "i18next": "^25.7.3",
     "i18next-browser-languagedetector": "^8.2.0",
     "input-otp": "^1.4.2",
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.7",
     "jszip": "^3.10.1",
     "languine": "^3.1.4",
     "leaflet": "^1.9.4",

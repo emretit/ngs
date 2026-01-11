@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,7 @@ export default function VendorInvoiceDetail() {
         toast.success("Fatura muhasebeleşti. AP borcu oluşturuldu.");
       }
     } catch (error) {
-      console.error('Status update error:', error);
+      logger.error('Status update error:', error);
     }
   };
 

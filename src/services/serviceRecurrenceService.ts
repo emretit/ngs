@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { RecurrenceConfig, calculateNextRecurrenceDate } from '@/utils/serviceRecurrenceUtils';
 
 /**
@@ -12,7 +13,7 @@ export class ServiceRecurrenceService {
     const { data, error } = await supabase.rpc('generate_recurring_service_instances');
 
     if (error) {
-      console.error('Error generating recurring service instances:', error);
+      logger.error('Error generating recurring service instances:', error);
       throw error;
     }
 
@@ -49,7 +50,7 @@ export class ServiceRecurrenceService {
       .single();
 
     if (error) {
-      console.error('Error creating recurring service:', error);
+      logger.error('Error creating recurring service:', error);
       throw error;
     }
 
@@ -79,7 +80,7 @@ export class ServiceRecurrenceService {
       .eq('id', serviceId);
 
     if (error) {
-      console.error('Error updating recurrence config:', error);
+      logger.error('Error updating recurrence config:', error);
       throw error;
     }
   }
@@ -98,7 +99,7 @@ export class ServiceRecurrenceService {
       .eq('id', serviceId);
 
     if (error) {
-      console.error('Error stopping recurrence:', error);
+      logger.error('Error stopping recurrence:', error);
       throw error;
     }
   }
@@ -116,7 +117,7 @@ export class ServiceRecurrenceService {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching recurring templates:', error);
+      logger.error('Error fetching recurring templates:', error);
       throw error;
     }
 
@@ -135,7 +136,7 @@ export class ServiceRecurrenceService {
       .order('service_reported_date', { ascending: false });
 
     if (error) {
-      console.error('Error fetching service instances:', error);
+      logger.error('Error fetching service instances:', error);
       throw error;
     }
 

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -94,13 +95,13 @@ const Subscription = ({ isCollapsed, setIsCollapsed }: SubscriptionProps) => {
   };
 
   const handlePaymentSuccess = (paymentId: string) => {
-    console.log("Payment successful:", paymentId);
+    logger.debug("Payment successful:", paymentId);
     setShowPaymentDialog(false);
     // Backend'e bildir ve aboneliği güncelle
   };
 
   const handlePaymentError = (error: string) => {
-    console.error("Payment error:", error);
+    logger.error("Payment error:", error);
   };
 
   const selectedDuration = durations.find(d => d.value === duration)!;

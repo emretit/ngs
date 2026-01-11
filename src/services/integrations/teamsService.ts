@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/utils/logger';
 
 export interface TeamsWebhookConfig {
   id: string;
@@ -80,7 +81,7 @@ export async function getTeamsConnection(): Promise<TeamsConnection | null> {
 
     return data;
   } catch (err: any) {
-    console.error('Error getting Teams connection:', err);
+    logger.error('Error getting Teams connection:', err);
     return null;
   }
 }
@@ -114,7 +115,7 @@ async function refreshAccessToken(connection: TeamsConnection): Promise<string> 
     if (error) throw error;
     return data.access_token;
   } catch (err: any) {
-    console.error('Error refreshing access token:', err);
+    logger.error('Error refreshing access token:', err);
     throw new Error('Failed to refresh access token');
   }
 }
@@ -186,7 +187,7 @@ export async function sendTeamsChannelMessage(
 
     return true;
   } catch (err: any) {
-    console.error('Error sending Teams message:', err);
+    logger.error('Error sending Teams message:', err);
     return false;
   }
 }
@@ -213,7 +214,7 @@ export async function sendTeamsWebhookMessage(
 
     return true;
   } catch (err: any) {
-    console.error('Error sending Teams webhook:', err);
+    logger.error('Error sending Teams webhook:', err);
     return false;
   }
 }
@@ -424,7 +425,7 @@ export async function listTeams(): Promise<any[]> {
     const data = await response.json();
     return data.value || [];
   } catch (err: any) {
-    console.error('Error listing teams:', err);
+    logger.error('Error listing teams:', err);
     return [];
   }
 }
@@ -455,7 +456,7 @@ export async function listTeamChannels(teamId: string): Promise<any[]> {
     const data = await response.json();
     return data.value || [];
   } catch (err: any) {
-    console.error('Error listing channels:', err);
+    logger.error('Error listing channels:', err);
     return [];
   }
 }
@@ -473,7 +474,7 @@ export async function disconnectTeams(connectionId: string): Promise<boolean> {
     if (error) throw error;
     return true;
   } catch (err: any) {
-    console.error('Error disconnecting Teams:', err);
+    logger.error('Error disconnecting Teams:', err);
     return false;
   }
 }
@@ -492,7 +493,7 @@ export async function getTeamsWebhooks(): Promise<TeamsWebhookConfig[]> {
     if (error) throw error;
     return data || [];
   } catch (err: any) {
-    console.error('Error getting Teams webhooks:', err);
+    logger.error('Error getting Teams webhooks:', err);
     return [];
   }
 }
@@ -526,7 +527,7 @@ export async function addTeamsWebhook(
     if (error) throw error;
     return true;
   } catch (err: any) {
-    console.error('Error adding Teams webhook:', err);
+    logger.error('Error adding Teams webhook:', err);
     return false;
   }
 }

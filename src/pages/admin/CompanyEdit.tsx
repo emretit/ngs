@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -134,7 +135,7 @@ const CompanyDetail = () => {
 
       return data.publicUrl;
     } catch (error) {
-      console.error('Error uploading logo:', error);
+      logger.error('Error uploading logo:', error);
       return null;
     }
   };
@@ -172,7 +173,7 @@ const CompanyDetail = () => {
         description: "İşlem sırasında bir hata oluştu",
         variant: "destructive",
       });
-      console.error('Error saving company:', error);
+      logger.error('Error saving company:', error);
     }
   };
 

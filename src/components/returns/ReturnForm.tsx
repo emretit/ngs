@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -167,7 +168,7 @@ const ReturnForm = ({ open, onClose, orderId }: ReturnFormProps) => {
       setItems([{ id: '1', product_name: '', return_quantity: 1, unit: 'adet', condition: 'new', notes: '' }]);
       onClose();
     } catch (error: any) {
-      console.error('Error creating return:', error);
+      logger.error('Error creating return:', error);
       toast.error(error.message || 'İade oluşturulurken hata oluştu');
     } finally {
       setIsSubmitting(false);

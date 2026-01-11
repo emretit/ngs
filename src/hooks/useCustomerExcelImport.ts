@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { importCustomersFromExcel, readExcelColumns } from '@/utils/excelUtils';
@@ -64,7 +65,7 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
         setShowMappingDialog(true);
         
       } catch (error: any) {
-        console.error('Error mapping columns:', error);
+        logger.error('Error mapping columns:', error);
         toast.error(t('toast.excelMappingError'));
       } finally {
         setIsMappingColumns(false);
@@ -91,7 +92,7 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
       }
     });
     
-    console.log('📋 Final mapping:', mapping);
+    logger.debug('📋 Final mapping:', mapping);
     setCustomMapping(mapping);
     setShowMappingDialog(false);
   };
@@ -145,7 +146,7 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
       setIsLoading(false);
       toast.info(t('toast.importCancelled'));
     } catch (error) {
-      console.error('Error cancelling import:', error);
+      logger.error('Error cancelling import:', error);
       setIsLoading(false);
       toast.info(t('toast.importCancelled'));
     }
@@ -167,10 +168,10 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
     
     try {
       // Import and parse Excel file with custom mapping
-      console.log('📋 Using custom mapping:', customMapping);
+      logger.debug('📋 Using custom mapping:', customMapping);
       const importedData = await importCustomersFromExcel(selectedFile, customMapping);
       
-      console.log('📋 Imported data sample (first row):', importedData[0]);
+      logger.debug('📋 Imported data sample (first row):', importedData[0]);
 
       if (!importedData || importedData.length === 0) {
         toast.error(t('toast.excelEmpty'));
@@ -243,7 +244,7 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
         const companyValue = row.company || (customerType === 'kurumsal' ? row.name.trim() : null);
         
         // Debug: Ham veriyi kontrol et
-        console.log('🔍 Processing row:', {
+        logger.debug('🔍 Processing row:', {
           name: row.name,
           tax_number: row.tax_number,
           tax_office: row.tax_office,
@@ -268,12 +269,12 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
             
             if (cityData) {
               cityId = cityData.id;
-              console.log('✅ City found:', cityName, '→ ID:', cityId);
+              logger.debug('✅ City found:', cityName, '→ ID:', cityId);
             } else {
-              console.log('⚠️ City not found:', cityName);
+              logger.debug('⚠️ City not found:', cityName);
             }
           } catch (error) {
-            console.error('Error resolving city ID:', error);
+            logger.error('Error resolving city ID:', error);
           }
         }
         
@@ -289,12 +290,12 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
             
             if (districtData) {
               districtId = districtData.id;
-              console.log('✅ District found:', districtName, '→ ID:', districtId);
+              logger.debug('✅ District found:', districtName, '→ ID:', districtId);
             } else {
-              console.log('⚠️ District not found:', districtName, 'for city ID:', cityId);
+              logger.debug('⚠️ District not found:', districtName, 'for city ID:', cityId);
             }
           } catch (error) {
-            console.error('Error resolving district ID:', error);
+            logger.error('Error resolving district ID:', error);
           }
         }
         
@@ -321,7 +322,7 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
         };
         
         // Debug: Supabase'e gönderilecek veriyi kontrol et
-        console.log('💾 Customer data to insert:', {
+        logger.debug('💾 Customer data to insert:', {
           name: customerData.name,
           tax_number: customerData.tax_number,
           tax_office: customerData.tax_office
@@ -332,7 +333,7 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
            .insert(customerData);
            
         if (insertError) {
-           console.error('Error inserting customer:', insertError);
+           logger.error('Error inserting customer:', insertError);
            failedCount++;
         } else {
            successCount++;
@@ -364,7 +365,7 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
       }
       
     } catch (error) {
-      console.error('Import error:', error);
+      logger.error('Import error:', error);
       toast.error(t('toast.importError'));
     } finally {
       setIsLoading(false);

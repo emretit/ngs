@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { usePurchaseOrdersInfiniteScroll, PurchaseOrder } from "@/hooks/usePurchaseOrders";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -73,7 +74,7 @@ const PurchaseOrdersList = () => {
 
   if (error) {
     toast.error("Siparişler yüklenirken bir hata oluştu");
-    console.error("Error loading orders:", error);
+    logger.error("Error loading orders:", error);
   }
 
   // Order tıklama handler'ı - useCallback ile optimize edildi

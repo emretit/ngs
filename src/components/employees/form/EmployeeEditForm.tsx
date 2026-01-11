@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { Form } from "@/components/ui/form";
 import { Employee } from "@/types/employee";
 import { useEmployeeForm } from "./hooks/useEmployeeForm";
@@ -70,7 +71,7 @@ export const EmployeeEditForm = ({
   }, []);
 
   const onSubmit = (values: any) => {
-    console.log("🟢 [EmployeeEditForm] onSubmit çağrıldı", {
+    logger.debug("🟢 [EmployeeEditForm] onSubmit çağrıldı", {
       values: {
         ...values,
         user_roles: values.user_roles,
@@ -85,7 +86,7 @@ export const EmployeeEditForm = ({
       _linkUserId: userLinkState.shouldLink ? userLinkState.userId : null,
     };
 
-    console.log("🟢 [EmployeeEditForm] submitValues:", {
+    logger.debug("🟢 [EmployeeEditForm] submitValues:", {
       ...submitValues,
       user_roles: submitValues.user_roles,
       _linkUserId: submitValues._linkUserId
@@ -95,8 +96,8 @@ export const EmployeeEditForm = ({
   };
 
   const onError = (errors: any) => {
-    console.error("❌ [EmployeeEditForm] Form validation hataları:", errors);
-    console.error("❌ [EmployeeEditForm] Form state:", form.getValues());
+    logger.error("❌ [EmployeeEditForm] Form validation hataları:", errors);
+    logger.error("❌ [EmployeeEditForm] Form state:", form.getValues());
   };
 
   return (

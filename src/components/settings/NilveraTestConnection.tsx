@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,7 +41,7 @@ export const NilveraTestConnection = () => {
         throw new Error(data?.error || "API bağlantısı başarısız");
       }
     } catch (error: any) {
-      console.error('Nilvera test error:', error);
+      logger.error('Nilvera test error:', error);
       toast({
         variant: "destructive",
         title: "Bağlantı Hatası ❌",

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -97,7 +98,7 @@ const Production = ({ isCollapsed, setIsCollapsed }: ProductionProps) => {
       await updateWorkOrder({ id: workOrderId, data: updateData });
       
     } catch (error) {
-      console.error("Status update failed", error);
+      logger.error("Status update failed", error);
       toast.error("Durum güncellenemedi");
     }
   };

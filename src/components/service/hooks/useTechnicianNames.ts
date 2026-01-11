@@ -1,5 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 
 export const useTechnicianNames = () => {
@@ -16,7 +17,7 @@ export const useTechnicianNames = () => {
         if (error) throw error;
         return data || [];
       } catch (error) {
-        console.error("Error fetching technicians:", error);
+        logger.error("Error fetching technicians:", error);
         return [];
       }
     },

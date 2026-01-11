@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 export interface GeminiChatResponse {
   content?: string;
@@ -73,13 +74,13 @@ export const checkGeminiStatus = async (): Promise<{ configured: boolean; messag
     });
     
     if (error) {
-      console.error('Gemini status check error:', error);
+      logger.error('Gemini status check error:', error);
       return { configured: false, message: error.message || 'Bağlantı hatası' };
     }
     
     return data || { configured: false, message: 'Yanıt alınamadı' };
   } catch (err: any) {
-    console.error('Gemini status check exception:', err);
+    logger.error('Gemini status check exception:', err);
     return { configured: false, message: err.message || 'Bağlantı hatası' };
   }
 };
@@ -103,7 +104,7 @@ export const generateSQLFromQuery = async (
     });
     
     if (error) {
-      console.error('SQL generation error:', error);
+      logger.error('SQL generation error:', error);
       return { 
         sql: '', 
         explanation: `Sorgu işlenirken hata oluştu: ${error.message}`,
@@ -125,7 +126,7 @@ export const generateSQLFromQuery = async (
       chartType: 'table'
     };
   } catch (err: any) {
-    console.error('SQL generation exception:', err);
+    logger.error('SQL generation exception:', err);
     return { 
       sql: '', 
       explanation: `Sorgu işlenirken hata oluştu: ${err.message}`,
@@ -156,13 +157,13 @@ export const generateSQLQuery = async (
     });
     
     if (error) {
-      console.error('SQL generation error:', error);
+      logger.error('SQL generation error:', error);
       return { error: error.message };
     }
     
     return data;
   } catch (err: any) {
-    console.error('SQL generation exception:', err);
+    logger.error('SQL generation exception:', err);
     return { error: err.message };
   }
 };
@@ -197,13 +198,13 @@ export const chatWithAI = async (
     });
 
     if (error) {
-      console.error('Chat error:', error);
+      logger.error('Chat error:', error);
       return { error: error.message };
     }
 
     return data;
   } catch (err: any) {
-    console.error('Chat exception:', err);
+    logger.error('Chat exception:', err);
     return { error: err.message };
   }
 };
@@ -253,7 +254,7 @@ export const sendMessageToGemini = async (
 
     return response.content || 'Üzgünüm, yanıt oluşturulamadı.';
   } catch (err: any) {
-    console.error('sendMessageToGemini error:', err);
+    logger.error('sendMessageToGemini error:', err);
     throw new Error(err.message || 'AI yanıt verirken bir hata oluştu');
   }
 };
@@ -284,13 +285,13 @@ export const generateReport = async (
     });
 
     if (error) {
-      console.error('Report generation error:', error);
+      logger.error('Report generation error:', error);
       return { error: error.message };
     }
 
     return data;
   } catch (err: any) {
-    console.error('Report generation exception:', err);
+    logger.error('Report generation exception:', err);
     return { error: err.message };
   }
 };
@@ -319,13 +320,13 @@ export const analyzeDataWithAI = async (
     });
     
     if (error) {
-      console.error('Analyze error:', error);
+      logger.error('Analyze error:', error);
       return { error: error.message };
     }
     
     return result;
   } catch (err: any) {
-    console.error('Analyze exception:', err);
+    logger.error('Analyze exception:', err);
     return { error: err.message };
   }
 };
@@ -352,13 +353,13 @@ export const mapColumnsWithAI = async (
     });
     
     if (error) {
-      console.error('Column mapping error:', error);
+      logger.error('Column mapping error:', error);
       return { error: error.message };
     }
     
     return data;
   } catch (err: any) {
-    console.error('Column mapping exception:', err);
+    logger.error('Column mapping exception:', err);
     return { error: err.message };
   }
 };
@@ -375,7 +376,7 @@ export const testGeminiConnection = async (): Promise<boolean> => {
  * Execute SQL Query against Supabase with company_id filter
  */
 export const executeSQLQuery = async (sql: string): Promise<any[]> => {
-  console.log('Executing SQL:', sql);
+  logger.debug('Executing SQL:', sql);
 
   try {
     const companyId = await getCurrentCompanyId();
@@ -452,7 +453,7 @@ export const executeSQLQuery = async (sql: string): Promise<any[]> => {
     const { data, error, count } = await query;
 
     if (error) {
-      console.error('SQL execution error:', error);
+      logger.error('SQL execution error:', error);
       throw new Error(`SQL Error: ${error.message}`);
     }
 
@@ -476,7 +477,7 @@ export const executeSQLQuery = async (sql: string): Promise<any[]> => {
 
     return data || [];
   } catch (error: any) {
-    console.error('Database query failed:', error);
+    logger.error('Database query failed:', error);
     return [{
       error: true,
       message: `Veritabanı sorgusu başarısız: ${error.message}`,
@@ -575,7 +576,7 @@ Yanıtlarını kısa, net ve Türkçe ver.`
     });
 
     if (error) {
-      console.error('Chat with context error:', error);
+      logger.error('Chat with context error:', error);
       return {
         error: error.message || 'Bir hata oluştu',
         configured: false
@@ -588,7 +589,7 @@ Yanıtlarını kısa, net ve Türkçe ver.`
       configured: true
     };
   } catch (err: any) {
-    console.error('Chat with context exception:', err);
+    logger.error('Chat with context exception:', err);
     return {
       error: err.message || 'Beklenmeyen bir hata oluştu',
       configured: false
@@ -678,7 +679,7 @@ export const chatWithAIStreaming = async (
       }
     }
   } catch (err: any) {
-    console.error('Streaming chat exception:', err);
+    logger.error('Streaming chat exception:', err);
     throw err;
   }
 };

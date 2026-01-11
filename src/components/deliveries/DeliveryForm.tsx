@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Label } from "@/components/ui/label";
@@ -190,7 +191,7 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({ orderId, salesInvoiceId, on
       onClose();
       // Navigate sadece route değişikliği gerekiyorsa yapılır, onClose zaten handle ediyor
     } catch (error: any) {
-      console.error("Error creating delivery:", error);
+      logger.error("Error creating delivery:", error);
       toast.error(error.message || "Teslimat oluşturulurken hata oluştu");
     }
   };

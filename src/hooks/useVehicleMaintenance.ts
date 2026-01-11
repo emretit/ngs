@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { VehicleMaintenance, MaintenanceFormData } from '@/types/vehicle';
 import { toast } from '@/hooks/use-toast';
@@ -75,7 +76,7 @@ export const useCreateMaintenance = () => {
         description: "Bakım kaydı oluşturulurken bir hata oluştu.",
         variant: "destructive",
       });
-      console.error('Maintenance creation error:', error);
+      logger.error('Maintenance creation error:', error);
     },
   });
 };
@@ -109,7 +110,7 @@ export const useUpdateMaintenance = () => {
         description: "Bakım kaydı güncellenirken bir hata oluştu.",
         variant: "destructive",
       });
-      console.error('Maintenance update error:', error);
+      logger.error('Maintenance update error:', error);
     },
   });
 };

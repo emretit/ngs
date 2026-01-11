@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { logger } from '@/utils/logger';
 
 export const exportToExcel = (data: any[], filename: string) => {
   try {
@@ -7,7 +8,7 @@ export const exportToExcel = (data: any[], filename: string) => {
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
     XLSX.writeFile(wb, `${filename}.xlsx`);
   } catch (error) {
-    console.error('Excel export error:', error);
+    logger.error('Excel export error:', error);
     throw new Error('Excel dosyası oluşturulamadı');
   }
 };

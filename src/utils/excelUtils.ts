@@ -1,5 +1,6 @@
 
 import * as XLSX from 'xlsx';
+import { logger } from '@/utils/logger';
 import { saveAs } from 'file-saver';
 import { Customer } from '@/types/customer';
 import { Proposal } from '@/types/proposal';
@@ -24,7 +25,7 @@ export const exportCustomersToExcel = (customers: Customer[], fileName = 'custom
     
     return true;
   } catch (error) {
-    console.error('Error exporting customers to Excel:', error);
+    logger.error('Error exporting customers to Excel:', error);
     return false;
   }
 };
@@ -48,7 +49,7 @@ export const exportSuppliersToExcel = (suppliers: any[], fileName = 'tedarikcile
     
     return true;
   } catch (error) {
-    console.error('Error exporting suppliers to Excel:', error);
+    logger.error('Error exporting suppliers to Excel:', error);
     return false;
   }
 };
@@ -179,7 +180,7 @@ export const importCustomersFromExcel = async (file: File, columnMapping?: { [ex
         
         resolve(mappedData);
       } catch (error) {
-        console.error('Error importing Excel file:', error);
+        logger.error('Error importing Excel file:', error);
         reject(error);
       }
     };
@@ -211,7 +212,7 @@ export const exportProposalsToExcel = (proposals: Proposal[], fileName = 'propos
     
     return true;
   } catch (error) {
-    console.error('Error exporting proposals to Excel:', error);
+    logger.error('Error exporting proposals to Excel:', error);
     return false;
   }
 };
@@ -235,7 +236,7 @@ export const exportProductsToExcel = (products: Product[], fileName = 'products.
     
     return true;
   } catch (error) {
-    console.error('Error exporting products to Excel:', error);
+    logger.error('Error exporting products to Excel:', error);
     return false;
   }
 };
@@ -301,7 +302,7 @@ export const exportCustomerTemplateToExcel = (fileName = 'musteri_sablonu.xlsx')
     
     return true;
   } catch (error) {
-    console.error('Error exporting customer template to Excel:', error);
+    logger.error('Error exporting customer template to Excel:', error);
     return false;
   }
 };
@@ -376,7 +377,7 @@ export const exportSupplierTemplateToExcel = (fileName = 'tedarikci_sablonu.xlsx
     
     return true;
   } catch (error) {
-    console.error('Error exporting supplier template to Excel:', error);
+    logger.error('Error exporting supplier template to Excel:', error);
     return false;
   }
 };
@@ -463,7 +464,7 @@ export const exportProductTemplateToExcel = (fileName = 'urun_sablonu.xlsx') => 
     
     return true;
   } catch (error) {
-    console.error('Error exporting product template to Excel:', error);
+    logger.error('Error exporting product template to Excel:', error);
     return false;
   }
 };
@@ -493,7 +494,7 @@ export const readExcelColumns = async (file: File): Promise<string[]> => {
         const headers = jsonData[0] as string[];
         resolve(headers.filter(h => h !== undefined && h !== null && h.toString().trim() !== ''));
       } catch (error) {
-        console.error('Error reading Excel columns:', error);
+        logger.error('Error reading Excel columns:', error);
         reject(error);
       }
     };
@@ -591,7 +592,7 @@ export const importProductsFromExcel = async (file: File, columnMapping?: { [exc
         
         resolve(mappedData);
       } catch (error) {
-        console.error('Error importing Excel file:', error);
+        logger.error('Error importing Excel file:', error);
         reject(error);
       }
     };

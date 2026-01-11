@@ -1,4 +1,5 @@
 import { useState, useCallback, memo } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import CustomersHeader from "@/components/customers/CustomersHeader";
 import CustomersFilterBar from "@/components/customers/CustomersFilterBar";
@@ -123,7 +124,7 @@ const Contacts = memo(() => {
 
   if (error) {
     toast.error(t("pages.customers.loadError"));
-    console.error("Error loading customers:", error);
+    logger.error("Error loading customers:", error);
   }
   const handleCustomerSelect = (customer: Customer) => {
     setSelectedCustomers(prev => {
@@ -164,7 +165,7 @@ const Contacts = memo(() => {
         .limit(1);
       
       if (ordersError) {
-        console.error('Error checking orders:', ordersError);
+        logger.error('Error checking orders:', ordersError);
       }
       
       const { data: salesInvoices, error: invoicesError } = await supabase
@@ -174,7 +175,7 @@ const Contacts = memo(() => {
         .limit(1);
       
       if (invoicesError) {
-        console.error('Error checking sales_invoices:', invoicesError);
+        logger.error('Error checking sales_invoices:', invoicesError);
       }
       
       const { data: proposals, error: proposalsError } = await supabase
@@ -184,7 +185,7 @@ const Contacts = memo(() => {
         .limit(1);
 
       if (proposalsError) {
-        console.error('Error checking proposals:', proposalsError);
+        logger.error('Error checking proposals:', proposalsError);
       }
 
       if (orders && orders.length > 0) {
@@ -214,7 +215,7 @@ const Contacts = memo(() => {
         .in('id', customerIds);
 
       if (error) {
-        console.error('Delete error details:', {
+        logger.error('Delete error details:', {
           message: error.message,
           code: error.code,
           details: error.details,
@@ -261,7 +262,7 @@ const Contacts = memo(() => {
       // Tabloyu yenile
       refreshCustomers();
     } catch (error: any) {
-      console.error('Error deleting customers:', error);
+      logger.error('Error deleting customers:', error);
       toast.error(`${t("pages.customers.deleteError")}: ${error?.message || t("common.unknownError")}`, { duration: 2000 });
     } finally {
       setIsDeleting(false);

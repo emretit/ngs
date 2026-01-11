@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "./useCurrentUser";
 
@@ -105,11 +106,11 @@ export const useOpexAnalysis = (filters: OpexAnalysisFilters) => {
       const { data: opexData, error: opexError } = await opexQuery;
 
       if (opexError) {
-        console.error("OPEX data fetch error:", opexError);
+        logger.error("OPEX data fetch error:", opexError);
         throw opexError;
       }
 
-      console.log(`Fetched ${opexData?.length || 0} OPEX records for year ${filters.year}`);
+      logger.debug(`Fetched ${opexData?.length || 0} OPEX records for year ${filters.year}`);
 
       // Also fetch expenses from expenses table as fallback
       let expensesQuery = supabase
@@ -141,11 +142,11 @@ export const useOpexAnalysis = (filters: OpexAnalysisFilters) => {
       const { data: expenses, error: expensesError } = await expensesQuery;
 
       if (expensesError) {
-        console.error("Expenses fetch error:", expensesError);
+        logger.error("Expenses fetch error:", expensesError);
         throw expensesError;
       }
 
-      console.log(`Fetched ${expenses?.length || 0} expense records for year ${filters.year}`);
+      logger.debug(`Fetched ${expenses?.length || 0} expense records for year ${filters.year}`);
 
       // Combine OPEX and expenses data
       const categoryMap = new Map<string, {

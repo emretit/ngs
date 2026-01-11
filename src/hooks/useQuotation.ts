@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -62,7 +63,7 @@ export const useQuotation = (quotationId?: string) => {
       if (error) throw error;
       setQuotations(data || []);
     } catch (error: any) {
-      console.error('Error loading quotations:', error);
+      logger.error('Error loading quotations:', error);
       toast.error('Failed to load quotations');
     } finally {
       setIsLoading(false);
@@ -86,7 +87,7 @@ export const useQuotation = (quotationId?: string) => {
       await loadQuotations();
       return data;
     } catch (error: any) {
-      console.error('Error creating quotation:', error);
+      logger.error('Error creating quotation:', error);
       toast.error('Failed to create quotation');
       throw error;
     }
@@ -104,7 +105,7 @@ export const useQuotation = (quotationId?: string) => {
       toast.success('Quotation updated successfully');
       await loadQuotations();
     } catch (error: any) {
-      console.error('Error updating quotation:', error);
+      logger.error('Error updating quotation:', error);
       toast.error('Failed to update quotation');
       throw error;
     }
@@ -122,7 +123,7 @@ export const useQuotation = (quotationId?: string) => {
       toast.success('Quotation deleted successfully');
       await loadQuotations();
     } catch (error: any) {
-      console.error('Error deleting quotation:', error);
+      logger.error('Error deleting quotation:', error);
       toast.error('Failed to delete quotation');
       throw error;
     }

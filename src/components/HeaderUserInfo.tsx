@@ -1,4 +1,5 @@
 import React from 'react'
+import { logger } from '@/utils/logger';
 import { Building2, User } from 'lucide-react'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useQuery } from '@tanstack/react-query'
@@ -22,7 +23,7 @@ export default function HeaderUserInfo() {
         .maybeSingle()
       
       if (error) {
-        console.error('Error fetching company:', error)
+        logger.error('Error fetching company:', error)
         return null
       }
       

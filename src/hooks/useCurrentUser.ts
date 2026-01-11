@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { useAuth } from '@/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -82,7 +83,7 @@ export const useCurrentUser = () => {
 
         // Veri kontrolü
         if (!data) {
-          console.warn('Kullanıcı profili bulunamadı');
+          logger.warn('Kullanıcı profili bulunamadı');
           setUserData(null);
           setError('Kullanıcı profili bulunamadı');
           return;
@@ -97,7 +98,7 @@ export const useCurrentUser = () => {
         setUserData(data);
         setError(null);
       } catch (err: any) {
-        console.error('Error fetching user data:', err);
+        logger.error('Error fetching user data:', err);
         setError(err.message);
         setUserData(null);
       } finally {

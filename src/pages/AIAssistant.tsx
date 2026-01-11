@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -301,7 +302,7 @@ export default function AIAssistant() {
         }
       }
     } catch (error: any) {
-      console.error("Message send error:", error);
+      logger.error("Message send error:", error);
       
       let errorMessage = 'Mesaj gönderilemedi';
       

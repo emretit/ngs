@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -69,7 +70,7 @@ export const useSalesInvoiceEdit = () => {
         } as any);
         
       } catch (error: any) {
-        console.error("Error fetching invoice:", error);
+        logger.error("Error fetching invoice:", error);
         toast.error("Fatura yüklenirken bir hata oluştu");
       } finally {
         setLoading(false);
@@ -160,7 +161,7 @@ export const useSalesInvoiceEdit = () => {
       navigate("/sales-invoices");
       
     } catch (error: any) {
-      console.error("Error saving invoice:", error);
+      logger.error("Error saving invoice:", error);
       toast.error("Fatura kaydedilirken bir hata oluştu");
     } finally {
       setSaving(false);
@@ -201,7 +202,7 @@ export const useSalesInvoiceEdit = () => {
       } as any);
       
     } catch (error: any) {
-      console.error("Error refetching invoice:", error);
+      logger.error("Error refetching invoice:", error);
       toast.error("Fatura yenilenirken bir hata oluştu");
     }
   };

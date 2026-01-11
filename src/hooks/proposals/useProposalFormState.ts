@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { toast } from "sonner";
 import { ProposalFormData } from "@/types/proposal-form";
 import { ProposalStatus, Proposal } from "@/types/proposal";
@@ -158,7 +159,7 @@ export const useProposalFormState = (
   };
   
   const handleItemsChange = (items: any[]) => {
-    console.log("Items changed:", items);
+    logger.debug("Items changed:", items);
     
     setFormData(prev => ({
       ...prev,
@@ -192,7 +193,7 @@ export const useProposalFormState = (
     // If currency didn't change, do nothing
     if (currency === prevCurrency) return;
     
-    console.log(`Currency changing from ${prevCurrency} to ${currency}`);
+    logger.debug(`Currency changing from ${prevCurrency} to ${currency}`);
     
     // Update proposal currency
     setFormData(prev => ({
@@ -203,7 +204,7 @@ export const useProposalFormState = (
     
     // Convert line items to new currency if needed
     if (formData.items && formData.items.length > 0) {
-      console.log(`Converting ${formData.items.length} items from ${prevCurrency} to ${currency}`);
+      logger.debug(`Converting ${formData.items.length} items from ${prevCurrency} to ${currency}`);
       
       const updatedItems = formData.items.map(item => {
         // If item has original currency info, convert from that
@@ -213,12 +214,12 @@ export const useProposalFormState = (
             ? item.original_price
             : item.unit_price;
             
-        console.log(`Converting item ${item.name} from ${sourceCurrency} to ${currency}`);
-        console.log(`Original price: ${sourcePrice} ${sourceCurrency}`);
+        logger.debug(`Converting item ${item.name} from ${sourceCurrency} to ${currency}`);
+        logger.debug(`Original price: ${sourcePrice} ${sourceCurrency}`);
 
         // Convert price to new currency
         const convertedPrice = convertCurrency(sourcePrice, sourceCurrency, currency);
-        console.log(`Converted price: ${convertedPrice} ${currency}`);
+        logger.debug(`Converted price: ${convertedPrice} ${currency}`);
         
         // Calculate total price with tax and discount
         const quantity = Number(item.quantity || 1);
@@ -244,7 +245,7 @@ export const useProposalFormState = (
         items: updatedItems
       }));
       
-      console.log("Items after currency conversion:", updatedItems);
+      logger.debug("Items after currency conversion:", updatedItems);
       toast.success(`Tüm kalemler ${currency} para birimine dönüştürüldü`);
     }
     
@@ -265,7 +266,7 @@ export const useProposalFormState = (
     
     try {
       setSaving(true);
-      console.log("Saving form data:", formData);
+      logger.debug("Saving form data:", formData);
       
       // Call the onSave function passed as a prop
       await onSave(formData);
@@ -274,7 +275,7 @@ export const useProposalFormState = (
       setSaving(false);
       return true;
     } catch (error) {
-      console.error("Error in handleSave:", error);
+      logger.error("Error in handleSave:", error);
       toast.error("Teklif kaydedilirken bir hata oluştu");
       setSaving(false);
       return false;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useForm, FormProvider } from "react-hook-form";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -171,7 +172,7 @@ const NewProposalCreate = () => {
   // Revizyon bilgilerini form state'lerine aktar
   useEffect(() => {
     if (revisionData) {
-      console.log('📋 Revizyon bilgileri yükleniyor:', revisionData);
+      logger.debug('📋 Revizyon bilgileri yükleniyor:', revisionData);
 
       // Customer bilgilerini doldur
       if (revisionData.customer_id) {
@@ -256,7 +257,7 @@ const NewProposalCreate = () => {
           }));
         }
       } catch (error) {
-        console.error('Error generating proposal number:', error);
+        logger.error('Error generating proposal number:', error);
         // Fallback to timestamp-based number if generation fails
         setProposalData(prev => ({
           ...prev,
@@ -275,7 +276,7 @@ const NewProposalCreate = () => {
       const data = await PdfExportService.getTemplates(undefined, 'quote');
       setTemplates(data);
     } catch (error) {
-      console.error('Error loading templates:', error);
+      logger.error('Error loading templates:', error);
     } finally {
       setIsLoadingTemplates(false);
     }
@@ -283,7 +284,7 @@ const NewProposalCreate = () => {
 
   // handleFieldChange - State'lerden sonra tanımlanmalı
   const handleFieldChange = useCallback((field: string, value: any) => {
-    console.log('🔍 handleFieldChange:', { field, value }); // Debug
+    logger.debug('🔍 handleFieldChange:', { field, value }); // Debug
     
     // Update the appropriate state based on field
     if (['contact_name', 'customer_id'].includes(field)) {
@@ -293,7 +294,7 @@ const NewProposalCreate = () => {
     } else if (['currency', 'exchange_rate', 'vat_percentage'].includes(field)) {
       setFinancialData(prev => ({ ...prev, [field]: value }));
     } else if (['payment_terms', 'delivery_terms', 'warranty_terms', 'price_terms', 'other_terms'].includes(field)) {
-      console.log('🔍 Updating termsData:', { field, value }); // Debug
+      logger.debug('🔍 Updating termsData:', { field, value }); // Debug
       setTermsData(prev => ({ ...prev, [field]: value }));
     }
   }, []);
@@ -326,7 +327,7 @@ const NewProposalCreate = () => {
               selected = data;
             }
           } catch (error) {
-            console.error("Error fetching customer:", error);
+            logger.error("Error fetching customer:", error);
           }
         }
         
@@ -737,7 +738,7 @@ const NewProposalCreate = () => {
               customerCompanyName = data.company || data.name || "Müşteri";
             }
           } catch (error) {
-            console.error("Error fetching customer for title:", error);
+            logger.error("Error fetching customer for title:", error);
             customerCompanyName = "Müşteri";
           }
         }
@@ -772,10 +773,10 @@ const NewProposalCreate = () => {
       // Eğer hala null ise, bugünün tarihini kullan
       if (!offerDateValue) {
         offerDateValue = formatDateToLocalString(new Date());
-        console.log('⚠️ offer_date was null/undefined, using today\'s date:', offerDateValue);
+        logger.debug('⚠️ offer_date was null/undefined, using today\'s date:', offerDateValue);
       }
 
-      console.log('💾 Saving proposal with offer_date:', offerDateValue, 'from formData.offer_date:', formData.offer_date);
+      logger.debug('💾 Saving proposal with offer_date:', offerDateValue, 'from formData.offer_date:', formData.offer_date);
 
       const proposalData = {
         title: `${customerCompanyName} - Teklif`,
@@ -836,7 +837,7 @@ const NewProposalCreate = () => {
         }
       }
     } catch (error) {
-      console.error('Error saving proposal:', error);
+      logger.error('Error saving proposal:', error);
       const errorMessage = error instanceof Error 
         ? error.message 
         : "Teklif kaydedilirken bir hata oluştu";

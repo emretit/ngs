@@ -123,7 +123,7 @@ const ServiceEdit = () => {
   const { data: serviceRequest, isLoading: loading } = useQuery({
     queryKey: ['service-request', id],
     queryFn: async () => {
-      console.log('[ServiceEdit] serviceRequest queryFn çalışıyor, id:', id);
+      logger.debug('[ServiceEdit] serviceRequest queryFn çalışıyor, id:', id);
       if (!id) throw new Error('Servis ID bulunamadı');
       
       const { data, error } = await supabase
@@ -133,10 +133,10 @@ const ServiceEdit = () => {
         .single();
 
       if (error) {
-        console.error('[ServiceEdit] serviceRequest query error:', error);
+        logger.error('[ServiceEdit] serviceRequest query error:', error);
         throw error;
       }
-      console.log('[ServiceEdit] serviceRequest data alındı:', data?.id);
+      logger.debug('[ServiceEdit] serviceRequest data alındı:', data?.id);
       return data;
     },
     enabled: !!id,
@@ -146,7 +146,7 @@ const ServiceEdit = () => {
   const { data: serviceItems = [], isLoading: itemsLoading } = useQuery({
     queryKey: ['service-items', id],
     queryFn: async () => {
-      console.log('[ServiceEdit] serviceItems queryFn çalışıyor, id:', id);
+      logger.debug('[ServiceEdit] serviceItems queryFn çalışıyor, id:', id);
       if (!id) return [];
       
       const { data, error } = await supabase
@@ -156,10 +156,10 @@ const ServiceEdit = () => {
         .order('row_number', { ascending: true });
 
       if (error) {
-        console.error('[ServiceEdit] serviceItems query error:', error);
+        logger.error('[ServiceEdit] serviceItems query error:', error);
         throw error;
       }
-      console.log('[ServiceEdit] serviceItems data alındı, count:', data?.length);
+      logger.debug('[ServiceEdit] serviceItems data alındı, count:', data?.length);
       return data || [];
     },
     enabled: !!id,
@@ -225,14 +225,14 @@ const ServiceEdit = () => {
 
   // ID değiştiğinde initialize flag'ini sıfırla (ProposalEdit'te yok ama biz ekliyoruz)
   useEffect(() => {
-    console.log('[ServiceEdit] ID değişti, initialize sıfırlanıyor, id:', id);
+    logger.debug('[ServiceEdit] ID değişti, initialize sıfırlanıyor, id:', id);
     setIsInitialized(false);
     setHasChanges(false);
   }, [id]);
 
   // Servis verisi yüklendiğinde form state'i initialize et (ProposalEdit'teki gibi)
   useEffect(() => {
-    console.log('[ServiceEdit] Initialize useEffect çalışıyor', {
+    logger.debug('[ServiceEdit] Initialize useEffect çalışıyor', {
       hasServiceRequest: !!serviceRequest,
       isInitialized,
       serviceRequestId: serviceRequest?.id,
@@ -245,7 +245,7 @@ const ServiceEdit = () => {
     // serviceRequest ve serviceItems'ın ID'lerini kullanarak gereksiz re-render'ları önle
     // serviceItems yüklenene kadar bekle
     if (serviceRequest && !isInitialized && serviceRequest.id === id && !itemsLoading) {
-      console.log('[ServiceEdit] Form initialize başlıyor...');
+      logger.debug('[ServiceEdit] Form initialize başlıyor...');
       // Service items'ı service_items tablosundan çek (order_items gibi)
       let productItems = [{
         id: "1",
@@ -263,7 +263,7 @@ const ServiceEdit = () => {
       }];
 
       // Önce service_items tablosundan çek
-      console.log('[ServiceEdit] serviceItems:', serviceItems);
+      logger.debug('[ServiceEdit] serviceItems:', serviceItems);
       if (serviceItems && serviceItems.length > 0) {
         productItems = serviceItems.map((item: any) => ({
           id: item.id || Date.now().toString(),
@@ -279,7 +279,7 @@ const ServiceEdit = () => {
           total_price: item.total_price || (item.quantity || 1) * (item.unit_price || 0),
           currency: item.currency || 'TRY'
         }));
-        console.log('[ServiceEdit] productItems mapped:', productItems);
+        logger.debug('[ServiceEdit] productItems mapped:', productItems);
       } else if (serviceRequest.service_details && typeof serviceRequest.service_details === 'object') {
         // Fallback: Eski JSONB formatından oku (backward compatibility)
         const serviceDetails = serviceRequest.service_details as any;
@@ -356,14 +356,14 @@ const ServiceEdit = () => {
         });
       }
         
-      console.log('[ServiceEdit] Form initialize tamamlandı', {
+      logger.debug('[ServiceEdit] Form initialize tamamlandı', {
         productItemsCount: productItems.length,
         productItems: productItems
       });
       setIsInitialized(true);
       setHasChanges(false);
     } else {
-      console.log('[ServiceEdit] Initialize koşulları sağlanmadı, atlanıyor', {
+      logger.debug('[ServiceEdit] Initialize koşulları sağlanmadı, atlanıyor', {
         hasServiceRequest: !!serviceRequest,
         isInitialized,
         serviceRequestId: serviceRequest?.id,
@@ -504,7 +504,7 @@ const ServiceEdit = () => {
 
   // Seçili müşteri/tedarikçi bilgisi - sadece ID değiştiğinde yeniden hesapla
   const selectedPartner = React.useMemo(() => {
-    console.log('[ServiceEdit] selectedPartner useMemo çalışıyor', {
+    logger.debug('[ServiceEdit] selectedPartner useMemo çalışıyor', {
       customer_id: formData.customer_id,
       supplier_id: formData.supplier_id,
       customersLength: customers?.length,
@@ -513,12 +513,12 @@ const ServiceEdit = () => {
     
     if (formData.customer_id && customers && customers.length > 0) {
       const found = customers.find(c => c.id === formData.customer_id);
-      console.log('[ServiceEdit] Customer bulundu:', found?.name);
+      logger.debug('[ServiceEdit] Customer bulundu:', found?.name);
       return found;
     }
     if (formData.supplier_id && suppliers && suppliers.length > 0) {
       const found = suppliers.find(s => s.id === formData.supplier_id);
-      console.log('[ServiceEdit] Supplier bulundu:', found?.name);
+      logger.debug('[ServiceEdit] Supplier bulundu:', found?.name);
       return found;
     }
     return null;
@@ -528,7 +528,7 @@ const ServiceEdit = () => {
 
   // Input change handler
   const handleInputChange = useCallback((field: keyof ServiceRequestFormData, value: any) => {
-    console.log('[ServiceEdit] handleInputChange:', field, value);
+    logger.debug('[ServiceEdit] handleInputChange:', field, value);
     setFormData(prev => ({
       ...prev,
       [field]: value,
@@ -538,7 +538,7 @@ const ServiceEdit = () => {
 
   // Recurrence config change handler - useCallback ile sarmalıyoruz sonsuz döngüyü önlemek için
   const handleRecurrenceChange = useCallback((config: RecurrenceConfig) => {
-    console.log('[ServiceEdit] RecurrenceConfig değişti:', config);
+    logger.debug('[ServiceEdit] RecurrenceConfig değişti:', config);
     setRecurrenceConfig(config);
     setHasChanges(true);
   }, []);
@@ -612,7 +612,7 @@ const ServiceEdit = () => {
           .upload(filePath, file);
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
+          logger.error('Upload error:', uploadError);
           toast.error(`${file.name} yüklenirken hata oluştu`);
           continue;
         }
@@ -634,7 +634,7 @@ const ServiceEdit = () => {
         setHasChanges(true);
       }
     } catch (error) {
-      console.error('File upload error:', error);
+      logger.error('File upload error:', error);
       toast.error('Dosya yüklenirken bir hata oluştu');
     } finally {
       setUploadingFiles(false);
@@ -694,7 +694,7 @@ const ServiceEdit = () => {
             receivedByUserId = data.received_by;
           }
         } catch (err) {
-          console.warn('Employee user_id bulunamadı:', err);
+          logger.warn('Employee user_id bulunamadı:', err);
           // Eğer employee bulunamazsa, değeri direkt kullan (belki zaten user_id'dir)
           receivedByUserId = data.received_by;
         }
@@ -708,7 +708,7 @@ const ServiceEdit = () => {
         .single();
 
       if (currentError) {
-        console.error('Mevcut servis verisi alınamadı:', currentError);
+        logger.error('Mevcut servis verisi alınamadı:', currentError);
       }
 
       // Teknisyen değişikliğini kontrol et
@@ -815,17 +815,17 @@ const ServiceEdit = () => {
               });
 
               if (pushError) {
-                console.error('Push notification gönderme hatası:', pushError);
+                logger.error('Push notification gönderme hatası:', pushError);
               } else {
-                console.log('Push notification başarıyla gönderildi:', pushData);
+                logger.debug('Push notification başarıyla gönderildi:', pushData);
               }
             } catch (pushErr) {
-              console.error('Push notification çağrı hatası:', pushErr);
+              logger.error('Push notification çağrı hatası:', pushErr);
               // Push notification hatası kritik değil, devam et
             }
           }
         } catch (notifErr) {
-          console.error('Bildirim gönderme hatası:', notifErr);
+          logger.error('Bildirim gönderme hatası:', notifErr);
           // Bildirim hatası kritik değil, devam et
         }
       }
@@ -839,7 +839,7 @@ const ServiceEdit = () => {
           .eq('service_request_id', id);
 
         if (deleteError) {
-          console.error('Service items silinirken hata:', deleteError);
+          logger.error('Service items silinirken hata:', deleteError);
           // Devam et, yeni items eklemeye çalış
         }
 
@@ -868,7 +868,7 @@ const ServiceEdit = () => {
             .insert(serviceItemsToInsert);
 
           if (itemsError) {
-            console.error('Service items eklenirken hata:', itemsError);
+            logger.error('Service items eklenirken hata:', itemsError);
             throw itemsError;
           }
         }
@@ -880,7 +880,7 @@ const ServiceEdit = () => {
           .eq('service_request_id', id);
 
         if (deleteError) {
-          console.error('Service items silinirken hata:', deleteError);
+          logger.error('Service items silinirken hata:', deleteError);
         }
       }
 
@@ -901,7 +901,7 @@ const ServiceEdit = () => {
       }, 1500);
     },
     onError: (error: any) => {
-      console.error('Servis güncelleme hatası:', error);
+      logger.error('Servis güncelleme hatası:', error);
       toast.error('Servis talebi güncellenirken bir hata oluştu', {
         description: error.message || 'Bilinmeyen hata',
       });
@@ -946,7 +946,7 @@ const ServiceEdit = () => {
       toast.success('Servis fişi PDF\'i oluşturuldu');
       setTemplateSelectorOpen(false);
     } catch (error) {
-      console.error('PDF oluşturma hatası:', error);
+      logger.error('PDF oluşturma hatası:', error);
       toast.error('PDF oluşturulurken hata oluştu: ' + (error as Error).message);
     } finally {
       setIsGeneratingPdf(false);
@@ -958,7 +958,7 @@ const ServiceEdit = () => {
   };
 
   useEffect(() => {
-    console.log('[ServiceEdit] Render kontrolü:', {
+    logger.debug('[ServiceEdit] Render kontrolü:', {
       loading,
       itemsLoading,
       hasServiceRequest: !!serviceRequest,
@@ -968,7 +968,7 @@ const ServiceEdit = () => {
   }, [loading, itemsLoading, serviceRequest, isInitialized, formData.service_title]);
 
   if (loading || itemsLoading) {
-    console.log('[ServiceEdit] Loading state, render ediliyor');
+    logger.debug('[ServiceEdit] Loading state, render ediliyor');
     return (
       <div className="flex items-center justify-center h-[600px]">
         <div className="w-8 h-8 border-4 border-t-blue-600 border-b-blue-600 border-l-transparent border-r-transparent rounded-full animate-spin"></div>
@@ -977,7 +977,7 @@ const ServiceEdit = () => {
   }
 
   if (!serviceRequest) {
-    console.log('[ServiceEdit] ServiceRequest yok, hata sayfası render ediliyor');
+    logger.debug('[ServiceEdit] ServiceRequest yok, hata sayfası render ediliyor');
     return (
       <div className="flex flex-col items-center justify-center h-[600px]">
         <h2 className="text-xl font-semibold mb-2">Servis Bulunamadı</h2>
@@ -987,7 +987,7 @@ const ServiceEdit = () => {
     );
   }
 
-  console.log('[ServiceEdit] Ana render başlıyor');
+  logger.debug('[ServiceEdit] Ana render başlıyor');
   return (
     <div className="space-y-2">
       {/* Enhanced Sticky Header */}

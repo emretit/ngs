@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { Customer } from "@/types/customer";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -30,7 +31,7 @@ export const useCustomerChecksQuery = (customer: Customer) => {
     queryKey: ['customer-checks', customer.id, userData?.company_id],
     queryFn: async () => {
       if (!userData?.company_id) {
-        console.warn('No company_id available for checks');
+        logger.warn('No company_id available for checks');
         return [];
       }
 
@@ -42,7 +43,7 @@ export const useCustomerChecksQuery = (customer: Customer) => {
         .order('issue_date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching customer checks:', error);
+        logger.error('Error fetching customer checks:', error);
         throw error;
       }
 

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { VehicleDocument, DocumentFormData } from '@/types/vehicle';
 import { toast } from '@/hooks/use-toast';
@@ -73,7 +74,7 @@ export const useCreateDocument = () => {
         description: "Belge yüklenirken bir hata oluştu.",
         variant: "destructive",
       });
-      console.error('Document creation error:', error);
+      logger.error('Document creation error:', error);
     },
   });
 };
@@ -107,7 +108,7 @@ export const useUpdateDocument = () => {
         description: "Belge güncellenirken bir hata oluştu.",
         variant: "destructive",
       });
-      console.error('Document update error:', error);
+      logger.error('Document update error:', error);
     },
   });
 };
@@ -137,7 +138,7 @@ export const useDeleteDocument = () => {
         description: "Belge silinirken bir hata oluştu.",
         variant: "destructive",
       });
-      console.error('Document deletion error:', error);
+      logger.error('Document deletion error:', error);
     },
   });
 };

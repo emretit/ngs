@@ -1,5 +1,6 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServiceQueries } from "../useServiceQueries";
@@ -51,7 +52,7 @@ export const useAttachmentMutations = () => {
       toast.success("File deleted successfully");
     },
     onError: (error) => {
-      console.error('File deletion error:', error);
+      logger.error('File deletion error:', error);
       toast.error("Failed to delete file");
     },
   });

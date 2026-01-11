@@ -7,12 +7,12 @@
  * Kullanım: node scripts/migrate-console-to-logger.js [--dry-run]
  */
 
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
-const util = require('util');
+import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
-const execPromise = util.promisify(exec);
+const execPromise = promisify(exec);
 
 // Renkli output için
 const colors = {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -71,7 +72,7 @@ const SignIn = () => {
         navigate("/dashboard");
       }, 1000);
     } catch (error: any) {
-      console.error("Giriş hatası:", error);
+      logger.error("Giriş hatası:", error);
       let errorMessage = "Giriş başarısız";
       if (error.message?.includes('Invalid login credentials')) {
         errorMessage = "E-posta veya şifre hatalı";

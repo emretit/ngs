@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 /**
  * Sistem parametrelerinden numara formatını alır
@@ -6,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 export const getNumberFormat = async (formatKey: string, companyId?: string): Promise<string> => {
   try {
     if (!companyId) {
-      console.warn('Company ID gerekli, varsayılan format kullanılacak');
+      logger.warn('Company ID gerekli, varsayılan format kullanılacak');
       return getDefaultFormat(formatKey);
     }
 
@@ -18,13 +19,13 @@ export const getNumberFormat = async (formatKey: string, companyId?: string): Pr
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = not found
-      console.warn(`Format ${formatKey} bulunamadı, varsayılan kullanılacak:`, error);
+      logger.warn(`Format ${formatKey} bulunamadı, varsayılan kullanılacak:`, error);
       return getDefaultFormat(formatKey);
     }
 
     return data?.parameter_value || getDefaultFormat(formatKey);
   } catch (error) {
-    console.error('Numara formatı alınırken hata:', error);
+    logger.error('Numara formatı alınırken hata:', error);
     return getDefaultFormat(formatKey);
   }
 };
@@ -86,7 +87,7 @@ export const formatNumber = (
     // Eğer seri yoksa veya 3 karakterden farklıysa, varsayılan kullan
     if (!serie || serie.length !== 3) {
       serie = 'FAT'; // Varsayılan seri
-      console.warn('⚠️ Seri kodu 3 karakter değil, varsayılan FAT kullanılıyor:', format);
+      logger.warn('⚠️ Seri kodu 3 karakter değil, varsayılan FAT kullanılıyor:', format);
     }
 
     // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
@@ -97,7 +98,7 @@ export const formatNumber = (
     
     // Toplam 16 karakter kontrolü
     if (gibFormat.length !== 16) {
-      console.warn('⚠️ GİB formatı 16 karakter değil:', gibFormat, 'Uzunluk:', gibFormat.length);
+      logger.warn('⚠️ GİB formatı 16 karakter değil:', gibFormat, 'Uzunluk:', gibFormat.length);
     }
     
     return gibFormat;
@@ -125,7 +126,7 @@ export const getNextSequentialNumber = async (
 ): Promise<number> => {
   try {
     if (!companyId) {
-      console.warn('Company ID gerekli, varsayılan sequence kullanılacak');
+      logger.warn('Company ID gerekli, varsayılan sequence kullanılacak');
       return 1;
     }
 
@@ -183,7 +184,7 @@ export const getNextSequentialNumber = async (
         throw upsertError;
       } catch (error) {
         if (retryCount === maxRetries - 1) {
-          console.error('Sequence güncellenirken hata:', error);
+          logger.error('Sequence güncellenirken hata:', error);
           throw error;
         }
         retryCount++;
@@ -192,7 +193,7 @@ export const getNextSequentialNumber = async (
 
     return nextNumber;
   } catch (error) {
-    console.error('Sequence alınırken hata:', error);
+    logger.error('Sequence alınırken hata:', error);
     // Fallback olarak timestamp tabanlı unique numara üret
     return Date.now() % 10000;
   }
@@ -230,7 +231,7 @@ export const resetSequence = async (
       throw error;
     }
   } catch (error) {
-    console.error('Sequence sıfırlanırken hata:', error);
+    logger.error('Sequence sıfırlanırken hata:', error);
     throw error;
   }
 };
@@ -278,7 +279,7 @@ const checkNumberExists = async (
     // Eğer kayıt bulunduysa true döndür
     // maybeSingle() kayıt yoksa null döndürür, hata vermez
     if (error && error.code !== 'PGRST116') {
-      console.error('Numara kontrolü sırasında hata:', error);
+      logger.error('Numara kontrolü sırasında hata:', error);
       return false;
     }
     
@@ -288,7 +289,7 @@ const checkNumberExists = async (
     if ((error as any)?.code === 'PGRST116') {
       return false;
     }
-    console.error('Numara kontrolü sırasında hata:', error);
+    logger.error('Numara kontrolü sırasında hata:', error);
     return false;
   }
 };
@@ -419,7 +420,7 @@ const getMaxNumberFromDatabase = async (
 
     return maxNumber;
   } catch (error) {
-    console.error('En yüksek numara bulunurken hata:', error);
+    logger.error('En yüksek numara bulunurken hata:', error);
     return 0;
   }
 };
@@ -458,17 +459,17 @@ export const generateNumber = async (
           // Format kontrolü yap
           const isValidFormat = validateVeribanInvoiceNumberFormat(lastVeribanNumber, formatForVeriban);
           if (!isValidFormat) {
-            console.warn('⚠️ Veriban\'dan gelen fatura numarası formatı uygun değil:', lastVeribanNumber);
+            logger.warn('⚠️ Veriban\'dan gelen fatura numarası formatı uygun değil:', lastVeribanNumber);
           } else {
             const veribanSequence = extractSequenceFromInvoiceNumber(lastVeribanNumber, formatForVeriban);
             if (veribanSequence && veribanSequence > maxNumber) {
-              console.log('✅ Veriban\'dan daha yüksek numara bulundu:', lastVeribanNumber, '-> Sequence:', veribanSequence);
+              logger.debug('✅ Veriban\'dan daha yüksek numara bulundu:', lastVeribanNumber, '-> Sequence:', veribanSequence);
               maxNumber = veribanSequence;
             }
           }
         }
       } catch (veribanError) {
-        console.warn('⚠️ Veriban kontrolü sırasında hata (devam ediliyor):', veribanError);
+        logger.warn('⚠️ Veriban kontrolü sırasında hata (devam ediliyor):', veribanError);
         // Veriban kontrolü başarısız olsa bile devam et
       }
     }
@@ -495,10 +496,10 @@ export const generateNumber = async (
     }
 
     // Eğer 100 denemede uygun numara bulunamazsa, fallback
-    console.warn('Uygun numara bulunamadı, fallback kullanılıyor');
+    logger.warn('Uygun numara bulunamadı, fallback kullanılıyor');
     return formatNumber(format, nextNumber, customDate);
   } catch (error) {
-    console.error('Numara üretilirken hata:', error);
+    logger.error('Numara üretilirken hata:', error);
     // Fallback olarak basit bir numara üret
     return `AUTO-${Date.now()}`;
   }

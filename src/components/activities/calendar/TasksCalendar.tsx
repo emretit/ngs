@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { logger } from '@/utils/logger';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -82,7 +83,7 @@ const TasksCalendar = ({
       const { data, error } = await query;
 
       if (error) {
-        console.error("Error fetching tasks:", error);
+        logger.error("Error fetching tasks:", error);
         throw error;
       }
 

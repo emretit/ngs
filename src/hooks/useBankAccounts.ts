@@ -1,5 +1,6 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 
@@ -51,7 +52,7 @@ export const useBankAccounts = () => {
             filter: `company_id=eq.${profile.company_id}`
           },
           (payload) => {
-            console.log('🔄 Bank account changed:', payload.eventType, payload.new || payload.old);
+            logger.debug('🔄 Bank account changed:', payload.eventType, payload.new || payload.old);
             // Invalidate queries to refetch data
             queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
           }

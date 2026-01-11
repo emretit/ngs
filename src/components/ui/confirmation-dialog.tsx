@@ -1,4 +1,5 @@
 import * as React from "react"
+import { logger } from '@/utils/logger';
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
 import { AlertTriangle, X } from "lucide-react"
@@ -144,7 +145,7 @@ const ConfirmationDialogComponent = React.forwardRef<
       onOpenChange(false)
     } catch (error) {
       // Hata durumunda dialog açık kalsın, kullanıcı hatayı görebilsin
-      console.error('Confirmation action failed:', error)
+      logger.error('Confirmation action failed:', error)
       // Hata durumunda dialog'u kapatma, kullanıcı hatayı görebilsin
     }
   }

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Button } from "@/components/ui/button";
@@ -121,7 +122,7 @@ export const EmployeeTasksTab = ({ employeeId, employeeName }: EmployeeTasksTabP
         
         setColumns(newColumns);
       } catch (error) {
-        console.error('Error fetching tasks:', error);
+        logger.error('Error fetching tasks:', error);
         toast({
           variant: "destructive",
           title: "Hata",
@@ -193,7 +194,7 @@ export const EmployeeTasksTab = ({ employeeId, employeeName }: EmployeeTasksTabP
       
       // Here you would update the task in your database
       // This is a placeholder
-      console.log('Task status updated:', updatedTask);
+      logger.debug('Task status updated:', updatedTask);
       
       toast({
         title: "Başarılı",

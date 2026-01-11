@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { RefreshCw, AlertCircle, CalendarIcon, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ const ExchangeRateCard: React.FC = () => {
         year: 'numeric'
       });
     } catch (error) {
-      console.error('Date parsing error:', error);
+      logger.error('Date parsing error:', error);
       return 'Geçersiz tarih';
     }
   };
@@ -76,7 +77,7 @@ const ExchangeRateCard: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching historical rate:', error);
+      logger.error('Error fetching historical rate:', error);
       setHistoricalRate(null);
     } finally {
       setLoadingHistorical(false);

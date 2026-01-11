@@ -1,5 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -15,7 +16,7 @@ export const useSupplierOptions = () => {
         .order("name");
       
       if (error) {
-        console.error("Error fetching suppliers:", error);
+        logger.error("Error fetching suppliers:", error);
         return [];
       }
       return data || [];

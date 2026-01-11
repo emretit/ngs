@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,7 +134,7 @@ const EnhancedBudgetMatrix = ({
         parseFloat(editValue) || 0
       );
     } catch (error) {
-      console.error("Save error:", error);
+      logger.error("Save error:", error);
     }
     
     setEditingCell(null);

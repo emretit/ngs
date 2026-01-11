@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { logger } from '@/utils/logger';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -66,7 +67,7 @@ export interface RealtimeSubscriptionOptions {
  *   companyId: userData?.company_id,
  *   queryKeys: [['proposals'], ['proposals-list']],
  *   onChange: (payload) => {
- *     console.log('Proposal changed:', payload);
+ *     logger.debug('Proposal changed:', payload);
  *   }
  * });
  * ```

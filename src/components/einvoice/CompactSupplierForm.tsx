@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,7 +143,7 @@ export const CompactSupplierForm: React.FC<CompactSupplierFormProps> = ({
       onClose();
       reset();
     } catch (error: any) {
-      console.error("❌ Error creating supplier:", error);
+      logger.error("❌ Error creating supplier:", error);
       toast({
         title: "Hata",
         description: error.message || "Tedarikçi oluşturulurken hata oluştu",

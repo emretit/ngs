@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -139,12 +140,12 @@ const ResourceSchedulingView = ({
 
   const handleTaskDelete = useCallback((task: Task) => {
     // Görev silme işlemi
-    console.log('Task deleted:', task);
+    logger.debug('Task deleted:', task);
   }, []);
 
   const handleProgressChange = useCallback((task: Task) => {
     // İlerleme güncellemesi
-    console.log('Progress changed:', task);
+    logger.debug('Progress changed:', task);
   }, []);
 
   const handleDblClick = useCallback((task: Task) => {

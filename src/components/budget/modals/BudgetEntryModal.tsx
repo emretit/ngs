@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import {
   Dialog,
   DialogContent,
@@ -108,7 +109,7 @@ const BudgetEntryModal = ({
         const uniqueSubs = [...new Set(data?.map(d => d.subcategory).filter(Boolean))] as string[];
         setSubcategories(uniqueSubs);
       } catch (error) {
-        console.error("Error loading subcategories:", error);
+        logger.error("Error loading subcategories:", error);
       }
     };
 
@@ -191,7 +192,7 @@ const BudgetEntryModal = ({
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
-      console.error("Save error:", error);
+      logger.error("Save error:", error);
     } finally {
       setLoading(false);
     }
@@ -238,7 +239,7 @@ const BudgetEntryModal = ({
         description: `${year - 1} yılı bütçeleri kopyalandı`,
       });
     } catch (error) {
-      console.error("Copy error:", error);
+      logger.error("Copy error:", error);
       toast({
         variant: "destructive",
         title: "Hata",

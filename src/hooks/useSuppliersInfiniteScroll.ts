@@ -1,4 +1,5 @@
 import { useInfiniteScroll } from "./useInfiniteScroll";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { Supplier } from "@/types/supplier";
 import { useEffect } from "react";
@@ -84,7 +85,7 @@ export const useSuppliersInfiniteScroll = (filters: UseSuppliersFilters = {}) =>
     const { data, error, count } = await query;
 
     if (error) {
-      console.error("Error fetching suppliers:", error);
+      logger.error("Error fetching suppliers:", error);
       throw error;
     }
 

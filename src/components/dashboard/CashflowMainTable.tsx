@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -152,7 +153,7 @@ export const CashflowMainTable = () => {
       setEditingCell(null);
       setTempValue('');
     } catch (error) {
-      console.error('Error updating cashflow value:', error);
+      logger.error('Error updating cashflow value:', error);
     }
   };
 

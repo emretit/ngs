@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog } from "@/components/ui/unified-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,7 +68,7 @@ const ProductPriceHistoryDialog: React.FC<ProductPriceHistoryDialogProps> = ({
         .order("created_at", { ascending: false });
 
       if (proposalError) {
-        console.error("Proposals error:", proposalError);
+        logger.error("Proposals error:", proposalError);
       } else if (proposals) {
         proposals.forEach((proposal: any) => {
           // items JSONB'den ürünü bul
@@ -118,7 +119,7 @@ const ProductPriceHistoryDialog: React.FC<ProductPriceHistoryDialogProps> = ({
         .order("created_at", { ascending: false });
 
       if (purchaseError) {
-        console.error("Purchase invoice items error:", purchaseError);
+        logger.error("Purchase invoice items error:", purchaseError);
       } else if (purchaseItems && purchaseItems.length > 0) {
         // Supplier bilgilerini ayrı çek
         const supplierIds = purchaseItems
@@ -179,7 +180,7 @@ const ProductPriceHistoryDialog: React.FC<ProductPriceHistoryDialogProps> = ({
         .order("created_at", { ascending: false });
 
       if (salesError) {
-        console.error("Sales invoice items error:", salesError);
+        logger.error("Sales invoice items error:", salesError);
       } else if (salesItems) {
         salesItems.forEach((item: any) => {
           if (item.sales_invoices) {
@@ -201,12 +202,12 @@ const ProductPriceHistoryDialog: React.FC<ProductPriceHistoryDialogProps> = ({
       // Tarihe göre sırala (en yeni en üstte)
       historyItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-      console.log("Price history items:", historyItems);
-      console.log("Product ID:", productId);
+      logger.debug("Price history items:", historyItems);
+      logger.debug("Product ID:", productId);
       
       setPriceHistory(historyItems);
     } catch (error) {
-      console.error("Error fetching price history:", error);
+      logger.error("Error fetching price history:", error);
     } finally {
       setIsLoading(false);
     }

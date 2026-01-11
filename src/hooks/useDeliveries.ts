@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -320,7 +321,7 @@ export const useDeliveries = () => {
             filter: `company_id=eq.${profile.company_id}`
           },
           (payload) => {
-            console.log('🔄 Delivery changed:', payload.eventType, payload.new || payload.old);
+            logger.debug('🔄 Delivery changed:', payload.eventType, payload.new || payload.old);
             // Invalidate queries to refetch data
             queryClient.invalidateQueries({ queryKey: ['deliveries'] });
             queryClient.invalidateQueries({ queryKey: ['delivery'] });

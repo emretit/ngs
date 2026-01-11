@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -105,7 +106,7 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
             });
           }
         } catch (stockError) {
-          console.warn("Stok bilgisi alınamadı:", stockError);
+          logger.warn("Stok bilgisi alınamadı:", stockError);
         }
       }
 

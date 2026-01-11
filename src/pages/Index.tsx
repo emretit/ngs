@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import HeroSection from "@/components/landing/HeroSection";
@@ -29,7 +30,7 @@ const Index = () => {
         const isInviteSetupPath = window.location.pathname === '/invite-setup';
         
         if (hasInviteToken || isInviteSetupPath) {
-          console.log('Invite token detected or on invite-setup page, not redirecting to dashboard');
+          logger.debug('Invite token detected or on invite-setup page, not redirecting to dashboard');
           if (isMounted) setLoading(false);
           return;
         }
@@ -41,7 +42,7 @@ const Index = () => {
           return;
         }
       } catch (error) {
-        console.error("Session kontrol hatası:", error);
+        logger.error("Session kontrol hatası:", error);
       } finally {
         if (isMounted) setLoading(false);
       }

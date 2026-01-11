@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import {
   Dialog,
   DialogContent,
@@ -70,7 +71,7 @@ const ApprovalTimeline = ({ revisionId, onClose }: ApprovalTimelineProps) => {
       if (approvalsError) throw approvalsError;
       setApprovals(approvalsData || []);
     } catch (error: any) {
-      console.error("Error fetching timeline:", error);
+      logger.error("Error fetching timeline:", error);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,7 +78,7 @@ const NewTaskForm = ({
       toast.success(t("forms.activityCreated"));
       onSuccess();
     } catch (error) {
-      console.error('Error creating task:', error);
+      logger.error('Error creating task:', error);
       toast.error(t("forms.activityCreateError"));
     } finally {
       setIsSubmitting(false);

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Table, TableBody } from "@/components/ui/table";
 import { Proposal, ProposalStatus } from "@/types/proposal";
 import ProposalTableHeader from "./table/ProposalTableHeader";
@@ -85,7 +86,7 @@ const ProposalTable = ({
       const data = await PdfExportService.getTemplates(undefined, 'quote');
       setTemplates(data);
     } catch (error) {
-      console.error('Error loading templates:', error);
+      logger.error('Error loading templates:', error);
     }
   };
 
@@ -99,7 +100,7 @@ const ProposalTable = ({
       
       toast.success("PDF yeni sekmede açıldı");
     } catch (error) {
-      console.error('PDF generation error:', error);
+      logger.error('PDF generation error:', error);
       toast.error("PDF oluşturulurken hata oluştu: " + (error as Error).message);
     }
   };
@@ -118,7 +119,7 @@ const ProposalTable = ({
       
       toast.success("Teklif durumu başarıyla güncellendi.");
     } catch (error) {
-      console.error('Error updating proposal status:', error);
+      logger.error('Error updating proposal status:', error);
       toast.error("Teklif durumu güncellenirken bir hata oluştu.");
     }
   };
@@ -150,7 +151,7 @@ const ProposalTable = ({
       
       toast.success("Teklif başarıyla silindi.");
     } catch (error) {
-      console.error('Error deleting proposal:', error);
+      logger.error('Error deleting proposal:', error);
       toast.error("Teklif silinirken bir hata oluştu.");
     } finally {
       setIsDeleting(false);
@@ -215,7 +216,7 @@ const ProposalTable = ({
         navigate(`/proposal/${newProposal.id}`);
       }
     } catch (error) {
-      console.error('Error copying proposal:', error);
+      logger.error('Error copying proposal:', error);
       toast.error("Teklif kopyalanırken bir hata oluştu.");
     } finally {
       setIsCopying(false);
@@ -289,7 +290,7 @@ const ProposalTable = ({
         navigate(`/proposal/${newProposal.id}`);
       }
     } catch (error) {
-      console.error('Error copying proposal:', error);
+      logger.error('Error copying proposal:', error);
       toast.error("Teklif kopyalanırken bir hata oluştu.");
     } finally {
       setIsCopying(false);
@@ -379,7 +380,7 @@ const ProposalTable = ({
         navigate(`/proposal/${newProposal.id}`);
       }
     } catch (error) {
-      console.error('Error creating revision:', error);
+      logger.error('Error creating revision:', error);
       toast.error("Revizyon oluşturulurken bir hata oluştu.", { id: 'revision' });
     } finally {
       setIsCopying(false);

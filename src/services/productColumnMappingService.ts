@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 /**
  * Product Column Mapping Service using Google Gemini AI
@@ -123,7 +124,7 @@ export const mapExcelColumnsWithAI = async (
     });
 
     if (error || data.error) {
-      console.error('AI mapping error:', error || data.error);
+      logger.error('AI mapping error:', error || data.error);
       return fallbackMapping(excelColumns);
     }
 
@@ -168,11 +169,11 @@ export const mapExcelColumnsWithAI = async (
       const existing = systemFieldMap.get(mapping.systemField);
       if (!existing || mapping.confidence > existing.confidence) {
         if (existing) {
-          console.log(`⚠️ Duplicate system field "${mapping.systemField}": "${existing.excelColumn}" (${existing.confidence}%) yerine "${mapping.excelColumn}" (${mapping.confidence}%) seçildi`);
+          logger.debug(`⚠️ Duplicate system field "${mapping.systemField}": "${existing.excelColumn}" (${existing.confidence}%) yerine "${mapping.excelColumn}" (${mapping.confidence}%) seçildi`);
         }
         systemFieldMap.set(mapping.systemField, mapping);
       } else {
-        console.log(`⚠️ Duplicate system field "${mapping.systemField}": "${mapping.excelColumn}" (${mapping.confidence}%) atlandı, "${existing.excelColumn}" (${existing.confidence}%) tutuldu`);
+        logger.debug(`⚠️ Duplicate system field "${mapping.systemField}": "${mapping.excelColumn}" (${mapping.confidence}%) atlandı, "${existing.excelColumn}" (${existing.confidence}%) tutuldu`);
       }
     });
 
@@ -194,7 +195,7 @@ export const mapExcelColumnsWithAI = async (
     };
 
   } catch (error: any) {
-    console.error('AI mapping error:', error);
+    logger.error('AI mapping error:', error);
     return fallbackMapping(excelColumns);
   }
 };

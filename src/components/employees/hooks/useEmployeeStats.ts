@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -92,7 +93,7 @@ export const useEmployeeStats = () => {
           openPositionsDetails: "2 aktif mülakat süreci",
         });
       } catch (error) {
-        console.error('Error fetching employee stats:', error);
+        logger.error('Error fetching employee stats:', error);
         toast({
           variant: "destructive",
           title: "Hata",

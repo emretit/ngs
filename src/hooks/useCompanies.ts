@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 
 export type Company = {
@@ -47,7 +48,7 @@ export const useCompanies = () => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError || !user) {
-        console.error('Error fetching user:', userError);
+        logger.error('Error fetching user:', userError);
         return null;
       }
 
@@ -58,7 +59,7 @@ export const useCompanies = () => {
         .maybeSingle();
 
       if (profileError || !profile?.company_id) {
-        console.error('Error fetching profile or company_id:', profileError);
+        logger.error('Error fetching profile or company_id:', profileError);
         return null;
       }
 
@@ -71,7 +72,7 @@ export const useCompanies = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching company data:', error);
+        logger.error('Error fetching company data:', error);
         // Eğer hata varsa, null döndür ama hata fırlatma
         return null;
       }

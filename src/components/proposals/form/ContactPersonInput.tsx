@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
@@ -336,7 +337,7 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
       toast.success(`"${addedName}" iletişim kişisi eklendi`);
     },
     onError: (error: any) => {
-      console.error("İletişim kişisi ekleme hatası:", error);
+      logger.error("İletişim kişisi ekleme hatası:", error);
       toast.error(`İletişim kişisi eklenirken hata oluştu: ${error?.message || 'Bilinmeyen hata'}`);
     },
   });
@@ -494,7 +495,7 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
                                   .eq('id', partnerId);
                                 
                                 if (updateError) {
-                                  console.error('Error saving contact to partner:', updateError);
+                                  logger.error('Error saving contact to partner:', updateError);
                                   toast.error('İletişim kişisi kaydedilirken hata oluştu');
                                 } else {
                                   // Müşteri/tedarikçi verilerini yeniden yükle
@@ -508,7 +509,7 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
                               }
                             }
                           } catch (error) {
-                            console.error('Error saving contact to partner:', error);
+                            logger.error('Error saving contact to partner:', error);
                             toast.error('İletişim kişisi kaydedilirken hata oluştu');
                           }
                         }

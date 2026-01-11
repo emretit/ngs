@@ -1,5 +1,6 @@
 
 import React from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -35,7 +36,7 @@ export function CurrencyRatePopover({
         year: 'numeric'
       });
     } catch (error) {
-      console.error('Date parsing error:', error);
+      logger.error('Date parsing error:', error);
       return 'Geçersiz tarih';
     }
   };

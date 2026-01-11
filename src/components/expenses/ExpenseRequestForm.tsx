@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -104,7 +105,7 @@ export const ExpenseRequestForm: React.FC<ExpenseRequestFormProps> = ({
 
       return data.publicUrl;
     } catch (error) {
-      console.error("Dosya yükleme hatası:", error);
+      logger.error("Dosya yükleme hatası:", error);
       return null;
     } finally {
       setUploading(false);
@@ -142,7 +143,7 @@ export const ExpenseRequestForm: React.FC<ExpenseRequestFormProps> = ({
         },
       });
     } catch (error) {
-      console.error("Harcama talebi oluşturma hatası:", error);
+      logger.error("Harcama talebi oluşturma hatası:", error);
     }
   };
 

@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 export interface AIConversation {
   id: string;
@@ -41,7 +42,7 @@ export async function createConversation(
 
     return { data: data as AIConversation, error: null };
   } catch (error) {
-    console.error('Error creating conversation:', error);
+    logger.error('Error creating conversation:', error);
     return { data: null, error: error as Error };
   }
 }
@@ -67,7 +68,7 @@ export async function getConversations(
 
     return { data: data as AIConversation[], error: null };
   } catch (error) {
-    console.error('Error getting conversations:', error);
+    logger.error('Error getting conversations:', error);
     return { data: null, error: error as Error };
   }
 }
@@ -89,7 +90,7 @@ export async function getConversation(
 
     return { data: data as AIConversation, error: null };
   } catch (error) {
-    console.error('Error getting conversation:', error);
+    logger.error('Error getting conversation:', error);
     return { data: null, error: error as Error };
   }
 }
@@ -111,7 +112,7 @@ export async function updateConversationTitle(
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error updating conversation title:', error);
+    logger.error('Error updating conversation title:', error);
     return { success: false, error: error as Error };
   }
 }
@@ -132,7 +133,7 @@ export async function deleteConversation(
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error deleting conversation:', error);
+    logger.error('Error deleting conversation:', error);
     return { success: false, error: error as Error };
   }
 }
@@ -162,7 +163,7 @@ export async function saveMessage(
 
     return { data: data as AIMessage, error: null };
   } catch (error) {
-    console.error('Error saving message:', error);
+    logger.error('Error saving message:', error);
     return { data: null, error: error as Error };
   }
 }
@@ -186,7 +187,7 @@ export async function getConversationHistory(
 
     return { data: data as AIMessage[], error: null };
   } catch (error) {
-    console.error('Error getting conversation history:', error);
+    logger.error('Error getting conversation history:', error);
     return { data: null, error: error as Error };
   }
 }
@@ -212,7 +213,7 @@ export async function getRecentMessages(
     const messages = (data as AIMessage[]).reverse();
     return { data: messages, error: null };
   } catch (error) {
-    console.error('Error getting recent messages:', error);
+    logger.error('Error getting recent messages:', error);
     return { data: null, error: error as Error };
   }
 }

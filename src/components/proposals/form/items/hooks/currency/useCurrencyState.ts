@@ -1,5 +1,6 @@
 
 import { useState, useCallback, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { getCurrencyOptions } from "../../utils/currencyUtils";
 import { toast } from "sonner";
 
@@ -16,7 +17,7 @@ export const useCurrencyState = (defaultCurrency?: string) => {
   }, [defaultCurrency]);
 
   const handleCurrencyChange = useCallback((newCurrency: string) => {
-    console.log(`Currency changed to ${newCurrency}`);
+    logger.debug(`Currency changed to ${newCurrency}`);
     setSelectedCurrency(newCurrency);
     
     // Dispatch a custom event to notify other components about the currency change

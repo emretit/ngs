@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,7 @@ const NewWorkOrderCreate = () => {
         .order("name");
       
       if (error) {
-        console.error("BOM fetch error:", error);
+        logger.error("BOM fetch error:", error);
         return [];
       }
       return data || [];
@@ -174,7 +175,7 @@ const NewWorkOrderCreate = () => {
       
       navigate("/production");
     } catch (error: any) {
-      console.error("Error saving work order:", error);
+      logger.error("Error saving work order:", error);
       toast.error(error.message || "İş emri kaydedilirken hata oluştu");
     } finally {
       setSaving(false);

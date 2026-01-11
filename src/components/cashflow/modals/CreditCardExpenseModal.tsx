@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -104,7 +105,7 @@ const CreditCardExpenseModal = ({ isOpen, onClose, onSuccess, cardId, cardName, 
 
       onSuccess();
     } catch (error) {
-      console.error('Error adding expense:', error);
+      logger.error('Error adding expense:', error);
       toast.error("Harcama işlemi eklenirken bir hata oluştu");
     } finally {
       setIsLoading(false);

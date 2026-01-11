@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -48,7 +49,7 @@ export const useOpexMatrix = () => {
 
       setData(result || []);
     } catch (err: any) {
-      console.error('fetchOpexMatrix error:', err);
+      logger.error('fetchOpexMatrix error:', err);
       setError(err.message);
       toast.error("OPEX matrix verileri alınırken hata oluştu: " + err.message);
     } finally {
@@ -121,7 +122,7 @@ export const useOpexMatrix = () => {
 
       return data;
     } catch (err: any) {
-      console.error('upsertOpexMatrix error:', err);
+      logger.error('upsertOpexMatrix error:', err);
       toast.error("OPEX verisi güncellenirken hata oluştu: " + err.message);
       throw err;
     }
@@ -140,7 +141,7 @@ export const useOpexMatrix = () => {
 
       toast.success("OPEX verisi silindi.");
     } catch (err: any) {
-      console.error('deleteOpexMatrix error:', err);
+      logger.error('deleteOpexMatrix error:', err);
       toast.error("OPEX verisi silinirken hata oluştu: " + err.message);
       throw err;
     }

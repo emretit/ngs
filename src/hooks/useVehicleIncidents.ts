@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { VehicleIncident, IncidentFormData } from '@/types/vehicle';
 import { toast } from '@/hooks/use-toast';
@@ -74,7 +75,7 @@ export const useCreateIncident = () => {
         description: "Olay kaydı oluşturulurken bir hata oluştu.",
         variant: "destructive",
       });
-      console.error('Incident creation error:', error);
+      logger.error('Incident creation error:', error);
     },
   });
 };
@@ -109,7 +110,7 @@ export const useUpdateIncident = () => {
         description: "Olay kaydı güncellenirken bir hata oluştu.",
         variant: "destructive",
       });
-      console.error('Incident update error:', error);
+      logger.error('Incident update error:', error);
     },
   });
 };

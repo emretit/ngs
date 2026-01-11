@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -82,7 +83,7 @@ const queryData = async (
   const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Query error:', error);
+    logger.error('Query error:', error);
     throw new Error(`Veri sorgulanamadı: ${error.message}`);
   }
 
@@ -249,7 +250,7 @@ export const generateExcelReport = async (
 ): Promise<GeneratedFile> => {
   try {
     // 1. Query data
-    console.log('Querying data for report:', reportType);
+    logger.debug('Querying data for report:', reportType);
     const rawData = await queryData(reportType, filters);
 
     if (rawData.length === 0) {
@@ -257,15 +258,15 @@ export const generateExcelReport = async (
     }
 
     // 2. Format data
-    console.log('Formatting data...');
+    logger.debug('Formatting data...');
     const formattedData = formatData(rawData, reportType);
 
     // 3. Create workbook
-    console.log('Creating workbook...');
+    logger.debug('Creating workbook...');
     const workbook = createWorkbook(formattedData, reportType);
 
     // 4. Generate blob
-    console.log('Generating file...');
+    logger.debug('Generating file...');
     const fileBuffer = XLSX.write(workbook, { 
       bookType: format === 'csv' ? 'csv' : 'xlsx', 
       type: 'array' 
@@ -285,7 +286,7 @@ export const generateExcelReport = async (
       type: blob.type
     };
   } catch (error) {
-    console.error('Excel generation error:', error);
+    logger.error('Excel generation error:', error);
     throw error;
   }
 };
@@ -330,7 +331,7 @@ export const saveGeneratedFileRecord = async (
       }
     });
   } catch (error) {
-    console.error('Error saving file record:', error);
+    logger.error('Error saving file record:', error);
     // Don't throw - file generation succeeded even if logging failed
   }
 };
@@ -503,7 +504,7 @@ export const generatePayrollExcel = async (
       type: blob.type
     };
   } catch (error) {
-    console.error('Payroll Excel generation error:', error);
+    logger.error('Payroll Excel generation error:', error);
     throw error;
   }
 };

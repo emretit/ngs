@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { showError } from "@/utils/toastUtils";
 import { IntegratorService } from "@/services/integratorService";
@@ -47,7 +48,7 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
       const { data, error } = await query;
 
       if (error) {
-        console.error('Cache fetch error:', error);
+        logger.error('Cache fetch error:', error);
         return [];
       }
 
@@ -69,7 +70,7 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
         invoiceProfile: inv.invoice_profile || 'TEMELFATURA',
       }));
     } catch (error) {
-      console.error('Cache fetch error:', error);
+      logger.error('Cache fetch error:', error);
       return [];
     }
   };
@@ -102,7 +103,7 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
 
       return result.invoices || [];
     } catch (error: any) {
-      console.error('API sync error:', error);
+      logger.error('API sync error:', error);
       throw error;
     } finally {
       setIsSyncing(false);
@@ -125,7 +126,7 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
       return await syncFromApi(false);
       
     } catch (error: any) {
-      console.error('Error fetching incoming invoices:', error);
+      logger.error('Error fetching incoming invoices:', error);
       showError(error?.message || 'Gelen faturalar yüklenirken hata oluştu');
       throw error;
     } finally {

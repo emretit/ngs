@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +47,7 @@ export const SimpleTemplateManagement: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching templates:', error);
+        logger.error('Error fetching templates:', error);
         return [];
       }
 
@@ -176,7 +177,7 @@ export const SimpleTemplateManagement: React.FC = () => {
     try {
       deleteMutation.mutate(templateToDelete.id);
     } catch (error) {
-      console.error('Error deleting template:', error);
+      logger.error('Error deleting template:', error);
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);

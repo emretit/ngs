@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from '@/utils/logger';
 import { Opportunity } from "@/types/crm";
 import { Json } from "@/types/json";
 import { BaseService } from "../base/BaseService";
@@ -53,7 +54,7 @@ export class OpportunityService extends BaseService {
       
       return { data, error: null };
     } catch (error) {
-      console.error('Error updating opportunity:', error);
+      logger.error('Error updating opportunity:', error);
       return { data: null, error };
     }
   }

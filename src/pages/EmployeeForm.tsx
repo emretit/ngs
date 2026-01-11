@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -34,9 +35,9 @@ const EmployeeForm = () => {
   });
 
   const handleSuccess = () => {
-    console.log("🟢 [EmployeeForm] handleSuccess çağrıldı", { id });
+    logger.debug("🟢 [EmployeeForm] handleSuccess çağrıldı", { id });
     refetch();
-    console.log("🟢 [EmployeeForm] navigate çağrılıyor:", `/employees/${id}`);
+    logger.debug("🟢 [EmployeeForm] navigate çağrılıyor:", `/employees/${id}`);
     navigate(`/employees/${id}`);
   };
 

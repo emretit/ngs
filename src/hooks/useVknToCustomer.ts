@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { logger } from '@/utils/logger';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -69,7 +70,7 @@ export const useVknToCustomer = () => {
         .maybeSingle();
 
       if (checkError) {
-        console.error('Error checking existing customer:', checkError);
+        logger.error('Error checking existing customer:', checkError);
         throw new Error('Müşteri kontrolü yapılamadı');
       }
 
@@ -120,7 +121,7 @@ export const useVknToCustomer = () => {
         .single();
 
       if (insertError) {
-        console.error('Error creating customer:', insertError);
+        logger.error('Error creating customer:', insertError);
         throw new Error(insertError.message || 'Müşteri oluşturulamadı');
       }
 
@@ -140,7 +141,7 @@ export const useVknToCustomer = () => {
       };
 
     } catch (error) {
-      console.error('VKN to customer creation error:', error);
+      logger.error('VKN to customer creation error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
       
       toast({

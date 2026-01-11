@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,9 +34,9 @@ export const useProductFormActions = (
   });
 
   const onSubmit = async (values: ProductFormSchema, addAnother = false) => {
-    console.log("🟣 useProductFormActions.onSubmit başladı");
-    console.log("🟣 isEditing:", isEditing, "productId:", productId);
-    console.log("🟣 Gelen values:", values);
+    logger.debug("🟣 useProductFormActions.onSubmit başladı");
+    logger.debug("🟣 isEditing:", isEditing, "productId:", productId);
+    logger.debug("🟣 Gelen values:", values);
 
     setIsSubmitting(true);
     try {
@@ -59,11 +60,11 @@ export const useProductFormActions = (
           company_id: companyId
         };
 
-        console.log("🟣 Hazırlanan data (preparedData):", preparedData);
+        logger.debug("🟣 Hazırlanan data (preparedData):", preparedData);
 
 
       if (isEditing && productId) {
-        console.log("🟣 GÜNCELLEME modu aktif, productId:", productId);
+        logger.debug("🟣 GÜNCELLEME modu aktif, productId:", productId);
         // Sadece veritabanında mevcut olan kolonları gönder
         // Stock artık warehouse_stock tablosunda tutulduğu için products tablosunda güncellenmiyor
         const updateData: any = {
@@ -101,17 +102,17 @@ export const useProductFormActions = (
           updated_at: new Date().toISOString()
         };
 
-        console.log("🟣 Supabase update işlemi başlatılıyor, updateData:", updateData);
+        logger.debug("🟣 Supabase update işlemi başlatılıyor, updateData:", updateData);
 
         const { error } = await supabase
           .from("products")
           .update(updateData)
           .eq("id", productId);
 
-        console.log("🟣 Supabase update tamamlandı, error:", error);
+        logger.debug("🟣 Supabase update tamamlandı, error:", error);
 
         if (error) {
-          console.error("❌ Supabase update error:", error);
+          logger.error("❌ Supabase update error:", error);
           let errorMessage = "Ürün güncellenirken bir hata oluştu";
           
           // Provide more specific error message based on the error code
@@ -129,10 +130,10 @@ export const useProductFormActions = (
           throw error;
         }
 
-        console.log("✅ Update başarılı, toast gösteriliyor");
+        logger.debug("✅ Update başarılı, toast gösteriliyor");
         showSuccess("Ürün başarıyla güncellendi", { duration: 900 });
 
-        console.log("🟣 Cache invalidate ediliyor...");
+        logger.debug("🟣 Cache invalidate ediliyor...");
         // Invalidate products queries to refresh the table
         await queryClient.invalidateQueries({ queryKey: ["products"] });
         // Also invalidate the specific product query
@@ -140,9 +141,9 @@ export const useProductFormActions = (
           await queryClient.invalidateQueries({ queryKey: ["product", productId] });
         }
 
-        console.log("🟣 Ürünler sayfasına yönlendiriliyor...");
+        logger.debug("🟣 Ürünler sayfasına yönlendiriliyor...");
         navigate(`/products`);
-        console.log("✅ İşlem tamamlandı");
+        logger.debug("✅ İşlem tamamlandı");
         return { resetForm: false };
       } else {
         // Create a new product with explicit fields that match the database schema
@@ -195,7 +196,7 @@ export const useProductFormActions = (
           .select();
 
         if (error) {
-          console.error("Error saving product:", error);
+          logger.error("Error saving product:", error);
           let errorMessage = "Ürün kaydedilirken bir hata oluştu";
           
           // Provide more specific error message based on the error code
@@ -241,13 +242,13 @@ export const useProductFormActions = (
               });
 
             if (stockError) {
-              console.error("Error adding stock to warehouse:", stockError);
+              logger.error("Error adding stock to warehouse:", stockError);
               // Hata olsa bile ürün oluşturuldu, sadece stok eklenemedi
               showWarning("Ürün oluşturuldu ancak stok eklenirken bir hata oluştu. Lütfen stok girişi yapın.");
             }
           } else {
             // Ana Depo bulunamadı, uyarı ver
-            console.warn("Ana Depo bulunamadı, stok eklenemedi");
+            logger.warn("Ana Depo bulunamadı, stok eklenemedi");
             showWarning("Ürün oluşturuldu ancak stok eklenemedi. Lütfen stok girişi yapın.");
           }
         }
@@ -266,7 +267,7 @@ export const useProductFormActions = (
         }
       }
     } catch (error: any) {
-      console.error("❌ Submit error:", error);
+      logger.error("❌ Submit error:", error);
       let errorMessage = "Ürün kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.";
 
       // Daha detaylı hata mesajı göster
@@ -276,11 +277,11 @@ export const useProductFormActions = (
         errorMessage = `${errorMessage} (Hata kodu: ${error.code})`;
       }
 
-      console.log("❌ Hata mesajı gösteriliyor:", errorMessage);
+      logger.debug("❌ Hata mesajı gösteriliyor:", errorMessage);
       showError(errorMessage);
       return { resetForm: false };
     } finally {
-      console.log("🟣 Finally bloğu çalıştı, isSubmitting = false yapılıyor");
+      logger.debug("🟣 Finally bloğu çalıştı, isSubmitting = false yapılıyor");
       setIsSubmitting(false);
     }
   };
@@ -335,7 +336,7 @@ export const useProductFormActions = (
         }
       }
     } catch (error: any) {
-      console.error("Error duplicating product:", error);
+      logger.error("Error duplicating product:", error);
       let errorMessage = "Ürün kopyalanırken bir hata oluştu. Lütfen tekrar deneyin.";
       
       if (error?.message) {

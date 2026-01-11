@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,7 +32,7 @@ export const useProposalEdit = () => {
         setProposal(data);
       }
     } catch (error) {
-      console.error("Error fetching proposal:", error);
+      logger.error("Error fetching proposal:", error);
     } finally {
       setLoading(false);
     }
@@ -99,7 +100,7 @@ export const useProposalEdit = () => {
       // Teklifi tekrar fetch et - sayfayı güncel verilerle yenile
       await fetchProposal();
     } catch (error) {
-      console.error("Error saving proposal:", error);
+      logger.error("Error saving proposal:", error);
       toast.error("Teklif güncellenirken bir hata oluştu");
     } finally {
       setSaving(false);

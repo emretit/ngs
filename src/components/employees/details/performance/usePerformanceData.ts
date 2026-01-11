@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useToast } from "@/components/ui/use-toast";
 import { PerformanceRecord } from "./types";
 
@@ -70,7 +71,7 @@ export const usePerformanceData = (employeeId: string) => {
         
         setPerformanceHistory(mockData);
       } catch (error) {
-        console.error('Error fetching performance history:', error);
+        logger.error('Error fetching performance history:', error);
         toast({
           variant: "destructive",
           title: "Hata",

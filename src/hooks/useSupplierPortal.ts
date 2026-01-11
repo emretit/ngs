@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -85,7 +86,7 @@ export const useSupplierPortalAuth = () => {
           setSupplier(null);
         }
       } catch (error) {
-        console.error('Session verification error:', error);
+        logger.error('Session verification error:', error);
         clearSession();
         setIsAuthenticated(false);
         setSupplier(null);
@@ -130,7 +131,7 @@ export const useSupplierPortalAuth = () => {
         return false;
       }
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       toast({
         title: 'Hata',
         description: 'Giriş yapılırken bir hata oluştu',
@@ -160,7 +161,7 @@ export const useSupplierPortalAuth = () => {
           }
         );
       } catch (error) {
-        console.error('Logout error:', error);
+        logger.error('Logout error:', error);
       }
     }
 

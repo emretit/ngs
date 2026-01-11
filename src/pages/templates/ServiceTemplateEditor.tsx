@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -99,7 +100,7 @@ export default function ServiceTemplateEditor() {
         }
       }
     } catch (error) {
-      console.error('Error loading company info:', error);
+      logger.error('Error loading company info:', error);
       if (showToast) {
         toast.error('Şirket bilgileri yüklenirken hata oluştu');
       }
@@ -197,7 +198,7 @@ export default function ServiceTemplateEditor() {
         },
       };
       
-      console.log('Creating template with data:', {
+      logger.debug('Creating template with data:', {
         name: templateData.name,
         description: templateData.description,
         service_details: templateData.service_details,
@@ -264,7 +265,7 @@ export default function ServiceTemplateEditor() {
         },
       };
       
-      console.log('Updating template with data:', {
+      logger.debug('Updating template with data:', {
         id,
         name: templateData.name,
         description: templateData.description,
@@ -334,7 +335,7 @@ export default function ServiceTemplateEditor() {
       URL.revokeObjectURL(url);
       toast.success('PDF başarıyla indirildi');
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      logger.error('Error downloading PDF:', error);
       toast.error('PDF indirilirken hata oluştu');
     }
   };
@@ -369,7 +370,7 @@ export default function ServiceTemplateEditor() {
           <div className="flex items-center gap-4">
             <Button 
               onClick={form.handleSubmit(onSubmit, (errors) => {
-                console.error('Form validation errors:', errors);
+                logger.error('Form validation errors:', errors);
                 toast.error('Lütfen form alanlarını kontrol edin');
               })}
               disabled={isLoading}

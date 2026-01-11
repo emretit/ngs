@@ -1,4 +1,5 @@
 import { useState, memo, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import SuppliersHeader from "@/components/suppliers/SuppliersHeader";
 import SuppliersFilterBar from "@/components/suppliers/SuppliersFilterBar";
@@ -126,7 +127,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
 
   if (error) {
     toast.error(t("pages.suppliers.loadError"));
-    console.error("Error loading suppliers:", error);
+    logger.error("Error loading suppliers:", error);
   }
   const handleSupplierSelect = useCallback((supplier: Supplier) => {
     setSelectedSuppliers(prev => {
@@ -153,15 +154,15 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
 
   const handleBulkDeleteConfirm = useCallback(async () => {
     if (selectedSuppliers.length === 0) {
-      console.log('No suppliers selected');
+      logger.debug('No suppliers selected');
       return;
     }
 
-    console.log('Starting bulk delete for suppliers:', selectedSuppliers.map(s => s.id));
+    logger.debug('Starting bulk delete for suppliers:', selectedSuppliers.map(s => s.id));
     setIsDeleting(true);
     try {
       const supplierIds = selectedSuppliers.map(s => s.id);
-      console.log('Supplier IDs to delete:', supplierIds);
+      logger.debug('Supplier IDs to delete:', supplierIds);
       
       // Önce hangi tedarikçilerin referansları olduğunu kontrol et
       const { data: purchaseInvoices, error: invoicesError } = await supabase
@@ -171,7 +172,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         .limit(1);
       
       if (invoicesError) {
-        console.error('Error checking purchase_invoices:', invoicesError);
+        logger.error('Error checking purchase_invoices:', invoicesError);
       }
       
       const { data: purchaseOrders, error: ordersError } = await supabase
@@ -181,7 +182,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         .limit(1);
       
       if (ordersError) {
-        console.error('Error checking purchase_orders:', ordersError);
+        logger.error('Error checking purchase_orders:', ordersError);
       }
       
       const { data: products, error: productsError } = await supabase
@@ -191,11 +192,11 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         .limit(1);
 
       if (productsError) {
-        console.error('Error checking products:', productsError);
+        logger.error('Error checking products:', productsError);
       }
 
       if (purchaseInvoices && purchaseInvoices.length > 0) {
-        console.log('Suppliers have purchase invoices, cannot delete');
+        logger.debug('Suppliers have purchase invoices, cannot delete');
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
         toast.error(t("pages.suppliers.cannotDeleteInvoices"), { duration: 2000 });
@@ -203,7 +204,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
       }
 
       if (purchaseOrders && purchaseOrders.length > 0) {
-        console.log('Suppliers have purchase orders, cannot delete');
+        logger.debug('Suppliers have purchase orders, cannot delete');
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
         toast.error(t("pages.suppliers.cannotDeleteOrders"), { duration: 2000 });
@@ -211,23 +212,23 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
       }
 
       if (products && products.length > 0) {
-        console.log('Suppliers have products, cannot delete');
+        logger.debug('Suppliers have products, cannot delete');
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
         toast.error(t("pages.suppliers.cannotDeleteInProducts"), { duration: 2000 });
         return;
       }
 
-      console.log('Attempting to delete suppliers from Supabase...');
+      logger.debug('Attempting to delete suppliers from Supabase...');
       const { error } = await supabase
         .from('suppliers')
         .delete()
         .in('id', supplierIds);
 
-      console.log('Delete response - error:', error);
+      logger.debug('Delete response - error:', error);
 
       if (error) {
-        console.error('Delete error details:', {
+        logger.error('Delete error details:', {
           message: error.message,
           code: error.code,
           details: error.details,
@@ -259,7 +260,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         return;
       }
 
-      console.log('Suppliers deleted successfully');
+      logger.debug('Suppliers deleted successfully');
       toast.success(t("pages.suppliers.deleted", { count: selectedSuppliers.length }), { duration: 2000 });
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       queryClient.invalidateQueries({ queryKey: ['supplier_statistics'] });
@@ -267,7 +268,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
       // Tabloyu yenile
       refreshSuppliers();
     } catch (error: any) {
-      console.error('Error deleting suppliers:', error);
+      logger.error('Error deleting suppliers:', error);
       toast.error(`${t("pages.suppliers.deleteError")}: ${error?.message || t("common.unknownError")}`, { duration: 2000 });
     } finally {
       setIsDeleting(false);

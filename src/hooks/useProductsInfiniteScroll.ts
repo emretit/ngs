@@ -1,4 +1,5 @@
 import { useInfiniteScroll } from "./useInfiniteScroll";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { useEffect } from "react";
@@ -62,7 +63,8 @@ export const useProductsInfiniteScroll = (filters: UseProductsFilters = {}) => {
         product_categories (
           id,
           name
-        )
+        ),
+        reserved_quantity
       `, { count: 'exact' });
 
     // Apply search filter
@@ -109,7 +111,7 @@ export const useProductsInfiniteScroll = (filters: UseProductsFilters = {}) => {
             hasNextPage: false
           };
         }
-        console.error("Error fetching products:", error);
+        logger.error("Error fetching products:", error);
         throw error;
       }
 
@@ -137,7 +139,7 @@ export const useProductsInfiniteScroll = (filters: UseProductsFilters = {}) => {
       const { data: stockData, error: stockError } = await stockQuery;
 
       if (stockError) {
-        console.error("Error fetching warehouse stock:", stockError);
+        logger.error("Error fetching warehouse stock:", stockError);
       }
 
       // Stok verilerini product_id'ye göre grupla ve topla
@@ -184,7 +186,7 @@ export const useProductsInfiniteScroll = (filters: UseProductsFilters = {}) => {
           hasNextPage: false
         };
       }
-      console.error("Error fetching products:", error);
+      logger.error("Error fetching products:", error);
       throw error;
     }
 
@@ -212,7 +214,7 @@ export const useProductsInfiniteScroll = (filters: UseProductsFilters = {}) => {
     const { data: stockData, error: stockError } = await stockQuery;
 
     if (stockError) {
-      console.error("Error fetching warehouse stock:", stockError);
+      logger.error("Error fetching warehouse stock:", stockError);
     }
 
     // Stok verilerini product_id'ye göre grupla ve topla

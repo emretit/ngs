@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,7 +72,7 @@ const PartnerIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName
       const sorted = sortCategoriesByOrder(data || [], 'income');
       setCategories(sorted.map(cat => ({ id: cat.id, name: cat.name })));
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      logger.error('Error fetching categories:', error);
     }
   };
 
@@ -96,7 +97,7 @@ const PartnerIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName
       if (error) throw error;
       setSubcategories(data || []);
     } catch (error) {
-      console.error('Error fetching subcategories:', error);
+      logger.error('Error fetching subcategories:', error);
     }
   };
 
@@ -203,7 +204,7 @@ const PartnerIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName
 
       onSuccess();
     } catch (error) {
-      console.error('Error adding income:', error);
+      logger.error('Error adding income:', error);
       toast.error("Gelir işlemi eklenirken bir hata oluştu");
     } finally {
       setIsLoading(false);

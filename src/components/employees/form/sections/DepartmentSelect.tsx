@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,7 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
       if (error) throw error;
       setDepartments(data || []);
     } catch (error) {
-      console.error('Error fetching departments:', error);
+      logger.error('Error fetching departments:', error);
       toast.error("Departmanlar yüklenirken hata oluştu");
     }
   };
@@ -123,7 +124,7 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
 
       toast.success("Yeni departman başarıyla eklendi!");
     } catch (error: any) {
-      console.error('Error adding department:', error);
+      logger.error('Error adding department:', error);
 
       // Handle duplicate key error
       if (error?.code === '23505' && error?.message?.includes('departments_name_key')) {
@@ -160,7 +161,7 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
       setDepartments(prev => prev.filter(dept => dept.id !== departmentToDelete.id));
       toast.success("Departman başarıyla silindi!");
     } catch (error) {
-      console.error('Error deleting department:', error);
+      logger.error('Error deleting department:', error);
       toast.error("Departman silinirken hata oluştu");
     } finally {
       setIsDeleting(false);

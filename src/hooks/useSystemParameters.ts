@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrentCompany } from '@/hooks/useCurrentCompany';
@@ -128,7 +129,7 @@ export const useSystemParameters = () => {
 
       setParameters(data || []);
     } catch (err) {
-      console.error('Error fetching system parameters:', err);
+      logger.error('Error fetching system parameters:', err);
       setError(err instanceof Error ? err.message : 'Parametreler yüklenirken hata oluştu');
     } finally {
       setLoading(false);
@@ -155,7 +156,7 @@ export const useSystemParameters = () => {
       setParameters(prev => [...prev, result]);
       return result;
     } catch (err) {
-      console.error('Error creating parameter:', err);
+      logger.error('Error creating parameter:', err);
       throw err;
     }
   };
@@ -182,7 +183,7 @@ export const useSystemParameters = () => {
       ));
       return result;
     } catch (err) {
-      console.error('Error updating parameter:', err);
+      logger.error('Error updating parameter:', err);
       throw err;
     }
   };
@@ -200,7 +201,7 @@ export const useSystemParameters = () => {
 
       setParameters(prev => prev.filter(param => param.id !== id));
     } catch (err) {
-      console.error('Error deleting parameter:', err);
+      logger.error('Error deleting parameter:', err);
       throw err;
     }
   };
@@ -296,7 +297,7 @@ export const useSystemParameters = () => {
 
       await fetchParameters(); // Listeyi yenile
     } catch (error) {
-      console.error('Import error:', error);
+      logger.error('Import error:', error);
       throw new Error('Parametreler içe aktarılırken hata oluştu');
     }
   };
@@ -320,7 +321,7 @@ export const useSystemParameters = () => {
 
       await fetchParameters(); // Listeyi yenile
     } catch (error) {
-      console.error('Reset error:', error);
+      logger.error('Reset error:', error);
       throw new Error('Parametreler varsayılana sıfırlanırken hata oluştu');
     }
   };

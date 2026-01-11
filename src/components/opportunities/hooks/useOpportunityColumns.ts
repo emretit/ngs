@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Opportunity, OpportunityStatus } from "@/types/crm";
 import { Circle, Square, Triangle, Star, Hexagon, Zap, Target, Check, Clock, ChevronRight, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -64,7 +65,7 @@ export const useOpportunityColumns = (
         }));
         setColumns(reconstructedColumns);
       } catch (error) {
-        console.error('Error loading saved columns:', error);
+        logger.error('Error loading saved columns:', error);
         setColumns(defaultColumns);
       }
     } else {
@@ -145,7 +146,7 @@ export const useOpportunityColumns = (
       toast.success(`"${deletedColumn?.title}" kolonu silindi. Fırsatlar "Yeni" durumuna taşındı.`);
       
     } catch (error) {
-      console.error('Error deleting column:', error);
+      logger.error('Error deleting column:', error);
       toast.error("Kolon silinirken hata oluştu");
     } finally {
       setColumnToDelete(null);

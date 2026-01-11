@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -103,7 +104,7 @@ const PurchaseInvoiceLineItems: React.FC<PurchaseInvoiceLineItemsProps> = ({
       setProductModalOpen(false);
       toast.success("Ürün eklendi");
     } catch (error) {
-      console.error("Error adding product:", error);
+      logger.error("Error adding product:", error);
       toast.error("Ürün eklenirken hata oluştu");
     }
   };

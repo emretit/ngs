@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { ProposalTemplate } from "@/types/proposal-template";
 import { ProposalFormData } from "@/types/proposal-form";
@@ -160,7 +161,7 @@ const StandardProposalForm: React.FC<StandardProposalFormProps> = ({
       total_tax: calculations.totalTax,
       total_amount: calculations.grandTotal
     };
-    console.log("Standard Template Form Data:", formData);
+    logger.debug("Standard Template Form Data:", formData);
     toast.success("Standart teklif taslak olarak kaydedildi");
     onSaveDraft();
   };

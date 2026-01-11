@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -73,7 +74,7 @@ export const seedTasks = async () => {
       const { error: empError } = await supabase.from('employees').insert(sampleEmployees);
       
       if (empError) {
-        console.error("Error creating sample employees:", empError);
+        logger.error("Error creating sample employees:", empError);
       } else {
         employees = sampleEmployees;
       }
@@ -115,7 +116,7 @@ export const seedTasks = async () => {
       const { error: oppError } = await supabase.from('opportunities').insert(sampleOpportunities);
       
       if (oppError) {
-        console.error("Error creating sample opportunities:", oppError);
+        logger.error("Error creating sample opportunities:", oppError);
       } else {
         opportunities = sampleOpportunities;
       }
@@ -300,7 +301,7 @@ export const seedTasks = async () => {
       .insert(sampleTasks);
 
     if (error) {
-      console.error('Error seeding tasks:', error);
+      logger.error('Error seeding tasks:', error);
       toast.error("Örnek görevler eklenirken bir hata oluştu!");
       return { success: false, error };
     }
@@ -308,7 +309,7 @@ export const seedTasks = async () => {
     toast.success("Örnek görevler başarıyla eklendi!");
     return { success: true };
   } catch (error) {
-    console.error('Error seeding tasks:', error);
+    logger.error('Error seeding tasks:', error);
     toast.error("Örnek görevler eklenirken bir hata oluştu!");
     return { success: false, error };
   }
@@ -432,7 +433,7 @@ export const seedOpportunities = async () => {
     if (error) throw error;
     return { success: true };
   } catch (error) {
-    console.error('Error seeding opportunities:', error);
+    logger.error('Error seeding opportunities:', error);
     return { success: false, error };
   }
 };
@@ -522,7 +523,7 @@ export const seedAllData = async () => {
     toast.success("Tüm örnek veriler başarıyla eklendi!");
     return { success: true };
   } catch (error) {
-    console.error('Error seeding all data:', error);
+    logger.error('Error seeding all data:', error);
     toast.error("Örnek veriler eklenirken bir hata oluştu!");
     return { success: false, error };
   }

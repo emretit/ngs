@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
@@ -227,7 +228,7 @@ const ServicePage = ({ defaultView = "dashboard", hideHeader = false }: ServiceP
       toast.success("Servis durumu güncellendi.");
     },
     onError: (error) => {
-      console.error('Durum güncelleme hatası:', error);
+      logger.error('Durum güncelleme hatası:', error);
       toast.error("Servis durumu güncellenirken bir hata oluştu.");
     }
   });
@@ -985,13 +986,13 @@ const ServicePage = ({ defaultView = "dashboard", hideHeader = false }: ServiceP
                     });
 
                   if (notificationError) {
-                    console.error('Bildirim kaydı hatası:', notificationError);
+                    logger.error('Bildirim kaydı hatası:', notificationError);
                     // Bildirim hatası kritik değil, devam et
                   }
 
                   // Push notification gönder (mobil uygulamaya)
                   try {
-                    console.log('📱 Push notification gönderiliyor...', {
+                    logger.debug('📱 Push notification gönderiliyor...', {
                       user_id: technician.user_id,
                       title: notificationTitle,
                       body: notificationBody
@@ -1011,18 +1012,18 @@ const ServicePage = ({ defaultView = "dashboard", hideHeader = false }: ServiceP
                     });
 
                     if (pushError) {
-                      console.error('❌ Push notification gönderme hatası:', pushError);
+                      logger.error('❌ Push notification gönderme hatası:', pushError);
                       // Hata detaylarını göster
                       toast.error(`Push notification hatası: ${pushError.message || 'Bilinmeyen hata'}`);
                     } else {
-                      console.log('✅ Push notification başarıyla gönderildi:', pushData);
+                      logger.debug('✅ Push notification başarıyla gönderildi:', pushData);
                       if (pushData?.fcm_message_id) {
-                        console.log('📨 FCM Message ID:', pushData.fcm_message_id);
+                        logger.debug('📨 FCM Message ID:', pushData.fcm_message_id);
                       }
                     }
                   } catch (pushErr: any) {
-                    console.error('❌ Push notification çağrı hatası:', pushErr);
-                    console.error('Hata detayları:', {
+                    logger.error('❌ Push notification çağrı hatası:', pushErr);
+                    logger.error('Hata detayları:', {
                       message: pushErr?.message,
                       stack: pushErr?.stack,
                       name: pushErr?.name
@@ -1035,7 +1036,7 @@ const ServicePage = ({ defaultView = "dashboard", hideHeader = false }: ServiceP
                 queryClient.invalidateQueries({ queryKey: ['service-requests'] });
                 toast.success("Servis teknisyene atandı ve bildirim gönderildi.");
               } catch (error: any) {
-                console.error('Servis atama hatası:', error);
+                logger.error('Servis atama hatası:', error);
                 toast.error(error.message || "Servis ataması güncellenirken bir hata oluştu.");
               }
             }}

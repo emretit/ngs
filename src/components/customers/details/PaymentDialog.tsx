@@ -1,5 +1,6 @@
 
 import { useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -290,7 +291,7 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
           await autoAllocatePayment.mutateAsync({ paymentId: insertedPayment.id, customerId: customer.id });
         } catch (allocError) {
           // Tahsis hatası ödeme kaydını engellemez, sadece log'lar
-          console.warn("Otomatik fatura tahsisinde hata:", allocError);
+          logger.warn("Otomatik fatura tahsisinde hata:", allocError);
         }
       }
 
@@ -326,7 +327,7 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
 
       onOpenChange(false);
     } catch (error) {
-      console.error("Payment error:", error);
+      logger.error("Payment error:", error);
       toast.error("Ödeme oluşturulurken bir hata oluştu.", { duration: 1000 });
     }
   }

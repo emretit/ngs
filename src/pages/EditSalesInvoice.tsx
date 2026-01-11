@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -119,9 +120,9 @@ const EditSalesInvoice = () => {
       try {
         const status = await IntegratorService.checkIntegratorStatus();
         setIntegratorStatus(status);
-        console.log('📊 [CreateSalesInvoice] Integrator status:', status);
+        logger.debug('📊 [CreateSalesInvoice] Integrator status:', status);
       } catch (error) {
-        console.error('Error loading integrator status:', error);
+        logger.error('Error loading integrator status:', error);
       }
     };
     loadIntegratorStatus();
@@ -138,23 +139,23 @@ const EditSalesInvoice = () => {
   // Send invoice based on selected integrator
   const sendInvoiceToIntegrator = useCallback((invoiceId: string) => {
     if (!integratorStatus) {
-      console.warn('⚠️ [CreateSalesInvoice] Integrator status not loaded yet');
+      logger.warn('⚠️ [CreateSalesInvoice] Integrator status not loaded yet');
       return;
     }
     
-    console.log('📤 [CreateSalesInvoice] Sending invoice to integrator:', integratorStatus.selected);
+    logger.debug('📤 [CreateSalesInvoice] Sending invoice to integrator:', integratorStatus.selected);
     
     if (integratorStatus.selected === 'veriban' && integratorStatus.veriban) {
-      console.log('📤 [CreateSalesInvoice] Sending to Veriban...');
+      logger.debug('📤 [CreateSalesInvoice] Sending to Veriban...');
       sendVeribanInvoice({ salesInvoiceId: invoiceId, forceResend: false });
     } else if (integratorStatus.selected === 'nilvera' && integratorStatus.nilvera) {
-      console.log('📤 [CreateSalesInvoice] Sending to Nilvera...');
+      logger.debug('📤 [CreateSalesInvoice] Sending to Nilvera...');
       sendNilveraInvoice(invoiceId);
     } else if (integratorStatus.selected === 'elogo' && integratorStatus.elogo) {
-      console.log('⚠️ [CreateSalesInvoice] e-Logo entegrasyonu henüz desteklenmiyor');
+      logger.debug('⚠️ [CreateSalesInvoice] e-Logo entegrasyonu henüz desteklenmiyor');
       toast.info('e-Logo entegrasyonu yakında eklenecek');
     } else {
-      console.warn('⚠️ [CreateSalesInvoice] Selected integrator is not active');
+      logger.warn('⚠️ [CreateSalesInvoice] Selected integrator is not active');
       toast.warning('Seçili entegratör aktif değil. Lütfen ayarlar sayfasından kontrol edin.');
     }
   }, [integratorStatus, sendVeribanInvoice, sendNilveraInvoice]);
@@ -293,15 +294,15 @@ const EditSalesInvoice = () => {
           
           if (!error && data) {
             selected = data;
-            console.log("✅ [CreateSalesInvoice] Customer loaded:", { id: selected.id, name: selected.name });
+            logger.debug("✅ [CreateSalesInvoice] Customer loaded:", { id: selected.id, name: selected.name });
           } else if (error) {
-            console.error("❌ [CreateSalesInvoice] Error fetching customer:", error);
+            logger.error("❌ [CreateSalesInvoice] Error fetching customer:", error);
           }
         } catch (error) {
-          console.error("❌ [CreateSalesInvoice] Error fetching customer:", error);
+          logger.error("❌ [CreateSalesInvoice] Error fetching customer:", error);
         }
       } else {
-        console.log("✅ [CreateSalesInvoice] Customer selected:", { id: selected.id, name: selected.name });
+        logger.debug("✅ [CreateSalesInvoice] Customer selected:", { id: selected.id, name: selected.name });
       }
       
       if (isMounted && selected) {
@@ -313,7 +314,7 @@ const EditSalesInvoice = () => {
         }));
 
         // Debug: Müşteri verilerini logla
-        console.log("🔍 [CreateSalesInvoice] Seçilen müşteri verileri:", {
+        logger.debug("🔍 [CreateSalesInvoice] Seçilen müşteri verileri:", {
           id: selected.id,
           name: selected.name,
           einvoice_document_type: selected.einvoice_document_type,
@@ -331,11 +332,11 @@ const EditSalesInvoice = () => {
           if (selected.is_einvoice_mukellef === true) {
             // Müşteri e-fatura mükellefi
             autoSelectedProfile = "TEMELFATURA";
-            console.log("✅ [EditSalesInvoice] Müşteri E-FATURA MÜKELLEFİ -> TEMELFATURA seçildi");
+            logger.debug("✅ [EditSalesInvoice] Müşteri E-FATURA MÜKELLEFİ -> TEMELFATURA seçildi");
           } else {
             // Müşteri e-fatura mükellefi DEĞİL -> E-Arşiv
             autoSelectedProfile = "EARSIVFATURA";
-            console.log("✅ [EditSalesInvoice] Müşteri E-FATURA MÜKELLEFİ DEĞİL -> EARSIVFATURA seçildi");
+            logger.debug("✅ [EditSalesInvoice] Müşteri E-FATURA MÜKELLEFİ DEĞİL -> EARSIVFATURA seçildi");
           }
           
           setInvoiceData(prev => ({
@@ -347,12 +348,12 @@ const EditSalesInvoice = () => {
           const message = selected.is_einvoice_mukellef 
             ? `✅ Müşteri e-fatura mükellefi - E-Fatura (${autoSelectedProfile}) otomatik seçildi`
             : `ℹ️ Müşteri e-fatura mükellefi değil - E-Arşiv Fatura (${autoSelectedProfile}) otomatik seçildi`;
-          console.log(message);
+          logger.debug(message);
         }
         // 2. SONRA: einvoice_document_type alanını kontrol et (yedek)
         else if (selected.einvoice_document_type) {
           const documentType = selected.einvoice_document_type;
-          console.log("✅ [EditSalesInvoice] DocumentType veritabanından bulundu:", documentType);
+          logger.debug("✅ [EditSalesInvoice] DocumentType veritabanından bulundu:", documentType);
           
           // DocumentType'a göre invoice_profile'ı otomatik doldur
           let invoiceProfile = "TEMELFATURA"; // Varsayılan
@@ -360,31 +361,31 @@ const EditSalesInvoice = () => {
           if (documentType === "Invoice" || documentType === "EINVOICE") {
             // E-Fatura mükellefi
             invoiceProfile = "TEMELFATURA";
-            console.log("📋 [EditSalesInvoice] E-Fatura mükellefi tespit edildi, invoice_profile: TEMELFATURA");
+            logger.debug("📋 [EditSalesInvoice] E-Fatura mükellefi tespit edildi, invoice_profile: TEMELFATURA");
           } else if (documentType === "ArchiveInvoice" || documentType === "EARCHIVE" || documentType === "EARCHIVETYPE2") {
             // E-Arşiv mükellefi
             invoiceProfile = "EARSIVFATURA";
-            console.log("📋 [EditSalesInvoice] E-Arşiv mükellefi tespit edildi, invoice_profile: EARSIVFATURA");
+            logger.debug("📋 [EditSalesInvoice] E-Arşiv mükellefi tespit edildi, invoice_profile: EARSIVFATURA");
           } else if (documentType === "Waybill" || documentType === "DESPATCHADVICE") {
             // E-İrsaliye
             invoiceProfile = "EARSIVIRSLIYE";
-            console.log("📋 [EditSalesInvoice] E-İrsaliye mükellefi tespit edildi, invoice_profile: EARSIVIRSLIYE");
+            logger.debug("📋 [EditSalesInvoice] E-İrsaliye mükellefi tespit edildi, invoice_profile: EARSIVIRSLIYE");
           } else {
-            console.warn("⚠️ [EditSalesInvoice] Bilinmeyen documentType:", documentType, "- Varsayılan TEMELFATURA kullanılıyor");
+            logger.warn("⚠️ [EditSalesInvoice] Bilinmeyen documentType:", documentType, "- Varsayılan TEMELFATURA kullanılıyor");
           }
           
-          console.log("📋 [EditSalesInvoice] Invoice profile otomatik dolduruldu (veritabanından):", invoiceProfile);
+          logger.debug("📋 [EditSalesInvoice] Invoice profile otomatik dolduruldu (veritabanından):", invoiceProfile);
           setInvoiceData(prev => ({
             ...prev,
             invoice_profile: invoiceProfile
           }));
         } else if (selected.tax_number && selected.tax_number.length >= 10) {
           // Eğer veritabanında documentType yoksa, API'den sorgula
-          console.log("🔍 [CreateSalesInvoice] DocumentType veritabanında yok, mükellef bilgisi sorgulanıyor...", selected.tax_number);
+          logger.debug("🔍 [CreateSalesInvoice] DocumentType veritabanında yok, mükellef bilgisi sorgulanıyor...", selected.tax_number);
           searchMukellef(selected.tax_number).then((result) => {
             if (result.success && result.data?.documentType) {
               const documentType = result.data.documentType;
-              console.log("✅ [CreateSalesInvoice] DocumentType API'den bulundu:", documentType);
+              logger.debug("✅ [CreateSalesInvoice] DocumentType API'den bulundu:", documentType);
               
               // DocumentType'a göre invoice_profile'ı otomatik doldur
               let invoiceProfile = "TEMELFATURA"; // Varsayılan
@@ -400,14 +401,14 @@ const EditSalesInvoice = () => {
                 invoiceProfile = "EARSIVIRSLIYE";
               }
               
-              console.log("📋 [CreateSalesInvoice] Invoice profile otomatik dolduruldu (API'den):", invoiceProfile);
+              logger.debug("📋 [CreateSalesInvoice] Invoice profile otomatik dolduruldu (API'den):", invoiceProfile);
               setInvoiceData(prev => ({
                 ...prev,
                 invoice_profile: invoiceProfile
               }));
             }
           }).catch((error) => {
-            console.error("❌ [CreateSalesInvoice] Mükellef sorgulama hatası:", error);
+            logger.error("❌ [CreateSalesInvoice] Mükellef sorgulama hatası:", error);
           });
         }
       }
@@ -460,7 +461,7 @@ const EditSalesInvoice = () => {
   useEffect(() => {
     if (!invoice || invoiceLoaded) return;
 
-    console.log("🔵 [EditSalesInvoice] Loading invoice data...");
+    logger.debug("🔵 [EditSalesInvoice] Loading invoice data...");
     
     try {
       // Set customer
@@ -516,9 +517,9 @@ const EditSalesInvoice = () => {
       }
 
       setInvoiceLoaded(true);
-      console.log("✅ [EditSalesInvoice] Invoice data loaded successfully");
+      logger.debug("✅ [EditSalesInvoice] Invoice data loaded successfully");
     } catch (error) {
-      console.error("❌ [EditSalesInvoice] Error loading invoice:", error);
+      logger.error("❌ [EditSalesInvoice] Error loading invoice:", error);
       toast.error("Fatura verileri yüklenirken hata oluştu");
     }
   }, [invoice, invoiceLoaded, form]);
@@ -700,27 +701,27 @@ const EditSalesInvoice = () => {
 
   // Save invoice (update)
   const handleUpdate = async () => {
-    console.log("💾 [EditSalesInvoice] Updating invoice...");
+    logger.debug("💾 [EditSalesInvoice] Updating invoice...");
     try {
       // Validation
       const customerId = watchCustomerId || customerData.customer_id;
       
       if (!customerId) {
-        console.log("  ❌ Validation failed: No customer selected");
+        logger.debug("  ❌ Validation failed: No customer selected");
         toast.error("Müşteri seçilmelidir");
         return;
       }
 
       const validItems = items.filter(item => item.name.trim());
-      console.log("  → Items validation:", { totalItems: items.length, validItems: validItems.length });
+      logger.debug("  → Items validation:", { totalItems: items.length, validItems: validItems.length });
       
       if (validItems.length === 0) {
-        console.log("  ❌ Validation failed: No valid items");
+        logger.debug("  ❌ Validation failed: No valid items");
         toast.error("En az bir fatura kalemi eklenmelidir");
         return;
       }
 
-      console.log("  → Validation passed, starting save...");
+      logger.debug("  → Validation passed, starting save...");
 
       // Calculate totals
       const primaryCurrency = financialData.currency;
@@ -734,7 +735,7 @@ const EditSalesInvoice = () => {
       // Numara sadece "E-Fatura Gönder" butonuna basıldığında otomatik üretilecek
       let finalInvoiceNumber = invoiceData.invoice_number || null;
       
-      console.log('📝 [EditSalesInvoice] Fatura güncelleniyor, numara:', finalInvoiceNumber || 'yok (E-Fatura gönderildiğinde atanacak)');
+      logger.debug('📝 [EditSalesInvoice] Fatura güncelleniyor, numara:', finalInvoiceNumber || 'yok (E-Fatura gönderildiğinde atanacak)');
 
       // Prepare invoice data
       const invoicePayload = {
@@ -811,7 +812,7 @@ const EditSalesInvoice = () => {
           .single();
         
         if (customerFetchError) {
-          console.error('❌ Error fetching customer balance:', customerFetchError);
+          logger.error('❌ Error fetching customer balance:', customerFetchError);
           // Hata olsa bile devam et, sadece logla
         } else if (customerData) {
           const newCustomerBalance = (customerData.balance || 0) + totals.grand;
@@ -821,10 +822,10 @@ const EditSalesInvoice = () => {
             .eq('id', customerId);
           
           if (customerUpdateError) {
-            console.error('❌ Error updating customer balance:', customerUpdateError);
+            logger.error('❌ Error updating customer balance:', customerUpdateError);
             // Hata olsa bile devam et, sadece logla
           } else {
-            console.log('✅ Customer balance updated:', newCustomerBalance);
+            logger.debug('✅ Customer balance updated:', newCustomerBalance);
           }
         }
       }
@@ -836,7 +837,7 @@ const EditSalesInvoice = () => {
         queryClient.invalidateQueries({ queryKey: ['customers'] });
       }
 
-      console.log("✅ [EditSalesInvoice] Invoice updated successfully", { invoiceId: invoice.id });
+      logger.debug("✅ [EditSalesInvoice] Invoice updated successfully", { invoiceId: invoice.id });
       
       // Show success message
       if (finalInvoiceNumber) {
@@ -848,7 +849,7 @@ const EditSalesInvoice = () => {
       navigate(`/sales-invoices/${invoice.id}`);
 
     } catch (error) {
-      console.error('❌ [CreateSalesInvoice] Error saving invoice:', error);
+      logger.error('❌ [CreateSalesInvoice] Error saving invoice:', error);
       toast.error("Fatura kaydedilirken bir hata oluştu");
     }
   };

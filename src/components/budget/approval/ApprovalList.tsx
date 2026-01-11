@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,7 @@ const ApprovalList = ({ filters }: ApprovalListProps) => {
       if (error) throw error;
       setRevisions(data || []);
     } catch (error: any) {
-      console.error("Error fetching revisions:", error);
+      logger.error("Error fetching revisions:", error);
       toast({
         variant: "destructive",
         title: "Hata",

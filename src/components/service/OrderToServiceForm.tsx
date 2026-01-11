@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -404,7 +405,7 @@ const OrderToServiceForm: React.FC<OrderToServiceFormProps> = ({ orderId, order 
           .upload(filePath, file);
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
+          logger.error('Upload error:', uploadError);
           toast.error(`${file.name} yüklenirken hata oluştu`);
           continue;
         }
@@ -425,7 +426,7 @@ const OrderToServiceForm: React.FC<OrderToServiceFormProps> = ({ orderId, order 
         toast.success(`${uploadedFiles.length} dosya yüklendi`);
       }
     } catch (error) {
-      console.error('File upload error:', error);
+      logger.error('File upload error:', error);
       toast.error('Dosya yüklenirken bir hata oluştu');
     } finally {
       setUploadingFiles(false);
@@ -487,7 +488,7 @@ const OrderToServiceForm: React.FC<OrderToServiceFormProps> = ({ orderId, order 
             receivedByUserId = employee.user_id;
           }
         } catch (err) {
-          console.warn('Employee user_id bulunamadı:', err);
+          logger.warn('Employee user_id bulunamadı:', err);
           receivedByUserId = data.received_by;
         }
       }
@@ -543,7 +544,7 @@ const OrderToServiceForm: React.FC<OrderToServiceFormProps> = ({ orderId, order 
         .single();
 
       if (serviceError) {
-        console.error('Service creation error:', serviceError);
+        logger.error('Service creation error:', serviceError);
         throw new Error(serviceError.message || "Servis talebi oluşturulamadı");
       }
 
@@ -573,7 +574,7 @@ const OrderToServiceForm: React.FC<OrderToServiceFormProps> = ({ orderId, order 
             .insert(serviceItemsToInsert);
 
           if (itemsError) {
-            console.error('Service items eklenirken hata:', itemsError);
+            logger.error('Service items eklenirken hata:', itemsError);
             throw itemsError;
           }
         }
@@ -590,7 +591,7 @@ const OrderToServiceForm: React.FC<OrderToServiceFormProps> = ({ orderId, order 
           .eq("id", data.order_id);
 
         if (orderError) {
-          console.error("Order update error:", orderError);
+          logger.error("Order update error:", orderError);
         }
       }
 
@@ -608,7 +609,7 @@ const OrderToServiceForm: React.FC<OrderToServiceFormProps> = ({ orderId, order 
       }, 1500);
     },
     onError: (error: any) => {
-      console.error('Servis oluşturma hatası:', error);
+      logger.error('Servis oluşturma hatası:', error);
       toast.error('Servis talebi oluşturulurken bir hata oluştu', {
         description: error.message || 'Bilinmeyen hata',
       });

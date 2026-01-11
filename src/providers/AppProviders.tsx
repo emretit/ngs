@@ -1,5 +1,6 @@
 
 import React from "react";
+import { logger } from '@/utils/logger';
 import { BrowserRouter as Router } from "react-router-dom";
 import { QueryClientProvider } from "./QueryClientProvider";
 import { Toaster } from "@/components/ui/sonner";
@@ -18,7 +19,7 @@ const ActivityTrackerWrapper = () => {
   return user ? <ActivityTracker /> : null;
   } catch (error) {
     // Hot reload sırasında AuthProvider context'i kaybolabilir
-    console.warn('ActivityTrackerWrapper: Auth context not available');
+    logger.warn('ActivityTrackerWrapper: Auth context not available');
     return null;
   }
 };

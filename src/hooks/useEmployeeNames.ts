@@ -1,5 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 
 export const useEmployeeNames = () => {
@@ -14,7 +15,7 @@ export const useEmployeeNames = () => {
         if (error) throw error;
         return data || [];
       } catch (error) {
-        console.error("Error fetching employees:", error);
+        logger.error("Error fetching employees:", error);
         return [];
       }
     },

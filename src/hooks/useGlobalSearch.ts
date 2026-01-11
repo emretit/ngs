@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import Fuse from "fuse.js";
 import { useMemo, useState, useEffect } from "react";
@@ -53,7 +54,7 @@ export const useGlobalSearch = (query: string) => {
     queryFn: async () => {
       try {
         if (!companyId) {
-          console.warn('No company_id found for user');
+          logger.warn('No company_id found for user');
           return {
             customers: [],
             employees: [],
@@ -121,7 +122,7 @@ export const useGlobalSearch = (query: string) => {
 
         queries.forEach(({ name, result }) => {
           if (result.error) {
-            console.error(`${name} fetch error:`, result.error);
+            logger.error(`${name} fetch error:`, result.error);
           }
         });
 
@@ -141,7 +142,7 @@ export const useGlobalSearch = (query: string) => {
           vehicles: vehiclesResult.data || [],
         } as SearchData;
       } catch (error) {
-        console.error('Error in global search query:', error);
+        logger.error('Error in global search query:', error);
         // Return empty data on error to prevent UI breaking
         return {
           customers: [],

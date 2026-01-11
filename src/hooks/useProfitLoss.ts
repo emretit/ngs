@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "./useCurrentUser";
 
@@ -89,11 +90,11 @@ export const useProfitLoss = (filters: ProfitLossFilters) => {
       const { data: salesInvoices, error: salesError } = await incomeQuery;
 
       if (salesError) {
-        console.error("Sales invoices fetch error:", salesError);
+        logger.error("Sales invoices fetch error:", salesError);
         throw salesError;
       }
 
-      console.log(`Fetched ${salesInvoices?.length || 0} sales invoices for year ${filters.year}, currency ${filters.currency}`);
+      logger.debug(`Fetched ${salesInvoices?.length || 0} sales invoices for year ${filters.year}, currency ${filters.currency}`);
 
       // Fetch expenses
       let expensesQuery = supabase
@@ -115,11 +116,11 @@ export const useProfitLoss = (filters: ProfitLossFilters) => {
       const { data: expenses, error: expensesError } = await expensesQuery;
 
       if (expensesError) {
-        console.error("Expenses fetch error:", expensesError);
+        logger.error("Expenses fetch error:", expensesError);
         throw expensesError;
       }
 
-      console.log(`Fetched ${expenses?.length || 0} expenses for year ${filters.year}`);
+      logger.debug(`Fetched ${expenses?.length || 0} expenses for year ${filters.year}`);
 
       // Calculate monthly data
       const monthlyData: MonthlyProfitLoss[] = MONTHS.map((monthName, index) => {

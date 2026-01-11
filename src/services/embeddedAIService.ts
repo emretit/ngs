@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 /**
  * Embedded AI Service using Google Gemini via Edge Function
@@ -73,7 +74,7 @@ export const analyzeSupabaseData = async (
     
     return analysis;
   } catch (error: any) {
-    console.error('Veri analizi hatası:', error);
+    logger.error('Veri analizi hatası:', error);
     return {
       summary: 'Veri analizi sırasında bir hata oluştu.',
       insights: [],
@@ -154,7 +155,7 @@ const analyzeWithAI = async (
       recommendations: result.recommendations || [],
     };
   } catch (error: any) {
-    console.error('Gemini AI analiz hatası:', error);
+    logger.error('Gemini AI analiz hatası:', error);
     
     // Fallback: Basit özet
     return {

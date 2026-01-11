@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import { UserWithRoles } from "../types";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
@@ -24,7 +25,7 @@ export const UserActions = ({ user, userId, onResetPassword, onDeactivate }: Use
     try {
       onDeactivate?.();
     } catch (error) {
-      console.error('Error deactivating user:', error);
+      logger.error('Error deactivating user:', error);
     } finally {
       setIsDeactivating(false);
       setIsDeactivateDialogOpen(false);

@@ -1,4 +1,5 @@
 import { useInfiniteScroll } from "./useInfiniteScroll";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { Return } from "@/types/returns";
 
@@ -80,7 +81,7 @@ export const useReturnsInfiniteScroll = (filters: UseReturnsFilters = {}) => {
     const { data, error, count } = await query;
 
     if (error) {
-      console.error("Error fetching returns:", error);
+      logger.error("Error fetching returns:", error);
       throw error;
     }
 

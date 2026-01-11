@@ -93,7 +93,7 @@ export async function batchConvertProductImages(
       imageMap.set(product.id, base64);
       
       if (process.env.NODE_ENV === 'development') {
-        console.log(`✅ Image converted for ${product.name}: ${base64?.substring(0, 50)}...`);
+        logger.debug(`✅ Image converted for ${product.name}: ${base64?.substring(0, 50)}...`);
       }
     }
   });

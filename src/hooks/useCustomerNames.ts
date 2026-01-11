@@ -1,5 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 
 interface Customer {
@@ -22,7 +23,7 @@ export const useCustomerNames = () => {
         
         return data as Customer[];
       } catch (error) {
-        console.error("Error loading customers:", error);
+        logger.error("Error loading customers:", error);
         throw error;
       }
     }

@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -129,7 +130,7 @@ export const EmployeeLeaveTab = ({ employee }: EmployeeLeaveTabProps) => {
           .order('priority', { ascending: true });
 
         if (rulesError) {
-          console.error('Error fetching rules for', leaveType.name, rulesError);
+          logger.error('Error fetching rules for', leaveType.name, rulesError);
           continue;
         }
 
@@ -199,7 +200,7 @@ export const EmployeeLeaveTab = ({ employee }: EmployeeLeaveTabProps) => {
           .in('status', ['approved', 'pending']);
 
         if (usedLeavesError) {
-          console.error('Error fetching used leaves:', usedLeavesError);
+          logger.error('Error fetching used leaves:', usedLeavesError);
         }
 
         // İzin türü eşleştirmesi için mapping
@@ -259,7 +260,7 @@ export const EmployeeLeaveTab = ({ employee }: EmployeeLeaveTabProps) => {
         if (error) throw error;
         setLeaves(data as EmployeeLeave[]);
       } catch (error) {
-        console.error('Error fetching leave data:', error);
+        logger.error('Error fetching leave data:', error);
         toast({
           variant: "destructive",
           title: "Error",

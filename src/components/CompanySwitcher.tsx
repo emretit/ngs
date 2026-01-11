@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { Building, Plus, Check, ChevronRight } from "lucide-react";
 import {
   Dialog,
@@ -50,7 +51,7 @@ export const CompanySwitcher = ({ open, onOpenChange }: CompanySwitcherProps) =>
     } catch (error: any) {
       const errorMessage = error?.message || "Şirket değiştirilemedi";
       toast.error(errorMessage);
-      console.error("Firma değiştirme hatası:", error);
+      logger.error("Firma değiştirme hatası:", error);
     }
   };
 
@@ -76,7 +77,7 @@ export const CompanySwitcher = ({ open, onOpenChange }: CompanySwitcherProps) =>
     } catch (error: any) {
       const errorMessage = error?.message || "Şirket oluşturulamadı";
       toast.error(errorMessage);
-      console.error("Şirket oluşturma hatası:", error);
+      logger.error("Şirket oluşturma hatası:", error);
     }
   };
 

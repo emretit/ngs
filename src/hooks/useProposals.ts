@@ -1,5 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { Proposal, ProposalStatus } from "@/types/proposal";
 import { ProposalFilters } from "@/components/proposals/types";
 import { useCurrentUser } from "./useCurrentUser";
@@ -109,7 +110,7 @@ export const useProposals = (filters?: ProposalFilters) => {
       const { data, error } = await query;
 
       if (error) {
-        console.error("Error fetching proposals:", error);
+        logger.error("Error fetching proposals:", error);
         throw error;
       }
 
@@ -201,7 +202,7 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters) => {
     queryFn: async () => {
       // Kullanıcının company_id'si yoksa boş sonuç döndür
       if (!userData?.company_id) {
-        console.warn("Kullanıcının company_id'si bulunamadı, boş sonuç döndürülüyor");
+        logger.warn("Kullanıcının company_id'si bulunamadı, boş sonuç döndürülüyor");
         return [];
       }
 
@@ -251,7 +252,7 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters) => {
       const { data, error: queryError } = await query;
 
       if (queryError) {
-        console.error("Error fetching proposals:", queryError);
+        logger.error("Error fetching proposals:", queryError);
         throw queryError;
       }
 

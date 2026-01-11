@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -77,7 +78,7 @@ export const useBudgetApproval = (year?: number) => {
 
       setRevisions(data || []);
     } catch (err: any) {
-      console.error("fetchRevisions error:", err);
+      logger.error("fetchRevisions error:", err);
       setError(err.message);
       toast({
         variant: "destructive",
@@ -101,7 +102,7 @@ export const useBudgetApproval = (year?: number) => {
       if (fetchError) throw fetchError;
       return data || [];
     } catch (err: any) {
-      console.error("fetchApprovals error:", err);
+      logger.error("fetchApprovals error:", err);
       throw err;
     }
   }, []);
@@ -147,7 +148,7 @@ export const useBudgetApproval = (year?: number) => {
 
       return data;
     } catch (err: any) {
-      console.error("createRevision error:", err);
+      logger.error("createRevision error:", err);
       toast({
         variant: "destructive",
         title: "Hata",
@@ -223,7 +224,7 @@ export const useBudgetApproval = (year?: number) => {
 
       return approval;
     } catch (err: any) {
-      console.error("approveRevision error:", err);
+      logger.error("approveRevision error:", err);
       toast({
         variant: "destructive",
         title: "Hata",
@@ -284,7 +285,7 @@ export const useBudgetApproval = (year?: number) => {
         description: "Revizyon reddedildi.",
       });
     } catch (err: any) {
-      console.error("rejectRevision error:", err);
+      logger.error("rejectRevision error:", err);
       toast({
         variant: "destructive",
         title: "Hata",

@@ -1,4 +1,5 @@
 import { useInfiniteScroll } from "./useInfiniteScroll";
+import { logger } from '@/utils/logger';
 import { Customer } from "@/types/customer";
 import { useCurrentUser } from "./useCurrentUser";
 import { buildCompanyQuery, buildCompanyQueryWithOr, QueryFilter } from "@/utils/supabaseQueryBuilder";
@@ -112,7 +113,7 @@ export const useCustomersInfiniteScroll = (filters: UseCustomersFilters = {}) =>
     const { data, error, count } = await query;
 
     if (error) {
-      console.error("Error fetching customers:", error);
+      logger.error("Error fetching customers:", error);
       throw error;
     }
 

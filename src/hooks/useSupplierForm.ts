@@ -121,9 +121,9 @@ export const useSupplierForm = () => {
 
   useEffect(() => {
     if (supplier) {
-      console.log('📝 Setting form data with supplier:', supplier);
-      console.log('📋 Supplier name:', supplier.name);
-      console.log('📋 Supplier company:', supplier.company);
+      logger.debug('📝 Setting form data with supplier:', supplier);
+      logger.debug('📋 Supplier name:', supplier.name);
+      logger.debug('📋 Supplier company:', supplier.company);
       
       // City ve district için ID'den isim çözme fonksiyonları
       const resolveCityName = async (cityId: number | null): Promise<string> => {
@@ -136,7 +136,7 @@ export const useSupplierForm = () => {
             .maybeSingle();
           return data?.name || "";
         } catch (error) {
-          console.error('Error resolving city name:', error);
+          logger.error('Error resolving city name:', error);
           return "";
         }
       };
@@ -152,7 +152,7 @@ export const useSupplierForm = () => {
             .maybeSingle();
           return data?.name || "";
         } catch (error) {
-          console.error('Error resolving district name:', error);
+          logger.error('Error resolving district name:', error);
           return "";
         }
       };
@@ -248,14 +248,14 @@ export const useSupplierForm = () => {
           einvoice_document_type: (supplier as any).einvoice_document_type ?? "",
         };
 
-        console.log('📝 New form data created:', newFormData);
+        logger.debug('📝 New form data created:', newFormData);
         setFormData(newFormData);
-        console.log('✅ Form data set successfully');
+        logger.debug('✅ Form data set successfully');
       };
 
       loadFormData();
     } else {
-      console.log('⚠️ No supplier data available to set');
+      logger.debug('⚠️ No supplier data available to set');
     }
   }, [supplier]);
 
@@ -434,13 +434,13 @@ export const useSupplierForm = () => {
 
       if (id) {
         // Update
-        console.log('Updating supplier data:', sanitizedData);
+        logger.debug('Updating supplier data:', sanitizedData);
         const { error: updateError } = await supabase
           .from('suppliers')
           .update(sanitizedData)
           .eq('id', id);
         if (updateError) {
-          console.error('Güncelleme hatası:', updateError);
+          logger.error('Güncelleme hatası:', updateError);
           throw updateError;
         }
         const { data: updatedData, error: fetchError } = await supabase
@@ -449,29 +449,29 @@ export const useSupplierForm = () => {
           .eq('id', id)
           .maybeSingle();
         if (fetchError) {
-          console.error('Veri getirme hatası:', fetchError);
+          logger.error('Veri getirme hatası:', fetchError);
           throw fetchError;
         }
         if (!updatedData) {
-          console.error('Güncellenmiş veri bulunamadı');
+          logger.error('Güncellenmiş veri bulunamadı');
           throw new Error('Güncellenmiş tedarikçi bulunamadı');
         }
         return updatedData;
       } else {
         // Add new supplier - add company_id to sanitized data
         const dataWithCompanyId = { ...sanitizedData, company_id };
-        console.log('Inserting supplier data:', dataWithCompanyId);
+        logger.debug('Inserting supplier data:', dataWithCompanyId);
         const { data: newData, error } = await supabase
           .from('suppliers')
           .insert([dataWithCompanyId])
           .select()
           .maybeSingle();
         if (error) {
-          console.error('Ekleme hatası:', error);
+          logger.error('Ekleme hatası:', error);
           throw error;
         }
         if (!newData) {
-          console.error('Yeni eklenen veri bulunamadı');
+          logger.error('Yeni eklenen veri bulunamadı');
           throw new Error('Tedarikçi eklenemedi');
         }
         return newData;
@@ -486,18 +486,18 @@ export const useSupplierForm = () => {
       navigate('/suppliers');
     },
     onError: (error) => {
-      console.error('Mutation error:', error);
+      logger.error('Mutation error:', error);
       toast.error(error instanceof Error ? error.message : "Bir hata oluştu. Lütfen tekrar deneyin.");
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form gönderiliyor:', formData);
+    logger.debug('Form gönderiliyor:', formData);
     try {
       await mutation.mutateAsync(formData);
     } catch (error) {
-      console.error('Form submission error:', error);
+      logger.error('Form submission error:', error);
     }
   };
 

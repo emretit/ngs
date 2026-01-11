@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useToast } from "@/components/ui/use-toast";
 import { useForm } from "react-hook-form";
 
@@ -98,7 +99,7 @@ export const useLeaveManagement = (employeeId: string) => {
         
         setLeaveHistory(mockData);
       } catch (error) {
-        console.error('Error fetching leave history:', error);
+        logger.error('Error fetching leave history:', error);
         toast({
           variant: "destructive",
           title: "Hata",
@@ -131,7 +132,7 @@ export const useLeaveManagement = (employeeId: string) => {
       }
       
       // This is a placeholder until the actual leave table is created
-      console.log('Submitted leave data:', { 
+      logger.debug('Submitted leave data:', { 
         ...values, 
         employee_id: employeeId,
         total_days: diffDays
@@ -166,7 +167,7 @@ export const useLeaveManagement = (employeeId: string) => {
         [values.leave_type]: leaveBalance[values.leave_type as keyof typeof leaveBalance] - diffDays
       });
     } catch (error) {
-      console.error('Error saving leave data:', error);
+      logger.error('Error saving leave data:', error);
       toast({
         variant: "destructive",
         title: "Hata",

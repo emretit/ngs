@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +36,7 @@ const ProductDetails = () => {
         .maybeSingle();
 
       if (profileError) {
-        console.warn("Profil bilgisi alınamadı:", profileError);
+        logger.warn("Profil bilgisi alınamadı:", profileError);
       }
 
       const companyId = profile?.company_id;
@@ -53,7 +54,7 @@ const ProductDetails = () => {
         .maybeSingle();
       
       if (error) {
-        console.error("Error fetching product:", error);
+        logger.error("Error fetching product:", error);
         throw error;
       }
       
@@ -109,7 +110,7 @@ const ProductDetails = () => {
       
       await refetch();
     } catch (error) {
-      console.error("Error updating product:", error);
+      logger.error("Error updating product:", error);
       showError("Ürün güncellenirken bir hata oluştu");
     }
   };

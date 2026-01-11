@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,8 +134,8 @@ const ProductDetailsModal = ({
     // Edit modu öncelikli - existingData varsa onu kullan
     if (existingData) {
       // We're editing an existing line item
-      console.log('ProductDetailsModal - Edit mode, existingData:', existingData);
-      console.log('ProductDetailsModal - quantity:', existingData.quantity, 'unit_price:', existingData.unit_price, 'vat_rate:', existingData.vat_rate, 'discount_rate:', existingData.discount_rate, 'currency:', existingData.currency);
+      logger.debug('ProductDetailsModal - Edit mode, existingData:', existingData);
+      logger.debug('ProductDetailsModal - quantity:', existingData.quantity, 'unit_price:', existingData.unit_price, 'vat_rate:', existingData.vat_rate, 'discount_rate:', existingData.discount_rate, 'currency:', existingData.currency);
       
       // Set flag to prevent currency conversion during initialization
       isInitializingFromExistingDataRef.current = true;
@@ -168,7 +169,7 @@ const ProductDetailsModal = ({
       }, 100);
     } else if (product) {
       // We're adding a new product
-      console.log('ProductDetailsModal - New mode, product:', product);
+      logger.debug('ProductDetailsModal - New mode, product:', product);
       setQuantity(1);
       setUnitPrice(product.price || 0);
       setVatRate(product.tax_rate || 20);
@@ -216,7 +217,7 @@ const ProductDetailsModal = ({
     const previousCurrency = prevCurrencyRef.current;
     const convertedPrice = convertAmount(unitPrice, previousCurrency, selectedCurrency);
     setUnitPrice(convertedPrice);
-    console.log(`Price converted from ${unitPrice} ${previousCurrency} to ${convertedPrice.toFixed(4)} ${selectedCurrency}`);
+    logger.debug(`Price converted from ${unitPrice} ${previousCurrency} to ${convertedPrice.toFixed(4)} ${selectedCurrency}`);
     
     // Update previous currency reference
     prevCurrencyRef.current = selectedCurrency;

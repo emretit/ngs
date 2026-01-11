@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Category {
@@ -42,7 +43,7 @@ export function useExpenseCategories() {
       if (error) throw error;
       setCategories(data || []);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      logger.error('Error fetching categories:', error);
     } finally {
       setLoading(false);
     }
@@ -57,7 +58,7 @@ export function useExpenseCategories() {
       if (error) throw error;
       setSubcategoriesList((data as any) || []);
     } catch (error) {
-      console.error('Error fetching subcategories:', error);
+      logger.error('Error fetching subcategories:', error);
     }
   }, []);
 

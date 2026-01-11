@@ -202,7 +202,7 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
       }
       loadTemplates();
     } catch (error) {
-      console.error('Error duplicating template:', error);
+      logger.error('Error duplicating template:', error);
       toast.error('Şablon kopyalanırken hata oluştu');
     }
   };
@@ -225,7 +225,7 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
       }
       loadTemplates();
     } catch (error) {
-      console.error('Error deleting template:', error);
+      logger.error('Error deleting template:', error);
       toast.error('Şablon silinirken hata oluştu');
     } finally {
       setIsDeleting(false);

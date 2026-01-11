@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -91,7 +92,7 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
     try {
       return format(new Date(dateString), "dd MMM yyyy", { locale: tr });
     } catch (error) {
-      console.error("Invalid date:", dateString);
+      logger.error("Invalid date:", dateString);
       return "-";
     }
   };
@@ -122,7 +123,7 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
       onClose();
     },
     onError: (error) => {
-      console.error("Error updating task:", error);
+      logger.error("Error updating task:", error);
       toast.error("Görev güncellenirken bir hata oluştu");
     },
     onSettled: () => {
@@ -154,7 +155,7 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       toast.success("Alt görevler başarıyla güncellendi");
     } catch (error) {
-      console.error("Error updating subtasks:", error);
+      logger.error("Error updating subtasks:", error);
       toast.error("Alt görevler güncellenirken bir hata oluştu");
     }
   };

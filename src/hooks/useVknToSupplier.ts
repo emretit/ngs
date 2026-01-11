@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -62,7 +63,7 @@ export const useVknToSupplier = () => {
 
       return newSupplier;
     } catch (error) {
-      console.error("Error creating supplier from VKN:", error);
+      logger.error("Error creating supplier from VKN:", error);
       toast({
         title: "Hata",
         description: "Tedarikçi oluşturulurken bir hata oluştu: " + (error as Error).message,

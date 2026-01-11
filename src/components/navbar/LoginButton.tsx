@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { logger } from '@/utils/logger';
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,7 +44,7 @@ const LoginButton = () => {
     } catch (e: any) {
       // Only warn if it's not a session error
       if (!e.message?.includes('session_not_found') && !e.message?.includes('Session not found')) {
-        console.warn('Supabase signOut failed:', e);
+        logger.warn('Supabase signOut failed:', e);
       }
     }
     clearAuthTokens();

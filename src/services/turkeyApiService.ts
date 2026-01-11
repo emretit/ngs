@@ -1,3 +1,5 @@
+import { logger } from '@/utils/logger';
+
 interface Province {
   id: number;
   name: string;
@@ -98,7 +100,7 @@ class TurkeyApiService {
         id: province.id
       }));
     } catch (error) {
-      console.error('Error fetching cities:', error);
+      logger.error('Error fetching cities:', error);
       return [];
     }
   }
@@ -112,7 +114,7 @@ class TurkeyApiService {
         id: district.id
       }));
     } catch (error) {
-      console.error('Error fetching districts for city ID:', cityId, error);
+      logger.error('Error fetching districts for city ID:', cityId, error);
       return [];
     }
   }
@@ -127,7 +129,7 @@ class TurkeyApiService {
         postalCode: neighborhood.postCode
       }));
     } catch (error) {
-      console.error('Error fetching neighborhoods for district ID:', districtId, error);
+      logger.error('Error fetching neighborhoods for district ID:', districtId, error);
       return [];
     }
   }
@@ -141,13 +143,13 @@ class TurkeyApiService {
       );
 
       if (!province) {
-        console.warn(`Province not found: ${cityName}`);
+        logger.warn(`Province not found: ${cityName}`);
         return [];
       }
 
       return this.getDistrictsByCityId(province.id);
     } catch (error) {
-      console.error('Error fetching districts for city:', cityName, error);
+      logger.error('Error fetching districts for city:', cityName, error);
       return [];
     }
   }
@@ -178,13 +180,13 @@ class TurkeyApiService {
       }
 
       if (!districtId) {
-        console.warn(`District not found: ${districtName}`);
+        logger.warn(`District not found: ${districtName}`);
         return [];
       }
 
       return this.getNeighborhoodsByDistrictIdForSelect(districtId);
     } catch (error) {
-      console.error('Error fetching neighborhoods for district:', districtName, error);
+      logger.error('Error fetching neighborhoods for district:', districtName, error);
       return [];
     }
   }

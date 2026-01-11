@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ const SetPassword = () => {
     const type = hashParams.get("type");
     const emailParam = hashParams.get("email") || searchParams.get('email');
 
-    console.log('SetPassword URL params:', { 
+    logger.debug('SetPassword URL params:', { 
       accessToken, 
       type, 
       emailParam,
@@ -41,7 +42,7 @@ const SetPassword = () => {
         refresh_token: ''
       }).then(({ data, error }) => {
         if (error) {
-          console.error('Session setup error:', error);
+          logger.error('Session setup error:', error);
           setError("Bağlantı geçersiz veya süresi dolmuş.");
           return;
         }
@@ -52,12 +53,12 @@ const SetPassword = () => {
           setEmail(emailParam);
         }
         
-        console.log('Session successfully set:', data.session?.user?.email);
+        logger.debug('Session successfully set:', data.session?.user?.email);
       });
     } else {
       // If no access token and no email, redirect to signin
       if (!emailParam) {
-        console.log('No access token or email found, redirecting to signin');
+        logger.debug('No access token or email found, redirecting to signin');
         navigate("/signin");
       } else {
         setEmail(emailParam);
@@ -90,7 +91,7 @@ const SetPassword = () => {
     }
 
     try {
-      console.log('Setting password for user...');
+      logger.debug('Setting password for user...');
 
       // Update user password
       const { error: updateError } = await supabase.auth.updateUser({
@@ -98,11 +99,11 @@ const SetPassword = () => {
       });
 
       if (updateError) {
-        console.error('Password update error:', updateError);
+        logger.error('Password update error:', updateError);
         throw updateError;
       }
 
-      console.log('Password successfully updated');
+      logger.debug('Password successfully updated');
       
       toast.success("Şifreniz kaydedildi. Dashboard'a yönlendiriliyorsunuz.", { duration: 1000 });
 
@@ -112,7 +113,7 @@ const SetPassword = () => {
       }, 1000);
 
     } catch (error: any) {
-      console.error('Password setup error:', error);
+      logger.error('Password setup error:', error);
       setError(error.message || "Bir hata oluştu. Lütfen tekrar deneyin.");
       toast.error(error.message || "Şifre belirleme sırasında bir hata oluştu.", { duration: 1000 });
     } finally {

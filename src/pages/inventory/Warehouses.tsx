@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, memo } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -65,7 +66,7 @@ const Warehouses = () => {
             filter: `company_id=eq.${profile.company_id}`
           },
           (payload) => {
-            console.log('🔄 Warehouse changed:', payload.eventType, payload.new || payload.old);
+            logger.debug('🔄 Warehouse changed:', payload.eventType, payload.new || payload.old);
             // Invalidate queries to refetch data
             queryClient.invalidateQueries({ queryKey: ['warehouses'] });
             queryClient.invalidateQueries({ queryKey: ['warehouse'] });
@@ -139,7 +140,7 @@ const Warehouses = () => {
 
   if (error) {
     toast.error("Depolar yüklenirken bir hata oluştu");
-    console.error("Error loading warehouses:", error);
+    logger.error("Error loading warehouses:", error);
   }
 
   const handleSort = useCallback((field: "name" | "code" | "warehouse_type" | "is_active") => {
@@ -199,7 +200,7 @@ const Warehouses = () => {
         .limit(1);
 
       if (stockError) {
-        console.error("Stok kontrolü hatası:", stockError);
+        logger.error("Stok kontrolü hatası:", stockError);
       }
 
       if (stockData && stockData.length > 0) {
@@ -219,7 +220,7 @@ const Warehouses = () => {
         .limit(1);
 
       if (transactionError) {
-        console.error("Transaction kontrolü hatası:", transactionError);
+        logger.error("Transaction kontrolü hatası:", transactionError);
       }
 
       if (transactionData && transactionData.length > 0) {
@@ -238,7 +239,7 @@ const Warehouses = () => {
         .eq("company_id", profile.company_id);
 
       if (error) {
-        console.error("Depo silme hatası:", error);
+        logger.error("Depo silme hatası:", error);
         toast.error("Depo silinirken bir hata oluştu");
         setIsDeleting(false);
         return;
@@ -254,7 +255,7 @@ const Warehouses = () => {
       setIsDeleteDialogOpen(false);
       setWarehouseToDelete(null);
     } catch (error) {
-      console.error("Depo silme hatası:", error);
+      logger.error("Depo silme hatası:", error);
       toast.error("Depo silinirken bir hata oluştu");
     } finally {
       setIsDeleting(false);
@@ -355,7 +356,7 @@ const Warehouses = () => {
       
       setIsBulkDeleteDialogOpen(false);
     } catch (error) {
-      console.error("Toplu silme hatası:", error);
+      logger.error("Toplu silme hatası:", error);
       toast.error("Depolar silinirken bir hata oluştu");
     } finally {
       setIsDeleting(false);
@@ -379,7 +380,7 @@ const Warehouses = () => {
     } else if (action === 'delete') {
       await handleBulkDelete();
     } else {
-      console.log('Bulk action:', action, selectedWarehouses);
+      logger.debug('Bulk action:', action, selectedWarehouses);
     }
   }, [selectedWarehouses, handleBulkDelete]);
 

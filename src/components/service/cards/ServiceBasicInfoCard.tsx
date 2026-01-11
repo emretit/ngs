@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -64,7 +65,7 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
         handleInputChange('service_location', fullAddress);
       }
     } catch (error) {
-      console.error('Error processing autocomplete result:', error);
+      logger.error('Error processing autocomplete result:', error);
     } finally {
       setShowAutocomplete(false);
       clearAutocomplete();

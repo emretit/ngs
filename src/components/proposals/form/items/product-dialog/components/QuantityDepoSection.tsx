@@ -1,5 +1,6 @@
 
 import React from "react";
+import { logger } from '@/utils/logger';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
@@ -81,7 +82,7 @@ const QuantityDepoSection: React.FC<QuantityDepoSectionProps> = ({
         .eq('company_id', profile.company_id);
 
       if (error) {
-        console.error('Error fetching warehouse stocks:', error);
+        logger.error('Error fetching warehouse stocks:', error);
         throw error;
       }
       

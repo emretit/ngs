@@ -4,6 +4,7 @@
  */
 
 import { useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
@@ -35,7 +36,7 @@ export function exportToExcel(
     XLSX.writeFile(workbook, fileName);
     toast.success(`${filename} Excel olarak indirildi`);
   } catch (error) {
-    console.error("Excel export error:", error);
+    logger.error("Excel export error:", error);
     toast.error("Excel raporu oluşturulamadı");
   }
 }
@@ -83,7 +84,7 @@ export function exportToCSV(
 
     toast.success(`${filename} CSV olarak indirildi`);
   } catch (error) {
-    console.error("CSV export error:", error);
+    logger.error("CSV export error:", error);
     toast.error("CSV raporu oluşturulamadı");
   }
 }
@@ -159,7 +160,7 @@ export function exportToPDF(
       toast.success(`${title} PDF olarak hazırlandı`);
     }, 250);
   } catch (error) {
-    console.error("PDF export error:", error);
+    logger.error("PDF export error:", error);
     toast.error("PDF raporu oluşturulamadı");
   }
 }

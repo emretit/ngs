@@ -1,5 +1,6 @@
 
 import { useState, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { Supplier } from "@/types/supplier";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
@@ -116,7 +117,7 @@ export const ActivitiesList = ({ supplier }: ActivitiesListProps) => {
       const { data, error: queryError } = await query;
 
       if (queryError) {
-        console.error("Error fetching supplier activities:", queryError);
+        logger.error("Error fetching supplier activities:", queryError);
         throw queryError;
       }
 

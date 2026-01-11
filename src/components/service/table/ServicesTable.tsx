@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -76,7 +77,7 @@ const ServicesTable = ({
         const templates = await PdfExportService.getServiceTemplates();
         setServiceTemplates(templates);
       } catch (error) {
-        console.error('Error loading service templates:', error);
+        logger.error('Error loading service templates:', error);
       } finally {
         setIsLoadingTemplates(false);
       }
@@ -225,7 +226,7 @@ const ServicesTable = ({
       });
       toast.success("Servis PDF'i yeni sekmede açıldı");
     } catch (error) {
-      console.error('Servis PDF oluşturma hatası:', error);
+      logger.error('Servis PDF oluşturma hatası:', error);
       toast.error("Servis PDF'i oluşturulurken hata oluştu: " + (error as Error).message);
     }
   };

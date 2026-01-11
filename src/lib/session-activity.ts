@@ -1,3 +1,5 @@
+import { logger } from '@/utils/logger';
+
 // Session activity tracking utilities
 // 8 hours in milliseconds
 export const ACTIVITY_TIMEOUT = 8 * 60 * 60 * 1000;
@@ -8,7 +10,7 @@ export const updateActivity = () => {
   try {
     localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
   } catch (error) {
-    console.warn('Failed to update activity timestamp:', error);
+    logger.warn('Failed to update activity timestamp:', error);
   }
 };
 
@@ -18,7 +20,7 @@ export const getLastActivity = (): number | null => {
     const timestamp = localStorage.getItem(LAST_ACTIVITY_KEY);
     return timestamp ? parseInt(timestamp, 10) : null;
   } catch (error) {
-    console.warn('Failed to get activity timestamp:', error);
+    logger.warn('Failed to get activity timestamp:', error);
     return null;
   }
 };
@@ -38,6 +40,6 @@ export const clearActivity = () => {
   try {
     localStorage.removeItem(LAST_ACTIVITY_KEY);
   } catch (error) {
-    console.warn('Failed to clear activity timestamp:', error);
+    logger.warn('Failed to clear activity timestamp:', error);
   }
 };

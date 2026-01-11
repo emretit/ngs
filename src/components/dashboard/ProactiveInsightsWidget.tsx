@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -60,7 +61,7 @@ export function ProactiveInsightsWidget({ companyId, maxInsights = 3 }: Proactiv
 
       setInsights(sorted.slice(0, maxInsights));
     } catch (err) {
-      console.error('Error loading insights:', err);
+      logger.error('Error loading insights:', err);
     } finally {
       setLoading(false);
     }

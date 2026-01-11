@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +21,7 @@ const ContactDetails = () => {
         .eq('id', id)
         .maybeSingle();
       if (error) {
-        console.error('Error fetching customer:', error);
+        logger.error('Error fetching customer:', error);
         throw error;
       }
       return data;

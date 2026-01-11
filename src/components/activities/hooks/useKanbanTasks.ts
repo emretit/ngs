@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { Task, TaskStatus } from "@/types/task";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -77,7 +78,7 @@ export const useKanbanTasks = ({
       const { data, error } = await query;
 
       if (error) {
-        console.error("Error fetching tasks:", error);
+        logger.error("Error fetching tasks:", error);
         throw error;
       }
 

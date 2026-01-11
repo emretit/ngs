@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 export interface ServiceTemplate {
   id: string;
@@ -62,7 +63,7 @@ export class ServiceTemplateService {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching service templates:', error);
+      logger.error('Error fetching service templates:', error);
       throw error;
     }
 
@@ -80,7 +81,7 @@ export class ServiceTemplateService {
       .single();
 
     if (error) {
-      console.error('Error fetching service template:', error);
+      logger.error('Error fetching service template:', error);
       throw error;
     }
 
@@ -106,7 +107,7 @@ export class ServiceTemplateService {
       .single();
 
     if (error) {
-      console.error('Error creating service template:', error);
+      logger.error('Error creating service template:', error);
       throw error;
     }
 
@@ -128,7 +129,7 @@ export class ServiceTemplateService {
       .single();
 
     if (error) {
-      console.error('Error updating service template:', error);
+      logger.error('Error updating service template:', error);
       throw error;
     }
 
@@ -145,7 +146,7 @@ export class ServiceTemplateService {
       .eq('id', templateId);
 
     if (error) {
-      console.error('Error deleting service template:', error);
+      logger.error('Error deleting service template:', error);
       throw error;
     }
   }
@@ -185,7 +186,7 @@ export class ServiceTemplateService {
       .single();
 
     if (error) {
-      console.error('Error creating service from template:', error);
+      logger.error('Error creating service from template:', error);
       throw error;
     }
 
@@ -303,7 +304,7 @@ export class ServiceTemplateService {
         await this.migrateTemplateToNewStructure(template.id);
         migrated++;
       } catch (error) {
-        console.error(`Error migrating template ${template.id}:`, error);
+        logger.error(`Error migrating template ${template.id}:`, error);
         errors++;
       }
     }

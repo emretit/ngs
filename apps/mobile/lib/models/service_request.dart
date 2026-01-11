@@ -23,6 +23,10 @@ class ServiceRequest {
   final String? contactEmail;
   final String? receivedBy;
   final String? serviceResult;
+  // Maliyet bilgileri
+  final double? laborCost;
+  final double? partsCost;
+  final double? totalCost;
   // Servis fişi alanları
   final String? slipNumber;
   final DateTime? issueDate;
@@ -66,6 +70,10 @@ class ServiceRequest {
     this.contactEmail,
     this.receivedBy,
     this.serviceResult,
+    // Maliyet bilgileri
+    this.laborCost,
+    this.partsCost,
+    this.totalCost,
     // Servis fişi alanları
     this.slipNumber,
     this.issueDate,
@@ -113,6 +121,10 @@ class ServiceRequest {
       contactEmail: json['contact_email']?.toString(),
       receivedBy: json['received_by']?.toString(),
       serviceResult: json['service_result']?.toString(),
+      // Maliyet bilgileri
+      laborCost: _parseDouble(json['labor_cost']),
+      partsCost: _parseDouble(json['parts_cost']),
+      totalCost: _parseDouble(json['total_cost']),
       // Servis fişi alanları
       slipNumber: json['slip_number']?.toString(),
       issueDate: _parseDateTime(json['issue_date']),
@@ -154,6 +166,22 @@ class ServiceRequest {
       return null;
     } catch (e) {
       print('DateTime parse hatası: $e, value: $value');
+      return null;
+    }
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    try {
+      if (value is num) {
+        return value.toDouble();
+      }
+      if (value is String) {
+        return double.tryParse(value);
+      }
+      return null;
+    } catch (e) {
+      print('Double parse hatası: $e, value: $value');
       return null;
     }
   }
@@ -210,6 +238,10 @@ class ServiceRequest {
       'contact_email': contactEmail,
       'received_by': receivedBy,
       'service_result': serviceResult,
+      // Maliyet bilgileri
+      'labor_cost': laborCost,
+      'parts_cost': partsCost,
+      'total_cost': totalCost,
       // Servis fişi alanları - sadece veritabanında olan alanlar
       // slip_number, issue_date, completion_date, technician_signature, customer_signature 
       // service_slips tablosunda, service_requests'te değil
@@ -250,6 +282,10 @@ class ServiceRequest {
     String? contactEmail,
     String? receivedBy,
     String? serviceResult,
+    // Maliyet bilgileri
+    double? laborCost,
+    double? partsCost,
+    double? totalCost,
     // Servis fişi alanları
     String? slipNumber,
     DateTime? issueDate,
@@ -292,6 +328,10 @@ class ServiceRequest {
       contactEmail: contactEmail ?? this.contactEmail,
       receivedBy: receivedBy ?? this.receivedBy,
       serviceResult: serviceResult ?? this.serviceResult,
+      // Maliyet bilgileri
+      laborCost: laborCost ?? this.laborCost,
+      partsCost: partsCost ?? this.partsCost,
+      totalCost: totalCost ?? this.totalCost,
       // Servis fişi alanları
       slipNumber: slipNumber ?? this.slipNumber,
       issueDate: issueDate ?? this.issueDate,

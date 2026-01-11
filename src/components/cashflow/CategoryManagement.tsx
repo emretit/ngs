@@ -1,4 +1,5 @@
 import { useState, memo, useMemo, useCallback, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -66,7 +67,7 @@ const CategoryItem = memo(({ category, onEdit, onDelete, subcategories, loading:
       setIsAddSubcategoryOpen(false);
       resetSubcategory({ name: '' });
     } catch (error) {
-      console.error('Failed to create subcategory:', error);
+      logger.error('Failed to create subcategory:', error);
     }
   };
 
@@ -80,7 +81,7 @@ const CategoryItem = memo(({ category, onEdit, onDelete, subcategories, loading:
       setEditingSubcategory(null);
       resetSubcategory({ name: '' });
     } catch (error) {
-      console.error('Failed to update subcategory:', error);
+      logger.error('Failed to update subcategory:', error);
     }
   };
 
@@ -103,7 +104,7 @@ const CategoryItem = memo(({ category, onEdit, onDelete, subcategories, loading:
       await deleteSubcategory(subcategoryToDelete.id);
       await refetchSubcategories();
     } catch (error) {
-      console.error('Failed to delete subcategory:', error);
+      logger.error('Failed to delete subcategory:', error);
     } finally {
       setIsDeletingSubcategory(false);
       setIsDeleteSubcategoryOpen(false);
@@ -413,7 +414,7 @@ const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedT
       setIsCreateOpen(false);
       reset({ type: 'expense', name: '', isSubcategory: false, parentCategoryId: undefined });
     } catch (error) {
-      console.error('Failed to create category:', error);
+      logger.error('Failed to create category:', error);
     }
   }, [createSubcategory, createCategory, refetch, refetchSubcategories, reset]);
 
@@ -426,7 +427,7 @@ const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedT
       setEditingCategory(null);
       reset({ type: 'expense', name: '', isSubcategory: false, parentCategoryId: undefined });
     } catch (error) {
-      console.error('Failed to update category:', error);
+      logger.error('Failed to update category:', error);
     }
   }, [editingCategory, updateCategory, reset]);
 
@@ -451,7 +452,7 @@ const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedT
     } catch (error: any) {
       // Hata mesajı zaten useCashflowCategories hook'unda toast olarak gösteriliyor
       // Burada sadece console'a yazıyoruz
-      console.error('Failed to delete category:', error);
+      logger.error('Failed to delete category:', error);
       
       // Eğer hata mesajı varsa ve toast gösterilmemişse burada göster
       if (error?.message) {

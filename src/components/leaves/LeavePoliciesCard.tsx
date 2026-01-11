@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -122,7 +123,7 @@ export const LeavePoliciesCard: React.FC<LeavePoliciesCardProps> = ({ onSaveRead
       toast.success("İzin ayarları başarıyla kaydedildi");
     },
     onError: (error: any) => {
-      console.error("Error saving leave settings:", error);
+      logger.error("Error saving leave settings:", error);
       toast.error("Ayarlar kaydedilirken hata oluştu: " + error.message);
     },
   });

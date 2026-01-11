@@ -111,9 +111,9 @@ export default function EInvoiceProcess() {
         invoice_item: item
       }));
       setMatchingItems(initialMatching);
-      console.log('✅ Invoice details loaded:', invoiceDetails);
+      logger.debug('✅ Invoice details loaded:', invoiceDetails);
     } catch (error: any) {
-      console.error('❌ Error in loadInvoiceDetails:', error);
+      logger.error('❌ Error in loadInvoiceDetails:', error);
       throw error;
     }
   }, [loadInvoiceDetailsFromHook]);
@@ -121,7 +121,7 @@ export default function EInvoiceProcess() {
   useEffect(() => {
     if (invoiceId) {
       loadInvoiceDetails().catch((error) => {
-        console.error('❌ Error loading invoice details:', error);
+        logger.error('❌ Error loading invoice details:', error);
         toast.error(error.message || "Fatura detayları yüklenirken bir hata oluştu");
         // Hata durumunda geri dön
         navigate('/e-invoice');
@@ -139,18 +139,18 @@ export default function EInvoiceProcess() {
   // Tedarikçi eşleştirmesi için ayrı fonksiyon - useCallback ile optimize et
   const matchSupplier = useCallback(async () => {
     if (!invoice) {
-      console.log('⚠️ Invoice yok, tedarikçi araması yapılamıyor');
+      logger.debug('⚠️ Invoice yok, tedarikçi araması yapılamıyor');
       return;
     }
     
     if (!suppliers.length) {
-      console.log('⚠️ Tedarikçi listesi boş, not_found olarak işaretleniyor');
+      logger.debug('⚠️ Tedarikçi listesi boş, not_found olarak işaretleniyor');
       setSupplierMatchStatus('not_found');
       return;
     }
     
     setSupplierMatchStatus('searching');
-    console.log('🔍 Tedarikçi aranıyor. VKN:', invoice.supplier_tax_number, 'Toplam tedarikçi:', suppliers.length);
+    logger.debug('🔍 Tedarikçi aranıyor. VKN:', invoice.supplier_tax_number, 'Toplam tedarikçi:', suppliers.length);
     
     const matchingSupplier = suppliers.find(s => 
       s.tax_number === invoice.supplier_tax_number
@@ -159,11 +159,11 @@ export default function EInvoiceProcess() {
     if (matchingSupplier) {
       setSelectedSupplierId(matchingSupplier.id);
       setSupplierMatchStatus('found');
-      console.log('✅ Tedarikçi otomatik eşleştirildi:', matchingSupplier.name, 'VKN:', matchingSupplier.tax_number);
+      logger.debug('✅ Tedarikçi otomatik eşleştirildi:', matchingSupplier.name, 'VKN:', matchingSupplier.tax_number);
     } else {
       setSupplierMatchStatus('not_found');
-      console.log('⚠️ VKN eşleşmedi. Aranan VKN:', invoice.supplier_tax_number);
-      console.log('📋 Sistemdeki tedarikçi VKN\'leri:', suppliers.map(s => s.tax_number).join(', '));
+      logger.debug('⚠️ VKN eşleşmedi. Aranan VKN:', invoice.supplier_tax_number);
+      logger.debug('📋 Sistemdeki tedarikçi VKN\'leri:', suppliers.map(s => s.tax_number).join(', '));
     }
   }, [invoice, suppliers]);
 
@@ -173,7 +173,7 @@ export default function EInvoiceProcess() {
       matchSupplier();
     } else if (invoice && !isLoadingSuppliers && suppliers.length === 0) {
       // Tedarikçi listesi yüklendi ama boş - not_found olarak işaretle
-      console.log('⚠️ Tedarikçi listesi boş, not_found durumu');
+      logger.debug('⚠️ Tedarikçi listesi boş, not_found durumu');
       setSupplierMatchStatus('not_found');
     }
   }, [invoice, suppliers, matchSupplier, isLoadingSuppliers]);
@@ -288,15 +288,15 @@ export default function EInvoiceProcess() {
         balance: 0,
         company_id: userProfile.company_id // RLS için company_id ekle
       };
-      console.log('🔍 Tedarikçi kaydedilecek bilgiler:', supplierData);
-      console.log('🔍 E-fatura tedarikçi detayları:', invoice.supplier_details);
+      logger.debug('🔍 Tedarikçi kaydedilecek bilgiler:', supplierData);
+      logger.debug('🔍 E-fatura tedarikçi detayları:', invoice.supplier_details);
       const { data: newSupplier, error } = await supabase
         .from('suppliers')
         .insert([supplierData])
         .select()
         .single();
       if (error) throw error;
-      console.log('✅ Tedarikçi başarıyla oluşturuldu:', newSupplier);
+      logger.debug('✅ Tedarikçi başarıyla oluşturuldu:', newSupplier);
       // Tedarikçi query'sini invalidate et
       await queryClient.invalidateQueries({ queryKey: ["suppliers-for-einvoice"] });
       // Yeni tedarikçiyi seç
@@ -304,7 +304,7 @@ export default function EInvoiceProcess() {
       setSupplierMatchStatus('found');
       toast.success(`Tedarikçi "${supplierData.name}" detaylı bilgilerle oluşturuldu ve seçildi`);
     } catch (error: any) {
-      console.error('❌ Error creating supplier:', error);
+      logger.error('❌ Error creating supplier:', error);
       toast.error(error.message || "Tedarikçi oluşturulurken hata oluştu");
     } finally {
       setIsCreatingSupplier(false);
@@ -348,7 +348,7 @@ export default function EInvoiceProcess() {
       }
       if (!existingInvoice) {
         // Create invoice in einvoices table first
-        console.log('🔄 Creating invoice in einvoices table...');
+        logger.debug('🔄 Creating invoice in einvoices table...');
         const { data: newInvoice, error: createInvoiceError } = await supabase
           .from('einvoices')
           .insert({
@@ -374,13 +374,13 @@ export default function EInvoiceProcess() {
           .select()
           .single();
         if (createInvoiceError) {
-          console.error('❌ Error creating invoice:', createInvoiceError);
+          logger.error('❌ Error creating invoice:', createInvoiceError);
           throw createInvoiceError;
         }
         einvoiceId = newInvoice.id;
-        console.log('✅ Invoice created in einvoices table:', einvoiceId);
+        logger.debug('✅ Invoice created in einvoices table:', einvoiceId);
       } else {
-        console.log('✅ Invoice already exists in einvoices table:', einvoiceId);
+        logger.debug('✅ Invoice already exists in einvoices table:', einvoiceId);
       }
       // Aynı fatura numarasıyla kayıtlı fatura var mı kontrol et
       const { data: existingPurchaseInvoice, error: checkInvoiceError } = await supabase
@@ -518,7 +518,7 @@ export default function EInvoiceProcess() {
         .single();
       
       if (supplierFetchError) {
-        console.error('❌ Error fetching supplier balance:', supplierFetchError);
+        logger.error('❌ Error fetching supplier balance:', supplierFetchError);
         // Hata olsa bile devam et, sadece logla
       } else if (supplierData) {
         const newSupplierBalance = (supplierData.balance || 0) - total;
@@ -528,10 +528,10 @@ export default function EInvoiceProcess() {
           .eq('id', selectedSupplierId);
         
         if (supplierUpdateError) {
-          console.error('❌ Error updating supplier balance:', supplierUpdateError);
+          logger.error('❌ Error updating supplier balance:', supplierUpdateError);
           // Hata olsa bile devam et, sadece logla
         } else {
-          console.log('✅ Supplier balance updated:', newSupplierBalance);
+          logger.debug('✅ Supplier balance updated:', newSupplierBalance);
         }
       }
       
@@ -609,7 +609,7 @@ export default function EInvoiceProcess() {
           .single();
 
         if (transactionError) {
-          console.error('❌ Error creating stock transaction:', transactionError);
+          logger.error('❌ Error creating stock transaction:', transactionError);
           // Hata olsa bile devam et, sadece logla
         } else if (stockTransaction) {
           // Ürün adlarını products tablosundan çek
@@ -649,7 +649,7 @@ export default function EInvoiceProcess() {
             .insert(transactionItems);
 
           if (transactionItemsError) {
-            console.error('❌ Error creating transaction items:', transactionItemsError);
+            logger.error('❌ Error creating transaction items:', transactionItemsError);
           } else {
             // Stok güncellemesi yap
             for (const item of validItems) {
@@ -709,7 +709,7 @@ export default function EInvoiceProcess() {
       toast.success(`Alış faturası başarıyla oluşturuldu.${defaultWarehouseId ? ' Stok hareketi oluşturuldu.' : ''}`);
       navigate('/e-invoice');
     } catch (error: any) {
-      console.error('❌ Error creating purchase invoice:', error);
+      logger.error('❌ Error creating purchase invoice:', error);
       toast.error(error.message || "Alış faturası oluşturulurken hata oluştu");
     } finally {
       setIsCreating(false);

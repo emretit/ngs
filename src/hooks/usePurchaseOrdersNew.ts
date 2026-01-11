@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { 
@@ -143,7 +144,7 @@ export const useCreatePurchaseOrderNew = () => {
       });
     },
     onError: (error) => {
-      console.error('PO creation error:', error);
+      logger.error('PO creation error:', error);
       toast({
         title: "Hata",
         description: "Sipariş oluşturulurken bir hata oluştu.",

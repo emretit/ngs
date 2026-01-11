@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogCancelButton, UnifiedDialogActionButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,7 +55,7 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', account
           });
         }
       } catch (e) {
-        console.error('Error pre-filling cash account:', e);
+        logger.error('Error pre-filling cash account:', e);
         toast.error("Hesap bilgileri yüklenirken hata oluştu");
       } finally {
         setIsPrefilling(false);
@@ -125,7 +126,7 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', account
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Error creating cash account:', error);
+      logger.error('Error creating cash account:', error);
       toast.error("Nakit kasa hesabı oluşturulurken hata oluştu");
     } finally {
       setIsLoading(false);

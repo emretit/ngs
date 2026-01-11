@@ -1,5 +1,6 @@
 
 import { formatDateOffset } from './utils';
+import { logger } from '@/utils/logger';
 import { mockCrmService, mockTasksAPI } from '@/services/mockCrm';
 import { TaskStatus } from '@/types/task';
 
@@ -35,13 +36,13 @@ export const taskWorkflow = {
       const { error } = await mockTasksAPI.createTask(task);
       
       if (error) {
-        console.error("Error creating follow-up task:", error);
+        logger.error("Error creating follow-up task:", error);
         return { success: false, error };
       }
       
       return { success: true };
     } catch (error) {
-      console.error("Error in createFollowUpTask:", error);
+      logger.error("Error in createFollowUpTask:", error);
       return { success: false, error };
     }
   },
@@ -65,13 +66,13 @@ export const taskWorkflow = {
       const { error } = await mockTasksAPI.createTask(task);
       
       if (error) {
-        console.error("Error creating opportunity task:", error);
+        logger.error("Error creating opportunity task:", error);
         return { success: false, error };
       }
       
       return { success: true };
     } catch (error) {
-      console.error("Error in assignOpportunityCreatedTask:", error);
+      logger.error("Error in assignOpportunityCreatedTask:", error);
       return { success: false, error };
     }
   }

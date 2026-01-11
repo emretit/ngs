@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { logger } from '@/utils/logger';
 import EInvoiceHeader from "@/components/einvoice/EInvoiceHeader";
 import EInvoiceFilterBar from "@/components/einvoice/EInvoiceFilterBar";
 import EInvoiceContent from "@/components/einvoice/EInvoiceContent";
@@ -64,7 +65,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
         .not('einvoice_id', 'is', null);
       
       if (error) {
-        console.error('Error fetching processed einvoice IDs:', error);
+        logger.error('Error fetching processed einvoice IDs:', error);
         return [];
       }
       

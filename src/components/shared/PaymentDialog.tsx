@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -158,7 +159,7 @@ export function PaymentDialog({ open, onOpenChange, contact, contactType }: Paym
 
       onOpenChange(false);
     } catch (error) {
-      console.error("Payment error:", error);
+      logger.error("Payment error:", error);
       toast({
         variant: "destructive",
         title: "Hata",

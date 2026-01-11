@@ -1,5 +1,6 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toastUtils";
 import { Task } from "@/types/task";
@@ -26,7 +27,7 @@ export const useTaskMutations = () => {
       showSuccess("Task updated successfully", { duration: 1000 });
     },
     onError: (error) => {
-      console.error("Error updating task:", error);
+      logger.error("Error updating task:", error);
       showError("Failed to update task");
     },
   });
@@ -46,7 +47,7 @@ export const useTaskMutations = () => {
       showSuccess("Task deleted successfully", { duration: 1000 });
     },
     onError: (error) => {
-      console.error("Error deleting task:", error);
+      logger.error("Error deleting task:", error);
       showError("Failed to delete task");
     },
   });

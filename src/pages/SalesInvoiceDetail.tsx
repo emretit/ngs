@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -106,7 +107,7 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
         const status = await IntegratorService.checkIntegratorStatus();
         setIntegratorStatus(status);
       } catch (error) {
-        console.error('Error loading integrator status:', error);
+        logger.error('Error loading integrator status:', error);
       }
     };
     loadIntegratorStatus();
@@ -135,7 +136,7 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
         form.setValue("customer_id", invoiceData.customer_id);
       }
     } catch (error) {
-      console.error("Error loading invoice:", error);
+      logger.error("Error loading invoice:", error);
       toast.error("Fatura yüklenirken hata oluştu");
     } finally {
       setLoading(false);
@@ -160,13 +161,13 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
         .order("created_at", { ascending: true });
 
       if (error) {
-        console.error("Error loading invoice items:", error);
+        logger.error("Error loading invoice items:", error);
         toast.error("Fatura kalemleri yüklenirken hata oluştu");
       } else {
         setInvoiceItems(items || []);
       }
     } catch (error) {
-      console.error("Error loading invoice items:", error);
+      logger.error("Error loading invoice items:", error);
     }
   };
 
@@ -194,7 +195,7 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
     try {
       // Fatura numarası kontrolü - tüm entegratörler için
       if (!invoice?.fatura_no) {
-        console.log('📝 [SalesInvoiceDetail] Fatura numarası yok, otomatik üretiliyor...');
+        logger.debug('📝 [SalesInvoiceDetail] Fatura numarası yok, otomatik üretiliyor...');
         
         // Kullanıcının company_id'sini al
         const { data: { user } } = await supabase.auth.getUser();
@@ -234,7 +235,7 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
           checkVeriban // Veriban ise çift kontrol
         );
         
-        console.log('✅ [SalesInvoiceDetail] Otomatik fatura numarası üretildi:', autoInvoiceNumber);
+        logger.debug('✅ [SalesInvoiceDetail] Otomatik fatura numarası üretildi:', autoInvoiceNumber);
         
         // Fatura numarasını veritabanına kaydet
         const { error: updateError } = await supabase
@@ -243,7 +244,7 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
           .eq('id', id);
         
         if (updateError) {
-          console.error('❌ [SalesInvoiceDetail] Fatura numarası kaydedilemedi:', updateError);
+          logger.error('❌ [SalesInvoiceDetail] Fatura numarası kaydedilemedi:', updateError);
           toast.error('Fatura numarası oluşturulamadı');
           return;
         }
@@ -261,7 +262,7 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
         sendNilveraInvoice(id);
       }
     } catch (error) {
-      console.error('❌ [SalesInvoiceDetail] Fatura gönderimi hazırlanırken hata:', error);
+      logger.error('❌ [SalesInvoiceDetail] Fatura gönderimi hazırlanırken hata:', error);
       toast.error('Bir hata oluştu, lütfen tekrar deneyin');
     }
   };

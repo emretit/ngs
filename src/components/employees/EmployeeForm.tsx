@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { Employee } from "@/types/employee";
 import { EmployeeFormWrapper } from "./form/EmployeeFormWrapper";
@@ -16,7 +17,7 @@ const EmployeeForm = ({ employee, isLoading = false }: EmployeeFormProps) => {
     setIsSaving(true);
     // Simulate form submission
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Form submitted with data:", formData);
+    logger.debug("Form submitted with data:", formData);
     setIsSaving(false);
   };
 

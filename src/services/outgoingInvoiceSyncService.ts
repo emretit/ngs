@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { OutgoingInvoice } from '@/hooks/useOutgoingInvoices';
 import { SalesInvoice } from '@/hooks/useSalesInvoices';
 import { getInvoiceStatusFromStateCode } from '@/utils/invoiceStatusHelpers';
@@ -36,7 +37,7 @@ export class OutgoingInvoiceSyncService {
       errors: []
     };
 
-    console.log(`🔄 [OutgoingInvoiceSync] ${outgoingInvoices.length} fatura senkronize ediliyor...`);
+    logger.debug(`🔄 [OutgoingInvoiceSync] ${outgoingInvoices.length} fatura senkronize ediliyor...`);
 
     for (const outgoingInvoice of outgoingInvoices) {
       try {
@@ -44,7 +45,7 @@ export class OutgoingInvoiceSyncService {
       } catch (error: any) {
         const errorMsg = `Fatura ${outgoingInvoice.invoiceNumber}: ${error.message}`;
         result.errors.push(errorMsg);
-        console.error(`❌ [OutgoingInvoiceSync] ${errorMsg}`);
+        logger.error(`❌ [OutgoingInvoiceSync] ${errorMsg}`);
       }
     }
 
@@ -52,7 +53,7 @@ export class OutgoingInvoiceSyncService {
       result.success = false;
     }
 
-    console.log(`✅ [OutgoingInvoiceSync] Tamamlandı:`, {
+    logger.debug(`✅ [OutgoingInvoiceSync] Tamamlandı:`, {
       created: result.created,
       updated: result.updated,
       skipped: result.skipped,
@@ -69,7 +70,7 @@ export class OutgoingInvoiceSyncService {
     // Geçersiz verileri atla
     if (!outgoingInvoice.invoiceNumber) {
       result.skipped++;
-      console.warn(`⚠️ [OutgoingInvoiceSync] Fatura numarası yok, atlanıyor: ${outgoingInvoice.id}`);
+      logger.warn(`⚠️ [OutgoingInvoiceSync] Fatura numarası yok, atlanıyor: ${outgoingInvoice.id}`);
       return;
     }
 
@@ -82,10 +83,10 @@ export class OutgoingInvoiceSyncService {
       );
 
       if (!customerId) {
-        console.warn(`⚠️ [OutgoingInvoiceSync] Müşteri bulunamadı/oluşturulamadı: ${outgoingInvoice.customerName}, müşteri olmadan devam ediliyor`);
+        logger.warn(`⚠️ [OutgoingInvoiceSync] Müşteri bulunamadı/oluşturulamadı: ${outgoingInvoice.customerName}, müşteri olmadan devam ediliyor`);
       }
     } else {
-      console.warn(`⚠️ [OutgoingInvoiceSync] Müşteri bilgisi eksik (VKN: ${outgoingInvoice.customerTaxNumber || 'yok'}, İsim: ${outgoingInvoice.customerName || 'yok'}), müşteri olmadan devam ediliyor`);
+      logger.warn(`⚠️ [OutgoingInvoiceSync] Müşteri bilgisi eksik (VKN: ${outgoingInvoice.customerTaxNumber || 'yok'}, İsim: ${outgoingInvoice.customerName || 'yok'}), müşteri olmadan devam ediliyor`);
     }
 
     // 2. Mevcut sales_invoice kaydını ara (Veriban outgoing_invoice.id ile eşleştirme)
@@ -118,7 +119,7 @@ export class OutgoingInvoiceSyncService {
 
       salesInvoiceId = existingSalesInvoice.id;
       result.updated++;
-      console.log(`🔄 [OutgoingInvoiceSync] Güncellendi: ${outgoingInvoice.invoiceNumber} -> ${salesInvoiceId}`);
+      logger.debug(`🔄 [OutgoingInvoiceSync] Güncellendi: ${outgoingInvoice.invoiceNumber} -> ${salesInvoiceId}`);
     } else {
       // Yeni kayıt oluştur - company_id default value olarak otomatik gelecek
       const { data: newInvoice, error: insertError } = await supabase
@@ -133,7 +134,7 @@ export class OutgoingInvoiceSyncService {
 
       salesInvoiceId = newInvoice.id;
       result.created++;
-      console.log(`✨ [OutgoingInvoiceSync] Oluşturuldu: ${outgoingInvoice.invoiceNumber} -> ${salesInvoiceId}`);
+      logger.debug(`✨ [OutgoingInvoiceSync] Oluşturuldu: ${outgoingInvoice.invoiceNumber} -> ${salesInvoiceId}`);
     }
 
     // 5. Fatura kalemlerini senkronize et
@@ -153,7 +154,7 @@ export class OutgoingInvoiceSyncService {
         .maybeSingle();
 
       if (findError) {
-        console.error(`❌ [OutgoingInvoiceSync] Müşteri arama hatası: ${findError.message}`);
+        logger.error(`❌ [OutgoingInvoiceSync] Müşteri arama hatası: ${findError.message}`);
         return null;
       }
 
@@ -178,14 +179,14 @@ export class OutgoingInvoiceSyncService {
         .single();
 
       if (insertError) {
-        console.error(`❌ [OutgoingInvoiceSync] Müşteri oluşturma hatası: ${insertError.message}`);
+        logger.error(`❌ [OutgoingInvoiceSync] Müşteri oluşturma hatası: ${insertError.message}`);
         return null;
       }
 
-      console.log(`✨ [OutgoingInvoiceSync] Yeni müşteri oluşturuldu: ${name} (${taxNumber})`);
+      logger.debug(`✨ [OutgoingInvoiceSync] Yeni müşteri oluşturuldu: ${name} (${taxNumber})`);
       return newCustomer.id;
     } catch (error: any) {
-      console.error(`❌ [OutgoingInvoiceSync] Müşteri işleme hatası: ${error.message}`);
+      logger.error(`❌ [OutgoingInvoiceSync] Müşteri işleme hatası: ${error.message}`);
       return null;
     }
   }
@@ -209,7 +210,7 @@ export class OutgoingInvoiceSyncService {
       answerType as any
     );
 
-    console.log(`📊 [OutgoingInvoiceSync] ${outgoing.invoiceNumber} mapping:`, {
+    logger.debug(`📊 [OutgoingInvoiceSync] ${outgoing.invoiceNumber} mapping:`, {
       stateCode,
       answerType,
       derivedStatus: einvoiceStatus,
@@ -281,12 +282,12 @@ export class OutgoingInvoiceSyncService {
         .order('line_number', { ascending: true });
 
       if (fetchError) {
-        console.error(`❌ [OutgoingInvoiceSync] Items fetch hatası: ${fetchError.message}`);
+        logger.error(`❌ [OutgoingInvoiceSync] Items fetch hatası: ${fetchError.message}`);
         return;
       }
 
       if (!outgoingItems || outgoingItems.length === 0) {
-        console.log(`ℹ️ [OutgoingInvoiceSync] Fatura kalemleri yok, atlanıyor`);
+        logger.debug(`ℹ️ [OutgoingInvoiceSync] Fatura kalemleri yok, atlanıyor`);
         return;
       }
 
@@ -305,7 +306,7 @@ export class OutgoingInvoiceSyncService {
         .eq('sales_invoice_id', salesInvoiceId);
 
       if (deleteError) {
-        console.error(`❌ [OutgoingInvoiceSync] Eski items silme hatası: ${deleteError.message}`);
+        logger.error(`❌ [OutgoingInvoiceSync] Eski items silme hatası: ${deleteError.message}`);
         // Devam et, yeni items eklemeyi dene
       }
 
@@ -331,13 +332,13 @@ export class OutgoingInvoiceSyncService {
         .insert(salesInvoiceItems);
 
       if (insertError) {
-        console.error(`❌ [OutgoingInvoiceSync] Items ekleme hatası: ${insertError.message}`);
+        logger.error(`❌ [OutgoingInvoiceSync] Items ekleme hatası: ${insertError.message}`);
         throw new Error(`Items ekleme hatası: ${insertError.message}`);
       }
 
-      console.log(`✅ [OutgoingInvoiceSync] ${salesInvoiceItems.length} kalem eklendi`);
+      logger.debug(`✅ [OutgoingInvoiceSync] ${salesInvoiceItems.length} kalem eklendi`);
     } catch (error: any) {
-      console.error(`❌ [OutgoingInvoiceSync] Items sync hatası: ${error.message}`);
+      logger.error(`❌ [OutgoingInvoiceSync] Items sync hatası: ${error.message}`);
       // Items hatası fatura sync'ini durdurmasın
     }
   }

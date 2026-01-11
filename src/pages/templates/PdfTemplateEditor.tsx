@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -61,12 +62,12 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   const { loadCompanyInfo, companyInfoLoadedRef } = usePdfCompanyInfo(form);
 
   useEffect(() => {
-    console.log('useEffect triggered, templateId:', templateId, 'pathname:', location.pathname); // Debug
+    logger.debug('useEffect triggered, templateId:', templateId, 'pathname:', location.pathname); // Debug
     // Check if we're on the new template page
     const isNewTemplatePage = location.pathname === '/pdf-templates/quote/new' || location.pathname === '/pdf-templates/new' || templateId === 'new';
     
     if (isNewTemplatePage) {
-      console.log('New template page detected, initializing...'); // Debug
+      logger.debug('New template page detected, initializing...'); // Debug
       setIsNewTemplate(true);
       setSelectedTemplate(null);
       setTemplateName('Yeni Şablon');
@@ -74,12 +75,12 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
       companyInfoLoadedRef.current = false;
       // Load company info for new template after form is ready
       const initializeNewTemplate = async () => {
-        console.log('initializeNewTemplate called, waiting 200ms...'); // Debug
+        logger.debug('initializeNewTemplate called, waiting 200ms...'); // Debug
         // Wait a bit to ensure form is mounted
         await new Promise(resolve => setTimeout(resolve, 200));
-        console.log('Calling loadCompanyInfo...'); // Debug
+        logger.debug('Calling loadCompanyInfo...'); // Debug
         await loadCompanyInfo(true);
-        console.log('loadCompanyInfo completed'); // Debug
+        logger.debug('loadCompanyInfo completed'); // Debug
       };
       initializeNewTemplate();
     } else if (templateId) {
@@ -235,7 +236,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
       const templates = await PdfExportService.getTemplates();
       setTemplates(templates);
     } catch (error) {
-      console.error('Error loading templates:', error);
+      logger.error('Error loading templates:', error);
       toast.error('Şablonlar yüklenirken hata oluştu');
     } finally {
       setIsLoadingTemplates(false);
@@ -304,7 +305,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
       };
       setPreviewData(sampleData);
     } catch (error) {
-      console.error('Error loading sample data:', error);
+      logger.error('Error loading sample data:', error);
     }
   };
 
@@ -391,7 +392,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
           <div className="flex items-center gap-4">
             <Button 
               onClick={form.handleSubmit(handleSave, (errors) => {
-                console.error('Form validation errors:', errors);
+                logger.error('Form validation errors:', errors);
                 toast.error('Lütfen form alanlarını kontrol edin');
               })}
               disabled={isLoading}

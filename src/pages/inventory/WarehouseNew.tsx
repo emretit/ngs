@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -109,7 +110,7 @@ const WarehouseNew = () => {
       navigate(`/inventory/warehouses/${data.id}`);
     },
     onError: (error: any) => {
-      console.error("Error creating warehouse:", error);
+      logger.error("Error creating warehouse:", error);
       toast.error(error.message || "Depo oluşturulurken bir hata oluştu");
     },
   });

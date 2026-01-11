@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export interface InfiniteScrollOptions {
@@ -150,10 +151,10 @@ export function useInfiniteScroll<T>(
         setHasNextPage(false);
         return;
       }
-      console.error('Error loading more data:', err);
+      logger.error('Error loading more data:', err);
       // Hata durumunda kullanıcıya daha anlamlı mesaj göster
       if (err instanceof Error && err.message.includes("company_id")) {
-        console.warn("Kullanıcı şirket bilgileri yüklenemedi, veriler gösterilemiyor");
+        logger.warn("Kullanıcı şirket bilgileri yüklenemedi, veriler gösterilemiyor");
       }
       // Diğer hatalarda da hasNextPage'i false yap
       setHasNextPage(false);

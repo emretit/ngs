@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -340,7 +341,7 @@ export default function EInvoiceList() {
                             try {
                               await downloadAndOpenPdf(invoice.id, 'e-fatura');
                             } catch (error) {
-                              console.error('PDF önizleme hatası:', error);
+                              logger.error('PDF önizleme hatası:', error);
                             } finally {
                               setDownloadingInvoiceId(null);
                             }

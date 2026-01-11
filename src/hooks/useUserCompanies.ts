@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthContext";
 
@@ -41,7 +42,7 @@ export const useUserCompanies = () => {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error fetching user companies:', error);
+        logger.error('Error fetching user companies:', error);
         throw error;
       }
       
@@ -81,7 +82,7 @@ export const useSwitchCompany = () => {
         .eq('id', user.id);
 
       if (error) {
-        console.error('Firma değiştirme hatası:', error);
+        logger.error('Firma değiştirme hatası:', error);
         throw new Error(error.message || 'Firma değiştirilemedi');
       }
       
@@ -151,7 +152,7 @@ export const useCreateUserCompany = () => {
         });
 
       if (companyError) {
-        console.error('Şirket oluşturma hatası:', companyError);
+        logger.error('Şirket oluşturma hatası:', companyError);
         throw new Error(companyError.message || 'Şirket oluşturulamadı');
       }
       

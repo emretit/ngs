@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Product } from "@/types/product";
 import { useExchangeRates as useDashboardExchangeRates } from "@/hooks/useExchangeRates";
 
@@ -27,7 +28,7 @@ export const useProductDetailsState = (open: boolean, selectedProduct: Product |
   // Exchange rates are now automatically loaded from dashboard
 
   const handleCurrencyChange = (value: string) => {
-    console.log("Currency changed in dialog to:", value);
+    logger.debug("Currency changed in dialog to:", value);
     setCurrentCurrency(value);
     window.dispatchEvent(new CustomEvent('currency-change', { detail: value }));
   };

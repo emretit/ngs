@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { VehicleFuel, FuelFormData } from '@/types/vehicle';
 import { toast } from '@/hooks/use-toast';
@@ -74,7 +75,7 @@ export const useCreateFuelRecord = () => {
         description: "Yakıt kaydı oluşturulurken bir hata oluştu.",
         variant: "destructive",
       });
-      console.error('Fuel record creation error:', error);
+      logger.error('Fuel record creation error:', error);
     },
   });
 };
@@ -109,7 +110,7 @@ export const useUpdateFuelRecord = () => {
         description: "Yakıt kaydı güncellenirken bir hata oluştu.",
         variant: "destructive",
       });
-      console.error('Fuel record update error:', error);
+      logger.error('Fuel record update error:', error);
     },
   });
 };

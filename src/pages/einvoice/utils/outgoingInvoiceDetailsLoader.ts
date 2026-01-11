@@ -10,7 +10,7 @@ import { logger } from '@/utils/logger';
  * API'den tekrar çekmemize gerek yok!
  */
 export const loadOutgoingInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDetails> => {
-  console.log('🔄 Loading OUTGOING invoice details from DATABASE for:', invoiceId);
+  logger.debug('🔄 Loading OUTGOING invoice details from DATABASE for:', invoiceId);
 
   // Veritabanından giden faturayı çek
   // invoiceId URL'den gelen id olabilir, önce id'ye göre kontrol edelim
@@ -21,7 +21,7 @@ export const loadOutgoingInvoiceDetails = async (invoiceId: string): Promise<EIn
     .single();
 
   if (invoiceError) {
-    console.error('❌ Error loading outgoing invoice from database:', invoiceError);
+    logger.error('❌ Error loading outgoing invoice from database:', invoiceError);
     throw new Error(`Giden fatura veritabanında bulunamadı: ${invoiceError.message}`);
   }
 
@@ -29,7 +29,7 @@ export const loadOutgoingInvoiceDetails = async (invoiceId: string): Promise<EIn
     throw new Error('Giden fatura veritabanında bulunamadı');
   }
 
-  console.log('✅ Outgoing invoice loaded from database:', invoiceData);
+  logger.debug('✅ Outgoing invoice loaded from database:', invoiceData);
 
   // Invoice items'ı da yükle (eğer ayrı tabloda ise)
   const { data: itemsData, error: itemsError } = await supabase
@@ -39,10 +39,10 @@ export const loadOutgoingInvoiceDetails = async (invoiceId: string): Promise<EIn
     .order('line_number');
 
   if (itemsError) {
-    console.warn('⚠️ Error loading invoice items:', itemsError);
+    logger.warn('⚠️ Error loading invoice items:', itemsError);
   }
 
-  console.log('✅ Loaded invoice items:', itemsData);
+  logger.debug('✅ Loaded invoice items:', itemsData);
 
   // Veritabanından gelen veriyi API response formatına dönüştür
   const apiInvoiceDetails: any = {
@@ -76,8 +76,8 @@ export const loadOutgoingInvoiceDetails = async (invoiceId: string): Promise<EIn
     items: itemsData || []
   };
 
-  console.log('\n' + '='.repeat(80));
-  console.log('🔍 OUTGOING INVOICE DATA FROM DATABASE');
+  logger.debug('\n' + '='.repeat(80));
+  logger.debug('🔍 OUTGOING INVOICE DATA FROM DATABASE');
   logger.debug('Full outgoing invoice details loaded', {
     invoiceId: apiInvoiceDetails?.id,
     availableKeys: apiInvoiceDetails ? Object.keys(apiInvoiceDetails) : [],
@@ -145,7 +145,7 @@ export const loadOutgoingInvoiceDetails = async (invoiceId: string): Promise<EIn
     apiInvoiceDetails?.customerTaxNumber ||
     '';
 
-  console.log('✅ Extracted customer info (Sales Invoice):', { customerName, customerTaxNumber });
+  logger.debug('✅ Extracted customer info (Sales Invoice):', { customerName, customerTaxNumber });
 
   // Fatura tutar bilgilerini doğru alanlardan çek
   const subtotal = parseFloat(String(
@@ -162,35 +162,35 @@ export const loadOutgoingInvoiceDetails = async (invoiceId: string): Promise<EIn
     '0'
   ));
   
-  console.log('💰 Invoice amounts (Sales Invoice):', { subtotal, taxTotal, totalAmount });
+  logger.debug('💰 Invoice amounts (Sales Invoice):', { subtotal, taxTotal, totalAmount });
 
   // Fatura tarihini doğru şekilde parse et
   let rawInvoiceDate: string | null = apiInvoiceDetails?.invoiceDate || null;
-  console.log('📅 invoiceDate from database (Sales Invoice):', rawInvoiceDate);
+  logger.debug('📅 invoiceDate from database (Sales Invoice):', rawInvoiceDate);
   
   // Tarih formatını normalize et
   let normalizedInvoiceDate: string;
   if (rawInvoiceDate) {
-    console.log('📅 Raw invoice date value:', rawInvoiceDate, 'Type:', typeof rawInvoiceDate);
+    logger.debug('📅 Raw invoice date value:', rawInvoiceDate, 'Type:', typeof rawInvoiceDate);
     if (rawInvoiceDate.includes('T')) {
       normalizedInvoiceDate = rawInvoiceDate;
-      console.log('📅 Date is ISO format, using as-is');
+      logger.debug('📅 Date is ISO format, using as-is');
     } else if (/^\d{4}-\d{2}-\d{2}$/.test(rawInvoiceDate)) {
       normalizedInvoiceDate = `${rawInvoiceDate}T00:00:00Z`;
-      console.log('📅 Date is YYYY-MM-DD format, converting to ISO');
+      logger.debug('📅 Date is YYYY-MM-DD format, converting to ISO');
     } else {
       const parsedDate = new Date(rawInvoiceDate);
       if (!isNaN(parsedDate.getTime())) {
         normalizedInvoiceDate = parsedDate.toISOString();
-        console.log('📅 Date parsed successfully:', normalizedInvoiceDate);
+        logger.debug('📅 Date parsed successfully:', normalizedInvoiceDate);
       } else {
-        console.warn('⚠️ Invalid date format, using current date as fallback');
+        logger.warn('⚠️ Invalid date format, using current date as fallback');
         normalizedInvoiceDate = new Date().toISOString();
       }
     }
-    console.log('✅ Normalized invoice date (Sales Invoice):', normalizedInvoiceDate);
+    logger.debug('✅ Normalized invoice date (Sales Invoice):', normalizedInvoiceDate);
   } else {
-    console.warn('⚠️ No invoice date found! Using current date as fallback');
+    logger.warn('⚠️ No invoice date found! Using current date as fallback');
     normalizedInvoiceDate = new Date().toISOString();
   }
 
@@ -199,7 +199,7 @@ export const loadOutgoingInvoiceDetails = async (invoiceId: string): Promise<EIn
   
   let normalizedDueDate: string | null = null;
   if (rawDueDate) {
-    console.log('📅 Raw due date value (Sales Invoice):', rawDueDate);
+    logger.debug('📅 Raw due date value (Sales Invoice):', rawDueDate);
     if (rawDueDate.includes('T')) {
       normalizedDueDate = rawDueDate;
     } else if (/^\d{4}-\d{2}-\d{2}$/.test(rawDueDate)) {
@@ -210,9 +210,9 @@ export const loadOutgoingInvoiceDetails = async (invoiceId: string): Promise<EIn
         normalizedDueDate = parsedDate.toISOString();
       }
     }
-    console.log('✅ Normalized due date (Sales Invoice):', normalizedDueDate);
+    logger.debug('✅ Normalized due date (Sales Invoice):', normalizedDueDate);
   } else {
-    console.log('ℹ️ No due date found in database (Sales Invoice)');
+    logger.debug('ℹ️ No due date found in database (Sales Invoice)');
   }
 
   const invoiceDetails: EInvoiceDetails = {

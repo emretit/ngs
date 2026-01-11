@@ -1,5 +1,6 @@
 
 import { useState, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PurchaseRequest, PurchaseRequestStatus, PurchaseRequestFormData } from "@/types/purchase";
 import { 
@@ -146,7 +147,7 @@ export const usePurchaseRequestsInfiniteScroll = (filters?: PurchaseRequestFilte
       .range(from, to);
 
     if (error) {
-      console.error("Error fetching purchase requests:", error);
+      logger.error("Error fetching purchase requests:", error);
       throw error;
     }
 

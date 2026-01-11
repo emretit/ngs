@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Building } from "lucide-react";
 import { CompanyInfoCard } from "@/components/settings/CompanyInfoCard";
 import { useCompanies, Company } from "@/hooks/useCompanies";
@@ -100,7 +101,7 @@ const CompanyInfoSettings = ({ isCollapsed, setIsCollapsed }: CompanyInfoSetting
         .single();
 
       if (error) {
-        console.error('Update error details:', error);
+        logger.error('Update error details:', error);
         throw error;
       }
       
@@ -122,7 +123,7 @@ const CompanyInfoSettings = ({ isCollapsed, setIsCollapsed }: CompanyInfoSetting
         duration: 1000,
       });
     } catch (error: any) {
-      console.error('Error saving company info:', error);
+      logger.error('Error saving company info:', error);
       const errorMessage = error?.message || error?.details || 'Şirket bilgileri kaydedilirken hata oluştu';
       toast.error(`Hata: ${errorMessage}`);
     } finally {

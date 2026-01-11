@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +48,7 @@ const MonthlyFinancialOverview = () => {
   const { financials, loading, upsertFinancial, refetch } = useMonthlyFinancials();
 
   useEffect(() => {
-    console.log('Fetching financials for year:', selectedYear);
+    logger.debug('Fetching financials for year:', selectedYear);
     refetch(selectedYear);
   }, [selectedYear, refetch]);
 
@@ -83,7 +84,7 @@ const MonthlyFinancialOverview = () => {
       setEditingCell(null);
       setTempValue('');
     } catch (error) {
-      console.error('Error saving financial data:', error);
+      logger.error('Error saving financial data:', error);
     }
   };
 

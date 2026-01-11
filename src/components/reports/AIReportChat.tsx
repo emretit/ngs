@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -158,7 +159,7 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
       if (error) throw error;
       return data || [];
     } catch (err: any) {
-      console.error('SQL execution error:', err);
+      logger.error('SQL execution error:', err);
       throw new Error(err.message || 'SQL sorgusu çalıştırılamadı');
     }
   };

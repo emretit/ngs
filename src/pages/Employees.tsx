@@ -1,4 +1,5 @@
 import { useState, memo, useCallback, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EmployeeList } from "@/components/employees/EmployeeList";
@@ -53,7 +54,7 @@ const Employees = () => {
             filter: `company_id=eq.${profile.company_id}`
           },
           (payload) => {
-            console.log('🔄 Employee changed:', payload.eventType, payload.new || payload.old);
+            logger.debug('🔄 Employee changed:', payload.eventType, payload.new || payload.old);
             // Invalidate queries to refetch data
             queryClient.invalidateQueries({ queryKey: ['employees'] });
             queryClient.invalidateQueries({ queryKey: ['employee'] });
@@ -104,7 +105,7 @@ const Employees = () => {
       
       if (employeesError) throw employeesError;
       
-      console.log('Employees data:', employeesData);
+      logger.debug('Employees data:', employeesData);
       
       // Process data to use salary information directly from employees table
       const processedData = employeesData?.map(employee => {
@@ -283,7 +284,7 @@ const Employees = () => {
 
   if (error) {
     toast.error(t("pages.employees.loadError"));
-    console.error("Error loading employees:", error);
+    logger.error("Error loading employees:", error);
   }
 
   return (

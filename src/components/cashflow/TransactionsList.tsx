@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -90,7 +91,7 @@ const TransactionsList = () => {
     try {
       await deleteTransaction(transactionToDelete);
     } catch (error) {
-      console.error('Error deleting transaction:', error);
+      logger.error('Error deleting transaction:', error);
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
@@ -105,7 +106,7 @@ const TransactionsList = () => {
 
   const exportToExcel = () => {
     // This would implement Excel export functionality
-    console.log('Exporting to Excel...');
+    logger.debug('Exporting to Excel...');
   };
 
 

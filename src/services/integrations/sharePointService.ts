@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/utils/logger';
 
 export interface SharePointFile {
   id: string;
@@ -64,7 +65,7 @@ export async function getSharePointConnection(): Promise<SharePointConnection | 
 
     return data;
   } catch (err: any) {
-    console.error('Error getting SharePoint connection:', err);
+    logger.error('Error getting SharePoint connection:', err);
     return null;
   }
 }
@@ -98,7 +99,7 @@ async function refreshAccessToken(connection: SharePointConnection): Promise<str
     if (error) throw error;
     return data.access_token;
   } catch (err: any) {
-    console.error('Error refreshing access token:', err);
+    logger.error('Error refreshing access token:', err);
     throw new Error('Failed to refresh access token');
   }
 }
@@ -195,7 +196,7 @@ export async function searchSharePoint(
         : undefined
     };
   } catch (err: any) {
-    console.error('Error searching SharePoint:', err);
+    logger.error('Error searching SharePoint:', err);
     throw err;
   }
 }
@@ -242,7 +243,7 @@ export async function getSharePointFile(
       createdBy: data.createdBy
     };
   } catch (err: any) {
-    console.error('Error getting SharePoint file:', err);
+    logger.error('Error getting SharePoint file:', err);
     return null;
   }
 }
@@ -277,7 +278,7 @@ export async function downloadSharePointFileContent(
 
     return await response.text();
   } catch (err: any) {
-    console.error('Error downloading SharePoint file:', err);
+    logger.error('Error downloading SharePoint file:', err);
     return null;
   }
 }
@@ -308,7 +309,7 @@ export async function listSharePointDrives(siteId: string): Promise<any[]> {
     const data = await response.json();
     return data.value || [];
   } catch (err: any) {
-    console.error('Error listing SharePoint drives:', err);
+    logger.error('Error listing SharePoint drives:', err);
     return [];
   }
 }
@@ -348,7 +349,7 @@ export async function listRecentSharePointFiles(top = 10): Promise<SharePointFil
       createdBy: item.createdBy
     }));
   } catch (err: any) {
-    console.error('Error listing recent files:', err);
+    logger.error('Error listing recent files:', err);
     return [];
   }
 }
@@ -396,7 +397,7 @@ export async function uploadToSharePoint(
       createdBy: data.createdBy
     };
   } catch (err: any) {
-    console.error('Error uploading to SharePoint:', err);
+    logger.error('Error uploading to SharePoint:', err);
     return null;
   }
 }
@@ -414,7 +415,7 @@ export async function disconnectSharePoint(connectionId: string): Promise<boolea
     if (error) throw error;
     return true;
   } catch (err: any) {
-    console.error('Error disconnecting SharePoint:', err);
+    logger.error('Error disconnecting SharePoint:', err);
     return false;
   }
 }

@@ -1,5 +1,6 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,7 +94,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     queryKey: ['supplier-payments', supplier.id, userData?.company_id],
     queryFn: async () => {
       if (!userData?.company_id) {
-        console.warn('No company_id available for payments');
+        logger.warn('No company_id available for payments');
         return [];
       }
 
@@ -108,11 +109,11 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
       
       // Debug: Eğer data boşsa ve error yoksa, RLS sorunu olabilir
       if (!data || data.length === 0) {
-        console.log('Payments query returned empty. Supplier ID:', supplier.id, 'Company ID:', userData.company_id);
+        logger.debug('Payments query returned empty. Supplier ID:', supplier.id, 'Company ID:', userData.company_id);
       }
 
       if (error) {
-        console.error('Error fetching payments:', error);
+        logger.error('Error fetching payments:', error);
         throw error;
       }
       
@@ -186,7 +187,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
               }
             }
           } catch (err) {
-            console.error('Error fetching account/check:', err);
+            logger.error('Error fetching account/check:', err);
           }
           
           const result: any = {
@@ -336,7 +337,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     queryKey: ['supplier-purchase-invoices', supplier.id, userData?.company_id],
     queryFn: async () => {
       if (!userData?.company_id) {
-        console.warn('No company_id available for purchase invoices');
+        logger.warn('No company_id available for purchase invoices');
         return [];
       }
 
@@ -348,7 +349,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         .order('invoice_date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching purchase invoices:', error);
+        logger.error('Error fetching purchase invoices:', error);
         throw error;
       }
       return data || [];
@@ -363,7 +364,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     queryKey: ['supplier-sales-invoices', supplier.id, userData?.company_id],
     queryFn: async () => {
       if (!userData?.company_id) {
-        console.warn('No company_id available for sales invoices');
+        logger.warn('No company_id available for sales invoices');
         return [];
       }
 
@@ -375,7 +376,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         .order('fatura_tarihi', { ascending: false });
 
       if (error) {
-        console.error('Error fetching sales invoices:', error);
+        logger.error('Error fetching sales invoices:', error);
         throw error;
       }
       return data || [];

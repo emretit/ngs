@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toastUtils";
 
@@ -29,7 +30,7 @@ export const useSalaryForm = (employeeId: string) => {
       
       return true;
     } catch (error) {
-      console.error('Maaş bilgisi kaydedilirken hata:', error);
+      logger.error('Maaş bilgisi kaydedilirken hata:', error);
       showError("Maaş bilgisi kaydedilirken bir hata oluştu");
       return false;
     } finally {

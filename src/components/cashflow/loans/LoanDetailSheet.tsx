@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import {
   Sheet,
   SheetContent,
@@ -394,7 +395,7 @@ const LoanDetailSheet: React.FC<LoanDetailSheetProps> = ({
     },
     onError: (error: any) => {
       toast.error("Ödeme kaydedilirken hata oluştu: " + (error.message || "Bilinmeyen hata"));
-      console.error("Payment error:", error);
+      logger.error("Payment error:", error);
     },
   });
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -34,7 +35,7 @@ export const useMonthlyFinancials = () => {
 
   const fetchFinancials = async (year?: number, month?: number) => {
     try {
-      console.log('fetchFinancials called with year:', year, 'month:', month);
+      logger.debug('fetchFinancials called with year:', year, 'month:', month);
       setLoading(true);
       setError(null);
       
@@ -73,10 +74,10 @@ export const useMonthlyFinancials = () => {
         });
       }
       
-      console.log('Setting mock financials data:', mockData);
+      logger.debug('Setting mock financials data:', mockData);
       setFinancials(mockData);
     } catch (err: any) {
-      console.error('fetchFinancials error:', err);
+      logger.error('fetchFinancials error:', err);
       setError(err.message);
       toast({
         variant: "destructive",
@@ -84,7 +85,7 @@ export const useMonthlyFinancials = () => {
         description: "Failed to fetch financial data: " + err.message,
       });
     } finally {
-      console.log('fetchFinancials completed, setting loading to false');
+      logger.debug('fetchFinancials completed, setting loading to false');
       setLoading(false);
     }
   };

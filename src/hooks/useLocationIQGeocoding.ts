@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { locationiqService, GeocodingResult } from '@/services/locationiqService';
@@ -53,7 +54,7 @@ export const useLocationIQGeocoding = () => {
         postal_code: data.postal_code || undefined,
       };
     } catch (error) {
-      console.error('Error getting cached geocoding result:', error);
+      logger.error('Error getting cached geocoding result:', error);
       return null;
     }
   }, []);
@@ -81,10 +82,10 @@ export const useLocationIQGeocoding = () => {
         });
 
       if (error) {
-        console.error('Error caching geocoding result:', error);
+        logger.error('Error caching geocoding result:', error);
       }
     } catch (error) {
-      console.error('Error caching geocoding result:', error);
+      logger.error('Error caching geocoding result:', error);
     }
   }, []);
 
@@ -121,7 +122,7 @@ export const useLocationIQGeocoding = () => {
       const errorMessage = err instanceof Error ? err.message : 'Geocoding failed';
       setError(errorMessage);
       setIsGeocoding(false);
-      console.error('Geocoding error:', err);
+      logger.error('Geocoding error:', err);
       return null;
     }
   }, [getCachedResult, cacheResult]);
@@ -156,7 +157,7 @@ export const useLocationIQGeocoding = () => {
       // Cache cleaned successfully
     },
     onError: (error) => {
-      console.error('Error cleaning expired cache:', error);
+      logger.error('Error cleaning expired cache:', error);
     },
   });
 

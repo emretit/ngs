@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -87,7 +88,7 @@ export const InviteUserDialog = () => {
       setIsOpen(false);
     },
     onError: (error: any) => {
-      console.error('Invite error:', error);
+      logger.error('Invite error:', error);
       const message = error.message || "Davet gönderilirken bir hata oluştu";
       toast.error(message);
     },

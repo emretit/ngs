@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogCancelButton, UnifiedDialogActionButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -283,7 +284,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
           });
         }
       } catch (e) {
-        console.error('Error pre-filling credit card:', e);
+        logger.error('Error pre-filling credit card:', e);
         toast.error("Kart bilgileri yüklenirken hata oluştu");
       } finally {
         setIsPrefilling(false);
@@ -396,7 +397,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }
         notes: ""
       });
     } catch (error) {
-      console.error('Error creating credit card:', error);
+      logger.error('Error creating credit card:', error);
       toast.error("Kredi kartı oluşturulurken hata oluştu");
     } finally {
       setIsLoading(false);

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -223,7 +224,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
       onClose();
       form.reset();
     } catch (error: any) {
-      console.error("❌ Error creating product:", error);
+      logger.error("❌ Error creating product:", error);
       toast.error(error.message || "Ürün oluşturulurken hata oluştu");
     } finally {
       setIsSaving(false);

@@ -1,0 +1,490 @@
+
+import React, { useState, useEffect } from "react";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { Proposal, ProposalStatus, proposalStatusColors, proposalStatusLabels } from "@/types/proposal";
+import { Edit2, MoreHorizontal, Trash2, Printer, ShoppingCart, Receipt, Copy, FileEdit, Users, UserPlus, GitBranch, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { ProposalStatusCell } from "./ProposalStatusCell";
+import { useNavigate } from "react-router-dom";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { useProposalCalculations } from "@/hooks/proposals/useProposalCalculations";
+import { toast } from "sonner";
+import { PdfExportService } from "@/services/pdf/pdfExportService";
+
+// import { ProposalPdfExporter } from "../ProposalPdfExporter";
+
+
+interface ProposalTableRowProps {
+  proposal: Proposal | null;
+  index: number;
+  formatMoney: (amount: number) => string;
+  onSelect: (proposal: Proposal) => void;
+  onStatusChange: (proposalId: string, newStatus: ProposalStatus) => void;
+  onDelete: (proposal: Proposal) => void;
+  onCopySameCustomer?: (proposal: Proposal) => void;
+  onCopyDifferentCustomer?: (proposal: Proposal) => void;
+  onCreateRevision?: (proposal: Proposal) => void;
+  templates: any[];
+  onPdfPrint: (proposal: Proposal, templateId: string) => void;
+  isLoading?: boolean;
+}
+
+export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
+  proposal,
+  index,
+  formatMoney,
+  onSelect,
+  onStatusChange,
+  onDelete,
+  onCopySameCustomer,
+  onCopyDifferentCustomer,
+  onCreateRevision,
+  templates,
+  onPdfPrint,
+  isLoading = false
+}) => {
+  const navigate = useNavigate();
+  const { calculateTotals } = useProposalCalculations();
+  const [revisions, setRevisions] = useState<any[]>([]);
+
+  // Revizyonları getir
+  useEffect(() => {
+    const fetchRevisions = async () => {
+      if (!proposal?.id) return;
+
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+
+        // Orijinal proposal ID'yi belirle
+        const originalProposalId = (proposal as any).parent_proposal_id || proposal.id;
+
+        // Tüm revizyonları getir (parent + tüm revisions)
+        const { data, error } = await supabase
+          .from('proposals')
+          .select('id, number, revision_number, status, created_at, valid_until')
+          .or(`id.eq.${originalProposalId},parent_proposal_id.eq.${originalProposalId}`)
+          .order('revision_number', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching revisions:', error);
+          return;
+        }
+
+        setRevisions(data || []);
+      } catch (error) {
+        console.error('Error fetching revisions:', error);
+      }
+    };
+
+    fetchRevisions();
+  }, [proposal?.id]);
+
+  // Loading state için skeleton göster
+  if (isLoading || !proposal) {
+    return (
+      <TableRow className="h-8">
+        <TableCell className="py-2 px-3"><div className="h-3 w-32 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-40 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-4 w-4 bg-gray-200 rounded animate-pulse" /></TableCell>
+      </TableRow>
+    );
+  }
+
+  // Metinleri kısalt
+  const shortenText = (text: string, maxLength: number = 25) => {
+    if (!text) return "";
+    
+    if (text.length <= maxLength) return text;
+    
+    return text.substring(0, maxLength - 3) + "...";
+  };
+
+  // Şirket adını kısalt
+  const getShortenedCompanyName = () => {
+    const companyName = proposal.customer?.company || proposal.customer_name || "Müşteri yok";
+    return shortenText(companyName, 20);
+  };
+
+  // Yetkili kişi adını kısalt
+  const getShortenedCompanyInfo = () => {
+    if (!proposal.customer?.name) return null;
+    return shortenText(proposal.customer.name, 18);
+  };
+  
+  // Use the stored total_amount from database (calculated and saved correctly)
+  const getGrandTotal = () => {
+    return proposal.total_amount || 0;
+  };
+
+  const formatCurrency = (amount: number, currency: string = "TRY") => {
+    // Convert TL to TRY directly
+    const currencyCode = currency === 'TL' ? 'TRY' : (currency || 'TRY');
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: currencyCode
+    }).format(amount);
+  };
+  
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/proposal/${proposal.id}`);
+  };
+
+  const handlePdfPrintClick = async (e: React.MouseEvent, templateId?: string) => {
+    e.stopPropagation();
+    try {
+      // Teklif detaylarını çek
+      const proposalData = await PdfExportService.transformProposalForPdf(proposal);
+      
+      // PDF'i yeni sekmede aç
+      await PdfExportService.openPdfInNewTab(proposalData, { templateId });
+      
+      toast.success("PDF yeni sekmede açıldı");
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error("PDF oluşturulurken hata oluştu: " + (error as Error).message);
+    }
+  };
+
+  const handleConvertToOrder = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/orders/create?proposalId=${proposal.id}`);
+    toast.success("Sipariş oluşturma sayfasına yönlendiriliyorsunuz");
+  };
+
+  const handleConvertToInvoice = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/sales-invoices/create?proposalId=${proposal.id}`);
+    toast.success("Fatura oluşturma sayfasına yönlendiriliyorsunuz");
+  };
+
+
+  
+  return (
+    <TableRow
+      key={proposal.id}
+      className="h-8 cursor-pointer transition-colors hover:bg-gray-50"
+      onClick={() => onSelect(proposal)}
+    >
+      <TableCell className="py-2 px-3">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-xs">#{proposal.number}</span>
+          <Badge 
+            variant="outline" 
+            className={`text-[10px] px-1.5 py-0 ${
+              (proposal as any).revision_number 
+                ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-700'
+                : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700'
+            }`}
+          >
+            <GitBranch className="h-3 w-3 mr-0.5" />
+            R{(proposal as any).revision_number || 0}
+          </Badge>
+        </div>
+      </TableCell>
+      <TableCell className="py-2 px-3">
+        {proposal.customer ? (
+          <div className="flex flex-col space-y-0">
+            <span className="text-xs font-medium" title={proposal.customer.company || proposal.customer.name}>
+              {getShortenedCompanyName()}
+            </span>
+            {proposal.customer.name && (
+              <span className="text-xs text-muted-foreground" title={proposal.customer.name}>
+                {getShortenedCompanyInfo()}
+              </span>
+            )}
+          </div>
+        ) : (
+          <span className="text-muted-foreground text-xs">{proposal.customer_name || "Müşteri yok"}</span>
+        )}
+      </TableCell>
+      <TableCell className="py-2 px-3 text-xs" title={(proposal as any).subject || ""}>
+        {shortenText((proposal as any).subject || "-", 30)}
+      </TableCell>
+      <TableCell className="text-center py-2 px-3">
+        <ProposalStatusCell 
+          status={proposal.status} 
+          proposalId={proposal.id} 
+          onStatusChange={onStatusChange} 
+        />
+      </TableCell>
+      <TableCell className="py-2 px-3">
+        {proposal.employee ? (
+          <div className="flex items-center space-x-2">
+            <Avatar className="h-6 w-6">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                {proposal.employee.first_name?.[0]}
+                {proposal.employee.last_name?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs font-medium truncate">
+              {proposal.employee.first_name} {proposal.employee.last_name}
+            </span>
+          </div>
+        ) : (
+          <span className="text-muted-foreground text-xs">-</span>
+        )}
+      </TableCell>
+      <TableCell className="text-center py-2 px-3 text-xs font-medium">
+        {formatCurrency(getGrandTotal(), proposal.currency || 'TRY')}
+      </TableCell>
+      <TableCell className="text-center py-2 px-3 text-xs font-medium">
+        {(() => {
+          const dateValue = proposal.offer_date || proposal.created_at;
+          if (!dateValue) return <span className="text-muted-foreground">-</span>;
+          const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+          if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
+          return dateObj.toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        })()}
+      </TableCell>
+      <TableCell className="text-center py-2 px-3 text-xs font-medium">
+        {(() => {
+          const dateValue = proposal.valid_until;
+          if (!dateValue) return <span className="text-muted-foreground">-</span>;
+          const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+          if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
+          return dateObj.toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        })()}
+      </TableCell>
+      <TableCell className="py-2 px-3 text-center">
+        <div className="flex justify-center space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleEdit}
+            className="h-8 w-8"
+            title="Düzenle"
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(proposal);
+            }}
+            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+            title="Sil"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={(e) => e.stopPropagation()}
+                className="h-8 w-8"
+                title="İşlemler"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56" onClick={(e) => e.stopPropagation()}>
+              {/* Yazdırma İşlemleri */}
+              <DropdownMenuLabel>Yazdırma</DropdownMenuLabel>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger 
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  <Printer className="h-4 w-4 mr-2 text-blue-500" />
+                  <span>Yazdır</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-48">
+                  {templates && templates.length > 0 ? (
+                    templates.map((template) => (
+                      <DropdownMenuItem
+                        key={template.id}
+                        onClick={(e) => handlePdfPrintClick(e, template.id)}
+                        className="cursor-pointer"
+                      >
+                        <Printer className="h-4 w-4 mr-2 text-blue-500" />
+                        <span>{template.name || 'PDF Yazdır'}</span>
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      Şablon bulunamadı
+                    </div>
+                  )}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              
+              <DropdownMenuSeparator />
+              
+              {/* Kopyala ve Revizyon İşlemleri */}
+              <DropdownMenuLabel>Kopyala</DropdownMenuLabel>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  <Copy className="h-4 w-4 mr-2 text-blue-500" />
+                  <span>Teklifi Kopyala</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-48">
+                  {onCopySameCustomer && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCopySameCustomer(proposal);
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <Users className="h-4 w-4 mr-2 text-blue-500" />
+                      <span>Aynı Müşteri İçin</span>
+                    </DropdownMenuItem>
+                  )}
+                  {onCopyDifferentCustomer && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCopyDifferentCustomer(proposal);
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2 text-green-500" />
+                      <span>Farklı Müşteri İçin</span>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              
+              {onCreateRevision && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateRevision(proposal);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <FileEdit className="h-4 w-4 mr-2 text-orange-500" />
+                  <span>Revizyon Oluştur</span>
+                </DropdownMenuItem>
+              )}
+
+              {/* Revizyonlar Listesi */}
+              {revisions.length > 1 && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger
+                    className="cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <GitBranch className="h-4 w-4 mr-2 text-orange-500" />
+                    <span>Revizyonlar ({revisions.length})</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-64">
+                    {revisions.map((rev) => (
+                      <DropdownMenuItem
+                        key={rev.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/proposal/${rev.id}`);
+                        }}
+                        className={cn(
+                          "cursor-pointer flex items-center justify-between",
+                          rev.id === proposal.id && "bg-orange-50"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[10px] px-1.5 py-0",
+                              rev.revision_number === 0
+                                ? "bg-blue-50 text-blue-600 border-blue-200"
+                                : "bg-orange-50 text-orange-600 border-orange-200"
+                            )}
+                          >
+                            R{rev.revision_number || 0}
+                          </Badge>
+                          <span className="text-xs">{rev.number}</span>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[10px] px-1.5 py-0",
+                              proposalStatusColors[rev.status as ProposalStatus]
+                            )}
+                          >
+                            {proposalStatusLabels[rev.status as ProposalStatus]}
+                          </Badge>
+                        </div>
+                        {rev.id === proposal.id && (
+                          <Check className="h-3 w-3 text-orange-600" />
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
+              
+              <DropdownMenuSeparator />
+              
+              {/* Dönüştürme İşlemleri */}
+              <DropdownMenuLabel>Dönüştür</DropdownMenuLabel>
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConvertToOrder(e);
+                }}
+                className="cursor-pointer"
+              >
+                <ShoppingCart className="h-4 w-4 mr-2 text-green-500" />
+                <span>Siparişe Çevir</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConvertToInvoice(e);
+                }}
+                className="cursor-pointer"
+              >
+                <Receipt className="h-4 w-4 mr-2 text-purple-500" />
+                <span>Faturaya Çevir</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+};
+
+// Memoized export for performance optimization
+export default React.memo(ProposalTableRow, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  if (!prevProps.proposal || !nextProps.proposal) {
+    return prevProps.proposal === nextProps.proposal;
+  }
+  
+  return (
+    prevProps.proposal.id === nextProps.proposal.id &&
+    prevProps.proposal.updated_at === nextProps.proposal.updated_at &&
+    prevProps.proposal.status === nextProps.proposal.status &&
+    prevProps.isLoading === nextProps.isLoading &&
+    prevProps.templates?.length === nextProps.templates?.length
+  );
+});

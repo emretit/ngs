@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { Layout } from 'react-grid-layout';
 
 export interface DashboardLayoutData {
@@ -65,7 +66,7 @@ export async function saveLayout(
 
     return { data: result.data as DashboardLayoutData, error: null };
   } catch (error) {
-    console.error('Error saving dashboard layout:', error);
+    logger.error('Error saving dashboard layout:', error);
     return { data: null, error: error as Error };
   }
 }
@@ -98,7 +99,7 @@ export async function loadLayout(
 
     return { data: data.layout_config as Layout[], error: null };
   } catch (error) {
-    console.error('Error loading dashboard layout:', error);
+    logger.error('Error loading dashboard layout:', error);
     return { data: null, error: error as Error };
   }
 }
@@ -122,7 +123,7 @@ export async function getAllLayouts(
 
     return { data: data as DashboardLayoutData[], error: null };
   } catch (error) {
-    console.error('Error getting all layouts:', error);
+    logger.error('Error getting all layouts:', error);
     return { data: null, error: error as Error };
   }
 }
@@ -143,7 +144,7 @@ export async function deleteLayout(
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error deleting layout:', error);
+    logger.error('Error deleting layout:', error);
     return { success: false, error: error as Error };
   }
 }
@@ -176,7 +177,7 @@ export async function setActiveLayout(
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error setting active layout:', error);
+    logger.error('Error setting active layout:', error);
     return { success: false, error: error as Error };
   }
 }
@@ -201,7 +202,7 @@ export async function resetToDefaultLayout(
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error resetting layout:', error);
+    logger.error('Error resetting layout:', error);
     return { success: false, error: error as Error };
   }
 }

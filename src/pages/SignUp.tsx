@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,7 +64,7 @@ const SignUp = () => {
       toast.success("E-posta adresinizi kontrol edin ve hesabınızı onaylayın.", { duration: 5000 });
       navigate("/signin");
     } catch (error: any) {
-      console.error("Signup error:", error);
+      logger.error("Signup error:", error);
       const msg = String(error?.message || error || "");
       let errorMessage = "Kayıt sırasında bir hata oluştu.";
       if (msg.includes('already registered') || msg.includes('already been registered')) {

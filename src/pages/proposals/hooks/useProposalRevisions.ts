@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 
 export const useProposalRevisions = (proposalId?: string, parentProposalId?: string) => {
   const [revisions, setRevisions] = useState<any[]>([]);
@@ -21,13 +22,13 @@ export const useProposalRevisions = (proposalId?: string, parentProposalId?: str
           .order('revision_number', { ascending: true });
 
         if (error) {
-          console.error('Error fetching revisions:', error);
+          logger.error('Error fetching revisions:', error);
           return;
         }
 
         setRevisions(data || []);
       } catch (error) {
-        console.error('Error fetching revisions:', error);
+        logger.error('Error fetching revisions:', error);
       }
     };
 

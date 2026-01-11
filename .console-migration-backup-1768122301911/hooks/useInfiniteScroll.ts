@@ -1,0 +1,213 @@
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+export interface InfiniteScrollOptions {
+  pageSize?: number;
+  enabled?: boolean;
+  refetchOnWindowFocus?: boolean;
+  refetchOnMount?: boolean;
+  staleTime?: number;
+  gcTime?: number;
+}
+
+export interface InfiniteScrollResult<T> {
+  data: T[];
+  isLoading: boolean;
+  isLoadingMore: boolean;
+  hasNextPage: boolean;
+  error: Error | null;
+  loadMore: () => void;
+  refresh: () => void;
+  totalCount?: number;
+}
+
+export function useInfiniteScroll<T>(
+  queryKey: string[],
+  queryFn: (page: number, pageSize: number) => Promise<{ data: T[]; totalCount?: number; hasNextPage?: boolean }>,
+  options: InfiniteScrollOptions = {}
+): InfiniteScrollResult<T> {
+  const {
+    pageSize = 20,
+    enabled = true,
+    refetchOnWindowFocus = false,
+    refetchOnMount = true, // Her mount'ta veriyi kontrol et (stale ise yeniler)
+    staleTime = 3 * 60 * 1000, // 3 dakika - veri bu süre içinde fresh sayılır
+    gcTime = 10 * 60 * 1000, // 10 dakika - cache'de kalma süresi
+  } = options;
+
+  const [allData, setAllData] = useState<T[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [totalCount, setTotalCount] = useState<number | undefined>();
+  const queryClient = useQueryClient();
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
+  // Optimize: Use ref to store existing IDs to avoid recreating Set on every loadMore call
+  const existingIdsRef = useRef<Set<string>>(new Set());
+
+  // Memoize query key to prevent unnecessary re-renders
+  const memoizedQueryKey = useMemo(() => queryKey, [queryKey.join(',')]);
+
+  // İlk sayfa için query
+  const { data: firstPageData, isLoading, error } = useQuery({
+    queryKey: [...memoizedQueryKey, 'page', 1, 'size', pageSize],
+    queryFn: () => queryFn(1, pageSize),
+    enabled,
+    refetchOnWindowFocus,
+    refetchOnMount, // Parametreden gelen değeri kullan
+    staleTime, // Parametreden gelen staleTime'ı kullan
+    gcTime,
+    placeholderData: (previousData) => previousData, // Önceki veriyi göster (smooth transition)
+  });
+
+  // İlk sayfa verisi geldiğinde state'i güncelle
+  useEffect(() => {
+    if (firstPageData?.data) {
+      // Her zaman güncelle - invalidate edildiğinde yeni veriyi göster
+      // (Teklif tarihi gibi alanlar değiştiğinde ID aynı kalabilir ama veri değişir)
+      setAllData(firstPageData.data);
+      
+      // Update existing IDs ref
+      existingIdsRef.current = new Set(firstPageData.data.map((item: any) => (item as any)?.id));
+      
+      setCurrentPage(1);
+      setHasNextPage(firstPageData.hasNextPage ?? firstPageData.data.length === pageSize);
+      if (firstPageData.totalCount !== undefined) {
+        setTotalCount(firstPageData.totalCount);
+      }
+    }
+  }, [firstPageData, pageSize]);
+
+  // Daha fazla veri yükleme fonksiyonu
+  const loadMore = useCallback(async () => {
+    if (!hasNextPage || isLoadingMore) return;
+
+    // Eğer totalCount varsa ve mevcut sayfa toplam sayfayı aşıyorsa, daha fazla veri yok
+    if (totalCount !== undefined && currentPage * pageSize >= totalCount) {
+      setHasNextPage(false);
+      return;
+    }
+
+    setIsLoadingMore(true);
+    const nextPage = currentPage + 1;
+
+    // Cancel previous request if exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
+    try {
+      // Önce cache'den kontrol et
+      const cacheKey = [...memoizedQueryKey, 'page', nextPage, 'size', pageSize];
+      const cachedData = queryClient.getQueryData(cacheKey);
+      
+      if (cachedData) {
+        // Cache'den veri varsa kullan
+        const result = cachedData as { data: T[]; totalCount?: number; hasNextPage?: boolean };
+        if (result?.data) {
+          // Duplicate'leri önlemek için yeni verileri filtrele - Optimize: Use ref instead of creating new Set
+          setAllData(prev => {
+            const newItems = result.data.filter((item: any) => !existingIdsRef.current.has((item as any)?.id));
+            // Update ref with new IDs
+            newItems.forEach((item: any) => existingIdsRef.current.add((item as any)?.id));
+            return [...prev, ...newItems];
+          });
+          setCurrentPage(nextPage);
+          setHasNextPage(result.hasNextPage ?? result.data.length === pageSize);
+          if (result.totalCount) {
+            setTotalCount(result.totalCount);
+          }
+        }
+      } else {
+        // Cache'de yoksa API'den çek
+        const result = await queryClient.fetchQuery({
+          queryKey: cacheKey,
+          queryFn: () => queryFn(nextPage, pageSize),
+          staleTime,
+          gcTime,
+        });
+
+        if (result?.data) {
+          // Duplicate'leri önlemek için yeni verileri filtrele - Optimize: Use ref instead of creating new Set
+          setAllData(prev => {
+            const newItems = result.data.filter((item: any) => !existingIdsRef.current.has((item as any)?.id));
+            // Update ref with new IDs
+            newItems.forEach((item: any) => existingIdsRef.current.add((item as any)?.id));
+            return [...prev, ...newItems];
+          });
+          setCurrentPage(nextPage);
+          setHasNextPage(result.hasNextPage ?? result.data.length === pageSize);
+          if (result.totalCount) {
+            setTotalCount(result.totalCount);
+          }
+        }
+      }
+    } catch (err: any) {
+      // PGRST103: Range Not Satisfiable - daha fazla veri yok, normal durum
+      if (err?.code === 'PGRST103' || err?.message?.includes('Range Not Satisfiable')) {
+        setHasNextPage(false);
+        return;
+      }
+      console.error('Error loading more data:', err);
+      // Hata durumunda kullanıcıya daha anlamlı mesaj göster
+      if (err instanceof Error && err.message.includes("company_id")) {
+        console.warn("Kullanıcı şirket bilgileri yüklenemedi, veriler gösterilemiyor");
+      }
+      // Diğer hatalarda da hasNextPage'i false yap
+      setHasNextPage(false);
+    } finally {
+      setIsLoadingMore(false);
+      abortControllerRef.current = null;
+    }
+  }, [currentPage, hasNextPage, isLoadingMore, queryFn, pageSize, memoizedQueryKey, queryClient, staleTime, gcTime, totalCount]);
+
+  // Yenileme fonksiyonu - tüm sayfaları yenile
+  const refresh = useCallback(() => {
+    // Cancel any ongoing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
+    // Tüm sayfaları invalidate et (silme işleminden sonra cache temizlenmeli)
+    queryClient.invalidateQueries({ 
+      queryKey: memoizedQueryKey,
+      exact: false // Tüm alt query'leri de invalidate et
+    });
+    
+    // State'i sıfırla
+    setAllData([]);
+    existingIdsRef.current.clear(); // Clear the ref as well
+    setCurrentPage(1);
+    setHasNextPage(true);
+    setIsLoadingMore(false);
+    setTotalCount(undefined);
+  }, [queryClient, memoizedQueryKey]);
+
+  // Cleanup effect for unmounting
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  // Cache'den veri varsa onu kullan, yoksa allData'yı kullan
+  // allData boşsa ve firstPageData varsa onu kullan (cache'den gelen veri)
+  // allData doluysa onu kullan (loadMore ile yüklenen veriler dahil)
+  const displayData = allData.length > 0 ? allData : (firstPageData?.data || []);
+
+  return {
+    data: displayData,
+    isLoading,
+    isLoadingMore,
+    hasNextPage,
+    error: error as Error | null,
+    loadMore,
+    refresh,
+    totalCount,
+  };
+}

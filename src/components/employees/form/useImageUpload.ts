@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -40,7 +41,7 @@ export const useImageUpload = () => {
 
       return publicUrl;
     } catch (error) {
-      console.error('Avatar upload error:', error);
+      logger.error('Avatar upload error:', error);
       return null;
     }
   };

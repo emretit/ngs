@@ -1,4 +1,5 @@
 import { formatDate as formatDateUtil } from './dateUtils';
+import { logger } from '@/utils/logger';
 import { formatCurrency as formatCurrencyUtil } from './formatters';
 
 /**
@@ -32,7 +33,7 @@ export const formatDate = (date: string | Date | null | undefined): string => {
     // Use centralized dateUtils with PDF-specific format
     return formatDateUtil(date, 'dd.MM.yyyy') || '-';
   } catch (error) {
-    console.error('Date formatting error:', error);
+    logger.error('Date formatting error:', error);
     return '-';
   }
 };

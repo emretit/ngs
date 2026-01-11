@@ -16,6 +16,8 @@ const PurchaseInvoiceDetail = React.lazy(() => import("@/pages/PurchaseInvoiceDe
 const EditPurchaseInvoice = React.lazy(() => import("@/pages/EditPurchaseInvoice"));
 const SalesInvoices = React.lazy(() => import("@/pages/SalesInvoices"));
 const CreateSalesInvoice = React.lazy(() => import("@/pages/CreateSalesInvoice"));
+const OrderToInvoiceCreate = React.lazy(() => import("@/pages/OrderToInvoiceCreate"));
+const ServiceToInvoiceCreate = React.lazy(() => import("@/pages/ServiceToInvoiceCreate"));
 const EditSalesInvoice = React.lazy(() => import("@/pages/EditSalesInvoice"));
 const SalesInvoiceDetail = React.lazy(() => import("@/pages/SalesInvoiceDetail"));
 const FinancialOverview = React.lazy(() => import("@/pages/FinancialOverview"));
@@ -71,6 +73,8 @@ export const financeRoutes: RouteConfig[] = [
   { path: "/purchase-invoices/edit/:id", component: EditPurchaseInvoice, protected: true },
   { path: "/purchase-invoices/:id", component: PurchaseInvoiceDetail, protected: true },
   { path: "/purchase-invoices", component: PurchaseInvoices, protected: true },
+  { path: "/sales-invoices/create-from-order", component: OrderToInvoiceCreate, protected: true }, // Siparişten fatura oluşturma (spesifik route önce)
+  { path: "/sales-invoices/create-from-service", component: ServiceToInvoiceCreate, protected: true }, // Servisten fatura oluşturma (spesifik route önce)
   { path: "/sales-invoices/create", component: CreateSalesInvoice, protected: true },
   { path: "/sales-invoices/edit/:id", component: EditSalesInvoice, protected: true },
   { path: "/sales-invoices/:id", component: SalesInvoiceDetail, protected: true },

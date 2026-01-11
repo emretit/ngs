@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { DragEndEvent } from "@dnd-kit/core";
 import { WorkOrder, WorkOrderStatus } from "@/types/production";
 import {
@@ -128,7 +129,7 @@ const WorkOrdersKanbanBoard = ({
         try {
           await onStatusChange(item.id, item.column as WorkOrderStatus);
         } catch (error) {
-          console.error("İş emri durumu güncellenirken hata:", error);
+          logger.error("İş emri durumu güncellenirken hata:", error);
           // Hata durumunda eski veriye geri dön
           setData(kanbanData);
         }
@@ -156,7 +157,7 @@ const WorkOrdersKanbanBoard = ({
         // Frontend status değerini kullan (zaten map edilmiş)
         await onStatusChange(activeItem.id, newColumn as WorkOrderStatus);
       } catch (error) {
-        console.error("İş emri durumu güncellenirken hata:", error);
+        logger.error("İş emri durumu güncellenirken hata:", error);
       }
     }
   };

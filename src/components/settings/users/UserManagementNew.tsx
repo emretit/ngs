@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,7 +133,7 @@ export const UserManagementNew = () => {
             .eq('user_id', userId);
 
           if (rolesError) {
-            console.error('Error deleting user roles:', rolesError);
+            logger.error('Error deleting user roles:', rolesError);
             errors.push(`Kullanıcı rolleri silinemedi: ${rolesError.message}`);
             continue;
           }
@@ -145,7 +146,7 @@ export const UserManagementNew = () => {
             .select();
 
           if (error) {
-            console.error('Error deleting profile:', error);
+            logger.error('Error deleting profile:', error);
             errors.push(`Kullanıcı profilini silinemedi: ${error.message}`);
             continue;
           }
@@ -158,7 +159,7 @@ export const UserManagementNew = () => {
 
           successCount++;
         } catch (err: any) {
-          console.error('Error deleting user:', err);
+          logger.error('Error deleting user:', err);
           errors.push(err.message || 'Bilinmeyen hata');
         }
       }
@@ -176,7 +177,7 @@ export const UserManagementNew = () => {
       setSelectedUsers([]);
     },
     onError: (error: any) => {
-      console.error('Bulk delete error:', error);
+      logger.error('Bulk delete error:', error);
       toast.error(error.message || "Kullanıcılar silinirken hata oluştu");
     },
   });

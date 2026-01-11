@@ -69,15 +69,56 @@ const ProductsTableRow = ({
       {/* Stok */}
       <TableCell className="py-2 px-3 text-right">
         <div className="flex flex-col items-end gap-1">
+          {/* Toplam Stok */}
           <div className="flex items-center justify-end gap-2">
-            <span className="text-xs font-medium text-gray-900">{product.stock_quantity}</span>
+            <span className="text-xs font-medium text-gray-900">
+              {product.stock_quantity}
+            </span>
             <span className="text-xs text-gray-500">{product.unit}</span>
           </div>
-          {product.stock_quantity > 0 && product.stock_quantity <= product.min_stock_level && (
-            <div className="flex items-center justify-end gap-1">
-              <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-800 border-yellow-200">Az Stok</Badge>
+          
+          {/* Rezerve Stok (varsa göster) */}
+          {product.reserved_quantity && product.reserved_quantity > 0 && (
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-xs text-orange-600">
+                -{product.reserved_quantity}
+              </span>
+              <span className="text-xs text-gray-400">rezerve</span>
             </div>
           )}
+          
+          {/* Kullanılabilir Stok */}
+          {product.reserved_quantity && product.reserved_quantity > 0 && (
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-xs font-semibold text-green-600">
+                {(product.stock_quantity || 0) - (product.reserved_quantity || 0)}
+              </span>
+              <span className="text-xs text-gray-400">müsait</span>
+            </div>
+          )}
+          
+          {/* Stok Durumu Badge */}
+          {(() => {
+            const availableStock = (product.stock_quantity || 0) - (product.reserved_quantity || 0);
+            
+            if (availableStock <= 0) {
+              return (
+                <Badge variant="outline" className="text-xs bg-red-50 text-red-800 border-red-200">
+                  Stokta Yok
+                </Badge>
+              );
+            }
+            
+            if (availableStock > 0 && availableStock <= product.min_stock_level) {
+              return (
+                <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-800 border-yellow-200">
+                  Az Stok
+                </Badge>
+              );
+            }
+            
+            return null;
+          })()}
         </div>
       </TableCell>
 

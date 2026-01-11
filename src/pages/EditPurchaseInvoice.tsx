@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
@@ -159,7 +160,7 @@ const EditPurchaseInvoice = () => {
         .order("created_at", { ascending: true });
 
       if (itemsError) {
-        console.error("Error loading invoice items:", itemsError);
+        logger.error("Error loading invoice items:", itemsError);
         toast.error("Fatura kalemleri yüklenemedi");
       } else {
         setLineItems(items || []);
@@ -173,7 +174,7 @@ const EditPurchaseInvoice = () => {
       });
 
     } catch (error) {
-      console.error("Error loading invoice:", error);
+      logger.error("Error loading invoice:", error);
       toast.error("Fatura yüklenirken hata oluştu");
     } finally {
       setLoading(false);
@@ -222,7 +223,7 @@ const EditPurchaseInvoice = () => {
       navigate(`/purchase-invoices/${id}`);
 
     } catch (error: any) {
-      console.error("Error saving invoice:", error);
+      logger.error("Error saving invoice:", error);
       // Error handling is done in the hook
     } finally {
       setSaving(false);

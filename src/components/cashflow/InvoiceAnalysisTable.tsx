@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -101,7 +102,7 @@ const InvoiceAnalysisTable = () => {
           ...calculatedData
         });
       } catch (error) {
-        console.error('Auto-save error:', error);
+        logger.error('Auto-save error:', error);
       }
     }, 1000);
 
@@ -162,7 +163,7 @@ const InvoiceAnalysisTable = () => {
       
       toast.success("Tüm veriler kaydedildi.");
     } catch (error) {
-      console.error('Error saving data:', error);
+      logger.error('Error saving data:', error);
       toast.error("Veriler kaydedilirken bir hata oluştu.");
     } finally {
       setLoading(false);

@@ -168,6 +168,15 @@ export default function ServiceDetail() {
              service.service_priority === 'high' ? 'Yüksek' :
              service.service_priority === 'medium' ? 'Orta' : 'Düşük'}
           </Badge>
+          {service.service_status !== 'cancelled' && parseFloat(service.total_cost || '0') > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/invoices/create-from-service?serviceId=${service.id}`)}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Faturaya Çevir
+            </Button>
+          )}
           <Button
             variant="default"
             onClick={() => navigate(`/service/edit/${service.id}`)}

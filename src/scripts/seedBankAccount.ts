@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from '@/utils/logger';
 
 const insertSampleBankAccount = async () => {
   const { data, error } = await supabase
@@ -25,9 +26,9 @@ const insertSampleBankAccount = async () => {
     .select();
 
   if (error) {
-    console.error("Error inserting sample bank account:", error);
+    logger.error("Error inserting sample bank account:", error);
   } else {
-    console.log("Sample bank account inserted successfully:", data);
+    logger.debug("Sample bank account inserted successfully:", data);
   }
 };
 

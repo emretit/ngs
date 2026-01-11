@@ -1,5 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 
 type UserRole = 'admin' | 'sales_rep' | 'technician' | 'support';
@@ -14,7 +15,7 @@ export const useRoleCheck = () => {
         .single();
 
       if (error) {
-        console.error('Error fetching user roles:', error);
+        logger.error('Error fetching user roles:', error);
         return null;
       }
 

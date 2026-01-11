@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
@@ -282,7 +283,7 @@ export default function StockEntryExitDialog({
       }
       onClose();
     } catch (error: any) {
-      console.error(`Error creating stock ${transactionType}:`, error);
+      logger.error(`Error creating stock ${transactionType}:`, error);
       toast.error(error.message || `Stok ${transactionType === 'giris' ? 'girişi' : 'çıkışı'} oluşturulurken hata oluştu`);
     } finally {
       setIsSubmitting(false);

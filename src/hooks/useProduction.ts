@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -101,7 +102,7 @@ export const useProduction = () => {
     const { data, error } = await query;
 
     if (error) {
-      console.error("Error fetching work orders:", error);
+      logger.error("Error fetching work orders:", error);
       toast.error("İş emirleri yüklenirken hata oluştu");
       return [];
     }
@@ -157,7 +158,7 @@ export const useProduction = () => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching BOMs:", error);
+      logger.error("Error fetching BOMs:", error);
       toast.error("Reçeteler yüklenirken hata oluştu");
       return [];
     }
@@ -226,7 +227,7 @@ export const useProduction = () => {
       .single();
 
     if (error) {
-      console.error("Error creating work order:", error);
+      logger.error("Error creating work order:", error);
       throw error;
     }
 
@@ -318,7 +319,7 @@ export const useProduction = () => {
       .eq("company_id", profile.company_id); // Company ID filtresi eklendi
 
     if (error) {
-      console.error("Error updating work order:", error);
+      logger.error("Error updating work order:", error);
       throw error;
     }
   };
@@ -351,7 +352,7 @@ export const useProduction = () => {
       .single();
 
     if (bomError) {
-      console.error("Error creating BOM:", bomError);
+      logger.error("Error creating BOM:", bomError);
       throw bomError;
     }
 
@@ -368,7 +369,7 @@ export const useProduction = () => {
         .insert(itemsToInsert);
 
       if (itemsError) {
-        console.error("Error creating BOM items:", itemsError);
+        logger.error("Error creating BOM items:", itemsError);
         await supabase.from("boms").delete().eq("id", bom.id);
         throw itemsError;
       }

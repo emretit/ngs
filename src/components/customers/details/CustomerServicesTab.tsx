@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,7 +38,7 @@ export const CustomerServicesTab = ({ customer }: CustomerServicesTabProps) => {
     queryKey: ['customer-service-requests', customer.id],
     queryFn: async (): Promise<ServiceRequest[]> => {
       try {
-        console.log('Fetching service requests for customer:', customer.id);
+        logger.debug('Fetching service requests for customer:', customer.id);
         
         const { data, error } = await supabase
           .from('service_requests')
@@ -57,11 +58,11 @@ export const CustomerServicesTab = ({ customer }: CustomerServicesTabProps) => {
           .order('created_at', { ascending: false });
 
         if (error) {
-          console.error('Service requests error:', error);
+          logger.error('Service requests error:', error);
           throw error;
         }
         
-        console.log('Service requests data:', data);
+        logger.debug('Service requests data:', data);
         
         // ServiceRequest tipine uygun hale getir
         return (data || []).map((item: any): ServiceRequest => ({
@@ -87,7 +88,7 @@ export const CustomerServicesTab = ({ customer }: CustomerServicesTabProps) => {
           warranty_info: typeof item.warranty_info === 'object' ? item.warranty_info : undefined
         }));
       } catch (err) {
-        console.error('Service requests fetch error:', err);
+        logger.error('Service requests fetch error:', err);
         throw err;
       }
     },

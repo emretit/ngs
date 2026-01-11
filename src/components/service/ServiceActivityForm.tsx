@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,7 +69,7 @@ export function ServiceActivityForm({ serviceRequestId, onClose, onSuccess }: Se
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Servis aktivitesi kayıt hatası:', error);
+      logger.error('Servis aktivitesi kayıt hatası:', error);
       toast.error("Servis aktivitesi kaydedilemedi");
     }
   };

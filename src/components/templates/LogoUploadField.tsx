@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -73,7 +74,7 @@ export const LogoUploadField: React.FC<LogoUploadFieldProps> = ({
         });
 
       if (error) {
-        console.error('Storage upload error:', error);
+        logger.error('Storage upload error:', error);
         if (error.message.includes('JWT')) {
           toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
         } else {
@@ -90,7 +91,7 @@ export const LogoUploadField: React.FC<LogoUploadFieldProps> = ({
       onLogoChange(publicUrl);
       toast.success('Logo başarıyla yüklendi');
     } catch (error) {
-      console.error('Logo upload error:', error);
+      logger.error('Logo upload error:', error);
       toast.error('Logo yüklenirken hata oluştu');
     } finally {
       setIsUploading(false);

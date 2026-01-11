@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,7 +78,7 @@ const ProductTable = ({ products, isLoading }: ProductTableProps) => {
       
       showSuccess("Ürün başarıyla silindi", { duration: 1000 });
     } catch (error) {
-      console.error('Error deleting product:', error);
+      logger.error('Error deleting product:', error);
       showError("Ürün silinirken bir hata oluştu");
     } finally {
       setIsDeleting(false);

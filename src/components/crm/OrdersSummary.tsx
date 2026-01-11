@@ -1,4 +1,5 @@
 import React from "react";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -30,7 +31,7 @@ const OrdersSummary = () => {
 ;
         
       if (error) {
-        console.error('Orders table error:', error);
+        logger.error('Orders table error:', error);
         return {
           total: 0,
           pending: 0,

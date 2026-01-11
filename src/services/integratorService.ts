@@ -1,4 +1,5 @@
 import { supabase } from '../integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 export type IntegratorType = 'nilvera' | 'elogo' | 'veriban';
 
@@ -33,13 +34,13 @@ export class IntegratorService {
         .single();
 
       if (error) {
-        console.log('Integrator settings bulunamadı, varsayılan olarak Nilvera kullanılıyor');
+        logger.debug('Integrator settings bulunamadı, varsayılan olarak Nilvera kullanılıyor');
         return 'nilvera';
       }
 
       return (data?.selected_integrator as IntegratorType) || 'nilvera';
     } catch (error) {
-      console.error('getSelectedIntegrator error:', error);
+      logger.error('getSelectedIntegrator error:', error);
       return 'nilvera'; // Default to Nilvera
     }
   }
@@ -78,7 +79,7 @@ export class IntegratorService {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('setSelectedIntegrator error:', error);
+      logger.error('setSelectedIntegrator error:', error);
       return false;
     }
   }
@@ -92,7 +93,7 @@ export class IntegratorService {
     try {
       const integrator = await this.getSelectedIntegrator();
 
-      console.log('📊 Gelen faturalar alınıyor, entegratör:', integrator);
+      logger.debug('📊 Gelen faturalar alınıyor, entegratör:', integrator);
 
       if (integrator === 'nilvera') {
         return this.getNilveraInvoices(filters);
@@ -120,23 +121,23 @@ export class IntegratorService {
     try {
       const integrator = await this.getSelectedIntegrator();
 
-      console.log('📊 Giden faturalar alınıyor, entegratör:', integrator);
-      console.log('📅 Filtreler:', filters);
+      logger.debug('📊 Giden faturalar alınıyor, entegratör:', integrator);
+      logger.debug('📅 Filtreler:', filters);
 
       if (integrator === 'veriban') {
         const result = await this.getVeribanOutgoingInvoices(filters);
-        console.log('✅ Veriban giden faturalar sonucu:', result);
+        logger.debug('✅ Veriban giden faturalar sonucu:', result);
         return result;
       } else {
         // Diğer entegratörler için henüz desteklenmiyor
-        console.log('⚠️ Giden faturalar için sadece Veriban destekleniyor. Seçili entegratör:', integrator);
+        logger.debug('⚠️ Giden faturalar için sadece Veriban destekleniyor. Seçili entegratör:', integrator);
         return {
           success: false,
           error: 'Giden faturalar için sadece Veriban destekleniyor',
         };
       }
     } catch (error: any) {
-      console.error('❌ getOutgoingInvoices hatası:', error);
+      logger.error('❌ getOutgoingInvoices hatası:', error);
       return {
         success: false,
         error: error.message || 'Giden faturalar alınamadı',
@@ -178,20 +179,20 @@ export class IntegratorService {
     filters: InvoiceFilters
   ): Promise<IntegratorServiceResponse> {
     try {
-      console.log('📊 e-Logo faturalar alınıyor, filtreler:', filters);
+      logger.debug('📊 e-Logo faturalar alınıyor, filtreler:', filters);
       
       const { data, error } = await supabase.functions.invoke('elogo-incoming-invoices', {
         body: { filters }
       });
 
       if (error) {
-        console.error('❌ e-Logo Edge Function hatası:', error);
+        logger.error('❌ e-Logo Edge Function hatası:', error);
         throw error;
       }
 
       // Check if the response indicates an error
       if (data && !data.success) {
-        console.error('❌ e-Logo function başarısız:', data.error);
+        logger.error('❌ e-Logo function başarısız:', data.error);
         return {
           success: false,
           invoices: [],
@@ -207,7 +208,7 @@ export class IntegratorService {
         message: data?.message,
       };
     } catch (error: any) {
-      console.error('❌ e-Logo faturalar alınırken hata:', {
+      logger.error('❌ e-Logo faturalar alınırken hata:', {
         message: error.message,
         status: error.status,
         statusText: error.statusText,
@@ -336,7 +337,7 @@ export class IntegratorService {
       });
 
       if (error) {
-        console.error('Veriban error:', error);
+        logger.error('Veriban error:', error);
 
         // Try to extract error message from response body
         if (error.context instanceof Response) {
@@ -347,7 +348,7 @@ export class IntegratorService {
               throw new Error(responseJson.error);
             }
           } catch (e) {
-            console.error('Could not parse error response:', e);
+            logger.error('Could not parse error response:', e);
           }
         }
 
@@ -381,7 +382,7 @@ export class IntegratorService {
         message: data?.message,
       };
     } catch (error: any) {
-      console.error('❌ getVeribanInvoices error:', error);
+      logger.error('❌ getVeribanInvoices error:', error);
       return {
         success: false,
         error: error.message || 'Veriban faturalar alınamadı',
@@ -409,7 +410,7 @@ export class IntegratorService {
       const startDate = filters.startDate ? filters.startDate.split('T')[0] : undefined;
       const endDate = filters.endDate ? filters.endDate.split('T')[0] : undefined;
 
-      console.log('🔍 Veriban giden faturalar çağırılıyor:', { 
+      logger.debug('🔍 Veriban giden faturalar çağırılıyor:', { 
         startDate, 
         endDate, 
         customerTaxNumber: filters.customerTaxNumber,
@@ -428,11 +429,11 @@ export class IntegratorService {
         }
       });
 
-      console.log('📦 Veriban API yanıtı DATA:', JSON.stringify(data, null, 2));
-      console.log('❌ Veriban API yanıtı ERROR:', JSON.stringify(error, null, 2));
+      logger.debug('📦 Veriban API yanıtı DATA:', JSON.stringify(data, null, 2));
+      logger.debug('❌ Veriban API yanıtı ERROR:', JSON.stringify(error, null, 2));
 
       if (error) {
-        console.error('Veriban outgoing invoices error:', error);
+        logger.error('Veriban outgoing invoices error:', error);
 
         // Try to extract error message from response body
         if (error.context instanceof Response) {
@@ -443,7 +444,7 @@ export class IntegratorService {
               throw new Error(responseJson.error);
             }
           } catch (e) {
-            console.error('Could not parse error response:', e);
+            logger.error('Could not parse error response:', e);
           }
         }
 
@@ -484,7 +485,7 @@ export class IntegratorService {
         message: data?.message,
       };
     } catch (error: any) {
-      console.error('❌ getVeribanOutgoingInvoices error:', error);
+      logger.error('❌ getVeribanOutgoingInvoices error:', error);
       return {
         success: false,
         error: error.message || 'Veriban giden faturalar alınamadı',
@@ -506,7 +507,7 @@ export class IntegratorService {
       });
 
       if (error) {
-        console.error('Veriban edge function error:', error);
+        logger.error('Veriban edge function error:', error);
         throw error;
       }
 
@@ -517,7 +518,7 @@ export class IntegratorService {
         message: data?.message,
       };
     } catch (error: any) {
-      console.error('Veriban mükellef sorgulama hatası:', error);
+      logger.error('Veriban mükellef sorgulama hatası:', error);
       return {
         success: false,
         error: error.message || 'Veriban mükellef sorgulaması yapılamadı',
@@ -581,7 +582,7 @@ export class IntegratorService {
         selected,
       };
     } catch (error) {
-      console.error('checkIntegratorStatus error:', error);
+      logger.error('checkIntegratorStatus error:', error);
       return { nilvera: false, elogo: false, veriban: false, selected: 'nilvera' };
     }
   }

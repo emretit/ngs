@@ -24,6 +24,8 @@ export interface Product {
   exchange_rate?: number;
   tax_rate: number;
   stock_quantity: number;
+  reserved_quantity?: number; // Reserved stock for confirmed orders
+  available_stock?: number;   // Calculated: stock_quantity - reserved_quantity
   min_stock_level: number;
   stock_threshold: number;
   unit: string;

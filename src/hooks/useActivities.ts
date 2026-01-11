@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { useCurrentUser } from "./useCurrentUser";
 import { useAuth } from "@/hooks/useAuth";
 import { Task } from "@/types/task";
@@ -39,7 +40,7 @@ export const useActivities = (filters: UseActivitiesFilters = {}) => {
 
       // Kullanıcının company_id'si yoksa boş sonuç döndür
       if (!userData?.company_id) {
-        console.warn("Kullanıcının company_id'si bulunamadı, boş sonuç döndürülüyor");
+        logger.warn("Kullanıcının company_id'si bulunamadı, boş sonuç döndürülüyor");
         return [];
       }
 
@@ -139,7 +140,7 @@ export const useActivities = (filters: UseActivitiesFilters = {}) => {
       }
 
       if (queryError) {
-        console.error("Error fetching activities:", queryError);
+        logger.error("Error fetching activities:", queryError);
         throw queryError;
       }
 

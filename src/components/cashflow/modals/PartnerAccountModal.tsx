@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogCancelButton, UnifiedDialogActionButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,7 +63,7 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
           });
         }
       } catch (e) {
-        console.error('Error pre-filling partner account:', e);
+        logger.error('Error pre-filling partner account:', e);
       } finally {
         setIsPrefilling(false);
       }
@@ -151,7 +152,7 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
         investment_date_date: undefined
       });
     } catch (error) {
-      console.error('Error creating partner account:', error);
+      logger.error('Error creating partner account:', error);
       toast.error("Ortak hesabı oluşturulurken hata oluştu");
     } finally {
       setIsLoading(false);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,15 +33,15 @@ export const ServiceSlipTemplateSelector: React.FC<ServiceSlipTemplateSelectorPr
       setIsLoadingTemplates(true);
       setError(null);
       try {
-        console.log('[ServiceSlipTemplateSelector] Şablonlar yükleniyor...', {
+        logger.debug('[ServiceSlipTemplateSelector] Şablonlar yükleniyor...', {
           companyId: userData?.company_id,
           isOpen
         });
         const loadedTemplates = await PdfExportService.getServiceTemplates();
-        console.log('[ServiceSlipTemplateSelector] Şablonlar yüklendi:', loadedTemplates);
+        logger.debug('[ServiceSlipTemplateSelector] Şablonlar yüklendi:', loadedTemplates);
         setTemplates(loadedTemplates);
       } catch (err) {
-        console.error('[ServiceSlipTemplateSelector] Şablon yükleme hatası:', err);
+        logger.error('[ServiceSlipTemplateSelector] Şablon yükleme hatası:', err);
         setError(err instanceof Error ? err : new Error('Bilinmeyen hata'));
       } finally {
         setIsLoadingTemplates(false);

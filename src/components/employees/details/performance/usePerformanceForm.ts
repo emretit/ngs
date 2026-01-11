@@ -1,5 +1,6 @@
 
 import { useForm } from "react-hook-form";
+import { logger } from '@/utils/logger';
 import { useToast } from "@/components/ui/use-toast";
 import { PerformanceFormValues, PerformanceRecord } from "./types";
 
@@ -61,7 +62,7 @@ export const usePerformanceForm = (
         description: "Performans değerlendirmesi kaydedildi.",
       });
     } catch (error) {
-      console.error('Error saving performance data:', error);
+      logger.error('Error saving performance data:', error);
       toast({
         variant: "destructive",
         title: "Hata",

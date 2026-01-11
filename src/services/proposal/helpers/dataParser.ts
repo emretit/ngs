@@ -1,5 +1,6 @@
 
 import { Proposal, ProposalAttachment, ProposalItem } from "@/types/proposal";
+import { logger } from '@/utils/logger';
 
 /**
  * Parses JSON data from proposal response into proper types
@@ -42,7 +43,7 @@ export function parseProposalData(data: any): Proposal | null {
         try {
           data.history = JSON.parse(data.history);
         } catch (e) {
-          console.error('Error parsing history:', e);
+          logger.error('Error parsing history:', e);
           data.history = [];
         }
       }
@@ -56,7 +57,7 @@ export function parseProposalData(data: any): Proposal | null {
     
     return data as Proposal;
   } catch (e) {
-    console.error('Error parsing proposal data:', e);
+    logger.error('Error parsing proposal data:', e);
     return data;
   }
 }

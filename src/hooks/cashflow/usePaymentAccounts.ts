@@ -12,6 +12,7 @@
  * Bu hook gelecekteki bir versiyonda kaldırılacaktır.
  */
 import { useState, useCallback, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentAccount {
@@ -49,7 +50,7 @@ export function usePaymentAccounts() {
         setPartnerAccounts(partnerRes.data.map((a: any) => ({ id: a.id, label: a.partner_name })));
       }
     } catch (e) {
-      console.error('Hesaplar yüklenirken hata:', e);
+      logger.error('Hesaplar yüklenirken hata:', e);
     } finally {
       setLoading(false);
     }

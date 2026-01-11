@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, memo } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import ProductsHeader from "@/components/products/ProductsHeader";
@@ -94,7 +95,7 @@ const Products = () => {
         .eq("company_id", companyId);
 
       if (countError) {
-        console.error("Error counting products for statistics:", countError);
+        logger.error("Error counting products for statistics:", countError);
         throw countError;
       }
 
@@ -117,7 +118,7 @@ const Products = () => {
         .eq("is_active", true);
 
       if (activeError) {
-        console.error("Error counting active products:", activeError);
+        logger.error("Error counting active products:", activeError);
       }
 
       const inactiveCount = (totalCount || 0) - (activeCount || 0);
@@ -137,7 +138,7 @@ const Products = () => {
           .range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (productIdsError) {
-          console.error("Error fetching product IDs for stock statistics:", productIdsError);
+          logger.error("Error fetching product IDs for stock statistics:", productIdsError);
           hasMore = false;
           break;
         }
@@ -178,7 +179,7 @@ const Products = () => {
               .eq("company_id", companyId);
 
             if (batchStockError) {
-              console.error(`Error fetching warehouse stock batch ${i + 1}/${totalBatches}:`, batchStockError);
+              logger.error(`Error fetching warehouse stock batch ${i + 1}/${totalBatches}:`, batchStockError);
               // Batch hatası olsa bile devam et
               continue;
             }
@@ -191,7 +192,7 @@ const Products = () => {
               });
             }
           } catch (error) {
-            console.error(`Error in warehouse stock batch ${i + 1}/${totalBatches}:`, error);
+            logger.error(`Error in warehouse stock batch ${i + 1}/${totalBatches}:`, error);
             // Hata olsa bile devam et
           }
         }
@@ -245,7 +246,7 @@ const Products = () => {
 
   if (error) {
       toast.error(t("pages.products.loadError"), { duration: 1000 });
-    console.error("Error loading products:", error);
+    logger.error("Error loading products:", error);
   }
 
   const handleSort = useCallback((field: "name" | "price" | "stock_quantity" | "category") => {
@@ -374,7 +375,7 @@ const Products = () => {
         setSelectedProducts(allProducts as Product[]);
       }
     } catch (error) {
-      console.error('Error selecting all products:', error);
+      logger.error('Error selecting all products:', error);
         toast.error(t("pages.products.selectAllError"), { duration: 1000 });
     }
   }, [debouncedSearchQuery, categoryFilter, stockFilter]);
@@ -408,7 +409,7 @@ const Products = () => {
         refresh();
         setSelectedProducts([]);
       } catch (error) {
-        console.error('Error activating products:', error);
+        logger.error('Error activating products:', error);
         toast.error(t("pages.products.activateError"), { duration: 1000 });
       }
     } else if (action === 'deactivate') {
@@ -427,7 +428,7 @@ const Products = () => {
         refresh();
         setSelectedProducts([]);
       } catch (error) {
-        console.error('Error deactivating products:', error);
+        logger.error('Error deactivating products:', error);
         toast.error(t("pages.products.deactivateError"), { duration: 1000 });
       }
     }
@@ -495,7 +496,7 @@ const Products = () => {
           .in('product_id', productIds);
 
         if (purchaseInvoiceError) {
-          console.error('Error deleting purchase_invoice_items:', purchaseInvoiceError);
+          logger.error('Error deleting purchase_invoice_items:', purchaseInvoiceError);
           toast.error('Alış fatura kalemleri silinirken bir hata oluştu', { duration: 1000 });
           return;
         }
@@ -509,7 +510,7 @@ const Products = () => {
           .in('matched_stock_id', productIds);
 
         if (eFaturaError) {
-          console.error('Error deleting e_fatura_stok_eslestirme:', eFaturaError);
+          logger.error('Error deleting e_fatura_stok_eslestirme:', eFaturaError);
           toast.error('E-fatura stok eşleştirmeleri silinirken bir hata oluştu', { duration: 1000 });
           return;
         }
@@ -523,7 +524,7 @@ const Products = () => {
           .in('product_id', productIds);
 
         if (stockError) {
-          console.error('Error deleting warehouse stock:', stockError);
+          logger.error('Error deleting warehouse stock:', stockError);
           toast.error('Stok kayıtları silinirken bir hata oluştu', { duration: 1000 });
           return;
         }
@@ -550,9 +551,9 @@ const Products = () => {
 
         if (isConflictError) {
           toast.error(t("pages.products.cannotDeleteInUse"), { duration: 1000 });
-          console.error('Delete conflict error:', { error, status, statusText, httpStatus, productIds });
+          logger.error('Delete conflict error:', { error, status, statusText, httpStatus, productIds });
         } else {
-          console.error('Delete error:', { error, status, statusText, httpStatus, productIds });
+          logger.error('Delete error:', { error, status, statusText, httpStatus, productIds });
           throw error;
         }
         return;
@@ -566,7 +567,7 @@ const Products = () => {
       refresh();
       setSelectedProducts([]);
     } catch (error: any) {
-      console.error('Error deleting products:', error);
+      logger.error('Error deleting products:', error);
       
       // 409 Conflict veya foreign key constraint hatası kontrolü
       const isConflictError = 

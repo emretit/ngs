@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 export interface SmartSuggestion {
   id: string;
@@ -169,7 +170,7 @@ export const generateSmartSuggestions = async (): Promise<SmartSuggestion[]> => 
     }
 
   } catch (error) {
-    console.error('Error generating suggestions:', error);
+    logger.error('Error generating suggestions:', error);
   }
 
   // Sort by priority

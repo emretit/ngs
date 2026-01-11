@@ -1,4 +1,5 @@
 import { memo, useCallback, useState } from "react";
+import { logger } from '@/utils/logger';
 import { useTranslation } from "react-i18next";
 import { Table, TableBody } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
@@ -80,7 +81,7 @@ const ProductListTable = ({
       
       showSuccess("Ürün başarıyla silindi", { duration: 1000 });
     } catch (error) {
-      console.error('Error deleting product:', error);
+      logger.error('Error deleting product:', error);
       showError("Ürün silinirken bir hata oluştu");
     } finally {
       setIsDeleting(false);

@@ -1,5 +1,6 @@
 
 import React from "react";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -49,7 +50,7 @@ const NewContactForm: React.FC<NewContactFormProps> = ({ opportunityId, onSubmit
       form.reset();
       
     } catch (error) {
-      console.error("Error adding contact:", error);
+      logger.error("Error adding contact:", error);
       showError("İletişim kaydedilemedi");
     }
   };

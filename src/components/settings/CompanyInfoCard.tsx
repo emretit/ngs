@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { logger } from '@/utils/logger';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ export const CompanyInfoCard = ({ company, formData, onFieldChange, isDirty }: C
           const existingPath = formData.logo_url.split('/').slice(-2).join('/');
           await supabase.storage.from('logos').remove([existingPath]);
         } catch (deleteError) {
-          console.log('No existing logo to delete or delete failed:', deleteError);
+          logger.debug('No existing logo to delete or delete failed:', deleteError);
         }
       }
 
@@ -47,7 +48,7 @@ export const CompanyInfoCard = ({ company, formData, onFieldChange, isDirty }: C
         });
 
       if (error) {
-        console.error('Error uploading logo:', error);
+        logger.error('Error uploading logo:', error);
         toast.error('Logo yüklenirken hata oluştu');
         return;
       }
@@ -61,7 +62,7 @@ export const CompanyInfoCard = ({ company, formData, onFieldChange, isDirty }: C
         toast.success('Logo başarıyla yüklendi');
       }
     } catch (error) {
-      console.error('Error in logo upload process:', error);
+      logger.error('Error in logo upload process:', error);
       toast.error('Logo yüklenirken hata oluştu');
     }
   };

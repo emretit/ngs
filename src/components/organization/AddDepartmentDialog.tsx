@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/hooks/useCompany";
@@ -54,7 +55,7 @@ export const AddDepartmentDialog: React.FC<AddDepartmentDialogProps> = ({
   departments = [],
   employees = [],
 }) => {
-  console.log("AddDepartmentDialog render edildi, open:", open);
+  logger.debug("AddDepartmentDialog render edildi, open:", open);
   const { companyId } = useCompany();
   const { toast } = useToast();
   const queryClient = useQueryClient();

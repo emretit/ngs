@@ -78,7 +78,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
   // Mevcut ürünleri yükle
   const loadExistingProducts = async () => {
     try {
-      console.log('🔄 Mevcut ürünler yükleniyor...');
+      logger.debug('🔄 Mevcut ürünler yükleniyor...');
       
       // Kullanıcının company_id'sini al
       const { data: { user } } = await supabase.auth.getUser();
@@ -127,11 +127,11 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
         stock_quantity: stockMap.get(product.id) || 0
       }));
 
-      console.log('✅ Mevcut ürünler yüklendi:', productsWithStock.length);
+      logger.debug('✅ Mevcut ürünler yüklendi:', productsWithStock.length);
       setExistingProducts(productsWithStock);
       return productsWithStock;
     } catch (error) {
-      console.error('❌ Mevcut ürünler yüklenemedi:', error);
+      logger.error('❌ Mevcut ürünler yüklenemedi:', error);
       toast.error("Mevcut ürünler yüklenemedi");
       return [];
     }
@@ -145,27 +145,27 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
     }
     setIsLoading(true);
     try {
-      console.log('🔄 Fatura verileri yükleniyor...', invoiceId);
+      logger.debug('🔄 Fatura verileri yükleniyor...', invoiceId);
       // Fatura verilerini session storage'dan al
       const invoiceData = sessionStorage.getItem(`invoice_${invoiceId}`);
       if (invoiceData) {
         const parsedInvoice = JSON.parse(invoiceData);
         setInvoice(parsedInvoice);
-        console.log('✅ Fatura bilgileri session storage\'dan alındı:', parsedInvoice.invoiceNumber);
+        logger.debug('✅ Fatura bilgileri session storage\'dan alındı:', parsedInvoice.invoiceNumber);
       }
       // Önce mevcut ürünleri yükle
       const existingProductsData = await loadExistingProducts();
       // XML'den ürünleri parse et
-      console.log('🔄 XML\'den ürünler parse ediliyor...');
+      logger.debug('🔄 XML\'den ürünler parse ediliyor...');
       const { data, error } = await supabase.functions.invoke('nilvera-invoices', {
         body: { 
           action: 'process_xml_invoice',
           invoiceId: invoiceId
         }
       });
-      console.log('📥 XML Parse API Response:', data);
+      logger.debug('📥 XML Parse API Response:', data);
       if (error) {
-        console.error('❌ Supabase function error:', error);
+        logger.error('❌ Supabase function error:', error);
         throw error;
       }
       if (data && data.success) {
@@ -372,7 +372,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
             results.push({ type: 'updated', product: updatedProduct });
           }
         } catch (error) {
-          console.error('Ürün işleme hatası:', error);
+          logger.error('Ürün işleme hatası:', error);
           results.push({ type: 'error', error: error });
         }
       }
@@ -387,7 +387,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
         }, 2000);
       }
     } catch (error: any) {
-      console.error('❌ Kaydetme hatası:', error);
+      logger.error('❌ Kaydetme hatası:', error);
       toast.error(error.message || "Eşleştirmeler kaydedilirken hata oluştu");
     } finally {
       setIsSaving(false);

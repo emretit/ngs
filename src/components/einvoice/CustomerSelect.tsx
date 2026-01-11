@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ export const CustomerSelect: React.FC<CustomerSelectProps> = ({
   const { data: allCustomersWithVKN, isLoading: isLoadingAll } = useQuery({
     queryKey: ["customers-with-vkn-all"],
     queryFn: async () => {
-      console.log('🔍 VKN\'li tüm müşteriler sorgulanıyor (RLS aktif)');
+      logger.debug('🔍 VKN\'li tüm müşteriler sorgulanıyor (RLS aktif)');
       
       const { data, error } = await supabase
         .from("customers")
@@ -41,12 +42,12 @@ export const CustomerSelect: React.FC<CustomerSelectProps> = ({
         .order('name');
       
       if (error) {
-        console.error('❌ Müşteri sorgu hatası:', error);
+        logger.error('❌ Müşteri sorgu hatası:', error);
         throw error;
       }
       
-      console.log(`✅ ${data?.length || 0} VKN'li müşteri bulundu (RLS)`);
-      console.log('📋 İlk 3 müşteri:', data?.slice(0, 3));
+      logger.debug(`✅ ${data?.length || 0} VKN'li müşteri bulundu (RLS)`);
+      logger.debug('📋 İlk 3 müşteri:', data?.slice(0, 3));
       return data || [];
     },
     staleTime: 5 * 60 * 1000, // 5 dakika cache
@@ -60,7 +61,7 @@ export const CustomerSelect: React.FC<CustomerSelectProps> = ({
       
       const normalizedQuery = searchQuery.trim().toLowerCase();
       
-      console.log('🔍 VKN\'li müşterilerde arama:', normalizedQuery);
+      logger.debug('🔍 VKN\'li müşterilerde arama:', normalizedQuery);
       
       const { data, error } = await supabase
         .from("customers")
@@ -73,7 +74,7 @@ export const CustomerSelect: React.FC<CustomerSelectProps> = ({
       
       if (error) throw error;
       
-      console.log(`✅ ${data?.length || 0} arama sonucu bulundu`);
+      logger.debug(`✅ ${data?.length || 0} arama sonucu bulundu`);
       return data;
     },
     enabled: !!searchQuery.trim() && isOpen,

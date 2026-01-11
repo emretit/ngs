@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -139,7 +140,7 @@ const PurchaseInvoicesTable = ({
     try {
       await onDeleteInvoice(invoiceToDelete.id);
     } catch (error) {
-      console.error('Error deleting invoice:', error);
+      logger.error('Error deleting invoice:', error);
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
@@ -403,7 +404,7 @@ const PurchaseInvoicesTable = ({
                             try {
                               await onDownloadPdf(invoice.einvoice_id, 'e-fatura');
                             } catch (error) {
-                              console.error('PDF önizleme hatası:', error);
+                              logger.error('PDF önizleme hatası:', error);
                             } finally {
                               setDownloadingInvoiceId(null);
                             }
@@ -433,7 +434,7 @@ const PurchaseInvoicesTable = ({
                               const invoiceType = invoice.sourceType === 'incoming' ? 'e-fatura' : 'e-arşiv';
                               await onDownloadPdf(invoice.id, invoiceType);
                             } catch (error) {
-                              console.error('PDF önizleme hatası:', error);
+                              logger.error('PDF önizleme hatası:', error);
                             } finally {
                               setDownloadingInvoiceId(null);
                             }

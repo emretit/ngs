@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 
 export type User = {
@@ -16,7 +17,7 @@ export const useUsers = (userId?: string) => {
     queryKey: ['profiles', userId],
     queryFn: async () => {
       if (!userId) {
-        console.log('useUsers: userId is null, returning null.');
+        logger.debug('useUsers: userId is null, returning null.');
         return null;
       }
       
@@ -28,7 +29,7 @@ export const useUsers = (userId?: string) => {
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching user data from profiles:', error);
+        logger.error('Error fetching user data from profiles:', error);
         return null;
       }
       

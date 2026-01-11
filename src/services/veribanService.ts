@@ -1,4 +1,5 @@
 import { supabase } from '../integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 export interface VeribanAuthData {
   username: string;
@@ -61,18 +62,18 @@ export class VeribanService {
    * Mükellef sorgulama
    */
   static async checkMukellef(taxNumber: string): Promise<VeribanResponse> {
-    console.log('🔍 [VeribanService] Mükellef sorgulama başlatılıyor...');
-    console.log('📋 [VeribanService] Vergi Numarası:', taxNumber);
+    logger.debug('🔍 [VeribanService] Mükellef sorgulama başlatılıyor...');
+    logger.debug('📋 [VeribanService] Vergi Numarası:', taxNumber);
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        console.error('❌ [VeribanService] Oturum bulunamadı');
+        logger.error('❌ [VeribanService] Oturum bulunamadı');
         throw new Error('Oturum bulunamadı');
       }
 
-      console.log('📤 [VeribanService] Edge function çağrılıyor: veriban-check-mukellef');
-      console.log('📦 [VeribanService] Request body:', { taxNumber });
+      logger.debug('📤 [VeribanService] Edge function çağrılıyor: veriban-check-mukellef');
+      logger.debug('📦 [VeribanService] Request body:', { taxNumber });
 
       const { data, error } = await supabase.functions.invoke('veriban-check-mukellef', {
         headers: {
@@ -83,12 +84,12 @@ export class VeribanService {
         }
       });
 
-      console.log('📥 [VeribanService] Edge function response alındı');
-      console.log('📊 [VeribanService] Response data:', JSON.stringify(data, null, 2));
-      console.log('⚠️ [VeribanService] Response error:', error);
+      logger.debug('📥 [VeribanService] Edge function response alındı');
+      logger.debug('📊 [VeribanService] Response data:', JSON.stringify(data, null, 2));
+      logger.debug('⚠️ [VeribanService] Response error:', error);
 
       if (error) {
-        console.error('❌ [VeribanService] Edge function error:', error);
+        logger.error('❌ [VeribanService] Edge function error:', error);
         throw error;
       }
 
@@ -99,7 +100,7 @@ export class VeribanService {
         message: data?.message,
       };
 
-      console.log('✅ [VeribanService] Mükellef sorgulama sonucu:', {
+      logger.debug('✅ [VeribanService] Mükellef sorgulama sonucu:', {
         success: result.success,
         isEinvoiceMukellef: result.data ? true : false,
         aliasName: result.data?.aliasName,
@@ -109,12 +110,12 @@ export class VeribanService {
 
       return result;
     } catch (err) {
-      console.error('❌ [VeribanService] Mükellef sorgulama hatası:', err);
+      logger.error('❌ [VeribanService] Mükellef sorgulama hatası:', err);
       const errorResult = {
         success: false,
         error: err instanceof Error ? err.message : 'Mükellef sorgulaması yapılamadı',
       };
-      console.error('❌ [VeribanService] Error result:', errorResult);
+      logger.error('❌ [VeribanService] Error result:', errorResult);
       return errorResult;
     }
   }
@@ -469,7 +470,7 @@ export class VeribanService {
     invoiceType?: 'sales' | 'purchase';
   }): Promise<VeribanResponse> {
     try {
-      console.log('🔍 [VeribanService] Getting invoice details for UUID:', params.invoiceUUID, 'Type:', params.invoiceType || 'purchase (default)');
+      logger.debug('🔍 [VeribanService] Getting invoice details for UUID:', params.invoiceUUID, 'Type:', params.invoiceType || 'purchase (default)');
       
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -481,7 +482,7 @@ export class VeribanService {
         ? 'veriban-sales-invoice-details' 
         : 'veriban-invoice-details';
       
-      console.log('📞 [VeribanService] Calling function:', functionName);
+      logger.debug('📞 [VeribanService] Calling function:', functionName);
 
       const { data, error } = await supabase.functions.invoke(functionName, {
         headers: {
@@ -492,7 +493,7 @@ export class VeribanService {
         }
       });
 
-      console.log('📥 [VeribanService] Invoice details response:', { data, error });
+      logger.debug('📥 [VeribanService] Invoice details response:', { data, error });
 
       if (error) throw error;
 
@@ -503,7 +504,7 @@ export class VeribanService {
         message: data?.message,
       };
     } catch (err) {
-      console.error('❌ [VeribanService] Get invoice details error:', err);
+      logger.error('❌ [VeribanService] Get invoice details error:', err);
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Fatura detayları alınamadı',

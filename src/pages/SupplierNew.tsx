@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -234,7 +235,7 @@ const SupplierNew = () => {
         .select()
         .single();
       if (error) {
-        console.error('Supplier add error:', error);
+        logger.error('Supplier add error:', error);
         throw error;
       }
       return newSupplier;
@@ -245,7 +246,7 @@ const SupplierNew = () => {
       navigate('/suppliers');
     },
     onError: (error) => {
-      console.error('Form submission error:', error);
+      logger.error('Form submission error:', error);
       toast.error("Tedarikçi eklenirken bir hata oluştu. Lütfen tekrar deneyin.");
     },
   });
@@ -254,7 +255,7 @@ const SupplierNew = () => {
     try {
       await mutation.mutateAsync(formData);
     } catch (error) {
-      console.error('Form submission error:', error);
+      logger.error('Form submission error:', error);
     }
   };
   return (

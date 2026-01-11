@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { Plus, Pencil, Trash2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,7 +117,7 @@ export function VendorContactsManager({ vendorId }: VendorContactsManagerProps) 
     try {
       await deleteContact.mutateAsync({ id: contactToDelete.id, vendorId });
     } catch (error) {
-      console.error('Error deleting contact:', error);
+      logger.error('Error deleting contact:', error);
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);

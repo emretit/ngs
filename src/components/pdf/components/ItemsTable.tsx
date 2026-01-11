@@ -1,4 +1,5 @@
 import React from 'react';
+import { logger } from '@/utils/logger';
 import { View, Text, Image } from '@react-pdf/renderer';
 import { QuoteData, TemplateSchema } from '@/types/pdf-template';
 import { safeText } from '../utils/pdfTextUtils';
@@ -69,7 +70,7 @@ export const ItemsTable: React.FC<ItemsTableProps> = ({ data, schema, styles }) 
                 const imageUrl = item.image_url || item.product?.image_url;
                 // Debug: image_url durumunu logla (sadece development'ta)
                 if (process.env.NODE_ENV === 'development' && index === 0) {
-                  console.log('PDF Render - Product Image Debug:', {
+                  logger.debug('PDF Render - Product Image Debug:', {
                     itemIndex: index,
                     itemId: item.id,
                     productId: item.product_id,

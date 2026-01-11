@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 
 export interface MonthlySalesData {
@@ -169,7 +170,7 @@ export async function fetchSalesAnalysisData(
 
     return Object.values(monthlyData);
   } catch (error) {
-    console.error('Error fetching sales analysis data:', error);
+    logger.error('Error fetching sales analysis data:', error);
     throw error;
   }
 }

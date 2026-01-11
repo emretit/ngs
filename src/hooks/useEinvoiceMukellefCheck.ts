@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { IntegratorService } from '../services/integratorService';
 
 interface EinvoiceData {
@@ -22,20 +23,20 @@ export const useEinvoiceMukellefCheck = () => {
   const [result, setResult] = useState<EinvoiceResult | null>(null);
 
   const checkEinvoiceMukellef = async (taxNumber: string): Promise<EinvoiceResult> => {
-    console.log('🔍 [useEinvoiceMukellefCheck] E-invoice mükellef check başlatılıyor...');
-    console.log('📋 [useEinvoiceMukellefCheck] Vergi Numarası:', taxNumber);
+    logger.debug('🔍 [useEinvoiceMukellefCheck] E-invoice mükellef check başlatılıyor...');
+    logger.debug('📋 [useEinvoiceMukellefCheck] Vergi Numarası:', taxNumber);
     
     setIsChecking(true);
     try {
       // Use IntegratorService which automatically routes to correct integrator
-      console.log('📤 [useEinvoiceMukellefCheck] IntegratorService.checkMukellef çağrılıyor...');
+      logger.debug('📤 [useEinvoiceMukellefCheck] IntegratorService.checkMukellef çağrılıyor...');
       const apiResult = await IntegratorService.checkMukellef(taxNumber);
 
-      console.log('📥 [useEinvoiceMukellefCheck] IntegratorService sonucu alındı');
-      console.log('📊 [useEinvoiceMukellefCheck] API Result:', JSON.stringify(apiResult, null, 2));
+      logger.debug('📥 [useEinvoiceMukellefCheck] IntegratorService sonucu alındı');
+      logger.debug('📊 [useEinvoiceMukellefCheck] API Result:', JSON.stringify(apiResult, null, 2));
 
       if (!apiResult.success) {
-        console.error('❌ [useEinvoiceMukellefCheck] API başarısız:', apiResult.error);
+        logger.error('❌ [useEinvoiceMukellefCheck] API başarısız:', apiResult.error);
         throw new Error(apiResult.error || 'Mükellef sorgulama başarısız');
       }
 
@@ -44,7 +45,7 @@ export const useEinvoiceMukellefCheck = () => {
         data: apiResult.data as EinvoiceData
       };
 
-      console.log('✅ [useEinvoiceMukellefCheck] Mükellef check sonucu:', {
+      logger.debug('✅ [useEinvoiceMukellefCheck] Mükellef check sonucu:', {
         isEinvoiceMukellef: checkResult.isEinvoiceMukellef,
         hasData: !!checkResult.data,
         aliasName: checkResult.data?.aliasName,
@@ -54,17 +55,17 @@ export const useEinvoiceMukellefCheck = () => {
       setResult(checkResult);
       return checkResult;
     } catch (error) {
-      console.error('❌ [useEinvoiceMukellefCheck] E-invoice check error:', error);
+      logger.error('❌ [useEinvoiceMukellefCheck] E-invoice check error:', error);
       const errorResult: EinvoiceResult = {
         isEinvoiceMukellef: false,
         data: undefined
       };
-      console.error('❌ [useEinvoiceMukellefCheck] Error result:', errorResult);
+      logger.error('❌ [useEinvoiceMukellefCheck] Error result:', errorResult);
       setResult(errorResult);
       return errorResult;
     } finally {
       setIsChecking(false);
-      console.log('🏁 [useEinvoiceMukellefCheck] Check işlemi tamamlandı');
+      logger.debug('🏁 [useEinvoiceMukellefCheck] Check işlemi tamamlandı');
     }
   };
 

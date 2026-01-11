@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useForm, FormProvider } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -528,7 +529,7 @@ const NewOrderCreate = () => {
         navigate("/orders/list");
       }
     } catch (error) {
-      console.error('Error saving order:', error);
+      logger.error('Error saving order:', error);
       const errorMessage = error instanceof Error
         ? error.message
         : "Sipariş kaydedilirken bir hata oluştu";

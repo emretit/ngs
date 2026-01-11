@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -138,7 +139,7 @@ export default function BalanceAdjustmentDialog({
         .insert([adjustmentPayload]);
 
       if (adjustmentError) {
-        console.error("Balance adjustment log error:", adjustmentError);
+        logger.error("Balance adjustment log error:", adjustmentError);
         // Log hatası işlemi durdurmasın
       }
     },

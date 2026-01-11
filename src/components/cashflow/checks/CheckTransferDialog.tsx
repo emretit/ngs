@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Label } from "@/components/ui/label";
 import { useForm, FormProvider } from "react-hook-form";
@@ -53,11 +54,11 @@ export default function CheckTransferDialog({
     queryKey: ["portfolio-checks", userData?.company_id],
     queryFn: async () => {
       if (!userData?.company_id) {
-        console.log("No company_id, returning empty array");
+        logger.debug("No company_id, returning empty array");
         return [];
       }
 
-      console.log("Fetching portfolio checks for company:", userData.company_id);
+      logger.debug("Fetching portfolio checks for company:", userData.company_id);
 
       const { data, error } = await supabase
         .from("checks")
@@ -71,11 +72,11 @@ export default function CheckTransferDialog({
         .order("due_date", { ascending: true });
 
       if (error) {
-        console.error("Error fetching portfolio checks:", error);
+        logger.error("Error fetching portfolio checks:", error);
         throw error;
       }
 
-      console.log("Fetched portfolio checks:", data);
+      logger.debug("Fetched portfolio checks:", data);
       return data || [];
     },
     enabled: open && allowCheckSelection && !initialCheck && !!userData?.company_id,
@@ -132,9 +133,9 @@ export default function CheckTransferDialog({
         .select();
 
       if (updateError) {
-        console.error("Update error:", updateError);
-        console.error("Update data:", updateData);
-        console.error("Check ID:", selectedCheck.id);
+        logger.error("Update error:", updateError);
+        logger.error("Update data:", updateData);
+        logger.error("Check ID:", selectedCheck.id);
         throw new Error(updateError.message || "Çek güncellenirken hata oluştu");
       }
 
@@ -156,7 +157,7 @@ export default function CheckTransferDialog({
 
       const { error: paymentError } = await supabase.from("payments").insert(paymentData);
       if (paymentError) {
-        console.error("Payment error:", paymentError);
+        logger.error("Payment error:", paymentError);
         throw new Error(paymentError.message || "Ödeme kaydı oluşturulurken hata oluştu");
       }
 
@@ -187,7 +188,7 @@ export default function CheckTransferDialog({
       onSuccess?.();
     },
     onError: (error: any) => {
-      console.error("Transfer mutation error:", error);
+      logger.error("Transfer mutation error:", error);
       toast.error(error.message || "Çek ciro edilirken hata oluştu", { duration: 2000 });
     },
   });

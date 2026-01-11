@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from '@/utils/logger';
 import { Proposal, ProposalStatus } from "@/types/proposal";
 import { Json } from "@/types/json";
 import { parseProposalData } from "../helpers/dataParser";
@@ -35,7 +36,7 @@ export async function getProposals(options: ServiceOptions = {}) {
     
     return { data, count };
   } catch (error) {
-    console.error('Error fetching proposals:', error);
+    logger.error('Error fetching proposals:', error);
     return { data: [], count: 0 };
   }
 }
@@ -62,7 +63,7 @@ export async function getProposalById(id: string) {
     
     return { data: parsedData, error: null };
   } catch (error) {
-    console.error('Error fetching proposal:', error);
+    logger.error('Error fetching proposal:', error);
     return { data: null, error };
   }
 }
@@ -95,7 +96,7 @@ export async function createProposal(proposal: Partial<Proposal>) {
       }
     }
   } catch (e) {
-    console.error('Error fetching user info:', e);
+    logger.error('Error fetching user info:', e);
   }
 
   // Create history entry for new proposal
@@ -129,13 +130,13 @@ export async function createProposal(proposal: Partial<Proposal>) {
           }
         }
       } catch (e) {
-        console.error('Error fetching company_id from profile:', e);
+        logger.error('Error fetching company_id from profile:', e);
       }
     }
 
-    console.log('Creating proposal with company_id:', companyId);
+    logger.debug('Creating proposal with company_id:', companyId);
     if (!companyId) {
-      console.warn('⚠️ WARNING: Proposal is being created without company_id!');
+      logger.warn('⚠️ WARNING: Proposal is being created without company_id!');
     }
 
     // Generate proposal number
@@ -263,7 +264,7 @@ export async function createProposal(proposal: Partial<Proposal>) {
     
     return { data: parsedData, error: null };
   } catch (error) {
-    console.error('Error creating proposal:', error);
+    logger.error('Error creating proposal:', error);
     return { data: null, error };
   }
 }
@@ -421,7 +422,7 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
         }
       }
     } catch (e) {
-      console.error('Error fetching user info:', e);
+      logger.error('Error fetching user info:', e);
     }
 
     // History entry oluştur
@@ -534,7 +535,7 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
           try {
             existingHistory = JSON.parse(currentProposal.history);
           } catch (e) {
-            console.error('Error parsing existing history:', e);
+            logger.error('Error parsing existing history:', e);
             existingHistory = [];
           }
         } else if (Array.isArray(currentProposal.history)) {
@@ -558,7 +559,7 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
     
     return { data: parsedData, error: null };
   } catch (error) {
-    console.error('Error updating proposal:', error);
+    logger.error('Error updating proposal:', error);
     return { data: null, error };
   }
 }
@@ -577,7 +578,7 @@ export async function deleteProposal(id: string) {
     
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error deleting proposal:', error);
+    logger.error('Error deleting proposal:', error);
     return { success: false, error };
   }
 }

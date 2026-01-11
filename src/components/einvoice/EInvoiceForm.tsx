@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,7 +86,7 @@ const EInvoiceForm = ({ onClose, onSuccess }: EInvoiceFormProps) => {
       toast.success('E-Fatura başarıyla oluşturuldu');
       onSuccess();
     } catch (error) {
-      console.error('E-Fatura oluşturma hatası:', error);
+      logger.error('E-Fatura oluşturma hatası:', error);
       toast.error('E-Fatura oluşturulamadı');
     } finally {
       setLoading(false);

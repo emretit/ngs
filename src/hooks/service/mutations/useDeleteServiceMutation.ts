@@ -1,5 +1,6 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -31,7 +32,7 @@ export const useDeleteServiceMutation = () => {
       toast.success("Service request deleted successfully");
     },
     onError: (error) => {
-      console.error('Service request deletion error:', error);
+      logger.error('Service request deletion error:', error);
       toast.error("Failed to delete service request");
     },
   });

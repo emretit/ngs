@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -13,7 +14,7 @@ export const useVeribanPdf = () => {
     setIsDownloading(true);
 
     try {
-      console.log('📄 [Veriban PDF] Starting PDF download:', { invoiceId, invoiceType, direction });
+      logger.debug('📄 [Veriban PDF] Starting PDF download:', { invoiceId, invoiceType, direction });
 
       const { data, error } = await supabase.functions.invoke('veriban-invoice-pdf', {
         body: {
@@ -23,10 +24,10 @@ export const useVeribanPdf = () => {
         }
       });
 
-      console.log('📡 [Veriban PDF] Supabase function response:', { data, error });
+      logger.debug('📡 [Veriban PDF] Supabase function response:', { data, error });
 
       if (error) {
-        console.error('❌ [Veriban PDF] Supabase function error:', error);
+        logger.error('❌ [Veriban PDF] Supabase function error:', error);
         throw new Error(error.message || 'PDF indirme hatası');
       }
 
@@ -38,7 +39,7 @@ export const useVeribanPdf = () => {
         throw new Error(data.error || 'PDF indirme başarısız');
       }
 
-      console.log('✅ [Veriban PDF] PDF downloaded successfully');
+      logger.debug('✅ [Veriban PDF] PDF downloaded successfully');
 
       if (!data.pdfData) {
         throw new Error('PDF verisi alınamadı');
@@ -81,7 +82,7 @@ export const useVeribanPdf = () => {
       toast.success(`${invoiceType === 'e-fatura' ? 'E-Fatura' : 'E-Arşiv'} PDF'i yeni sekmede açıldı`);
       return { success: true, url: blobUrl };
     } catch (error) {
-      console.error('❌ [Veriban PDF] PDF download error:', error);
+      logger.error('❌ [Veriban PDF] PDF download error:', error);
       const errorMessage = error instanceof Error ? error.message : 'PDF açma hatası';
       toast.error(errorMessage);
       return { success: false, error: errorMessage };

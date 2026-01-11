@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { VendorInvoice, VendorInvoiceFormData, ThreeWayMatch } from '@/types/purchasing-extended';
@@ -208,7 +209,7 @@ export const useUpdateVendorInvoiceStatus = () => {
         // 1. Create a payable entry in cashflow
         // 2. Generate payment schedule based on payment terms
         // 3. Link to the invoice for reconciliation
-        console.log('TODO: Create AP bill for invoice', id);
+        logger.debug('TODO: Create AP bill for invoice', id);
       }
 
       const { error } = await supabase

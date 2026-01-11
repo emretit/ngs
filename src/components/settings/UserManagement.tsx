@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -135,7 +136,7 @@ export const UserManagement = () => {
             .eq('user_id', profile.id);
           
           if (rolesError) {
-            console.error('Error fetching roles:', rolesError);
+            logger.error('Error fetching roles:', rolesError);
             return { ...profile, user_roles: [] };
           }
 

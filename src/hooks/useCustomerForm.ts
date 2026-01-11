@@ -118,7 +118,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
             .maybeSingle();
           return data?.name || "";
         } catch (error) {
-          console.error('Error resolving city name:', error);
+          logger.error('Error resolving city name:', error);
           return "";
         }
       };
@@ -134,7 +134,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
             .maybeSingle();
           return data?.name || "";
         } catch (error) {
-          console.error('Error resolving district name:', error);
+          logger.error('Error resolving district name:', error);
           return "";
         }
       };
@@ -413,7 +413,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
           .maybeSingle();
         
         if (checkError) {
-          console.error('Mevcut kayıt kontrol hatası:', checkError);
+          logger.error('Mevcut kayıt kontrol hatası:', checkError);
         }
         
         // Company ID kontrolü
@@ -432,7 +432,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
           .select();
         
         if (updateError) {
-          console.error('Update hatası:', updateError);
+          logger.error('Update hatası:', updateError);
           throw updateError;
         }
 
@@ -443,12 +443,12 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
           .maybeSingle();
         
         if (fetchError) {
-          console.error('Fetch error:', fetchError);
+          logger.error('Fetch error:', fetchError);
           throw fetchError;
         }
 
         if (!updatedData) {
-          console.error('Updated data not found');
+          logger.error('Updated data not found');
           throw new Error('Updated customer not found');
         }
 
@@ -463,12 +463,12 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
           .maybeSingle();
         
         if (error) {
-          console.error('Add error:', error);
+          logger.error('Add error:', error);
           throw error;
         }
 
         if (!newData) {
-          console.error('New data not found');
+          logger.error('New data not found');
           throw new Error('Customer could not be added');
         }
 
@@ -486,7 +486,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
       navigate('/customers');
     },
     onError: (error) => {
-      console.error('Mutation error:', error);
+      logger.error('Mutation error:', error);
       toast.error(error instanceof Error ? error.message : "Bir hata oluştu. Lütfen tekrar deneyin.");
     },
   });
@@ -496,7 +496,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
     try {
       await mutation.mutateAsync(formData);
     } catch (error) {
-      console.error('Form submission error:', error);
+      logger.error('Form submission error:', error);
     }
   };
 

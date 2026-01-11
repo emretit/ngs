@@ -1,4 +1,5 @@
 import { memo, useState, useEffect, useRef } from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -179,7 +180,7 @@ export const AIAgentAccordion = memo(() => {
         });
       }
     } catch (error: any) {
-      console.error("AI error:", error);
+      logger.error("AI error:", error);
       toast({
         title: "Hata",
         description: error.message || "Mesaj gönderilemedi",

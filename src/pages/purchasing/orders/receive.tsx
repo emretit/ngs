@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,7 +92,7 @@ export default function ReceivePurchaseOrder() {
       });
       navigate(`/purchasing/grns`);
     } catch (error) {
-      console.error('Error creating GRN:', error);
+      logger.error('Error creating GRN:', error);
     }
   };
 

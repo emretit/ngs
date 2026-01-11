@@ -1,5 +1,6 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Task } from "@/types/task";
@@ -91,7 +92,7 @@ export const useTaskOperations = () => {
           queryClient.setQueryData(queryKey, data);
         });
       }
-      console.error("Error updating task status:", error);
+      logger.error("Error updating task status:", error);
       toast.error("Görev durumu güncellenemedi");
     },
   });
@@ -111,7 +112,7 @@ export const useTaskOperations = () => {
       toast.success("Görev silindi");
     },
     onError: (error) => {
-      console.error("Error deleting task:", error);
+      logger.error("Error deleting task:", error);
       toast.error("Görev silinemedi");
     },
   });
@@ -133,7 +134,7 @@ export const useTaskOperations = () => {
       toast.success("Görev önemi güncellendi");
     },
     onError: (error) => {
-      console.error("Error updating task importance:", error);
+      logger.error("Error updating task importance:", error);
       toast.error("Görev önemi güncellenemedi");
     },
   });

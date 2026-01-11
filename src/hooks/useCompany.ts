@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthContext";
 
@@ -17,7 +18,7 @@ export function useCompany() {
         .single();
 
       if (error) {
-        console.error("Error fetching company:", error);
+        logger.error("Error fetching company:", error);
         return null;
       }
 

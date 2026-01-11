@@ -1,5 +1,6 @@
 
 import React, { useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent } from "@/components/ui/card";
 import { DollarSign, AlertCircle, ArrowRightLeft } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -29,7 +30,7 @@ const ProposalCurrencySelector: React.FC<ProposalCurrencySelectorProps> = ({
 
   // Refresh exchange rates when component loads
   useEffect(() => {
-    console.log("ProposalCurrencySelector loaded, refreshing rates");
+    logger.debug("ProposalCurrencySelector loaded, refreshing rates");
     refreshExchangeRates();
   }, [refreshExchangeRates]);
 
@@ -43,14 +44,14 @@ const ProposalCurrencySelector: React.FC<ProposalCurrencySelectorProps> = ({
     const rate = exchangeRates.find(rate => rate.currency_code === selectedCurrency);
     
     if (rate && rate.forex_selling) {
-      console.log(`Found rate for ${selectedCurrency}:`, rate.forex_selling);
+      logger.debug(`Found rate for ${selectedCurrency}:`, rate.forex_selling);
       return {
         rate: rate.forex_selling,
         formattedRate: formatCurrency(rate.forex_selling, "TRY")
       };
     }
     
-    console.log(`No rate found for ${selectedCurrency} in:`, exchangeRates);
+    logger.debug(`No rate found for ${selectedCurrency} in:`, exchangeRates);
     return null;
   };
 
@@ -63,7 +64,7 @@ const ProposalCurrencySelector: React.FC<ProposalCurrencySelectorProps> = ({
     
     // If there are items and onItemsChange callback, convert the items' currencies
     if (items.length > 0 && onItemsChange) {
-      console.log(`Converting all items from ${selectedCurrency} to ${newCurrency}`);
+      logger.debug(`Converting all items from ${selectedCurrency} to ${newCurrency}`);
       
       const updatedItems = items.map(item => {
         // If item has original currency info, convert from that to maintain accuracy
@@ -73,12 +74,12 @@ const ProposalCurrencySelector: React.FC<ProposalCurrencySelectorProps> = ({
             ? item.original_price
             : item.unit_price;
             
-        console.log(`Converting item ${item.name} from ${sourceCurrency} to ${newCurrency}`);
-        console.log(`Original price: ${sourcePrice} ${sourceCurrency}`);
+        logger.debug(`Converting item ${item.name} from ${sourceCurrency} to ${newCurrency}`);
+        logger.debug(`Original price: ${sourcePrice} ${sourceCurrency}`);
 
         // Convert the currency
         const convertedPrice = convertCurrency(sourcePrice, sourceCurrency, newCurrency);
-        console.log(`Converted price: ${convertedPrice} ${newCurrency}`);
+        logger.debug(`Converted price: ${convertedPrice} ${newCurrency}`);
         
         // Calculate total with tax and discount rates
         const quantity = Number(item.quantity || 1);

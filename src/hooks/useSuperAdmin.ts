@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthContext";
 
@@ -17,7 +18,7 @@ export const useSuperAdmin = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('Error checking super admin status:', error);
+        logger.error('Error checking super admin status:', error);
         return false;
       }
 

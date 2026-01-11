@@ -1,0 +1,370 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  Search, 
+  RefreshCw, 
+  Eye, 
+  Package, 
+  FileText, 
+  Building,
+  DollarSign,
+  Loader2,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Calendar
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
+import { toast } from 'sonner';
+import { useNilveraPdf } from '@/hooks/useNilveraPdf';
+import { DateDisplay } from '@/components/ui/date-display';
+
+export default function EInvoiceList() {
+  // Date range filter states - Default to last 7 days (test için)
+  const getLast7DaysRange = () => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 7);
+    
+    return {
+      start: sevenDaysAgo.toISOString().split('T')[0],
+      end: now.toISOString().split('T')[0]
+    };
+  };
+  
+  const defaultRange = getLast7DaysRange();
+  const [startDate, setStartDate] = useState(defaultRange.start);
+  const [endDate, setEndDate] = useState(defaultRange.end);
+  
+  const { incomingInvoices, isLoading, refetch } = useIncomingInvoices({ startDate, endDate });
+  const navigate = useNavigate();
+  const { downloadAndOpenPdf } = useNilveraPdf();
+  
+  // Her satır için ayrı loading state
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
+  
+  // Refetch when date filters change
+  useEffect(() => {
+    refetch();
+  }, [startDate, endDate, refetch]);
+
+  // Show ALL invoices for now (removed unprocessed filter)
+  // TODO: Add filter toggle later for processed/unprocessed invoices
+  
+  // Apply filters
+  const filteredInvoices = incomingInvoices.filter(invoice => {
+    const matchesSearch = !searchTerm || 
+      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.supplierTaxNumber.toLowerCase().includes(searchTerm.toLowerCase());
+
+    return matchesSearch;
+  });
+
+  // Calculate summary statistics
+  const totalInvoices = filteredInvoices.length;
+  const totalAmount = filteredInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
+
+
+  const getInvoiceTypeBadge = (invoiceType: string) => {
+    switch (invoiceType) {
+      case 'SATIS':
+        return <Badge className="bg-green-100 text-green-800">Satış</Badge>;
+      case 'IADE':
+        return <Badge className="bg-red-100 text-red-800">İade</Badge>;
+      case 'OZELMATRAH':
+        return <Badge className="bg-blue-100 text-blue-800">Özel Matrah</Badge>;
+      case 'TEVKIFAT_IADE':
+        return <Badge className="bg-blue-100 text-blue-800">Tevkifat İade</Badge>;
+      case 'KONAKLAMA':
+        return <Badge className="bg-purple-100 text-purple-800">Konaklama</Badge>;
+      case 'SGK':
+        return <Badge className="bg-blue-100 text-blue-800">SGK</Badge>;
+      case 'IHRAC_KAYITLI':
+        return <Badge className="bg-blue-100 text-blue-800">İhraç Kayıtlı</Badge>;
+      case 'ISTISNA':
+        return <Badge className="bg-blue-100 text-blue-800">İstisna</Badge>;
+      case 'TEMEL':
+        return <Badge className="bg-gray-100 text-gray-800">Temel</Badge>;
+      case 'TICARI':
+        return <Badge className="bg-green-100 text-green-800">Ticari</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800">{invoiceType || 'Bilinmiyor'}</Badge>;
+    }
+  };
+
+  const getInvoiceProfileBadge = (invoiceProfile: string) => {
+    switch (invoiceProfile) {
+      case 'TEMELFATURA':
+        return <Badge variant="outline" className="border-blue-500 text-blue-700">Temel Fatura</Badge>;
+      case 'TICARIFATURA':
+        return <Badge variant="outline" className="border-green-500 text-green-700">Ticari Fatura</Badge>;
+      case 'IHRACAT':
+        return <Badge variant="outline" className="border-purple-500 text-purple-700">İhracat</Badge>;
+      case 'YOLCUBERABERFATURA':
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-700">Yolcu Beraber</Badge>;
+      case 'EARSIVFATURA':
+        return <Badge variant="outline" className="border-indigo-500 text-indigo-700">E-Arşiv</Badge>;
+      case 'KAMU':
+        return <Badge variant="outline" className="border-red-500 text-red-700">Kamu</Badge>;
+      case 'HKS':
+        return <Badge variant="outline" className="border-gray-500 text-gray-700">HKS</Badge>;
+      default:
+        return <Badge variant="outline" className="border-gray-500 text-gray-700">{invoiceProfile || 'Bilinmiyor'}</Badge>;
+    }
+  };
+
+  const handleProcessInvoice = (invoice: any) => {
+    navigate(`/e-invoice/process/${invoice.id}`);
+  };
+
+  const handleRefresh = () => {
+    refetch();
+    toast.success("E-fatura listesi güncellendi");
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header with filters */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <CardTitle className="text-2xl bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-orange-400">
+                Gelen E-Faturalar
+              </CardTitle>
+              <p className="text-muted-foreground mt-1">
+                Tüm gelen e-faturaları görüntüleyin ve işleme alın
+              </p>
+            </div>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+              {filteredInvoices.length} Fatura
+            </Badge>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          {/* Filters */}
+          <div className="flex flex-col gap-4 mb-6">
+            {/* Date Range Filter */}
+            <div className="flex flex-col sm:flex-row gap-4 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Tarih Aralığı:</span>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-muted-foreground">Başlangıç:</label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-[140px]"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-muted-foreground">Bitiş:</label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-[140px]"
+                  />
+                </div>
+                <Button 
+                  onClick={handleRefresh}
+                  disabled={isLoading}
+                  size="sm"
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  Filtrele
+                </Button>
+              </div>
+            </div>
+            
+            {/* Search and Status Filters */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Fatura no, firma adı veya vergi no ile ara..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Tarih filtresi" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tüm Tarihler</SelectItem>
+                  <SelectItem value="today">Bugün</SelectItem>
+                  <SelectItem value="week">Bu Hafta</SelectItem>
+                  <SelectItem value="month">Bu Ay</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardContent className="flex items-center p-4">
+                <FileText className="h-8 w-8 text-blue-600 mr-3" />
+                <div>
+                  <p className="text-sm font-medium text-blue-600">Toplam</p>
+                  <p className="text-lg font-bold text-blue-900">{totalInvoices}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+
+            <Card>
+              <CardContent className="flex items-center p-4">
+                <DollarSign className="h-8 w-8 text-green-600 mr-3" />
+                <div>
+                  <p className="text-sm font-medium text-green-600">Toplam Tutar</p>
+                  <p className="text-lg font-bold text-green-900">
+                    {totalAmount.toLocaleString('tr-TR')} ₺
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Invoice Table */}
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+              <span className="ml-2 text-muted-foreground">E-faturalar yükleniyor...</span>
+            </div>
+          ) : filteredInvoices.length === 0 ? (
+            <div className="text-center py-12">
+              <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">E-Fatura Bulunamadı</h3>
+              <p className="text-muted-foreground">
+                Seçilen tarih aralığında e-fatura bulunmuyor veya filtre kriterlerinize uygun fatura yok.
+              </p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fatura No</TableHead>
+                  <TableHead>Fatura Tipi</TableHead>
+                  <TableHead>Fatura Senaryosu</TableHead>
+                  <TableHead>Tedarikçi</TableHead>
+                  <TableHead>Vergi No</TableHead>
+                  <TableHead>Fatura Tarihi</TableHead>
+                  <TableHead>Vade Tarihi</TableHead>
+                  <TableHead className="text-right">Tutar</TableHead>
+                  <TableHead>Para Birimi</TableHead>
+                  <TableHead className="text-center">İşlemler</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInvoices.map((invoice) => (
+                  <TableRow key={invoice.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium">
+                      {invoice.invoiceNumber}
+                    </TableCell>
+                    <TableCell>
+                       {getInvoiceTypeBadge(invoice.invoiceType || 'BILINMIYOR')}
+                     </TableCell>
+                     <TableCell>
+                       {getInvoiceProfileBadge(invoice.invoiceProfile || 'TEMELFATURA')}
+                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Building className="h-4 w-4 text-muted-foreground mr-2" />
+                        {invoice.supplierName}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {invoice.supplierTaxNumber}
+                    </TableCell>
+                    <TableCell>
+                      <DateDisplay date={invoice.invoiceDate} />
+                    </TableCell>
+                    <TableCell>
+                      <DateDisplay date={invoice.dueDate} />
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {invoice.totalAmount.toLocaleString('tr-TR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{invoice.currency}</Badge>
+                    </TableCell>
+                    <TableCell className="py-2 px-3 text-center">
+                      <div className="flex justify-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleProcessInvoice(invoice);
+                          }}
+                          className="h-8 w-8"
+                          title="İşle"
+                        >
+                          <Package className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            setDownloadingInvoiceId(invoice.id);
+                            try {
+                              await downloadAndOpenPdf(invoice.id, 'e-fatura');
+                            } catch (error) {
+                              console.error('PDF önizleme hatası:', error);
+                            } finally {
+                              setDownloadingInvoiceId(null);
+                            }
+                          }}
+                          disabled={downloadingInvoiceId === invoice.id}
+                          className="h-8 w-8"
+                          title="PDF Önizleme"
+                        >
+                          {downloadingInvoiceId === invoice.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+    </div>
+  );
+}

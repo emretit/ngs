@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
@@ -127,7 +128,7 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
         setInvoice(invoiceData);
       }
     } catch (error) {
-      console.error("Error loading invoice:", error);
+      logger.error("Error loading invoice:", error);
     } finally {
       setLoading(false);
     }
@@ -151,12 +152,12 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
         .order("created_at", { ascending: true });
 
       if (error) {
-        console.error("Error loading invoice items:", error);
+        logger.error("Error loading invoice items:", error);
       } else {
         setInvoiceItems(items || []);
       }
     } catch (error) {
-      console.error("Error loading invoice items:", error);
+      logger.error("Error loading invoice items:", error);
     } finally {
       setItemsLoading(false);
     }
@@ -200,7 +201,7 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
         .order("transaction_date", { ascending: false });
 
       if (error) {
-        console.error("Error loading stock movements:", error);
+        logger.error("Error loading stock movements:", error);
       } else if (transactions) {
         const movements: StockMovement[] = transactions.flatMap((transaction: any) => {
           if (!transaction.items || transaction.items.length === 0) return [];
@@ -219,7 +220,7 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
         setStockMovements(movements);
       }
     } catch (error) {
-      console.error("Error loading stock movements:", error);
+      logger.error("Error loading stock movements:", error);
     } finally {
       setMovementsLoading(false);
     }

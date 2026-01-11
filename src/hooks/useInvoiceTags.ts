@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -63,7 +64,7 @@ export const useInvoiceTags = (invoiceId?: string, hasNilveraId?: boolean) => {
       toast.success(`${newTags.length} etiket başarıyla yüklendi`);
     },
     onError: (error: any) => {
-      console.error('Error refreshing tags:', error);
+      logger.error('Error refreshing tags:', error);
       toast.error(error.message || 'Etiketler yenilenirken hata oluştu');
     }
   });

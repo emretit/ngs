@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -120,7 +121,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
         });
       }
     } catch (error) {
-      console.error('Error loading terms:', error);
+      logger.error('Error loading terms:', error);
     }
   };
 
@@ -158,7 +159,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
       }
     }
 
-    console.log('🔍 ProposalFormTerms - handleTermSelect:', {
+    logger.debug('🔍 ProposalFormTerms - handleTermSelect:', {
       category,
       fieldName,
       currentValue,
@@ -269,7 +270,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
       setEditingTermId(null);
 
     } catch (error) {
-      console.error('Error saving term:', error);
+      logger.error('Error saving term:', error);
       toast.error("Şart kaydedilirken bir hata oluştu: " + (error as Error).message);
     } finally {
       setIsLoading(false);
@@ -315,7 +316,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
 
       toast.success("Şart başarıyla silindi!");
     } catch (error) {
-      console.error('Error deleting term:', error);
+      logger.error('Error deleting term:', error);
       toast.error("Şart silinirken bir hata oluştu: " + (error as Error).message);
     } finally {
       setIsDeleting(false);
@@ -478,7 +479,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
               name="other_terms"
               value={otherTerms || ""}
               onChange={(e) => {
-                console.log('🔍 ProposalFormTerms - Other Terms onChange:', {
+                logger.debug('🔍 ProposalFormTerms - Other Terms onChange:', {
                   name: e.target.name,
                   value: e.target.value
                 });

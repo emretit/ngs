@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { VeribanSettings } from "@/components/settings/VeribanSettings";
 import { VeribanInvoiceProcessing } from "@/components/veriban/VeribanInvoiceProcessing";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +41,7 @@ const VeribanSettingsPage = ({ isCollapsed, setIsCollapsed }: VeribanSettingsPag
         setInvoices(data);
       }
     } catch (error) {
-      console.error('Faturalar yüklenirken hata:', error);
+      logger.error('Faturalar yüklenirken hata:', error);
     } finally {
       setLoading(false);
     }

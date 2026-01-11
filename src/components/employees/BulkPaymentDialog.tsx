@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,7 +85,7 @@ export const BulkPaymentDialog = ({ open, onOpenChange, selectedEmployees }: Bul
 
       setPayrollRecords(formattedRecords);
     } catch (error) {
-      console.error('Error loading payroll records:', error);
+      logger.error('Error loading payroll records:', error);
       toast({
         variant: "destructive",
         title: "Hata",

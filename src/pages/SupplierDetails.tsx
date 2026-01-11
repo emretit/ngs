@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +21,7 @@ const SupplierDetails = () => {
         .eq('id', id)
         .maybeSingle();
       if (error) {
-        console.error('Error fetching supplier:', error);
+        logger.error('Error fetching supplier:', error);
         throw error;
       }
       return data;

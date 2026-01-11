@@ -1,4 +1,5 @@
 import { IncomingInvoice } from '@/hooks/useIncomingInvoices';
+import { logger } from '@/utils/logger';
 
 /**
  * Invoice Adapter
@@ -138,7 +139,7 @@ export class InvoiceAdapter {
   static async parseElogoBinaryData(binaryData: string): Promise<any> {
     // TODO: Implement actual parsing
     // This would require a library like JSZip and XML parser
-    console.warn('parseElogoBinaryData not fully implemented - would need JSZip and XML parser');
+    logger.warn('parseElogoBinaryData not fully implemented - would need JSZip and XML parser');
     return {
       parsed: false,
       raw: binaryData,

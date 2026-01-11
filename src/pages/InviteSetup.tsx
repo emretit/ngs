@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ const InviteSetup = () => {
     const type = hashParams.get("type");
     const emailParam = hashParams.get("email") || searchParams.get('email');
     
-    console.log('InviteSetup URL params:', { 
+    logger.debug('InviteSetup URL params:', { 
       accessToken, 
       type, 
       emailParam, 
@@ -41,12 +42,12 @@ const InviteSetup = () => {
         refresh_token: refreshToken || ''
       }).then(({ data, error }) => {
         if (error) {
-          console.error('Session setup error:', error);
+          logger.error('Session setup error:', error);
           setError("Bağlantı geçersiz veya süresi dolmuş. Yöneticinizden yeni bir davet linki isteyin.");
           return;
         }
         
-        console.log('Session successfully created:', data.session?.user?.email);
+        logger.debug('Session successfully created:', data.session?.user?.email);
         
         // Session başarıyla oluşturuldu
         setSessionReady(true);
@@ -65,7 +66,7 @@ const InviteSetup = () => {
     } else {
       // If no access token and no email, redirect to signup
       if (!emailParam) {
-        console.log('No access token or email found, redirecting to signup');
+        logger.debug('No access token or email found, redirecting to signup');
         navigate("/signup");
       } else {
         setEmail(emailParam);
@@ -87,19 +88,19 @@ const InviteSetup = () => {
       return;
     }
     try {
-      console.log('Starting invite setup process...');
+      logger.debug('Starting invite setup process...');
       
       // Session'ın hazır olup olmadığını kontrol et
       if (!sessionReady) {
-        console.error('Session not ready - no session created from invite link');
+        logger.error('Session not ready - no session created from invite link');
         setError("Davet linki geçersiz veya süresi dolmuş. Lütfen yöneticinizden yeni bir davet linki isteyin.");
         setLoading(false);
         return;
       }
       
-      console.log('Session ready, proceeding with user update');
+      logger.debug('Session ready, proceeding with user update');
       // Kullanıcının şifresini ve profilini güncelle
-      console.log('Updating user password and profile...');
+      logger.debug('Updating user password and profile...');
       const { error: updateError } = await supabase.auth.updateUser({
         password: password,
         data: { 
@@ -107,33 +108,33 @@ const InviteSetup = () => {
         }
       });
       if (updateError) {
-        console.error('User update error:', updateError);
+        logger.error('User update error:', updateError);
         throw updateError;
       }
-      console.log('User successfully updated');
+      logger.debug('User successfully updated');
 
       // Get current user to check for employee_id in metadata
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user?.id) {
         // Update profiles table with full_name
-        console.log('Updating profiles table with full_name:', fullName.trim());
+        logger.debug('Updating profiles table with full_name:', fullName.trim());
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ full_name: fullName.trim() })
           .eq('id', user.id);
         
         if (profileError) {
-          console.error('Error updating profile full_name:', profileError);
+          logger.error('Error updating profile full_name:', profileError);
         } else {
-          console.log('Profile full_name updated successfully');
+          logger.debug('Profile full_name updated successfully');
         }
         
         // Check for employee_id in metadata
         const employeeId = user?.user_metadata?.employee_id;
         
         if (employeeId) {
-          console.log('Linking user to employee:', employeeId);
+          logger.debug('Linking user to employee:', employeeId);
           try {
             // Update employee with user_id
             await supabase
@@ -147,21 +148,21 @@ const InviteSetup = () => {
               .update({ employee_id: employeeId })
               .eq('id', user.id);
             
-            console.log('User-Employee link established');
+            logger.debug('User-Employee link established');
           } catch (linkError) {
-            console.error('Error linking user to employee:', linkError);
+            logger.error('Error linking user to employee:', linkError);
             // Don't throw - user is already created
           }
         }
       }
       toast.success("Şifreniz başarıyla oluşturuldu. Dashboard'a yönlendiriliyorsunuz.", { duration: 1000 });
       // Kısa bir delay sonra dashboard'a yönlendir
-      console.log('Redirecting to dashboard in 1 second...');
+      logger.debug('Redirecting to dashboard in 1 second...');
       setTimeout(() => {
         navigate("/dashboard");
       }, 1000);
     } catch (error: any) {
-      console.error('Account setup error:', error);
+      logger.error('Account setup error:', error);
       setError(error.message || "Bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setLoading(false);

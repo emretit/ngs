@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import PurchaseInvoicesHeader from "@/components/purchase/PurchaseInvoicesHeader";
@@ -86,7 +87,7 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
         successCount++;
       } catch (error) {
         errorCount++;
-        console.error(`Fatura silme hatası (${id}):`, error);
+        logger.error(`Fatura silme hatası (${id}):`, error);
       }
     }
 

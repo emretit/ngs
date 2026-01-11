@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { usePurchaseRequests, usePurchaseRequestsInfiniteScroll } from "@/hooks/usePurchaseRequests";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -85,7 +86,7 @@ const PurchaseRequestsList = () => {
 
   if (error) {
     toast.error("Talepler yüklenirken bir hata oluştu");
-    console.error("Error loading requests:", error);
+    logger.error("Error loading requests:", error);
   }
 
   // Request tıklama handler'ı - useCallback ile optimize edildi

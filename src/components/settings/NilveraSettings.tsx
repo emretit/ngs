@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +63,7 @@ export const NilveraSettings = () => {
         setNilveraData(null);
       }
     } catch (error) {
-      console.error('Error checking Nilvera status:', error);
+      logger.error('Error checking Nilvera status:', error);
     }
   };
 
@@ -112,7 +113,7 @@ export const NilveraSettings = () => {
         throw new Error(data?.error || "Bilinmeyen hata");
       }
     } catch (error: any) {
-      console.error('Nilvera auth error:', error);
+      logger.error('Nilvera auth error:', error);
       toast({
         variant: "destructive",
         title: "Hata",

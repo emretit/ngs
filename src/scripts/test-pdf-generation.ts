@@ -1,5 +1,6 @@
 // Test script for PDF generation with PAFTA template
 import { PdfExportService } from '@/services/pdf/pdfExportService';
+import { logger } from '@/utils/logger';
 
 // Mock proposal data to test PDF generation
 const mockProposalData = {
@@ -72,13 +73,13 @@ const mockProposalData = {
 
 export async function testPdfGeneration() {
   try {
-    console.log('🧪 PDF oluşturma testi başlatılıyor...');
+    logger.debug('🧪 PDF oluşturma testi başlatılıyor...');
     
     // 1. Transform proposal data for PDF
-    console.log('📄 Teklif verisi PDF formatına dönüştürülüyor...');
+    logger.debug('📄 Teklif verisi PDF formatına dönüştürülüyor...');
     const quoteData = await PdfExportService.transformProposalForPdf(mockProposalData);
-    console.log('✅ Teklif verisi başarıyla dönüştürüldü');
-    console.log('📊 Dönüştürülen veri:', {
+    logger.debug('✅ Teklif verisi başarıyla dönüştürüldü');
+    logger.debug('📊 Dönüştürülen veri:', {
       number: quoteData.number,
       customerName: quoteData.customer?.name,
       customerCompany: quoteData.customer?.company,
@@ -88,7 +89,7 @@ export async function testPdfGeneration() {
     });
     
     // 2. Get PAFTA template
-    console.log('🎨 PAFTA şablonu getiriliyor...');
+    logger.debug('🎨 PAFTA şablonu getiriliyor...');
     const templates = await PdfExportService.getTemplates(undefined, 'quote');
     
     const paftaTemplate = templates.find(t => t.name === 'pafta');
@@ -97,23 +98,23 @@ export async function testPdfGeneration() {
       throw new Error('PAFTA şablonu bulunamadı');
     }
     
-    console.log('✅ PAFTA şablonu bulundu:', {
+    logger.debug('✅ PAFTA şablonu bulundu:', {
       id: paftaTemplate.id,
       name: paftaTemplate.name,
       isDefault: paftaTemplate.is_default
     });
     
     // 3. Generate PDF
-    console.log('🔄 PDF oluşturuluyor...');
+    logger.debug('🔄 PDF oluşturuluyor...');
     const pdfBlob = await PdfExportService.generatePdf(quoteData, { 
       templateId: paftaTemplate.id 
     });
     
-    console.log('✅ PDF başarıyla oluşturuldu!');
-    console.log('📁 PDF boyutu:', `${(pdfBlob.size / 1024).toFixed(2)} KB`);
+    logger.debug('✅ PDF başarıyla oluşturuldu!');
+    logger.debug('📁 PDF boyutu:', `${(pdfBlob.size / 1024).toFixed(2)} KB`);
     
     // 4. Test download functionality (just test generation, not actual download)
-    console.log('💾 İndirme fonksiyonu test ediliyor...');
+    logger.debug('💾 İndirme fonksiyonu test ediliyor...');
     
     return {
       success: true,
@@ -123,7 +124,7 @@ export async function testPdfGeneration() {
     };
     
   } catch (error) {
-    console.error('❌ PDF test hatası:', error);
+    logger.error('❌ PDF test hatası:', error);
     return {
       success: false,
       message: 'PDF test başarısız: ' + (error as Error).message,
@@ -135,18 +136,18 @@ export async function testPdfGeneration() {
 // Browser test function
 export async function testPdfInBrowser() {
   if (typeof window === 'undefined') {
-    console.log('❌ Bu test sadece browser ortamında çalışır');
+    logger.debug('❌ Bu test sadece browser ortamında çalışır');
     return;
   }
   
-  console.log('🌐 Browser PDF testi başlatılıyor...');
+  logger.debug('🌐 Browser PDF testi başlatılıyor...');
   const result = await testPdfGeneration();
   
   if (result.success) {
-    console.log('🎉 Browser PDF test başarılı!');
-    console.log('📋 Test sonucu:', result);
+    logger.debug('🎉 Browser PDF test başarılı!');
+    logger.debug('📋 Test sonucu:', result);
   } else {
-    console.error('💥 Browser PDF test başarısız:', result.message);
+    logger.error('💥 Browser PDF test başarısız:', result.message);
   }
   
   return result;
@@ -156,6 +157,6 @@ export async function testPdfInBrowser() {
 if (typeof window !== 'undefined') {
   (window as any).testPdfGeneration = testPdfGeneration;
   (window as any).testPdfInBrowser = testPdfInBrowser;
-  console.log('🔧 PDF test fonksiyonları window objesine eklendi');
-  console.log('💡 Kullanım: window.testPdfInBrowser()');
+  logger.debug('🔧 PDF test fonksiyonları window objesine eklendi');
+  logger.debug('💡 Kullanım: window.testPdfInBrowser()');
 }

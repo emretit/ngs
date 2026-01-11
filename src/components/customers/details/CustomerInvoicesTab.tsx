@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { logger } from '@/utils/logger';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -90,7 +91,7 @@ const CustomerInvoicesTab = ({ customerId, customerName }: CustomerInvoicesTabPr
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching sales invoices:', error);
+        logger.error('Error fetching sales invoices:', error);
         throw error;
       }
 
@@ -104,7 +105,7 @@ const CustomerInvoicesTab = ({ customerId, customerName }: CustomerInvoicesTabPr
     queryKey: ['customer-purchase-invoices', customerId, userData?.company_id],
     queryFn: async (): Promise<PurchaseInvoice[]> => {
       if (!userData?.company_id || !customerId) {
-        console.warn('No company_id or customerId available');
+        logger.warn('No company_id or customerId available');
         return [];
       }
 
@@ -135,12 +136,12 @@ const CustomerInvoicesTab = ({ customerId, customerName }: CustomerInvoicesTabPr
       ]);
 
       if (customerInvoicesResult.error) {
-        console.error('Error fetching customer purchase invoices:', customerInvoicesResult.error);
+        logger.error('Error fetching customer purchase invoices:', customerInvoicesResult.error);
         throw customerInvoicesResult.error;
       }
 
       if (supplierInvoicesResult.error) {
-        console.error('Error fetching supplier purchase invoices:', supplierInvoicesResult.error);
+        logger.error('Error fetching supplier purchase invoices:', supplierInvoicesResult.error);
         throw supplierInvoicesResult.error;
       }
 
@@ -162,7 +163,7 @@ const CustomerInvoicesTab = ({ customerId, customerName }: CustomerInvoicesTabPr
         return dateB - dateA;
       });
 
-      console.log('✅ Purchase invoices fetched:', uniqueInvoices.length, uniqueInvoices);
+      logger.debug('✅ Purchase invoices fetched:', uniqueInvoices.length, uniqueInvoices);
       return uniqueInvoices;
     },
     enabled: !!customerId && !!userData?.company_id,

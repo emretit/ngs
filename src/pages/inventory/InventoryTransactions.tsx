@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, memo, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import InventoryTransactionsHeader from "@/components/inventory/InventoryTransactionsHeader";
@@ -120,7 +121,7 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
       // TODO: Bulk cancel
       toast.info("Toplu iptal yakında eklenecek");
     } else {
-      console.log('Bulk action:', action, selectedTransactions);
+      logger.debug('Bulk action:', action, selectedTransactions);
     }
   }, [selectedTransactions]);
 

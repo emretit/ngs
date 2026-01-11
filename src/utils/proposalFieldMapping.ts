@@ -1,4 +1,5 @@
 import { Proposal } from "@/types/proposal";
+import { logger } from '@/utils/logger';
 
 /**
  * Teklifler için Standart Field List Tanımları
@@ -317,7 +318,7 @@ export function mapProposalToTemplateInputs(
 ): Record<string, any> {
   const inputs: Record<string, any> = {};
   
-  console.log('🔄 Template Schema Debug:', {
+  logger.debug('🔄 Template Schema Debug:', {
     rawSchema: templateSchema,
     schemasLength: templateSchema?.schemas?.length,
     schemasFirstItem: templateSchema?.schemas?.[0],
@@ -326,7 +327,7 @@ export function mapProposalToTemplateInputs(
   
   // Template yapısını kontrol et
   if (!templateSchema?.schemas?.[0]) {
-    console.warn('Template schemas bulunamadı:', templateSchema);
+    logger.warn('Template schemas bulunamadı:', templateSchema);
     return inputs;
   }
   
@@ -350,7 +351,7 @@ export function mapProposalToTemplateInputs(
     const fieldConfig = templateFields[fieldKey];
     const fieldName = fieldConfig.name || fieldKey; // name yoksa key'i kullan
     
-    console.log(`🔍 Field mapping: ${fieldKey} (name: ${fieldName})`);
+    logger.debug(`🔍 Field mapping: ${fieldKey} (name: ${fieldName})`);
     
     // Standard mapping'te eşleşen field'ı bul
     const mappingEntry = findFieldMappingByName(fieldName);
@@ -363,16 +364,16 @@ export function mapProposalToTemplateInputs(
         ? mapping.formatter(rawValue, proposal)
         : rawValue || `Örnek ${fieldName}`;
       
-      console.log(`✅ Mapped ${fieldName}: ${inputs[fieldName]}`);
+      logger.debug(`✅ Mapped ${fieldName}: ${inputs[fieldName]}`);
     } else {
       // Eşleşme bulunamazsa genel fallback
       inputs[fieldName] = `Örnek ${fieldName}`;
-      console.log(`⚠️ Fallback for ${fieldName}: ${inputs[fieldName]}`);
+      logger.debug(`⚠️ Fallback for ${fieldName}: ${inputs[fieldName]}`);
     }
   });
   
-  console.log('📋 Final Template Fields:', templateFields);
-  console.log('🎯 Generated Inputs:', inputs);
+  logger.debug('📋 Final Template Fields:', templateFields);
+  logger.debug('🎯 Generated Inputs:', inputs);
   
   return inputs;
 }
@@ -444,7 +445,7 @@ export function validateTemplateFields(templateSchema: any): {
   const templateFields = templateSchema.schemas[0];
   const templateFieldKeys = Object.keys(templateFields);
   
-  console.log('🔍 Template fields:', templateFieldKeys);
+  logger.debug('🔍 Template fields:', templateFieldKeys);
   
   // Her template field'ının hangi standart field'a eşlendiğini kontrol et
   templateFieldKeys.forEach(fieldKey => {

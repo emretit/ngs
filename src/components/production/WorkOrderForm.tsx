@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Label } from "@/components/ui/label";
@@ -56,7 +57,7 @@ const WorkOrderForm: React.FC<WorkOrderFormProps> = ({ workOrderId, onClose }) =
         .order("name");
       
       if (error) {
-        console.error("BOM fetch error:", error);
+        logger.error("BOM fetch error:", error);
         return [];
       }
       return data || [];
@@ -150,7 +151,7 @@ const WorkOrderForm: React.FC<WorkOrderFormProps> = ({ workOrderId, onClose }) =
       onClose();
       navigate("/production");
     } catch (error: any) {
-      console.error("Error creating work order:", error);
+      logger.error("Error creating work order:", error);
       toast.error(error.message || "İş emri oluşturulurken hata oluştu");
     }
   };

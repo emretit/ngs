@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -114,7 +115,7 @@ const BudgetGrid = ({ filters, onDataChange }: BudgetGridProps) => {
       );
       onDataChange?.();
     } catch (error) {
-      console.error("Save error:", error);
+      logger.error("Save error:", error);
     }
     
     setEditingCell(null);

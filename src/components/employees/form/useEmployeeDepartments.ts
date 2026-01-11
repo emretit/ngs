@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -24,7 +25,7 @@ export const useEmployeeDepartments = () => {
         .order('name', { ascending: true });
 
       if (error) {
-        console.error('Error fetching departments:', error);
+        logger.error('Error fetching departments:', error);
         toast({
           title: "Error",
           description: "Failed to load departments",

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Budget } from "./useBudget";
@@ -166,7 +167,7 @@ export const useBudgetMatrix = (config: MatrixConfig) => {
       setIncomes(incomesData || []);
       setCashflowCategories(cashflowCategoryData || []);
     } catch (err: any) {
-      console.error("fetchData error:", err);
+      logger.error("fetchData error:", err);
       setError(err.message);
       toast({
         variant: "destructive",
@@ -632,7 +633,7 @@ export const useBudgetMatrix = (config: MatrixConfig) => {
 
       return data;
     } catch (err: any) {
-      console.error("updateCell error:", err);
+      logger.error("updateCell error:", err);
       toast({
         variant: "destructive",
         title: "Hata",

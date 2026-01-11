@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -6,13 +7,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Building2, MapPin, ShoppingCart, Receipt } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Building2, MapPin, ShoppingCart, Receipt, Globe, Calendar, RefreshCcw } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
 import ContactPersonInput from "@/components/proposals/form/ContactPersonInput";
 import ProposalFormTerms from "@/components/proposals/form/ProposalFormTerms";
 import { OrderStatus } from "@/types/orders";
 import { orderStatusLabels, orderStatusColors } from "./OrderDetailsCard";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 
 interface OrderCustomerInfoCardProps {
   formData: {
@@ -47,6 +50,9 @@ const OrderCustomerInfoCard: React.FC<OrderCustomerInfoCardProps> = ({
   handleFieldChange,
   errors = {}
 }) => {
+  // Exchange rates management
+  const { exchangeRates, lastUpdate, loading: isLoadingRates, refreshExchangeRates } = useExchangeRates();
+  
   // Form object for FormProvider
   const form = useForm({
     defaultValues: {
@@ -54,6 +60,45 @@ const OrderCustomerInfoCard: React.FC<OrderCustomerInfoCardProps> = ({
       contact_name: formData.contact_name || '',
     }
   });
+
+  // Get exchange rate for selected currency
+  const getCurrentExchangeRate = (): number | null => {
+    if (!formData.currency || formData.currency === "TRY" || formData.currency === "TL") {
+      return null;
+    }
+    const rate = exchangeRates.find(r => r.currency_code === formData.currency);
+    return rate?.forex_selling || null;
+  };
+
+  // Auto-update exchange rate when currency changes
+  useEffect(() => {
+    if (formData.currency && formData.currency !== "TRY" && formData.currency !== "TL") {
+      const currentRate = getCurrentExchangeRate();
+      if (currentRate) {
+        handleFieldChange('exchange_rate', currentRate);
+      }
+    } else if (formData.currency === "TRY" || formData.currency === "TL") {
+      handleFieldChange('exchange_rate', 1.0);
+    }
+  }, [formData.currency, exchangeRates]);
+
+  const currentRate = getCurrentExchangeRate();
+
+  const getLastUpdateText = () => {
+    if (!lastUpdate) return "Güncelleme bilgisi yok";
+    
+    try {
+      const date = new Date(lastUpdate);
+      return date.toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      logger.error('Date parsing error:', error);
+      return 'Geçersiz tarih';
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
@@ -96,22 +141,6 @@ const OrderCustomerInfoCard: React.FC<OrderCustomerInfoCardProps> = ({
                   placeholder="Sipariş tarihi seçin"
                   className="h-7 text-xs"
                 />
-              </div>
-
-              {/* Para Birimi */}
-              <div>
-                <Label htmlFor="currency" className="text-xs font-medium text-gray-700">Para Birimi</Label>
-                <Select value={formData.currency || "TRY"} onValueChange={(value) => handleFieldChange('currency', value)}>
-                  <SelectTrigger className="mt-1 h-7 text-xs">
-                    <SelectValue placeholder="Para birimi" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="TRY">₺ TRY</SelectItem>
-                    <SelectItem value="USD">$ USD</SelectItem>
-                    <SelectItem value="EUR">€ EUR</SelectItem>
-                    <SelectItem value="GBP">£ GBP</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
@@ -181,27 +210,79 @@ const OrderCustomerInfoCard: React.FC<OrderCustomerInfoCardProps> = ({
             </div>
           </div>
 
-          {/* Döviz Kuru - Sadece TL dışındaki para birimleri için */}
-          {formData.currency && formData.currency !== "TRY" && formData.currency !== "TL" && (
-            <div>
-              <Label htmlFor="exchange_rate" className="text-xs font-medium text-gray-700">
-                Döviz Kuru (1 {formData.currency} = ? TRY)
-              </Label>
-              <Input
-                id="exchange_rate"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.exchange_rate || ""}
-                onChange={(e) => handleFieldChange('exchange_rate', parseFloat(e.target.value) || 1)}
-                placeholder="Örn: 32.50"
-                className="mt-1 h-7 text-xs"
-              />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                1 {formData.currency} = {formData.exchange_rate || "1"} TRY
-              </p>
+          {/* Para Birimi ve Döviz Kuru - Modern Tek Satır Tasarım */}
+          <div className="p-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+            <div className="flex items-center gap-3">
+              {/* Para Birimi Seçimi */}
+              <div className="flex items-center gap-2">
+                <Label className="text-xs font-semibold text-amber-900 whitespace-nowrap">Para Birimi:</Label>
+                <Select value={formData.currency || "TRY"} onValueChange={(value) => handleFieldChange('currency', value)}>
+                  <SelectTrigger className="h-8 w-24 text-xs bg-white border-amber-300">
+                    <SelectValue placeholder="Para birimi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TRY">TRY</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Döviz Kuru - Sadece TRY değilse */}
+              {formData.currency && formData.currency !== "TRY" && formData.currency !== "TL" && (
+                <>
+                  <div className="h-5 w-px bg-amber-300" />
+                  
+                  <div className="flex items-center justify-between gap-2 flex-1">
+                    {/* Sol: Kur Bilgisi */}
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-amber-900 whitespace-nowrap">
+                          1 {formData.currency} =
+                        </span>
+                        <Input
+                          type="number"
+                          step="0.0001"
+                          min="0.0001"
+                          value={formData.exchange_rate || 1}
+                          onChange={(e) => handleFieldChange('exchange_rate', parseFloat(e.target.value) || 1)}
+                          className="h-7 w-24 text-xs font-medium text-amber-900 bg-white border-amber-300 text-right"
+                        />
+                        <span className="text-xs font-semibold text-amber-900">TRY</span>
+                      </div>
+                    </div>
+                    
+                    {/* Orta: Güncel Kur */}
+                    {currentRate && (
+                      <div className="text-[10px] text-amber-600 whitespace-nowrap">
+                        Güncel: {currentRate.toFixed(4)} TRY
+                      </div>
+                    )}
+                    
+                    {/* Sağ: Tarih ve Yenile */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 text-[10px] text-amber-600">
+                        <Calendar className="h-2.5 w-2.5" />
+                        <span>{getLastUpdateText()}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:bg-amber-100 shrink-0"
+                        onClick={refreshExchangeRates}
+                        disabled={isLoadingRates}
+                        title="Kurları Yenile"
+                      >
+                        <RefreshCcw className={`h-3 w-3 text-amber-700 ${isLoadingRates ? 'animate-spin' : ''}`} />
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Durum Checkboxları */}
           <div className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg border border-gray-200">

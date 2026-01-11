@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -89,7 +90,7 @@ export const useOpexCategories = () => {
 
       setCategories(transformedCategories);
     } catch (err: any) {
-      console.error('fetchOpexCategories error:', err);
+      logger.error('fetchOpexCategories error:', err);
       setError(err.message);
       toast.error("OPEX kategorileri alınırken hata oluştu: " + err.message);
     } finally {
@@ -149,7 +150,7 @@ export const useOpexCategories = () => {
 
       return categoryData;
     } catch (err: any) {
-      console.error('createCategory error:', err);
+      logger.error('createCategory error:', err);
       toast.error("Kategori oluşturulurken hata oluştu: " + err.message);
       throw err;
     }
@@ -207,7 +208,7 @@ export const useOpexCategories = () => {
       await fetchOpexCategories();
       toast.success("Kategori başarıyla güncellendi.");
     } catch (err: any) {
-      console.error('updateCategory error:', err);
+      logger.error('updateCategory error:', err);
       toast.error("Kategori güncellenirken hata oluştu: " + err.message);
       throw err;
     }
@@ -234,7 +235,7 @@ export const useOpexCategories = () => {
       await fetchOpexCategories();
       toast.success("Kategori başarıyla silindi.");
     } catch (err: any) {
-      console.error('deleteCategory error:', err);
+      logger.error('deleteCategory error:', err);
       toast.error("Kategori silinirken hata oluştu: " + err.message);
       throw err;
     }

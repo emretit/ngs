@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { logger } from '@/utils/logger';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -62,7 +63,7 @@ const ServiceLocationMapModal: React.FC<ServiceLocationMapModalProps> = ({
             setError('Konum bulunamadı');
           }
         } catch (err) {
-          console.error('Geocoding error:', err);
+          logger.error('Geocoding error:', err);
           setError('Konum bulunurken bir hata oluştu');
         }
       };

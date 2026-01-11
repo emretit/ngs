@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -523,7 +524,7 @@ export const useInventoryTransactions = () => {
 
               // Fark analizi için log (opsiyonel - gelecekte fark raporu için kullanılabilir)
               if (difference !== 0) {
-                console.log(`Sayım farkı: ${item.product_name} - Sistem: ${systemQuantity}, Fiziksel: ${physicalQuantity}, Fark: ${difference > 0 ? '+' : ''}${difference}`);
+                logger.debug(`Sayım farkı: ${item.product_name} - Sistem: ${systemQuantity}, Fiziksel: ${physicalQuantity}, Fark: ${difference > 0 ? '+' : ''}${difference}`);
               }
             }
             break;
@@ -675,7 +676,7 @@ export const useInventoryTransactions = () => {
       .eq("transaction_id", id);
 
     if (itemsDeleteError) {
-      console.error("❌ Transaction items silinirken hata:", itemsDeleteError);
+      logger.error("❌ Transaction items silinirken hata:", itemsDeleteError);
       throw new Error("İşlem kalemleri silinirken hata oluştu");
     }
 
@@ -686,7 +687,7 @@ export const useInventoryTransactions = () => {
       .eq("id", id);
 
     if (deleteError) {
-      console.error("❌ Transaction silinirken hata:", deleteError);
+      logger.error("❌ Transaction silinirken hata:", deleteError);
       toast.error("İşlem silinirken hata oluştu");
       throw deleteError;
     }

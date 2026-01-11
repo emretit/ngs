@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { chatWithAI } from './geminiService';
 
 export interface RiskFactor {
@@ -123,7 +124,7 @@ export async function calculateCashFlowRisk(): Promise<RiskFactor> {
           : undefined,
     };
   } catch (error) {
-    console.error('Cash flow risk calculation error:', error);
+    logger.error('Cash flow risk calculation error:', error);
     return {
       name: 'Nakit Akışı Riski',
       score: 0,
@@ -218,7 +219,7 @@ export async function calculateReceivablesRisk(): Promise<RiskFactor> {
           : undefined,
     };
   } catch (error) {
-    console.error('Receivables risk calculation error:', error);
+    logger.error('Receivables risk calculation error:', error);
     return {
       name: 'Alacak Riski',
       score: 0,
@@ -315,7 +316,7 @@ export async function calculateConcentrationRisk(): Promise<RiskFactor> {
           : undefined,
     };
   } catch (error) {
-    console.error('Concentration risk calculation error:', error);
+    logger.error('Concentration risk calculation error:', error);
     return {
       name: 'Müşteri Yoğunlaşma Riski',
       score: 0,
@@ -403,7 +404,7 @@ export async function calculateInventoryRisk(): Promise<RiskFactor> {
         score > 50 ? 'Stok optimizasyonu yapın' : score > 30 ? 'Stok seviyelerini gözden geçirin' : undefined,
     };
   } catch (error) {
-    console.error('Inventory risk calculation error:', error);
+    logger.error('Inventory risk calculation error:', error);
     return {
       name: 'Stok Riski',
       score: 0,
@@ -454,7 +455,7 @@ En kritik risklere odaklan ve öncelikli aksiyonları belirt.`;
         aiRecommendations = response.content;
       }
     } catch (error) {
-      console.error('AI recommendations generation failed:', error);
+      logger.error('AI recommendations generation failed:', error);
     }
 
     return {
@@ -465,7 +466,7 @@ En kritik risklere odaklan ve öncelikli aksiyonları belirt.`;
       lastUpdated: new Date(),
     };
   } catch (error) {
-    console.error('Error generating risk analysis:', error);
+    logger.error('Error generating risk analysis:', error);
     throw error;
   }
 }

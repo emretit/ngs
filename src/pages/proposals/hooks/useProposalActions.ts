@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -126,7 +127,7 @@ export const useProposalActions = (
         await refetchProposal();
       }
     } catch (error) {
-      console.error("Error saving proposal:", error);
+      logger.error("Error saving proposal:", error);
       toast.error("Teklif güncellenirken bir hata oluştu");
     } finally {
       setIsSaving(false);
@@ -147,7 +148,7 @@ export const useProposalActions = (
       
       toast.success(`Teklif durumu "${proposalStatusLabels[newStatus]}" olarak güncellendi`);
     } catch (error) {
-      console.error("Error updating proposal status:", error);
+      logger.error("Error updating proposal status:", error);
       toast.error("Teklif durumu güncellenirken bir hata oluştu");
     }
   }, [proposal]);
@@ -162,7 +163,7 @@ export const useProposalActions = (
       toast.success("Teklif silindi");
       navigate("/proposals");
     } catch (error) {
-      console.error('Error deleting proposal:', error);
+      logger.error('Error deleting proposal:', error);
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
@@ -181,7 +182,7 @@ export const useProposalActions = (
       await PdfExportService.openPdfInNewTab(proposalData, { templateId });
       toast("PDF yeni sekmede açıldı");
     } catch (error) {
-      console.error('PDF generation error:', error);
+      logger.error('PDF generation error:', error);
       toast.error("PDF oluşturulurken hata oluştu: " + (error as Error).message);
     }
   }, [proposal]);
@@ -283,7 +284,7 @@ export const useProposalActions = (
         navigate(`/proposal/${newProposal.id}`);
       }
     } catch (error) {
-      console.error('Error creating revision:', error);
+      logger.error('Error creating revision:', error);
       toast.error("Revizyon oluşturulurken bir hata oluştu.", { id: 'revision' });
     }
   }, [proposal, queryClient, navigate]);
@@ -339,7 +340,7 @@ export const useProposalActions = (
         navigate(`/proposal/${newProposal.id}`);
       }
     } catch (error) {
-      console.error('Error copying proposal:', error);
+      logger.error('Error copying proposal:', error);
       toast.error("Teklif kopyalanırken bir hata oluştu.");
     } finally {
       setIsCopying(false);
@@ -410,7 +411,7 @@ export const useProposalActions = (
         navigate(`/proposal/${newProposal.id}`);
       }
     } catch (error) {
-      console.error('Error copying proposal:', error);
+      logger.error('Error copying proposal:', error);
       toast.error("Teklif kopyalanırken bir hata oluştu.");
     } finally {
       setIsCopying(false);

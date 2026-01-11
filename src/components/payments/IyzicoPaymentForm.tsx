@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,7 +115,7 @@ export function IyzicoPaymentForm({
       }
 
     } catch (error: any) {
-      console.error('Payment error:', error);
+      logger.error('Payment error:', error);
       const errorMessage = error.message || "Ödeme işlemi sırasında bir hata oluştu";
       toast({
         title: "Ödeme Hatası",

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthContext";
 
@@ -31,13 +32,13 @@ export const usePermissions = () => {
         .maybeSingle();
 
       if (roleError) {
-        console.error('Error fetching user permissions:', roleError);
+        logger.error('Error fetching user permissions:', roleError);
         return null;
       }
 
       if (!userRoleData) {
         // Kullanıcıya rol atanmamış - bu normal olabilir, varsayılan olarak tüm modüllere erişim veriliyor
-        // console.warn('No role assigned to user:', user.id);
+        // logger.warn('No role assigned to user:', user.id);
         return null;
       }
 

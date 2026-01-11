@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,7 +69,7 @@ const CashIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
       const sorted = sortCategoriesByOrder(data || [], 'income');
       setCategories(sorted.map(cat => ({ id: cat.id, name: cat.name })));
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      logger.error('Error fetching categories:', error);
     }
   };
 
@@ -155,7 +156,7 @@ const CashIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Error adding income:', error);
+      logger.error('Error adding income:', error);
       toast.error("Gelir işlemi eklenirken hata oluştu");
     } finally {
       setIsLoading(false);

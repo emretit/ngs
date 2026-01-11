@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,7 +161,7 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
 
       onClose();
     } catch (error) {
-      console.error('Error saving service slip:', error);
+      logger.error('Error saving service slip:', error);
       toast.error(error instanceof Error ? error.message : "Servis fişi kaydedilemedi.");
     } finally {
       setLoading(false);
@@ -182,7 +183,7 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
 
       onClose();
     } catch (error) {
-      console.error('Error completing service:', error);
+      logger.error('Error completing service:', error);
       toast.error(error instanceof Error ? error.message : "Servis tamamlanamadı.");
     } finally {
       setLoading(false);

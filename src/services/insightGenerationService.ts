@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/utils/logger';
 
 export type InsightType = 'anomaly' | 'prediction' | 'optimization' | 'risk';
 export type InsightCategory = 'sales' | 'finance' | 'inventory' | 'hr' | 'operations' | 'general';
@@ -156,7 +157,7 @@ async function detectSalesAnomalies(companyId: string): Promise<Insight[]> {
       }
     }
   } catch (err) {
-    console.error('Error detecting sales anomalies:', err);
+    logger.error('Error detecting sales anomalies:', err);
   }
 
   return insights;
@@ -268,7 +269,7 @@ async function detectFinanceRisks(companyId: string): Promise<Insight[]> {
       }
     }
   } catch (err) {
-    console.error('Error detecting finance risks:', err);
+    logger.error('Error detecting finance risks:', err);
   }
 
   return insights;
@@ -332,7 +333,7 @@ async function predictInventoryIssues(companyId: string): Promise<Insight[]> {
       // This would require transaction history analysis in production
     }
   } catch (err) {
-    console.error('Error predicting inventory issues:', err);
+    logger.error('Error predicting inventory issues:', err);
   }
 
   return insights;
@@ -388,7 +389,7 @@ async function generateHROptimizations(companyId: string): Promise<Insight[]> {
       }
     }
   } catch (err) {
-    console.error('Error generating HR optimizations:', err);
+    logger.error('Error generating HR optimizations:', err);
   }
 
   return insights;
@@ -422,13 +423,13 @@ export async function saveInsights(insights: Insight[]): Promise<boolean> {
       );
 
     if (error) {
-      console.error('Error saving insights:', error);
+      logger.error('Error saving insights:', error);
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error('Error in saveInsights:', err);
+    logger.error('Error in saveInsights:', err);
     return false;
   }
 }
@@ -468,7 +469,7 @@ export async function getInsights(
     if (error) throw error;
     return data || [];
   } catch (err) {
-    console.error('Error getting insights:', err);
+    logger.error('Error getting insights:', err);
     return [];
   }
 }
@@ -485,7 +486,7 @@ export async function markInsightAsRead(insightId: string): Promise<boolean> {
 
     return !error;
   } catch (err) {
-    console.error('Error marking insight as read:', err);
+    logger.error('Error marking insight as read:', err);
     return false;
   }
 }
@@ -502,7 +503,7 @@ export async function dismissInsight(insightId: string): Promise<boolean> {
 
     return !error;
   } catch (err) {
-    console.error('Error dismissing insight:', err);
+    logger.error('Error dismissing insight:', err);
     return false;
   }
 }
@@ -530,7 +531,7 @@ export async function logInsightInteraction(
 
     return !error;
   } catch (err) {
-    console.error('Error logging interaction:', err);
+    logger.error('Error logging interaction:', err);
     return false;
   }
 }

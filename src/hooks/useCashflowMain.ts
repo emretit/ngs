@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -74,7 +75,7 @@ export const useCashflowMain = () => {
 
       setData(mockData);
     } catch (err: any) {
-      console.error('fetchCashflowMain error:', err);
+      logger.error('fetchCashflowMain error:', err);
       setError(err.message);
       toast({
         variant: "destructive",
@@ -134,7 +135,7 @@ export const useCashflowMain = () => {
 
       return mockData;
     } catch (err: any) {
-      console.error('upsertCashflowMain error:', err);
+      logger.error('upsertCashflowMain error:', err);
       toast({
         variant: "destructive",
         title: "Hata",
@@ -154,7 +155,7 @@ export const useCashflowMain = () => {
         description: "Nakit akış verisi silindi.",
       });
     } catch (err: any) {
-      console.error('deleteCashflowMain error:', err);
+      logger.error('deleteCashflowMain error:', err);
       toast({
         variant: "destructive",
         title: "Hata",

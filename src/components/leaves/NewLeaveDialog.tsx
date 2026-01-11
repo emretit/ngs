@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -52,7 +53,7 @@ const NewLeaveDialog: React.FC<NewLeaveDialogProps> = ({ isOpen, onClose }) => {
         .order('name');
       
       if (error) {
-        console.error("Error fetching leave types:", error);
+        logger.error("Error fetching leave types:", error);
         throw error;
       }
       return data as LeaveType[] || [];
@@ -144,7 +145,7 @@ const NewLeaveDialog: React.FC<NewLeaveDialogProps> = ({ isOpen, onClose }) => {
       const { error } = await supabase.from("employee_leaves").insert([leaveData]);
 
       if (error) {
-        console.error("Error creating leave:", error);
+        logger.error("Error creating leave:", error);
         toast.error("İzin kaydı oluşturulamadı: " + error.message);
         return;
       }
@@ -154,7 +155,7 @@ const NewLeaveDialog: React.FC<NewLeaveDialogProps> = ({ isOpen, onClose }) => {
       queryClient.invalidateQueries({ queryKey: ["leaves"] });
       handleClose();
     } catch (err: any) {
-      console.error("Error in submit:", err);
+      logger.error("Error in submit:", err);
       toast.error("İzin kaydı oluşturulamadı: " + (err.message || "Bilinmeyen hata"));
     } finally {
       setIsSubmitting(false);

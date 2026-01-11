@@ -1,4 +1,5 @@
 import React, { Suspense, useMemo } from 'react';
+import { logger } from '@/utils/logger';
 import { useLocation, matchPath } from 'react-router-dom';
 import { useTabs } from './TabContext';
 import { appRoutes } from '@/routes/appRoutes';
@@ -44,7 +45,7 @@ class TabErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error(`Error in tab ${this.props.tabPath}:`, error, errorInfo);
+    logger.error(`Error in tab ${this.props.tabPath}:`, error, errorInfo);
   }
 
   render() {
@@ -100,7 +101,7 @@ const TabContent = React.memo<{
   }, [path]);
 
   if (!routeConfig) {
-    console.warn(`No route found for path: ${path}`);
+    logger.warn(`No route found for path: ${path}`);
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-2">

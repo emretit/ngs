@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { Payment } from "@/types/payment";
 import { Customer } from "@/types/customer";
@@ -11,7 +12,7 @@ export const usePaymentsQuery = (customer: Customer) => {
     queryKey: ['customer-payments', customer.id, userData?.company_id],
     queryFn: async () => {
       if (!userData?.company_id) {
-        console.warn('No company_id available for payments');
+        logger.warn('No company_id available for payments');
         return [];
       }
 
@@ -24,11 +25,11 @@ export const usePaymentsQuery = (customer: Customer) => {
       
       // Debug: Eğer data boşsa ve error yoksa, RLS sorunu olabilir
       if (!data || data.length === 0) {
-        console.log('Payments query returned empty. Customer ID:', customer.id, 'Company ID:', userData.company_id);
+        logger.debug('Payments query returned empty. Customer ID:', customer.id, 'Company ID:', userData.company_id);
       }
 
       if (error) {
-        console.error('Error fetching payments:', error);
+        logger.error('Error fetching payments:', error);
         throw error;
       }
 
@@ -102,7 +103,7 @@ export const usePaymentsQuery = (customer: Customer) => {
               }
             }
           } catch (err) {
-            console.error('Error fetching account/check for payment:', err);
+            logger.error('Error fetching account/check for payment:', err);
           }
           
           const result: any = {

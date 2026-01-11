@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -100,7 +101,7 @@ export const LeaveDetailPanel = ({ leaveId, isOpen, onClose }: LeaveDetailPanelP
         .single();
 
       if (queryError) {
-        console.error("Error fetching leave:", queryError);
+        logger.error("Error fetching leave:", queryError);
         throw queryError;
       }
 
@@ -137,7 +138,7 @@ export const LeaveDetailPanel = ({ leaveId, isOpen, onClose }: LeaveDetailPanelP
         .eq("id", leave.id);
 
       if (updateError) {
-        console.error("Error approving leave:", updateError);
+        logger.error("Error approving leave:", updateError);
         toast.error("İzin talebi onaylanamadı: " + updateError.message);
         return;
       }
@@ -161,7 +162,7 @@ export const LeaveDetailPanel = ({ leaveId, isOpen, onClose }: LeaveDetailPanelP
       // Invalidate list query
       queryClient.invalidateQueries({ queryKey: ["leaves"] });
     } catch (err: any) {
-      console.error("Error in approve:", err);
+      logger.error("Error in approve:", err);
       toast.error("İzin talebi onaylanamadı: " + (err.message || "Bilinmeyen hata"));
     } finally {
       setIsActionLoading(false);
@@ -188,7 +189,7 @@ export const LeaveDetailPanel = ({ leaveId, isOpen, onClose }: LeaveDetailPanelP
         .eq("id", leave.id);
 
       if (updateError) {
-        console.error("Error rejecting leave:", updateError);
+        logger.error("Error rejecting leave:", updateError);
         toast.error("İzin talebi reddedilemedi: " + updateError.message);
         return;
       }
@@ -216,7 +217,7 @@ export const LeaveDetailPanel = ({ leaveId, isOpen, onClose }: LeaveDetailPanelP
       setIsRejectDialogOpen(false);
       setRejectReason("");
     } catch (err: any) {
-      console.error("Error in reject:", err);
+      logger.error("Error in reject:", err);
       toast.error("İzin talebi reddedilemedi: " + (err.message || "Bilinmeyen hata"));
     } finally {
       setIsActionLoading(false);

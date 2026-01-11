@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/utils/logger';
 
 export interface GoogleDriveFile {
   id: string;
@@ -57,7 +58,7 @@ export async function getGoogleDriveConnection(): Promise<GoogleDriveConnection 
 
     return data;
   } catch (err: any) {
-    console.error('Error getting Google Drive connection:', err);
+    logger.error('Error getting Google Drive connection:', err);
     return null;
   }
 }
@@ -95,7 +96,7 @@ async function refreshAccessToken(connection: GoogleDriveConnection): Promise<st
     if (error) throw error;
     return data.access_token;
   } catch (err: any) {
-    console.error('Error refreshing access token:', err);
+    logger.error('Error refreshing access token:', err);
     throw new Error('Failed to refresh access token');
   }
 }
@@ -179,7 +180,7 @@ export async function searchGoogleDrive(
       nextPageToken: data.nextPageToken
     };
   } catch (err: any) {
-    console.error('Error searching Google Drive:', err);
+    logger.error('Error searching Google Drive:', err);
     throw err;
   }
 }
@@ -215,7 +216,7 @@ export async function getGoogleDriveFile(fileId: string): Promise<GoogleDriveFil
 
     return await response.json();
   } catch (err: any) {
-    console.error('Error getting Google Drive file:', err);
+    logger.error('Error getting Google Drive file:', err);
     return null;
   }
 }
@@ -257,7 +258,7 @@ export async function downloadGoogleDriveFileContent(fileId: string): Promise<st
 
     return await response.text();
   } catch (err: any) {
-    console.error('Error downloading Google Drive file:', err);
+    logger.error('Error downloading Google Drive file:', err);
     return null;
   }
 }
@@ -291,7 +292,7 @@ export async function analyzeGoogleDriveDocument(
     if (error) throw error;
     return data.analysis;
   } catch (err: any) {
-    console.error('Error analyzing document:', err);
+    logger.error('Error analyzing document:', err);
     return null;
   }
 }
@@ -309,7 +310,7 @@ export async function disconnectGoogleDrive(connectionId: string): Promise<boole
     if (error) throw error;
     return true;
   } catch (err: any) {
-    console.error('Error disconnecting Google Drive:', err);
+    logger.error('Error disconnecting Google Drive:', err);
     return false;
   }
 }
@@ -345,7 +346,7 @@ export async function listRecentGoogleDriveFiles(pageSize = 10): Promise<GoogleD
     const data = await response.json();
     return data.files || [];
   } catch (err: any) {
-    console.error('Error listing recent files:', err);
+    logger.error('Error listing recent files:', err);
     return [];
   }
 }

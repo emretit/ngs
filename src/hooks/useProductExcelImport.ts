@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { importProductsFromExcel, readExcelColumns } from '@/utils/excelUtils';
@@ -61,7 +62,7 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
         setShowMappingDialog(true);
         
       } catch (error: any) {
-        console.error('Error mapping columns:', error);
+        logger.error('Error mapping columns:', error);
         toast.error('Kolon eşleştirme yapılırken bir hata oluştu');
       } finally {
         setIsMappingColumns(false);
@@ -208,7 +209,7 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
         // Validate data
         const validationErrors = validateProductData(row);
         if (validationErrors.length > 0) {
-          console.warn(`Row ${i + 1} validation errors:`, validationErrors);
+          logger.warn(`Row ${i + 1} validation errors:`, validationErrors);
           invalidCount++;
           setStats({
             success: successCount,
@@ -296,7 +297,7 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
             .single();
             
           if (insertError) {
-            console.error('Error inserting product:', insertError);
+            logger.error('Error inserting product:', insertError);
             failedCount++;
           } else {
             // Eğer stok miktarı varsa ve company_id varsa, warehouse_stock'a ekle
@@ -324,7 +325,7 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
                   });
 
                 if (stockError) {
-                  console.error('Error adding stock to warehouse:', stockError);
+                  logger.error('Error adding stock to warehouse:', stockError);
                 }
               }
             }
@@ -367,7 +368,7 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
       }
       
     } catch (error) {
-      console.error('Import error:', error);
+      logger.error('Import error:', error);
       toast.error('İçe aktarma sırasında bir hata oluştu');
     } finally {
       setIsLoading(false);

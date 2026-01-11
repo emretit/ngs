@@ -1,3 +1,5 @@
+import { logger } from '@/utils/logger';
+
 /**
  * LocationIQ API Service
  * Provides address autocomplete and geocoding functionality
@@ -51,7 +53,7 @@ class LocationIQService {
   constructor() {
     this.apiKey = LOCATIONIQ_API_KEY || '';
     if (!this.apiKey) {
-      console.warn('LocationIQ API key not configured. Set LOCATIONIQ_API_KEY constant or use Supabase Secrets in production.');
+      logger.warn('LocationIQ API key not configured. Set LOCATIONIQ_API_KEY constant or use Supabase Secrets in production.');
     }
   }
 
@@ -94,7 +96,7 @@ class LocationIQService {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('LocationIQ autocomplete error:', error);
+      logger.error('LocationIQ autocomplete error:', error);
       throw error;
     }
   }
@@ -153,7 +155,7 @@ class LocationIQService {
         postal_code: result.address?.postcode,
       };
     } catch (error) {
-      console.error('LocationIQ geocoding error:', error);
+      logger.error('LocationIQ geocoding error:', error);
       throw error;
     }
   }
@@ -198,7 +200,7 @@ class LocationIQService {
         postal_code: result.address?.postcode,
       };
     } catch (error) {
-      console.error('LocationIQ reverse geocoding error:', error);
+      logger.error('LocationIQ reverse geocoding error:', error);
       throw error;
     }
   }

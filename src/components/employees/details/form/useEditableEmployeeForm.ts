@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Employee } from "@/types/employee";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,7 +50,7 @@ export const useEditableEmployeeForm = ({ employee, onSuccess }: UseEditableEmpl
       setIsEditing(false);
       onSuccess?.();
     } catch (error) {
-      console.error('Çalışan güncellenirken hata:', error);
+      logger.error('Çalışan güncellenirken hata:', error);
       toast.error("Çalışan bilgileri güncellenirken bir hata oluştu");
     } finally {
       setIsSaving(false);

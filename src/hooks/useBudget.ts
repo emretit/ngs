@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -82,7 +83,7 @@ export const useBudget = (filters?: BudgetFilters) => {
       if (fetchError) throw fetchError;
       setBudgets(data || []);
     } catch (err: any) {
-      console.error("fetchBudgets error:", err);
+      logger.error("fetchBudgets error:", err);
       setError(err.message);
       toast({
         variant: "destructive",
@@ -142,7 +143,7 @@ export const useBudget = (filters?: BudgetFilters) => {
 
       return data;
     } catch (err: any) {
-      console.error("upsertBudget error:", err);
+      logger.error("upsertBudget error:", err);
       toast({
         variant: "destructive",
         title: "Hata",
@@ -191,7 +192,7 @@ export const useBudget = (filters?: BudgetFilters) => {
 
       return data;
     } catch (err: any) {
-      console.error("bulkUpsertBudgets error:", err);
+      logger.error("bulkUpsertBudgets error:", err);
       toast({
         variant: "destructive",
         title: "Hata",
@@ -218,7 +219,7 @@ export const useBudget = (filters?: BudgetFilters) => {
         description: "Bütçe silindi.",
       });
     } catch (err: any) {
-      console.error("deleteBudget error:", err);
+      logger.error("deleteBudget error:", err);
       toast({
         variant: "destructive",
         title: "Hata",
@@ -251,7 +252,7 @@ export const useBudget = (filters?: BudgetFilters) => {
 
       return data;
     } catch (err: any) {
-      console.error("updateBudgetStatus error:", err);
+      logger.error("updateBudgetStatus error:", err);
       toast({
         variant: "destructive",
         title: "Hata",
@@ -288,7 +289,7 @@ export const useBudget = (filters?: BudgetFilters) => {
         description: `${year} yılı bütçeleri kilitlendi.`,
       });
     } catch (err: any) {
-      console.error("lockYearBudgets error:", err);
+      logger.error("lockYearBudgets error:", err);
       toast({
         variant: "destructive",
         title: "Hata",
@@ -362,7 +363,7 @@ export const useBudget = (filters?: BudgetFilters) => {
 
       return data;
     } catch (err: any) {
-      console.error("copyFromPreviousYear error:", err);
+      logger.error("copyFromPreviousYear error:", err);
       toast({
         variant: "destructive",
         title: "Hata",

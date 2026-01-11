@@ -170,16 +170,16 @@ export default function EInvoiceProcessOutgoing() {
                   .single();
                 
                 if (createEinvoiceError) {
-                  console.warn('⚠️ Error creating einvoice record:', createEinvoiceError);
+                  logger.warn('⚠️ Error creating einvoice record:', createEinvoiceError);
                 } else if (newEinvoice) {
                   einvoiceId = newEinvoice.id;
-                  console.log('✅ Created einvoice record for outgoing invoice:', einvoiceId);
+                  logger.debug('✅ Created einvoice record for outgoing invoice:', einvoiceId);
                 }
               }
             }
           }
         } catch (error) {
-          console.warn('⚠️ Error checking/creating einvoice record:', error);
+          logger.warn('⚠️ Error checking/creating einvoice record:', error);
         }
         
         // Initialize matching items
@@ -195,7 +195,7 @@ export default function EInvoiceProcessOutgoing() {
             .eq('invoice_id', einvoiceId);
           
           if (matchingError) {
-            console.warn('⚠️ Error loading saved matchings:', matchingError);
+            logger.warn('⚠️ Error loading saved matchings:', matchingError);
           } else if (savedMatchings && savedMatchings.length > 0) {
             // Kaydedilmiş eşleştirmeleri initialMatching'e ekle
             savedMatchings.forEach(saved => {
@@ -209,19 +209,19 @@ export default function EInvoiceProcessOutgoing() {
                 }
               }
             });
-            console.log('✅ Loaded saved matchings:', savedMatchings.length);
+            logger.debug('✅ Loaded saved matchings:', savedMatchings.length);
           }
         } catch (error) {
-          console.warn('⚠️ Error loading saved matchings:', error);
+          logger.warn('⚠️ Error loading saved matchings:', error);
         }
         
         if (!isMounted) return;
         
         setMatchingItems(initialMatching);
-        console.log('✅ Invoice details loaded:', invoiceDetails);
+        logger.debug('✅ Invoice details loaded:', invoiceDetails);
       } catch (error: any) {
         if (!isMounted) return;
-        console.error('❌ Error in loadInvoiceDetails:', error);
+        logger.error('❌ Error in loadInvoiceDetails:', error);
         toast.error(error.message || "Fatura detayları yüklenirken bir hata oluştu");
         // Hata durumunda geri dön
         navigate('/e-invoice');
@@ -263,7 +263,7 @@ export default function EInvoiceProcessOutgoing() {
     
     // Müşteri araması yap
     setCustomerMatchStatus('searching');
-    console.log('🔍 Müşteri aranıyor. VKN:', invoice.supplier_tax_number, 'Toplam müşteri:', customers.length);
+    logger.debug('🔍 Müşteri aranıyor. VKN:', invoice.supplier_tax_number, 'Toplam müşteri:', customers.length);
     
     // Giden faturada customerTaxNumber kullan (eğer mevcutsa)
     const taxNumberToMatch = (invoice as any).customer_tax_number || invoice.supplier_tax_number;
@@ -275,11 +275,11 @@ export default function EInvoiceProcessOutgoing() {
     if (matchingCustomer) {
       setSelectedCustomerId(matchingCustomer.id);
       setCustomerMatchStatus('found');
-      console.log('✅ Müşteri otomatik eşleştirildi:', matchingCustomer.name, 'VKN:', matchingCustomer.tax_number);
+      logger.debug('✅ Müşteri otomatik eşleştirildi:', matchingCustomer.name, 'VKN:', matchingCustomer.tax_number);
     } else {
       setCustomerMatchStatus('not_found');
-      console.log('⚠️ VKN eşleşmedi. Aranan VKN:', taxNumberToMatch);
-      console.log('📋 Sistemdeki müşteri VKN\'leri:', customers.map(c => c.tax_number).join(', '));
+      logger.debug('⚠️ VKN eşleşmedi. Aranan VKN:', taxNumberToMatch);
+      logger.debug('📋 Sistemdeki müşteri VKN\'leri:', customers.map(c => c.tax_number).join(', '));
     }
   }, [invoice?.supplier_tax_number, (invoice as any)?.customer_tax_number, customersTaxNumbers, customers.length, isLoadingCustomers]); // customersTaxNumbers ile referans değişikliğini kontrol ediyoruz
   
@@ -354,14 +354,14 @@ export default function EInvoiceProcessOutgoing() {
             .single();
           
           if (createEinvoiceError) {
-            console.error('❌ Error creating einvoice record:', createEinvoiceError);
+            logger.error('❌ Error creating einvoice record:', createEinvoiceError);
             toast.error('Fatura kaydı oluşturulurken hata oluştu.');
             return;
           }
           
           if (newEinvoice) {
             einvoiceId = newEinvoice.id;
-            console.log('✅ Created einvoice record for outgoing invoice:', einvoiceId);
+            logger.debug('✅ Created einvoice record for outgoing invoice:', einvoiceId);
           }
         }
       }
@@ -407,9 +407,9 @@ export default function EInvoiceProcessOutgoing() {
           .eq('invoice_line_id', itemToSave.invoice_item.id);
         
         if (updateError) {
-          console.error('❌ Error updating matching:', updateError);
+          logger.error('❌ Error updating matching:', updateError);
         } else {
-          console.log('✅ Matching updated in database');
+          logger.debug('✅ Matching updated in database');
         }
       } else {
         // Yeni kayıt ekle
@@ -418,13 +418,13 @@ export default function EInvoiceProcessOutgoing() {
           .insert(matchingRecord);
         
         if (insertError) {
-          console.error('❌ Error saving matching:', insertError);
+          logger.error('❌ Error saving matching:', insertError);
         } else {
-          console.log('✅ Matching saved to database');
+          logger.debug('✅ Matching saved to database');
         }
       }
     } catch (error) {
-      console.error('❌ Error in handleManualMatch:', error);
+      logger.error('❌ Error in handleManualMatch:', error);
     }
   }, [invoiceId, invoice]); // invoice'u dependency'ye ekledik çünkü einvoice kaydı oluştururken kullanıyoruz
   
@@ -498,11 +498,11 @@ export default function EInvoiceProcessOutgoing() {
         .maybeSingle();
       
       if (!existingEinvoice) {
-        console.warn('⚠️ Einvoice record not found, cannot remove matching');
+        logger.warn('⚠️ Einvoice record not found, cannot remove matching');
         return;
       }
     } catch (error) {
-      console.error('❌ Error checking einvoice record:', error);
+      logger.error('❌ Error checking einvoice record:', error);
       return;
     }
     
@@ -527,13 +527,13 @@ export default function EInvoiceProcessOutgoing() {
           .eq('invoice_line_id', invoiceLineId);
         
         if (updateError) {
-          console.error('❌ Error removing matching:', updateError);
+          logger.error('❌ Error removing matching:', updateError);
         } else {
-          console.log('✅ Matching removed from database');
+          logger.debug('✅ Matching removed from database');
         }
       }
     } catch (error) {
-      console.error('❌ Error in handleRemoveMatch:', error);
+      logger.error('❌ Error in handleRemoveMatch:', error);
     }
   }, [invoiceId, invoice]);
   
@@ -581,7 +581,7 @@ export default function EInvoiceProcessOutgoing() {
         company_id: userProfile.company_id // RLS için company_id ekle
       };
       
-      console.log('🔍 Müşteri kaydedilecek bilgiler:', customerData);
+      logger.debug('🔍 Müşteri kaydedilecek bilgiler:', customerData);
       
       const { data: newCustomer, error } = await supabase
         .from('customers')
@@ -591,7 +591,7 @@ export default function EInvoiceProcessOutgoing() {
       
       if (error) throw error;
       
-      console.log('✅ Müşteri başarıyla oluşturuldu:', newCustomer);
+      logger.debug('✅ Müşteri başarıyla oluşturuldu:', newCustomer);
       
       // Müşteri query'sini invalidate et
       await queryClient.invalidateQueries({ queryKey: ["customers-for-einvoice"] });
@@ -601,7 +601,7 @@ export default function EInvoiceProcessOutgoing() {
       setCustomerMatchStatus('found');
       toast.success(`Müşteri "${customerData.name}" detaylı bilgilerle oluşturuldu ve seçildi`);
     } catch (error: any) {
-      console.error('❌ Error creating customer:', error);
+      logger.error('❌ Error creating customer:', error);
       toast.error(error.message || "Müşteri oluşturulurken hata oluştu");
     } finally {
       setIsCreatingCustomer(false);
@@ -715,7 +715,7 @@ export default function EInvoiceProcessOutgoing() {
         .single();
       
       if (customerFetchError) {
-        console.error('❌ Error fetching customer balance:', customerFetchError);
+        logger.error('❌ Error fetching customer balance:', customerFetchError);
       } else if (customerData) {
         const newCustomerBalance = (customerData.balance || 0) + total;
         const { error: customerUpdateError } = await supabase
@@ -724,9 +724,9 @@ export default function EInvoiceProcessOutgoing() {
           .eq('id', selectedCustomerId);
         
         if (customerUpdateError) {
-          console.error('❌ Error updating customer balance:', customerUpdateError);
+          logger.error('❌ Error updating customer balance:', customerUpdateError);
         } else {
-          console.log('✅ Customer balance updated:', newCustomerBalance);
+          logger.debug('✅ Customer balance updated:', newCustomerBalance);
         }
       }
       
@@ -805,7 +805,7 @@ export default function EInvoiceProcessOutgoing() {
           .single();
 
         if (transactionError) {
-          console.error('❌ Error creating stock transaction:', transactionError);
+          logger.error('❌ Error creating stock transaction:', transactionError);
         } else if (stockTransaction) {
           // Ürün adlarını products tablosundan çek
           const productIds = validItems
@@ -844,7 +844,7 @@ export default function EInvoiceProcessOutgoing() {
             .insert(transactionItems);
 
           if (transactionItemsError) {
-            console.error('❌ Error creating transaction items:', transactionItemsError);
+            logger.error('❌ Error creating transaction items:', transactionItemsError);
           } else {
             // Stok güncellemesi yap (çıkış olduğu için stok azalt)
             for (const item of validItems) {
@@ -872,7 +872,7 @@ export default function EInvoiceProcessOutgoing() {
                     .eq('id', existingStock.id);
                 } else {
                   // Stok yoksa negatif stok kaydı oluştur (uyarı verebiliriz)
-                  console.warn(`⚠️ Ürün ${item.matched_product_id} için stok bulunamadı, negatif stok oluşturulacak`);
+                  logger.warn(`⚠️ Ürün ${item.matched_product_id} için stok bulunamadı, negatif stok oluşturulacak`);
                   await supabase
                     .from('warehouse_stock')
                     .insert({
@@ -901,7 +901,7 @@ export default function EInvoiceProcessOutgoing() {
       toast.success(`Satış faturası başarıyla oluşturuldu.${defaultWarehouseId ? ' Stok hareketi oluşturuldu.' : ''}`);
       navigate('/sales-invoices');
     } catch (error: any) {
-      console.error('❌ Error creating sales invoice:', error);
+      logger.error('❌ Error creating sales invoice:', error);
       toast.error(error.message || "Satış faturası oluşturulurken hata oluştu");
     } finally {
       setIsCreating(false);

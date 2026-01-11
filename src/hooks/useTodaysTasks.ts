@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/hooks/useCompany";
 import { format, startOfDay, endOfDay } from "date-fns";
@@ -54,7 +55,7 @@ export function useTodaysTasks() {
         .limit(20);
 
       if (error) {
-        console.error("Error fetching today's tasks:", error);
+        logger.error("Error fetching today's tasks:", error);
         return [];
       }
 

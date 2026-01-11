@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { logger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -74,7 +75,7 @@ export const usePdfTemplateActions = (
         } : null);
       }
     } catch (error) {
-      console.error('Error saving template:', error);
+      logger.error('Error saving template:', error);
       toast.error('Şablon kaydedilirken hata oluştu');
     } finally {
       setIsLoading(false);
@@ -89,7 +90,7 @@ export const usePdfTemplateActions = (
       await PdfExportService.downloadPdf(previewData, { templateId: selectedTemplate.id });
       toast.success('PDF başarıyla indirildi');
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      logger.error('Error downloading PDF:', error);
       toast.error('PDF indirilirken hata oluştu');
     } finally {
       setIsLoading(false);

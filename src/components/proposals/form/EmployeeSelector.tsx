@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -77,7 +78,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
         .order("first_name");
       
       if (error) {
-        console.error("Error fetching employees:", error);
+        logger.error("Error fetching employees:", error);
         throw error;
       }
       return data as Employee[] || [];

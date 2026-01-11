@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { DropResult } from "@hello-pangea/dnd";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,7 +48,7 @@ export const ProposalKanban = ({ proposals, onProposalSelect, onStatusChange }: 
     },
     onError: (error) => {
       toast.error('Teklif güncellenirken bir hata oluştu');
-      console.error('Error updating proposal:', error);
+      logger.error('Error updating proposal:', error);
     }
   });
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { showError } from "@/utils/toastUtils";
 import { IntegratorService } from "@/services/integratorService";
@@ -61,7 +62,7 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
       const { data, error } = await query;
 
       if (error) {
-        console.error('Cache fetch error:', error);
+        logger.error('Cache fetch error:', error);
         return [];
       }
 
@@ -98,7 +99,7 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
         isAnswered: inv.is_answered || false,
       }));
     } catch (error) {
-      console.error('Cache fetch error:', error);
+      logger.error('Cache fetch error:', error);
       return [];
     }
   };
@@ -124,7 +125,7 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
         ? `${dateFilters.endDate}T23:59:59.999Z` 
         : `${endOfMonth.toISOString().split('T')[0]}T23:59:59.999Z`;
       
-      console.log('🔄 Giden faturalar API sync başlatılıyor:', { startDate, endDate, customerTaxNumber: dateFilters.customerTaxNumber, forceRefresh });
+      logger.debug('🔄 Giden faturalar API sync başlatılıyor:', { startDate, endDate, customerTaxNumber: dateFilters.customerTaxNumber, forceRefresh });
       
       const result = await IntegratorService.getOutgoingInvoices({
         startDate,
@@ -133,7 +134,7 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
         customerTaxNumber: dateFilters?.customerTaxNumber
       });
 
-      console.log('📊 API sync sonucu:', { success: result.success, invoiceCount: result.invoices?.length, error: result.error });
+      logger.debug('📊 API sync sonucu:', { success: result.success, invoiceCount: result.invoices?.length, error: result.error });
 
       if (!result.success) {
         throw new Error(result.error || 'Giden faturalar alınamadı');
@@ -143,17 +144,17 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
       // Kullanıcı manuel olarak ProcessOutgoingInvoices sayfasından seçip ekleyebilir
       // if (result.invoices && result.invoices.length > 0) {
       //   try {
-      //     console.log('🔄 [useOutgoingInvoices] Sales invoices senkronizasyonu başlatılıyor...');
+      //     logger.debug('🔄 [useOutgoingInvoices] Sales invoices senkronizasyonu başlatılıyor...');
       //     const syncResult = await outgoingInvoiceSyncService.syncToSalesInvoices(result.invoices);
-      //     console.log('✅ [useOutgoingInvoices] Senkronizasyon tamamlandı:', syncResult);
+      //     logger.debug('✅ [useOutgoingInvoices] Senkronizasyon tamamlandı:', syncResult);
       //   } catch (syncError: any) {
-      //     console.error('⚠️ [useOutgoingInvoices] Senkronizasyon hatası:', syncError.message);
+      //     logger.error('⚠️ [useOutgoingInvoices] Senkronizasyon hatası:', syncError.message);
       //   }
       // }
 
       return result.invoices || [];
     } catch (error: any) {
-      console.error('❌ API sync error:', error);
+      logger.error('❌ API sync error:', error);
       throw error;
     } finally {
       setIsSyncing(false);
@@ -166,7 +167,7 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
       
       // VKN yoksa sadece cache'den oku
       if (!dateFilters?.customerTaxNumber || dateFilters.customerTaxNumber.length < 10) {
-        console.log('⚠️ VKN yok - sadece cache görüntüleniyor');
+        logger.debug('⚠️ VKN yok - sadece cache görüntüleniyor');
         return await fetchFromCache();
       }
       
@@ -179,7 +180,7 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
         
         // Arka planda API'den senkronize et (non-blocking)
         syncFromApi(false).catch(error => {
-          console.error('Background sync error:', error);
+          logger.error('Background sync error:', error);
         });
         
         return cachedInvoices;
@@ -189,7 +190,7 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
       return await syncFromApi(false);
       
     } catch (error: any) {
-      console.error('Error fetching outgoing invoices:', error);
+      logger.error('Error fetching outgoing invoices:', error);
       showError(error?.message || 'Giden faturalar yüklenirken hata oluştu');
       throw error;
     } finally {

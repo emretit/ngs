@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { importCustomersFromExcel } from '@/utils/excelUtils';
@@ -90,7 +91,7 @@ export const useExcelImport = (onSuccess?: () => void) => {
           .maybeSingle();
         
         if (checkError) {
-          console.error('Error checking existing customer:', checkError);
+          logger.error('Error checking existing customer:', checkError);
           failedCount++;
         } else if (existingCustomer) {
           duplicateCount++;
@@ -114,7 +115,7 @@ export const useExcelImport = (onSuccess?: () => void) => {
             });
             
           if (insertError) {
-            console.error('Error inserting customer:', insertError);
+            logger.error('Error inserting customer:', insertError);
             failedCount++;
           } else {
             successCount++;
@@ -156,7 +157,7 @@ export const useExcelImport = (onSuccess?: () => void) => {
       }
       
     } catch (error) {
-      console.error('Import error:', error);
+      logger.error('Import error:', error);
       toast.error('İçe aktarma sırasında bir hata oluştu');
     } finally {
       setIsLoading(false);

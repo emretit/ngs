@@ -1,3 +1,5 @@
+import { logger } from '@/utils/logger';
+
 const STORAGE_KEY = 'dashboard-layout';
 
 export interface LayoutItem {
@@ -52,7 +54,7 @@ export function saveLayoutToLocalStorage(layouts: LayoutItem[]): void {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(layoutData));
   } catch (error) {
-    console.error('Failed to save layout to localStorage:', error);
+    logger.error('Failed to save layout to localStorage:', error);
   }
 }
 
@@ -67,7 +69,7 @@ export function loadLayoutFromLocalStorage(): LayoutItem[] | null {
     const layoutData: DashboardLayout = JSON.parse(stored);
     return layoutData.layouts;
   } catch (error) {
-    console.error('Failed to load layout from localStorage:', error);
+    logger.error('Failed to load layout from localStorage:', error);
     return null;
   }
 }
@@ -79,7 +81,7 @@ export function clearLayoutFromLocalStorage(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
-    console.error('Failed to clear layout from localStorage:', error);
+    logger.error('Failed to clear layout from localStorage:', error);
   }
 }
 
@@ -142,7 +144,7 @@ export function validateLayout(layout: LayoutItem[]): boolean {
   const ids = layout.map((item) => item.i);
   const uniqueIds = new Set(ids);
   if (ids.length !== uniqueIds.size) {
-    console.error('Duplicate widget IDs found in layout');
+    logger.error('Duplicate widget IDs found in layout');
     return false;
   }
 
@@ -158,7 +160,7 @@ export function validateLayout(layout: LayoutItem[]): boolean {
   );
 
   if (invalid) {
-    console.error('Invalid dimensions found in layout');
+    logger.error('Invalid dimensions found in layout');
     return false;
   }
 

@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { Task } from "@/types/task";
@@ -17,7 +18,7 @@ const TaskMainInfo = ({ formData, handleInputChange }: TaskMainInfoProps) => {
     try {
       return format(new Date(dateString), "dd MMM yyyy", { locale: tr });
     } catch (error) {
-      console.error("Invalid date:", dateString);
+      logger.error("Invalid date:", dateString);
       return "-";
     }
   };

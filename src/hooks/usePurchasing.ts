@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { 
@@ -169,7 +170,7 @@ export const useCreatePurchaseRequest = () => {
       });
     },
     onError: (error) => {
-      console.error('PR creation error:', error);
+      logger.error('PR creation error:', error);
       toast({
         title: "Hata",
         description: "Talep oluşturulurken bir hata oluştu.",

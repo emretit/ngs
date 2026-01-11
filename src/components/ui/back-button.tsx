@@ -1,4 +1,5 @@
 import React from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -35,7 +36,7 @@ const BackButton = ({
         navigate(-1);
       }
     } catch (error) {
-      console.error("BackButton error:", error);
+      logger.error("BackButton error:", error);
     }
   };
   const baseClasses = "group transition-all duration-200 font-medium";

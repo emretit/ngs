@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,7 +99,7 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
       toast.success(`"${newCategory.name}" kategorisi oluşturuldu`);
     },
     onError: (error: any) => {
-      console.error("Kategori oluşturma hatası:", error);
+      logger.error("Kategori oluşturma hatası:", error);
       toast.error(`Kategori oluşturulurken hata oluştu: ${error?.message || 'Bilinmeyen hata'}`);
     },
   });
@@ -138,7 +139,7 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
       setIsDeleteDialogOpen(false);
       setCategoryToDelete(null);
     } catch (error) {
-      console.error('Error deleting category:', error);
+      logger.error('Error deleting category:', error);
       toast.error("Kategori silinirken hata oluştu");
       setIsDeleteDialogOpen(false);
       setCategoryToDelete(null);

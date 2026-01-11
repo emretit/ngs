@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toastUtils";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,7 +69,7 @@ export const useEmployeeForm = () => {
         navigate("/employees");
       }
     } catch (error) {
-      console.error("Error submitting employee form:", error);
+      logger.error("Error submitting employee form:", error);
       showError("Çalışan oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setIsSubmitting(false);
@@ -127,7 +128,7 @@ export const useEmployeeForm = () => {
       
       navigate(`/employees/${id}`);
     } catch (error) {
-      console.error("Error updating employee:", error);
+      logger.error("Error updating employee:", error);
       showError("Çalışan güncellenirken bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setIsSubmitting(false);

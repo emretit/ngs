@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -79,7 +80,7 @@ export const useOrderEdit = () => {
       // Refresh order data
       queryClient.invalidateQueries({ queryKey: ['order', id] });
     } catch (error) {
-      console.error("Error saving order:", error);
+      logger.error("Error saving order:", error);
       toast.error("Sipariş kaydedilirken bir hata oluştu");
     } finally {
       setSaving(false);

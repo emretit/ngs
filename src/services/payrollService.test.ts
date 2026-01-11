@@ -4,6 +4,7 @@
  */
 
 import {
+import { logger } from '@/utils/logger';
   calculateEmployeePayroll,
   calculateIncomeTax,
   PayrollYearParameters,
@@ -41,78 +42,78 @@ const formatCurrency = (amount: number): string => {
 };
 
 const printResult = (title: string, result: any) => {
-  console.log(`\n${'='.repeat(60)}`);
-  console.log(`TEST: ${title}`);
-  console.log('='.repeat(60));
-  console.log(`\n📊 BRÜT MAAŞ HESAPLAMASI:`);
-  console.log(`  Aylık Maaş Tabanı: ${formatCurrency(result.base_salary)}`);
+  logger.debug(`\n${'='.repeat(60)}`);
+  logger.debug(`TEST: ${title}`);
+  logger.debug('='.repeat(60));
+  logger.debug(`\n📊 BRÜT MAAŞ HESAPLAMASI:`);
+  logger.debug(`  Aylık Maaş Tabanı: ${formatCurrency(result.base_salary)}`);
   if (result.overtime_pay > 0) {
-    console.log(`  Fazla Mesai: ${formatCurrency(result.overtime_pay)}`);
+    logger.debug(`  Fazla Mesai: ${formatCurrency(result.overtime_pay)}`);
   }
   if (result.bonus_premium > 0) {
-    console.log(`  Prim/İkramiye: ${formatCurrency(result.bonus_premium)}`);
+    logger.debug(`  Prim/İkramiye: ${formatCurrency(result.bonus_premium)}`);
   }
   if (result.allowances_cash > 0 || result.allowances_in_kind > 0) {
-    console.log(`  Yan Ödemeler: ${formatCurrency(result.allowances_cash + result.allowances_in_kind)}`);
+    logger.debug(`  Yan Ödemeler: ${formatCurrency(result.allowances_cash + result.allowances_in_kind)}`);
   }
-  console.log(`  TOPLAM BRÜT: ${formatCurrency(result.gross_salary)}`);
+  logger.debug(`  TOPLAM BRÜT: ${formatCurrency(result.gross_salary)}`);
 
-  console.log(`\n💰 SGK KESİNTİLERİ:`);
-  console.log(`  SGK Matrah Tabanı: ${formatCurrency(result.sgk_base)}`);
-  console.log(`  SGK Primi (%14): -${formatCurrency(result.sgk_employee_share)}`);
-  console.log(`  İşsizlik Primi (%1): -${formatCurrency(result.unemployment_employee)}`);
-  console.log(`  Toplam: -${formatCurrency(result.sgk_employee_share + result.unemployment_employee)}`);
+  logger.debug(`\n💰 SGK KESİNTİLERİ:`);
+  logger.debug(`  SGK Matrah Tabanı: ${formatCurrency(result.sgk_base)}`);
+  logger.debug(`  SGK Primi (%14): -${formatCurrency(result.sgk_employee_share)}`);
+  logger.debug(`  İşsizlik Primi (%1): -${formatCurrency(result.unemployment_employee)}`);
+  logger.debug(`  Toplam: -${formatCurrency(result.sgk_employee_share + result.unemployment_employee)}`);
 
-  console.log(`\n📋 VERGİ KESİNTİLERİ:`);
-  console.log(`  Gelir Vergisi Matrahı: ${formatCurrency(result.income_tax_base)}`);
-  console.log(`  Gelir Vergisi: -${formatCurrency(result.income_tax_amount)}`);
+  logger.debug(`\n📋 VERGİ KESİNTİLERİ:`);
+  logger.debug(`  Gelir Vergisi Matrahı: ${formatCurrency(result.income_tax_base)}`);
+  logger.debug(`  Gelir Vergisi: -${formatCurrency(result.income_tax_amount)}`);
   if (result.income_tax_exemption > 0) {
-    console.log(`    (Muafiyet: ${formatCurrency(result.income_tax_exemption)})`);
+    logger.debug(`    (Muafiyet: ${formatCurrency(result.income_tax_exemption)})`);
   }
-  console.log(`  Damga Vergisi: -${formatCurrency(result.stamp_tax_amount)}`);
+  logger.debug(`  Damga Vergisi: -${formatCurrency(result.stamp_tax_amount)}`);
   if (result.stamp_tax_exemption > 0) {
-    console.log(`    (Muafiyet: ${formatCurrency(result.stamp_tax_exemption)})`);
+    logger.debug(`    (Muafiyet: ${formatCurrency(result.stamp_tax_exemption)})`);
   }
-  console.log(`  Toplam: -${formatCurrency(result.income_tax_amount + result.stamp_tax_amount)}`);
+  logger.debug(`  Toplam: -${formatCurrency(result.income_tax_amount + result.stamp_tax_amount)}`);
 
   if (result.advances > 0 || result.garnishments > 0) {
-    console.log(`\n💳 DİĞER KESİNTİLER:`);
+    logger.debug(`\n💳 DİĞER KESİNTİLER:`);
     if (result.advances > 0) {
-      console.log(`  Avanslar: -${formatCurrency(result.advances)}`);
+      logger.debug(`  Avanslar: -${formatCurrency(result.advances)}`);
     }
     if (result.garnishments > 0) {
-      console.log(`  Hacizler: -${formatCurrency(result.garnishments)}`);
+      logger.debug(`  Hacizler: -${formatCurrency(result.garnishments)}`);
     }
   }
 
-  console.log(`\n📊 ÖZET:`);
-  console.log(`  Toplam Brüt: ${formatCurrency(result.gross_salary)}`);
-  console.log(`  Toplam Kesintiler: -${formatCurrency(result.total_deductions)}`);
-  console.log(`  ✅ NET MAAŞ: ${formatCurrency(result.net_salary)}`);
+  logger.debug(`\n📊 ÖZET:`);
+  logger.debug(`  Toplam Brüt: ${formatCurrency(result.gross_salary)}`);
+  logger.debug(`  Toplam Kesintiler: -${formatCurrency(result.total_deductions)}`);
+  logger.debug(`  ✅ NET MAAŞ: ${formatCurrency(result.net_salary)}`);
   
-  console.log(`\n🏢 İŞVEREN MALİYETİ:`);
-  console.log(`  İşveren SGK: +${formatCurrency(result.sgk_employer_share)}`);
-  console.log(`  İşveren İşsizlik: +${formatCurrency(result.unemployment_employer)}`);
-  console.log(`  İş Kazası: +${formatCurrency(result.accident_insurance)}`);
-  console.log(`  TOPLAM MALİYET: ${formatCurrency(result.total_employer_cost)}`);
+  logger.debug(`\n🏢 İŞVEREN MALİYETİ:`);
+  logger.debug(`  İşveren SGK: +${formatCurrency(result.sgk_employer_share)}`);
+  logger.debug(`  İşveren İşsizlik: +${formatCurrency(result.unemployment_employer)}`);
+  logger.debug(`  İş Kazası: +${formatCurrency(result.accident_insurance)}`);
+  logger.debug(`  TOPLAM MALİYET: ${formatCurrency(result.total_employer_cost)}`);
   
-  console.log(`\n💡 ORANLAR:`);
-  console.log(`  Net/Brüt: %${((result.net_salary / result.gross_salary) * 100).toFixed(2)}`);
-  console.log(`  Kesinti Oranı: %${((result.total_deductions / result.gross_salary) * 100).toFixed(2)}`);
-  console.log(`  İşveren Maliyet Farkı: %${(((result.total_employer_cost - result.gross_salary) / result.gross_salary) * 100).toFixed(2)}`);
+  logger.debug(`\n💡 ORANLAR:`);
+  logger.debug(`  Net/Brüt: %${((result.net_salary / result.gross_salary) * 100).toFixed(2)}`);
+  logger.debug(`  Kesinti Oranı: %${((result.total_deductions / result.gross_salary) * 100).toFixed(2)}`);
+  logger.debug(`  İşveren Maliyet Farkı: %${(((result.total_employer_cost - result.gross_salary) / result.gross_salary) * 100).toFixed(2)}`);
 
   if (result.is_minimum_wage_exemption_applied) {
-    console.log(`\n🎉 Asgari ücret muafiyeti uygulandı!`);
+    logger.debug(`\n🎉 Asgari ücret muafiyeti uygulandı!`);
   }
 
   if (result.warnings.length > 0) {
-    console.log(`\n⚠️  UYARILAR:`);
-    result.warnings.forEach((w: string) => console.log(`  - ${w}`));
+    logger.debug(`\n⚠️  UYARILAR:`);
+    result.warnings.forEach((w: string) => logger.debug(`  - ${w}`));
   }
 };
 
 // Test 1: Minimum Wage (with exemption)
-console.log('\n\n🧪 BORDRO HESAPLAMA TESTLERİ - 2026\n');
+logger.debug('\n\n🧪 BORDRO HESAPLAMA TESTLERİ - 2026\n');
 
 const test1 = calculateEmployeePayroll(
   'emp-001',
@@ -189,19 +190,19 @@ const test6 = calculateEmployeePayroll(
 printResult('Çok Yüksek Gelir (500.000 TL - Çoklu Vergi Dilimi)', test6);
 
 // Income tax bracket test
-console.log(`\n\n${'='.repeat(60)}`);
-console.log('GELİR VERGİSİ DİLİM TESTLERİ');
-console.log('='.repeat(60));
+logger.debug(`\n\n${'='.repeat(60)}`);
+logger.debug('GELİR VERGİSİ DİLİM TESTLERİ');
+logger.debug('='.repeat(60));
 
 const testBrackets = [10000, 100000, 200000, 500000, 1000000, 2000000];
 testBrackets.forEach(amount => {
   const tax = calculateIncomeTax(amount, params2026.income_tax_brackets);
   const effectiveRate = (tax / amount) * 100;
-  console.log(`\nMatrah: ${formatCurrency(amount)}`);
-  console.log(`  Vergi: ${formatCurrency(tax)}`);
-  console.log(`  Efektif Oran: %${effectiveRate.toFixed(2)}`);
+  logger.debug(`\nMatrah: ${formatCurrency(amount)}`);
+  logger.debug(`  Vergi: ${formatCurrency(tax)}`);
+  logger.debug(`  Efektif Oran: %${effectiveRate.toFixed(2)}`);
 });
 
-console.log('\n\n✅ TÜM TESTLER TAMAMLANDI!\n');
+logger.debug('\n\n✅ TÜM TESTLER TAMAMLANDI!\n');
 
 export {};

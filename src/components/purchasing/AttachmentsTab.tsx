@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -119,7 +120,7 @@ export function AttachmentsTab({ objectType, objectId }: AttachmentsTabProps) {
       // Reset input
       e.target.value = '';
     } catch (error: any) {
-      console.error('Upload error:', error);
+      logger.error('Upload error:', error);
       toast({
         title: "Hata",
         description: error.message || "Dosya yüklenemedi.",
@@ -142,7 +143,7 @@ export function AttachmentsTab({ objectType, objectId }: AttachmentsTabProps) {
     try {
       await deleteMutation.mutateAsync(attachmentToDelete);
     } catch (error) {
-      console.error('Error deleting attachment:', error);
+      logger.error('Error deleting attachment:', error);
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);

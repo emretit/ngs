@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -94,7 +95,7 @@ export const LeaveTypesManagement = () => {
             .eq("leave_type_id", type.id);
 
           if (countError) {
-            console.error("Error counting rules:", countError);
+            logger.error("Error counting rules:", countError);
             return { ...type, rules_count: 0 };
           }
 

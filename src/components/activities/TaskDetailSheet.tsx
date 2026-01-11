@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { CalendarIcon, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet";
@@ -64,7 +65,7 @@ const TaskDetailSheet = ({ task, isOpen, onClose }: TaskDetailSheetProps) => {
     },
     onError: (error) => {
       toast.error(t('toast.activityUpdateError'));
-      console.error('Update error:', error);
+      logger.error('Update error:', error);
     }
   });
 

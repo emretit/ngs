@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 // PostgrestError type definition
 export interface PostgrestError {
@@ -118,7 +119,7 @@ export const handleSupabaseError = (
   
   // Log error
   if (shouldLog) {
-    console.error(`[Supabase Error] ${context?.operation || 'Operation'} failed:`, {
+    logger.error(`[Supabase Error] ${context?.operation || 'Operation'} failed:`, {
       error,
       table: context?.table,
       code: (error as PostgrestError).code,

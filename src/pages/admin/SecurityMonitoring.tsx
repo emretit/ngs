@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,13 +43,13 @@ const SecurityMonitoring = () => {
         const { data, error } = await supabase.rpc('run_analytics_query' as any, { query_text: query });
         
         if (error) {
-          console.error('Auth logs error:', error);
+          logger.error('Auth logs error:', error);
           return [];
         }
         
         return data || [];
       } catch (err) {
-        console.error('Failed to fetch auth logs:', err);
+        logger.error('Failed to fetch auth logs:', err);
         return [];
       }
     },

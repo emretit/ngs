@@ -1,4 +1,5 @@
 import React from "react";
+import { logger } from '@/utils/logger';
 import { useAuth } from "@/auth/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -19,7 +20,7 @@ export const ProtectedRoute: React.FC<RouteGuardProps> = ({ children, requiredMo
     loading = auth.loading;
   } catch (error) {
     // Hot reload sırasında AuthProvider context'i kaybolabilir
-    console.warn('ProtectedRoute: Auth context not available');
+    logger.warn('ProtectedRoute: Auth context not available');
     user = null;
     loading = true;
   }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, memo, useMemo, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -137,7 +138,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       const { data, error } = await supabase.from('employees').select('id, first_name, last_name, department').order('first_name');
       if (!error) setEmployees(data || []);
     } catch (error) {
-      console.error('Error fetching employees:', error);
+      logger.error('Error fetching employees:', error);
     }
   }, []);
 
@@ -150,7 +151,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       const { data, error } = await supabase.from('cashflow_categories').select('id, name').eq('type', 'expense').eq('company_id', profile.company_id).order('name');
       if (!error) setCategories(data || []);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      logger.error('Error fetching categories:', error);
     }
   }, []);
 
@@ -159,7 +160,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       const { data, error } = await supabase.from('cashflow_subcategories').select('id, name, category_id').order('name');
       if (!error) setSubcategoriesList((data as any) || []);
     } catch (error) {
-      console.error('Error fetching subcategories:', error);
+      logger.error('Error fetching subcategories:', error);
     }
   }, []);
 
@@ -176,14 +177,14 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       if (!cardRes.error && cardRes.data) setCreditCards(cardRes.data.map((a: any) => ({ id: a.id, label: a.card_name })));
       if (!partnerRes.error && partnerRes.data) setPartnerAccounts(partnerRes.data.map((a: any) => ({ id: a.id, label: a.partner_name })));
     } catch (e) {
-      console.error('Hesaplar yüklenirken hata:', e);
+      logger.error('Hesaplar yüklenirken hata:', e);
     }
   }, []);
 
   // Expenses hatası varsa göster
   useEffect(() => {
     if (expensesError) {
-      console.error('Error fetching expenses:', expensesError);
+      logger.error('Error fetching expenses:', expensesError);
       toast.error("Masraflar yüklenirken bir hata oluştu");
     }
   }, [expensesError]);
@@ -382,7 +383,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
         }
         
         if (transactionError) {
-          console.error('Error adding transaction to payment account:', transactionError);
+          logger.error('Error adding transaction to payment account:', transactionError);
           // Transaction hatası olsa bile masraf kaydedildi, sadece uyarı ver
           toast.error("Masraf kaydedildi ancak ödeme hesabına işlem eklenirken hata oluştu");
         }
@@ -424,7 +425,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       resetForm();
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
     } catch (error) {
-      console.error('Error adding expense:', error);
+      logger.error('Error adding expense:', error);
       toast.error("Masraf eklenirken bir hata oluştu");
     }
   };
@@ -648,7 +649,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
         }
         
         if (transactionError) {
-          console.error('Error adding transaction to payment account:', transactionError);
+          logger.error('Error adding transaction to payment account:', transactionError);
           toast.error("Masraf güncellendi ancak ödeme hesabına işlem eklenirken hata oluştu");
         }
       }
@@ -658,7 +659,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       setEditingExpense(null);
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
     } catch (error) {
-      console.error('Error updating expense:', error);
+      logger.error('Error updating expense:', error);
       toast.error("Masraf güncellenirken bir hata oluştu");
     } finally {
       setIsUpdating(false);
@@ -674,7 +675,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       toast.success("Masraf başarıyla silindi");
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
     } catch (error) {
-      console.error('Error deleting expense:', error);
+      logger.error('Error deleting expense:', error);
       toast.error("Masraf silinirken bir hata oluştu");
     } finally {
       setIsDeleting(false);

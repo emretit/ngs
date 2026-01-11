@@ -1,0 +1,81 @@
+import { useState } from 'react';
+import { IntegratorService } from '../services/integratorService';
+
+interface EinvoiceData {
+  companyName?: string;
+  aliasName?: string;
+  taxOffice?: string;
+  address?: string;
+  city?: string;
+  district?: string;
+  mersisNo?: string;
+  sicilNo?: string;
+}
+
+interface EinvoiceResult {
+  isEinvoiceMukellef: boolean;
+  data?: EinvoiceData;
+}
+
+export const useEinvoiceMukellefCheck = () => {
+  const [isChecking, setIsChecking] = useState(false);
+  const [result, setResult] = useState<EinvoiceResult | null>(null);
+
+  const checkEinvoiceMukellef = async (taxNumber: string): Promise<EinvoiceResult> => {
+    console.log('🔍 [useEinvoiceMukellefCheck] E-invoice mükellef check başlatılıyor...');
+    console.log('📋 [useEinvoiceMukellefCheck] Vergi Numarası:', taxNumber);
+    
+    setIsChecking(true);
+    try {
+      // Use IntegratorService which automatically routes to correct integrator
+      console.log('📤 [useEinvoiceMukellefCheck] IntegratorService.checkMukellef çağrılıyor...');
+      const apiResult = await IntegratorService.checkMukellef(taxNumber);
+
+      console.log('📥 [useEinvoiceMukellefCheck] IntegratorService sonucu alındı');
+      console.log('📊 [useEinvoiceMukellefCheck] API Result:', JSON.stringify(apiResult, null, 2));
+
+      if (!apiResult.success) {
+        console.error('❌ [useEinvoiceMukellefCheck] API başarısız:', apiResult.error);
+        throw new Error(apiResult.error || 'Mükellef sorgulama başarısız');
+      }
+
+      const checkResult: EinvoiceResult = {
+        isEinvoiceMukellef: apiResult.data?.aliasName ? true : false,
+        data: apiResult.data as EinvoiceData
+      };
+
+      console.log('✅ [useEinvoiceMukellefCheck] Mükellef check sonucu:', {
+        isEinvoiceMukellef: checkResult.isEinvoiceMukellef,
+        hasData: !!checkResult.data,
+        aliasName: checkResult.data?.aliasName,
+        companyName: checkResult.data?.companyName
+      });
+
+      setResult(checkResult);
+      return checkResult;
+    } catch (error) {
+      console.error('❌ [useEinvoiceMukellefCheck] E-invoice check error:', error);
+      const errorResult: EinvoiceResult = {
+        isEinvoiceMukellef: false,
+        data: undefined
+      };
+      console.error('❌ [useEinvoiceMukellefCheck] Error result:', errorResult);
+      setResult(errorResult);
+      return errorResult;
+    } finally {
+      setIsChecking(false);
+      console.log('🏁 [useEinvoiceMukellefCheck] Check işlemi tamamlandı');
+    }
+  };
+
+  const clearResult = () => {
+    setResult(null);
+  };
+
+  return {
+    checkEinvoiceMukellef,
+    isChecking,
+    result,
+    clearResult
+  };
+};

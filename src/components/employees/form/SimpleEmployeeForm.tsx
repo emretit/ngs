@@ -1,5 +1,6 @@
 
 import { useState, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -134,7 +135,7 @@ const SimpleEmployeeForm = () => {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     
-    console.log("Çalışan oluşturuluyor...");
+    logger.debug("Çalışan oluşturuluyor...");
     
     try {
       // Get user session and company_id
@@ -215,7 +216,7 @@ const SimpleEmployeeForm = () => {
 
       if (error) throw error;
 
-      console.log("✅ Employee created:", newEmployee);
+      logger.debug("✅ Employee created:", newEmployee);
 
       // If linking to a user, also update the profile's employee_id (bidirectional)
       if (userLinkState.shouldLink && userLinkState.userId && newEmployee?.id) {
@@ -224,9 +225,9 @@ const SimpleEmployeeForm = () => {
             .from("profiles")
             .update({ employee_id: newEmployee.id })
             .eq("id", userLinkState.userId);
-          console.log("✅ Profile linked to employee");
+          logger.debug("✅ Profile linked to employee");
         } catch (linkError) {
-          console.error("Error linking profile to employee:", linkError);
+          logger.error("Error linking profile to employee:", linkError);
         }
       }
 
@@ -276,7 +277,7 @@ const SimpleEmployeeForm = () => {
 
           await Promise.all(documentPromises);
         } catch (docError) {
-          console.error("Error uploading documents:", docError);
+          logger.error("Error uploading documents:", docError);
           showError("Belgeler yüklenirken hata oluştu, ancak çalışan oluşturuldu.");
         }
       }
@@ -291,7 +292,7 @@ const SimpleEmployeeForm = () => {
         navigate("/employees");
       }
     } catch (error: any) {
-      console.error("Error creating employee:", error);
+      logger.error("Error creating employee:", error);
       
       // Handle specific error cases
       if (error?.code === '23505') {

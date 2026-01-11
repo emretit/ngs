@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { logger } from '@/utils/logger';
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -138,7 +139,7 @@ const EmployeeTable = ({
     try {
       deleteEmployeeMutation.mutate(employeeToDelete.id);
     } catch (error) {
-      console.error('Error deleting employee:', error);
+      logger.error('Error deleting employee:', error);
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);

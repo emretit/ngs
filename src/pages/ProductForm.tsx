@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FileText, ArrowLeft, Save } from "lucide-react";
@@ -47,7 +48,7 @@ const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
     const subscription = form.watch(() => {
       if (Object.keys(form.formState.errors).length > 0) {
         // Only log errors to console, not display toast on every keystroke
-        console.log("Form has errors:", form.formState.errors);
+        logger.debug("Form has errors:", form.formState.errors);
       }
     });
     
@@ -55,48 +56,48 @@ const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
   }, [form]);
 
   const handleSubmit = useCallback(async (values: any, addAnother = false): Promise<{ resetForm: boolean }> => {
-    console.log("🟢 handleSubmit çağrıldı, values:", values);
+    logger.debug("🟢 handleSubmit çağrıldı, values:", values);
     // Ensure currency is properly set before submission
     if (!values.currency || values.currency.trim() === "") {
       values.currency = "TRY";
-      console.log("🟡 Currency değeri TRY olarak ayarlandı");
+      logger.debug("🟡 Currency değeri TRY olarak ayarlandı");
     }
 
     try {
-      console.log("🟢 onSubmit çağrılıyor...");
+      logger.debug("🟢 onSubmit çağrılıyor...");
       const result = await onSubmit(values, addAnother);
-      console.log("🟢 onSubmit tamamlandı, sonuç:", result);
+      logger.debug("🟢 onSubmit tamamlandı, sonuç:", result);
       if (result?.resetForm) {
         form.reset();
       }
       return result || { resetForm: false };
     } catch (error) {
-      console.error("❌ Submit error:", error);
+      logger.error("❌ Submit error:", error);
       // Error handling zaten onSubmit içinde yapılıyor
       return { resetForm: false };
     }
   }, [form, onSubmit]);
 
   const handleSaveClick = () => {
-    console.log("🔵 Kaydet butonuna tıklandı");
+    logger.debug("🔵 Kaydet butonuna tıklandı");
     const submitForm = async () => {
       // Ensure status is set based on is_active before validation
       const currentIsActive = form.getValues("is_active");
       const currentStatus = form.getValues("status");
       const currentUnit = form.getValues("unit");
 
-      console.log("🔵 Mevcut is_active:", currentIsActive, "status:", currentStatus, "unit:", currentUnit);
+      logger.debug("🔵 Mevcut is_active:", currentIsActive, "status:", currentStatus, "unit:", currentUnit);
 
       // If status is not set or invalid, set it based on is_active
       if (!currentStatus || !["active", "inactive", "discontinued"].includes(currentStatus)) {
         const newStatus = currentIsActive ? "active" : "inactive";
-        console.log("🟡 Status geçersiz, yeni değer:", newStatus);
+        logger.debug("🟡 Status geçersiz, yeni değer:", newStatus);
         form.setValue("status", newStatus);
       }
 
       // If unit is not set or empty, set default value
       if (!currentUnit || currentUnit.trim() === "") {
-        console.log("🟡 Unit boş, varsayılan değer (piece) ayarlanıyor");
+        logger.debug("🟡 Unit boş, varsayılan değer (piece) ayarlanıyor");
         form.setValue("unit", "piece");
       }
 
@@ -112,21 +113,21 @@ const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
         form.setValue("image_url", null, { shouldValidate: false });
       }
 
-      console.log("🔵 Form validasyonu başlatılıyor...");
+      logger.debug("🔵 Form validasyonu başlatılıyor...");
       const isValid = await form.trigger();
-      console.log("🔵 Form validasyonu sonucu:", isValid);
+      logger.debug("🔵 Form validasyonu sonucu:", isValid);
 
       if (!isValid) {
-        console.log("❌ Form geçersiz, hatalar:", form.formState.errors);
-        console.log("❌ Status hatası detayı:", form.formState.errors.status);
-        console.log("❌ Mevcut form değerleri:", form.getValues());
+        logger.debug("❌ Form geçersiz, hatalar:", form.formState.errors);
+        logger.debug("❌ Status hatası detayı:", form.formState.errors.status);
+        logger.debug("❌ Mevcut form değerleri:", form.getValues());
         showError("Lütfen form hatalarını düzeltin");
         return;
       }
 
-      console.log("✅ Form geçerli, submit ediliyor...");
+      logger.debug("✅ Form geçerli, submit ediliyor...");
       form.handleSubmit(async (values) => {
-        console.log("🔵 Submit fonksiyonu çağrıldı, values:", values);
+        logger.debug("🔵 Submit fonksiyonu çağrıldı, values:", values);
         await handleSubmit(values, false);
       })();
     };

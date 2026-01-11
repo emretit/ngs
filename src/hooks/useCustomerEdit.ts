@@ -1,5 +1,6 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CustomerFormData } from "@/types/customer";
@@ -29,7 +30,7 @@ export const useCustomerEdit = (customerId: string | undefined, onSuccess?: () =
         tax_office: data.tax_office || null,
       };
 
-      console.log('Updating data:', sanitizedData);
+      logger.debug('Updating data:', sanitizedData);
       
       const { error: updateError } = await supabase
         .from('customers')
@@ -37,7 +38,7 @@ export const useCustomerEdit = (customerId: string | undefined, onSuccess?: () =
         .eq('id', customerId);
       
       if (updateError) {
-        console.error('Update error:', updateError);
+        logger.error('Update error:', updateError);
         throw updateError;
       }
 
@@ -59,7 +60,7 @@ export const useCustomerEdit = (customerId: string | undefined, onSuccess?: () =
       }
     },
     onError: (error) => {
-      console.error('Mutation error:', error);
+      logger.error('Mutation error:', error);
       toast({
         title: "Hata",
         description: error instanceof Error ? error.message : "Bir hata oluştu. Lütfen tekrar deneyin.",

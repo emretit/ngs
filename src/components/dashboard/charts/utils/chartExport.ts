@@ -1,9 +1,11 @@
+import { logger } from '@/utils/logger';
+
 /**
  * CSV formatında veri export eder
  */
 export const exportToCSV = (data: any[], filename: string) => {
   if (!data || data.length === 0) {
-    console.error('No data to export');
+    logger.error('No data to export');
     return;
   }
 
@@ -55,14 +57,14 @@ export const exportToPNG = async (elementId: string, filename: string) => {
   try {
     const element = document.getElementById(elementId);
     if (!element) {
-      console.error('Element not found');
+      logger.error('Element not found');
       return;
     }
 
     // SVG elementini bul ve PNG'ye çevir
     const svgElement = element.querySelector('svg');
     if (!svgElement) {
-      console.error('SVG element not found');
+      logger.error('SVG element not found');
       return;
     }
 
@@ -108,7 +110,7 @@ export const exportToPNG = async (elementId: string, filename: string) => {
     
     img.src = url;
   } catch (error) {
-    console.error('Error exporting to PNG:', error);
+    logger.error('Error exporting to PNG:', error);
   }
 };
 
@@ -119,14 +121,14 @@ export const exportToSVG = (elementId: string, filename: string) => {
   try {
     const element = document.getElementById(elementId);
     if (!element) {
-      console.error('Element not found');
+      logger.error('Element not found');
       return;
     }
 
     // SVG elementini bul
     const svgElement = element.querySelector('svg');
     if (!svgElement) {
-      console.error('SVG element not found');
+      logger.error('SVG element not found');
       return;
     }
 
@@ -147,7 +149,7 @@ export const exportToSVG = (elementId: string, filename: string) => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('Error exporting to SVG:', error);
+    logger.error('Error exporting to SVG:', error);
   }
 };
 
@@ -179,7 +181,7 @@ export const handleExport = async (
       exportToSVG(elementId, filename);
       break;
     default:
-      console.error('Unsupported export format:', format);
+      logger.error('Unsupported export format:', format);
   }
 };
 

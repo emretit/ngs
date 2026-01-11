@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,7 +79,7 @@ const WarehouseDetails = () => {
     },
     meta: {
       onError: (error: Error) => {
-        console.error("Error fetching warehouse:", error);
+        logger.error("Error fetching warehouse:", error);
         showError("Depo bilgilerini alırken bir hata oluştu");
       }
     },
@@ -187,7 +188,7 @@ const WarehouseDetails = () => {
       showSuccess("Depo başarıyla güncellendi", { duration: 1000 });
     },
     onError: (error) => {
-      console.error("Error updating warehouse:", error);
+      logger.error("Error updating warehouse:", error);
       showError("Depo güncellenirken bir hata oluştu");
     },
   });

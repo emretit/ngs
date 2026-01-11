@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { useSystemParameters, SystemParameter } from '@/hooks/useSystemParameters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,7 +62,7 @@ export const SystemParametersManager: React.FC<SystemParametersManagerProps> = (
         company_id: companyId
       });
     } catch (error) {
-      console.error('Audit log error:', error);
+      logger.error('Audit log error:', error);
     }
   };
 
@@ -88,7 +89,7 @@ export const SystemParametersManager: React.FC<SystemParametersManagerProps> = (
       setIsCreateDialogOpen(false);
       toast.success('Parametre başarıyla oluşturuldu');
     } catch (error) {
-      console.error('Error creating parameter:', error);
+      logger.error('Error creating parameter:', error);
       toast.error('Parametre oluşturulurken hata oluştu');
     }
   };
@@ -111,7 +112,7 @@ export const SystemParametersManager: React.FC<SystemParametersManagerProps> = (
       setEditingParam(null);
       toast.success('Parametre başarıyla güncellendi');
     } catch (error) {
-      console.error('Error updating parameter:', error);
+      logger.error('Error updating parameter:', error);
       toast.error('Parametre güncellenirken hata oluştu');
     }
   };
@@ -133,7 +134,7 @@ export const SystemParametersManager: React.FC<SystemParametersManagerProps> = (
       setIsDeleteDialogOpen(false);
       setParameterToDelete(null);
     } catch (error) {
-      console.error('Error deleting parameter:', error);
+      logger.error('Error deleting parameter:', error);
       toast.error('Parametre silinirken hata oluştu');
       setIsDeleteDialogOpen(false);
       setParameterToDelete(null);

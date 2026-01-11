@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Proposal, ProposalItem } from "@/types/proposal";
@@ -55,7 +56,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ proposalId }) => {
                 items: JSON.parse(data.items)
               };
             } catch (e) {
-              console.error("Failed to parse items:", e);
+              logger.error("Failed to parse items:", e);
             }
           }
           
@@ -67,7 +68,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ proposalId }) => {
           }
         }
       } catch (error) {
-        console.error("Error fetching proposal:", error);
+        logger.error("Error fetching proposal:", error);
       } finally {
         setLoading(false);
       }
@@ -130,7 +131,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ proposalId }) => {
       navigate('/orders/list');
       
     } catch (error) {
-      console.error("Error creating order:", error);
+      logger.error("Error creating order:", error);
       toast({
         title: "Hata",
         description: "Sipariş oluşturulurken hata oluştu",
@@ -195,7 +196,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ proposalId }) => {
       navigate('/orders/list');
       
     } catch (error) {
-      console.error("Error saving draft order:", error);
+      logger.error("Error saving draft order:", error);
       toast({
         title: "Hata",
         description: "Sipariş taslağı kaydedilirken hata oluştu",

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -101,13 +102,13 @@ export default function AIWorkflows() {
   };
 
   const handleSaveWorkflow = (workflow: any) => {
-    console.log('Save workflow:', workflow);
+    logger.debug('Save workflow:', workflow);
     // TODO: API call to save workflow
     setView('list');
   };
 
   const handleRunWorkflow = (workflowId: string) => {
-    console.log('Run workflow:', workflowId);
+    logger.debug('Run workflow:', workflowId);
     // TODO: API call to start workflow execution
     setView('execution');
   };
@@ -170,8 +171,8 @@ export default function AIWorkflows() {
             started_at: new Date().toISOString(),
             trigger_source: 'manual'
           }}
-          onRetry={() => console.log('Retry')}
-          onCancel={() => console.log('Cancel')}
+          onRetry={() => logger.debug('Retry')}
+          onCancel={() => logger.debug('Cancel')}
         />
       </div>
     );

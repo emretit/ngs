@@ -1,4 +1,5 @@
 import React, { useMemo, useEffect, useState } from "react";
+import { logger } from '@/utils/logger';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -60,7 +61,7 @@ const ServiceMapView = ({
               servicesWithLocations.push(service);
             }
           } catch (error) {
-            console.error('Geocoding error for service:', service.id, error);
+            logger.error('Geocoding error for service:', service.id, error);
             servicesWithLocations.push(service);
           }
           

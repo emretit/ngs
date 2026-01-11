@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -33,7 +34,7 @@ export const useProposalDraft = () => {
       navigate("/proposals");
       return newProposal.id;
     } catch (error) {
-      console.error('Error saving draft:', error);
+      logger.error('Error saving draft:', error);
       toast.error("Taslak kaydedilirken bir hata oluştu");
       return null;
     } finally {

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -71,7 +72,7 @@ export const BulkPayrollDialog = ({ open, onOpenChange, selectedEmployees }: Bul
         return item;
       }));
     } catch (error) {
-      console.error('Error loading salaries:', error);
+      logger.error('Error loading salaries:', error);
     }
   };
 

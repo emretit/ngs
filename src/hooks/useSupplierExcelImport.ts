@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { importCustomersFromExcel, readExcelColumns } from '@/utils/excelUtils'; // Reusing existing util as it returns JSON
@@ -59,7 +60,7 @@ export const useSupplierExcelImport = (onSuccess?: () => void) => {
         setShowMappingDialog(true);
         
       } catch (error: any) {
-        console.error('Error mapping columns:', error);
+        logger.error('Error mapping columns:', error);
         toast.error('Kolon eşleştirme yapılırken bir hata oluştu');
       } finally {
         setIsMappingColumns(false);
@@ -122,7 +123,7 @@ export const useSupplierExcelImport = (onSuccess?: () => void) => {
       setIsLoading(false);
       toast.info('İçe aktarma iptal edildi');
     } catch (error) {
-      console.error('Error cancelling import:', error);
+      logger.error('Error cancelling import:', error);
       setIsLoading(false);
       toast.info('İçe aktarma iptal edildi');
     }
@@ -221,12 +222,12 @@ export const useSupplierExcelImport = (onSuccess?: () => void) => {
             
             if (cityData) {
               cityId = cityData.id;
-              console.log('✅ City found:', cityName, '→ ID:', cityId);
+              logger.debug('✅ City found:', cityName, '→ ID:', cityId);
             } else {
-              console.log('⚠️ City not found:', cityName);
+              logger.debug('⚠️ City not found:', cityName);
             }
           } catch (error) {
-            console.error('Error resolving city ID:', error);
+            logger.error('Error resolving city ID:', error);
           }
         }
         
@@ -242,12 +243,12 @@ export const useSupplierExcelImport = (onSuccess?: () => void) => {
             
             if (districtData) {
               districtId = districtData.id;
-              console.log('✅ District found:', districtName, '→ ID:', districtId);
+              logger.debug('✅ District found:', districtName, '→ ID:', districtId);
             } else {
-              console.log('⚠️ District not found:', districtName, 'for city ID:', cityId);
+              logger.debug('⚠️ District not found:', districtName, 'for city ID:', cityId);
             }
           } catch (error) {
-            console.error('Error resolving district ID:', error);
+            logger.error('Error resolving district ID:', error);
           }
         }
         
@@ -281,7 +282,7 @@ export const useSupplierExcelImport = (onSuccess?: () => void) => {
            .insert(supplierData);
            
         if (insertError) {
-           console.error('Error inserting supplier:', insertError);
+           logger.error('Error inserting supplier:', insertError);
            failedCount++;
         } else {
            successCount++;
@@ -313,7 +314,7 @@ export const useSupplierExcelImport = (onSuccess?: () => void) => {
       }
       
     } catch (error) {
-      console.error('Import error:', error);
+      logger.error('Import error:', error);
       toast.error('İçe aktarma sırasında bir hata oluştu');
     } finally {
       setIsLoading(false);

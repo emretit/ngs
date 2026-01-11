@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { fetchSalesAnalysisData, MonthlySalesData, SalesAnalysisFilters } from '@/services/dashboard/salesAnalysisService';
 
 export const useSalesAnalysis = (filters: SalesAnalysisFilters = { timePeriod: '6' }) => {
@@ -14,7 +15,7 @@ export const useSalesAnalysis = (filters: SalesAnalysisFilters = { timePeriod: '
         const result = await fetchSalesAnalysisData(filters);
         setData(result);
       } catch (err) {
-        console.error('Error loading sales analysis data:', err);
+        logger.error('Error loading sales analysis data:', err);
         setError(err as Error);
       } finally {
         setIsLoading(false);

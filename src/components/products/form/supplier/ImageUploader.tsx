@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { UseFormReturn } from "react-hook-form";
 import { ProductFormSchema } from "../ProductFormSchema";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -98,7 +99,7 @@ const ImageUploader = ({ form, compact = false }: ImageUploaderProps) => {
       
       setUploadProgress(100);
     } catch (error) {
-      console.error('Error uploading file:', error);
+      logger.error('Error uploading file:', error);
       alert('Dosya yüklenirken bir hata oluştu: ' + (error as Error).message);
     } finally {
       setTimeout(() => {

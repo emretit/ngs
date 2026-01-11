@@ -1,4 +1,5 @@
 import { addDays, addWeeks, addMonths, format, isAfter, startOfDay } from 'date-fns';
+import { logger } from '@/utils/logger';
 import { tr } from 'date-fns/locale';
 
 export type RecurrenceType = 'daily' | 'weekly' | 'monthly' | 'none';
@@ -86,7 +87,7 @@ export function generateRecurringExpenses(
 
   // Warn if we hit the safety limit
   if (count >= SAFETY_LIMIT) {
-    console.warn('Recurring expense generation hit safety limit of', SAFETY_LIMIT, 'instances. Consider setting an end date.');
+    logger.warn('Recurring expense generation hit safety limit of', SAFETY_LIMIT, 'instances. Consider setting an end date.');
   }
 
   return instances;

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { ProposalTemplate } from "@/types/proposal-template";
 import { ProposalFormData } from "@/types/proposal-form";
@@ -55,7 +56,7 @@ const ProposalTemplateForm: React.FC<ProposalTemplateFormProps> = ({ template, o
       items,
       valid_until: validUntil ? validUntil.toISOString() : undefined,
     };
-    console.log("Form data to be submitted:", formData);
+    logger.debug("Form data to be submitted:", formData);
     onSaveDraft();
   };
   

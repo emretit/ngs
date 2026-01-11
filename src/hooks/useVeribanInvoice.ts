@@ -1,4 +1,5 @@
 import { useRef, useCallback, useEffect, useState } from "react";
+import { logger } from '@/utils/logger';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +34,7 @@ export const useVeribanInvoice = () => {
       salesInvoiceId: string; 
       forceResend?: boolean 
     }) => {
-      console.log('🚀 [useVeribanInvoice] Sending invoice to Veriban:', salesInvoiceId, 'forceResend:', forceResend);
+      logger.debug('🚀 [useVeribanInvoice] Sending invoice to Veriban:', salesInvoiceId, 'forceResend:', forceResend);
       
       // GÖNDERİM BAŞLARKEN HEMEN DURUMU GÜNCELLE
       // Bu sayede kullanıcı arayüzde hemen değişikliği görür
@@ -48,15 +49,15 @@ export const useVeribanInvoice = () => {
           .eq('id', salesInvoiceId);
         
         if (updateError) {
-          console.error('⚠️ [useVeribanInvoice] Durum güncelleme hatası:', updateError);
+          logger.error('⚠️ [useVeribanInvoice] Durum güncelleme hatası:', updateError);
         } else {
-          console.log('✅ [useVeribanInvoice] Fatura durumu "sending" (StateCode=3) olarak güncellendi');
+          logger.debug('✅ [useVeribanInvoice] Fatura durumu "sending" (StateCode=3) olarak güncellendi');
           // Hemen query'leri yenile
           queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
           queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
         }
       } catch (err) {
-        console.error('⚠️ [useVeribanInvoice] Durum güncelleme hatası:', err);
+        logger.error('⚠️ [useVeribanInvoice] Durum güncelleme hatası:', err);
       }
       
       // Create a timeout promise (30 seconds)
@@ -83,8 +84,8 @@ export const useVeribanInvoice = () => {
       const { data, error } = result;
       
       if (error) {
-        console.error('❌ [useVeribanInvoice] Edge function error:', error);
-        console.error('❌ [useVeribanInvoice] Error context:', error.context);
+        logger.error('❌ [useVeribanInvoice] Edge function error:', error);
+        logger.error('❌ [useVeribanInvoice] Error context:', error.context);
         
         // Try to extract error message from response body
         let errorMessage = error.message || 'Bilinmeyen hata';
@@ -94,7 +95,7 @@ export const useVeribanInvoice = () => {
             // Try to get response body if available
             if (error.context instanceof Response) {
               const responseText = await error.context.text();
-              console.error('❌ [useVeribanInvoice] Response body:', responseText);
+              logger.error('❌ [useVeribanInvoice] Response body:', responseText);
               try {
                 const responseJson = JSON.parse(responseText);
                 if (responseJson.error) {
@@ -134,7 +135,7 @@ export const useVeribanInvoice = () => {
             if ((e as any).message === 'NEEDS_CONFIRMATION') {
               throw e;
             }
-            console.error('❌ [useVeribanInvoice] Could not read response body:', e);
+            logger.error('❌ [useVeribanInvoice] Could not read response body:', e);
           }
         }
         
@@ -166,11 +167,11 @@ export const useVeribanInvoice = () => {
         };
       }
       
-      console.log('✅ [useVeribanInvoice] Response:', data);
+      logger.debug('✅ [useVeribanInvoice] Response:', data);
       return data;
     },
     onSuccess: async (data, { salesInvoiceId }) => {
-      console.log("🎯 Veriban e-fatura gönderim cevabı:", data);
+      logger.debug("🎯 Veriban e-fatura gönderim cevabı:", data);
       
       if (data?.success) {
         // Başarılı gönderimde durumu 'sent' olarak güncelle
@@ -185,12 +186,12 @@ export const useVeribanInvoice = () => {
             .eq('id', salesInvoiceId);
           
           if (updateError) {
-            console.error('⚠️ [useVeribanInvoice] Başarılı gönderim sonrası durum güncelleme hatası:', updateError);
+            logger.error('⚠️ [useVeribanInvoice] Başarılı gönderim sonrası durum güncelleme hatası:', updateError);
           } else {
-            console.log('✅ [useVeribanInvoice] Fatura durumu "sent" (StateCode=2) olarak güncellendi');
+            logger.debug('✅ [useVeribanInvoice] Fatura durumu "sent" (StateCode=2) olarak güncellendi');
           }
         } catch (err) {
-          console.error('⚠️ [useVeribanInvoice] Başarılı gönderim sonrası durum güncelleme hatası:', err);
+          logger.error('⚠️ [useVeribanInvoice] Başarılı gönderim sonrası durum güncelleme hatası:', err);
         }
         
         toast.success('E-fatura başarıyla Veriban sistemine gönderildi');
@@ -215,13 +216,13 @@ export const useVeribanInvoice = () => {
             })
             .eq('id', salesInvoiceId);
         } catch (err) {
-          console.error('⚠️ [useVeribanInvoice] Hata durumu güncellenemedi:', err);
+          logger.error('⚠️ [useVeribanInvoice] Hata durumu güncellenemedi:', err);
         }
         queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       }
     },
     onError: async (error: any, { salesInvoiceId }) => {
-      console.error("❌ Veriban e-fatura gönderim hatası:", error);
+      logger.error("❌ Veriban e-fatura gönderim hatası:", error);
       
       // Check if confirmation is needed
       if (error?.message === 'NEEDS_CONFIRMATION' && error?.needsConfirmation) {
@@ -244,9 +245,9 @@ export const useVeribanInvoice = () => {
             einvoice_error_message: error?.message || 'E-fatura gönderilemedi'
           })
           .eq('id', salesInvoiceId);
-        console.log('✅ [useVeribanInvoice] Hata durumu (StateCode=4) veritabanına kaydedildi');
+        logger.debug('✅ [useVeribanInvoice] Hata durumu (StateCode=4) veritabanına kaydedildi');
       } catch (err) {
-        console.error('⚠️ [useVeribanInvoice] Hata durumu güncellenemedi:', err);
+        logger.error('⚠️ [useVeribanInvoice] Hata durumu güncellenemedi:', err);
       }
       
       // Edge function'dan gelen detaylı hata mesajını göster
@@ -287,7 +288,7 @@ export const useVeribanInvoice = () => {
   // Check invoice status (includes transfer status check automatically)
   const checkStatusMutation = useMutation({
     mutationFn: async (salesInvoiceId: string) => {
-      console.log('🔄 [useVeribanInvoice] Durum kontrolü başlatılıyor:', salesInvoiceId);
+      logger.debug('🔄 [useVeribanInvoice] Durum kontrolü başlatılıyor:', salesInvoiceId);
       
       const { data, error } = await supabase.functions.invoke('veriban-invoice-status', {
         body: { 
@@ -296,14 +297,14 @@ export const useVeribanInvoice = () => {
       });
       
       if (error) {
-        console.error('❌ [useVeribanInvoice] Edge function hatası:', error);
+        logger.error('❌ [useVeribanInvoice] Edge function hatası:', error);
         // Error context'ten detaylı hata mesajını al
         let errorMessage = error.message || 'Bilinmeyen hata';
         if (error.context) {
           try {
             if (error.context instanceof Response) {
               const responseText = await error.context.text();
-              console.error('❌ [useVeribanInvoice] Response body:', responseText);
+              logger.error('❌ [useVeribanInvoice] Response body:', responseText);
               try {
                 const responseJson = JSON.parse(responseText);
                 if (responseJson.error) {
@@ -314,7 +315,7 @@ export const useVeribanInvoice = () => {
               }
             }
           } catch (e) {
-            console.error('❌ [useVeribanInvoice] Hata mesajı okunamadı:', e);
+            logger.error('❌ [useVeribanInvoice] Hata mesajı okunamadı:', e);
           }
         }
         throw new Error(errorMessage);
@@ -337,8 +338,8 @@ export const useVeribanInvoice = () => {
         }
       }
       
-      console.log('✅ [useVeribanInvoice] Durum kontrolü başarılı:', data);
-      console.log('📊 [useVeribanInvoice] Durum detayları:', {
+      logger.debug('✅ [useVeribanInvoice] Durum kontrolü başarılı:', data);
+      logger.debug('📊 [useVeribanInvoice] Durum detayları:', {
         stateCode: data?.status?.stateCode,
         stateName: data?.status?.stateName,
         userFriendlyStatus: data?.status?.userFriendlyStatus,
@@ -370,7 +371,7 @@ export const useVeribanInvoice = () => {
     }
 
     if (attempt >= maxAttempts) {
-      console.warn('⚠️ [useVeribanInvoice] Maksimum deneme sayısına ulaşıldı. Durum kontrol edilemedi.');
+      logger.warn('⚠️ [useVeribanInvoice] Maksimum deneme sayısına ulaşıldı. Durum kontrol edilemedi.');
       toast.warning('Fatura işleniyor. Durum otomatik olarak güncellenecek.');
       return;
     }
@@ -378,9 +379,9 @@ export const useVeribanInvoice = () => {
     try {
       const result = await checkStatusMutation.mutateAsync(salesInvoiceId);
       
-      console.log('✅ [useVeribanInvoice] Durum kontrolü başarılı');
+      logger.debug('✅ [useVeribanInvoice] Durum kontrolü başarılı');
       if (result.status) {
-        console.log('📊 [useVeribanInvoice] Fatura durumu:', {
+        logger.debug('📊 [useVeribanInvoice] Fatura durumu:', {
           stateCode: result.status.stateCode,
           durum: result.status.userFriendlyStatus,
           cevap: result.status.answerStatus || 'Henüz cevap yok',
@@ -392,12 +393,12 @@ export const useVeribanInvoice = () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       
     } catch (error: any) {
-      console.warn('⚠️ [useVeribanInvoice] Durum kontrolü hatası:', error);
+      logger.warn('⚠️ [useVeribanInvoice] Durum kontrolü hatası:', error);
       
       // 202 (Accepted) - Transfer henüz tamamlanmamış, retry yap
       if (error?.message?.includes('henüz') || error?.message?.includes('işleniyor') || error?.message?.includes('bekliyor')) {
         const waitTime = Math.min(30000 * Math.pow(2, attempt), 300000); // Max 5 dakika
-        console.log(`⏳ [useVeribanInvoice] Fatura işleniyor, ${waitTime / 1000} saniye sonra tekrar kontrol edilecek (deneme ${attempt + 1}/${maxAttempts})...`);
+        logger.debug(`⏳ [useVeribanInvoice] Fatura işleniyor, ${waitTime / 1000} saniye sonra tekrar kontrol edilecek (deneme ${attempt + 1}/${maxAttempts})...`);
         
         const timeout = setTimeout(() => {
           checkStatusWithRetry(salesInvoiceId, attempt + 1, maxAttempts);
@@ -407,7 +408,7 @@ export const useVeribanInvoice = () => {
       } else if (error?.message?.includes('bulunamadı')) {
         // Fatura bulunamadı - henüz işlenmemiş olabilir, retry yap
         const waitTime = Math.min(30000 * Math.pow(2, attempt), 300000);
-        console.log(`⏳ [useVeribanInvoice] Fatura henüz işlenmemiş, ${waitTime / 1000} saniye sonra tekrar kontrol edilecek (deneme ${attempt + 1}/${maxAttempts})...`);
+        logger.debug(`⏳ [useVeribanInvoice] Fatura henüz işlenmemiş, ${waitTime / 1000} saniye sonra tekrar kontrol edilecek (deneme ${attempt + 1}/${maxAttempts})...`);
         
         const timeout = setTimeout(() => {
           checkStatusWithRetry(salesInvoiceId, attempt + 1, maxAttempts);
@@ -416,14 +417,14 @@ export const useVeribanInvoice = () => {
         retryTimeoutsRef.current.set(salesInvoiceId, timeout);
       } else if (error?.message?.includes('Transfer hatası') || error?.message?.includes('MODEL CREATE ERROR')) {
         // Transfer hatası - retry yapma, direkt hata göster
-        console.error('❌ [useVeribanInvoice] Transfer hatası:', error);
+        logger.error('❌ [useVeribanInvoice] Transfer hatası:', error);
         toast.error(`Fatura gönderiminde hata: ${error.message}`);
         // Veritabanını güncelle
         queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
         queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       } else {
         // Diğer hatalar - kritik değil, sadece logla
-        console.error('❌ [useVeribanInvoice] Durum kontrolü hatası:', error);
+        logger.error('❌ [useVeribanInvoice] Durum kontrolü hatası:', error);
       }
     }
   }, [checkStatusMutation, queryClient]);
@@ -445,7 +446,7 @@ export const useVeribanInvoice = () => {
         options?.onSuccess?.();
       },
       onError: (error) => {
-        console.error("Durum kontrolü hatası:", error);
+        logger.error("Durum kontrolü hatası:", error);
         if (!options?.silent) {
           toast.error('Durum kontrolü yapılamadı');
         }
@@ -457,7 +458,7 @@ export const useVeribanInvoice = () => {
   // Toplu durum sorgulama: Tüm faturaların durumunu kontrol et
   const refreshAllInvoiceStatuses = useCallback(async () => {
     try {
-      console.log('🔄 [BulkStatusRefresh] Başlatılıyor...');
+      logger.debug('🔄 [BulkStatusRefresh] Başlatılıyor...');
       toast.loading('Fatura durumları güncelleniyor...', { id: 'bulk-refresh' });
 
       // Tüm faturaları al (fatura_no olan)
@@ -477,7 +478,7 @@ export const useVeribanInvoice = () => {
         return;
       }
 
-      console.log(`📊 [BulkStatusRefresh] ${invoices.length} fatura bulundu`);
+      logger.debug(`📊 [BulkStatusRefresh] ${invoices.length} fatura bulundu`);
 
       let successCount = 0;
       let errorCount = 0;
@@ -493,16 +494,16 @@ export const useVeribanInvoice = () => {
           });
 
           if (statusError) {
-            console.error(`❌ [BulkStatusRefresh] ${invoice.fatura_no} hatası:`, statusError);
+            logger.error(`❌ [BulkStatusRefresh] ${invoice.fatura_no} hatası:`, statusError);
             errorCount++;
           } else if (data?.success) {
-            console.log(`✅ [BulkStatusRefresh] ${invoice.fatura_no} güncellendi:`, data.status?.userFriendlyStatus);
+            logger.debug(`✅ [BulkStatusRefresh] ${invoice.fatura_no} güncellendi:`, data.status?.userFriendlyStatus);
             successCount++;
           } else {
             errorCount++;
           }
         } catch (err) {
-          console.error(`❌ [BulkStatusRefresh] ${invoice.fatura_no} hatası:`, err);
+          logger.error(`❌ [BulkStatusRefresh] ${invoice.fatura_no} hatası:`, err);
           errorCount++;
         }
       });
@@ -510,7 +511,7 @@ export const useVeribanInvoice = () => {
       // Tüm sorguların bitmesini bekle
       await Promise.all(promises);
 
-      console.log(`✅ [BulkStatusRefresh] Tamamlandı: ${successCount} başarılı, ${errorCount} hata`);
+      logger.debug(`✅ [BulkStatusRefresh] Tamamlandı: ${successCount} başarılı, ${errorCount} hata`);
 
       // Listeyi yenile - tüm query'leri agresif şekilde yenile
       await queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
@@ -523,7 +524,7 @@ export const useVeribanInvoice = () => {
       toast.success(`${successCount} fatura durumu güncellendi`, { id: 'bulk-refresh' });
 
     } catch (error: any) {
-      console.error('❌ [BulkStatusRefresh] Hata:', error);
+      logger.error('❌ [BulkStatusRefresh] Hata:', error);
       toast.error('Fatura durumları güncellenirken hata oluştu', { id: 'bulk-refresh' });
     }
   }, [queryClient]);
@@ -534,7 +535,7 @@ export const useVeribanInvoice = () => {
       // Tüm retry timeout'larını temizle
       retryTimeoutsRef.current.forEach((timeout, invoiceId) => {
         clearTimeout(timeout);
-        console.log('🧹 [Cleanup] Retry timeout temizlendi:', invoiceId);
+        logger.debug('🧹 [Cleanup] Retry timeout temizlendi:', invoiceId);
       });
       retryTimeoutsRef.current.clear();
     };
@@ -543,7 +544,7 @@ export const useVeribanInvoice = () => {
   // Confirmation dialog handlers
   const handleConfirmResend = useCallback(() => {
     if (confirmDialog.invoiceId) {
-      console.log('✅ Kullanıcı tekrar göndermeyi onayladı:', confirmDialog.invoiceId);
+      logger.debug('✅ Kullanıcı tekrar göndermeyi onayladı:', confirmDialog.invoiceId);
       // forceResend = true ile tekrar çağır
       sendInvoiceMutation.mutate({
         salesInvoiceId: confirmDialog.invoiceId,
@@ -554,7 +555,7 @@ export const useVeribanInvoice = () => {
   }, [confirmDialog.invoiceId, sendInvoiceMutation]);
 
   const handleCancelResend = useCallback(() => {
-    console.log('❌ Kullanıcı tekrar göndermeyi iptal etti');
+    logger.debug('❌ Kullanıcı tekrar göndermeyi iptal etti');
     setConfirmDialog({ open: false, invoiceId: null, currentStatus: null });
     toast.info('E-fatura gönderimi iptal edildi');
   }, []);

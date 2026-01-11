@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, FormProvider } from "react-hook-form";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
@@ -102,7 +103,7 @@ export const OpportunityDetailSheet = ({
         description: 'Fırsat güncellenirken bir hata oluştu',
         className: "bg-gray-50 border-gray-200",
       });
-      console.error('Error updating opportunity:', error);
+      logger.error('Error updating opportunity:', error);
     }
   });
 

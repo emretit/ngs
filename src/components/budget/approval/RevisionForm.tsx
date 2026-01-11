@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import {
   Dialog,
   DialogContent,
@@ -91,7 +92,7 @@ const RevisionForm = ({ open, onOpenChange, filters }: RevisionFormProps) => {
         reason: "",
       });
     } catch (error: any) {
-      console.error("Error creating revision:", error);
+      logger.error("Error creating revision:", error);
       toast({
         variant: "destructive",
         title: "Hata",

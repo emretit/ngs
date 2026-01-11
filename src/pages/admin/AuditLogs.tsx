@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -90,7 +91,7 @@ const AuditLogs = () => {
         .in('id', userIds);
       
       if (profilesError) {
-        console.error('Profiles fetch error:', profilesError);
+        logger.error('Profiles fetch error:', profilesError);
       }
       
       if (profilesData) {

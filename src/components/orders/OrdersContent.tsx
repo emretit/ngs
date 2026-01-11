@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import OrdersTable from "./OrdersTable";
 import OrdersKanbanBoard from "./kanban/OrdersKanbanBoard";
@@ -7,6 +8,9 @@ import { useOrders } from "@/hooks/useOrders";
 import { Order, OrderStatus } from "@/types/orders";
 import { Loader2 } from "lucide-react";
 import InfiniteScroll from "@/components/ui/infinite-scroll";
+import { StockShortageDialog, ShortageItem } from "./StockShortageDialog";
+import { useAutoPurchaseRequest } from "@/hooks/useAutoPurchaseRequest";
+import { toast } from "sonner";
 
 interface OrdersContentProps {
   orders: Order[];
@@ -44,6 +48,15 @@ const OrdersContent = ({
   onSort
 }: OrdersContentProps) => {
   const navigate = useNavigate();
+  
+  // Stock shortage dialog state
+  const [stockShortageDialog, setStockShortageDialog] = useState<{
+    open: boolean;
+    orderId: string;
+    shortageItems: ShortageItem[];
+  } | null>(null);
+  
+  const { createPurchaseRequest, isCreating } = useAutoPurchaseRequest();
 
   // For kanban view, use the original hook
   const { orders: kanbanOrders, isLoading: kanbanLoading, error: kanbanError, updateStatusMutation, refetch: refetchKanban } = useOrders();
@@ -60,12 +73,12 @@ const OrdersContent = ({
 
   const handleDeleteOrder = (orderId: string) => {
     // TODO: Show confirmation dialog and delete
-    console.log("Delete order:", orderId);
+    logger.debug("Delete order:", orderId);
   };
 
   const handleConvertToInvoice = (order: Order) => {
     // Navigate to invoice creation page with order data
-    navigate(`/sales-invoices/create?orderId=${order.id}`);
+    navigate(`/sales-invoices/create-from-order?orderId=${order.id}`);
   };
 
   const handleConvertToService = (order: Order) => {
@@ -75,22 +88,22 @@ const OrdersContent = ({
 
   const handlePrintOrder = (order: Order) => {
     // TODO: Open print dialog/PDF
-    console.log("Print order:", order);
+    logger.debug("Print order:", order);
   };
 
   if ((error || kanbanError) && activeView === "kanban") {
     const errorObj = error || kanbanError;
-    const errorMessage = typeof errorObj === 'string' 
-      ? errorObj 
-      : errorObj instanceof Error 
-      ? errorObj.message 
-      : 'Bilinmeyen bir hata oluştu';
-      
+    const errorMessage = typeof errorObj === 'string'
+      ? errorObj
+      : errorObj instanceof Error
+        ? errorObj.message
+        : 'Bilinmeyen bir hata oluştu';
+
     return (
       <div className="text-center p-8 text-red-600">
         <p>Hata oluştu: {errorMessage}</p>
-        <button 
-          onClick={() => window.location.reload()} 
+        <button
+          onClick={() => window.location.reload()}
           className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200"
         >
           Sayfayı Yenile
@@ -101,14 +114,57 @@ const OrdersContent = ({
 
   const handleUpdateOrderStatus = async (id: string, status: OrderStatus) => {
     try {
-      await updateStatusMutation.mutateAsync({ id, status });
+      const result = await updateStatusMutation.mutateAsync({ id, status });
+      
+      // Check if there's stock shortage
+      if (result.hasShortage && result.shortageItems && result.shortageItems.length > 0) {
+        // Show dialog
+        setStockShortageDialog({
+          open: true,
+          orderId: id,
+          shortageItems: result.shortageItems
+        });
+        return; // Don't refetch yet, wait for user decision
+      }
+      
       // Mutation already invalidates queries, but we can manually refetch kanban if needed
       if (activeView === "kanban" && refetchKanban) {
         refetchKanban();
       }
     } catch (error) {
-      console.error("Sipariş durumu güncellenirken hata:", error);
+      logger.error("Sipariş durumu güncellenirken hata:", error);
       throw error;
+    }
+  };
+  
+  const handleCreatePurchaseRequest = async () => {
+    if (!stockShortageDialog) return;
+    
+    try {
+      await createPurchaseRequest({
+        orderId: stockShortageDialog.orderId,
+        shortageItems: stockShortageDialog.shortageItems
+      });
+      
+      setStockShortageDialog(null);
+      toast.success("Satın alma talebi oluşturuldu");
+      
+      // Refetch orders
+      if (activeView === "kanban" && refetchKanban) {
+        refetchKanban();
+      }
+    } catch (error) {
+      logger.error("Satın alma talebi oluşturulamadı:", error);
+    }
+  };
+  
+  const handleContinueAnyway = () => {
+    setStockShortageDialog(null);
+    toast.warning("Sipariş onaylandı ancak stok yetersiz");
+    
+    // Refetch orders
+    if (activeView === "kanban" && refetchKanban) {
+      refetchKanban();
     }
   };
 
@@ -137,21 +193,21 @@ const OrdersContent = ({
                 />
               </div>
             </div>
-            
+
             {/* Infinite scroll trigger - OrdersTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}
             {hasNextPage && !isLoading && (
               <div className="px-4">
                 <InfiniteScroll
                   hasNextPage={hasNextPage}
                   isLoadingMore={isLoadingMore}
-                  onLoadMore={loadMore || (() => {})}
+                  onLoadMore={loadMore || (() => { })}
                   className="mt-4"
                 >
                   <div />
                 </InfiniteScroll>
               </div>
             )}
-            
+
             {/* Tüm siparişler yüklendi mesajı */}
             {!hasNextPage && orders.length > 0 && !isLoading && (
               <div className="text-center py-4 text-sm text-gray-500">
@@ -172,6 +228,16 @@ const OrdersContent = ({
           />
         )}
       </div>
+      
+      {/* Stock Shortage Dialog */}
+      <StockShortageDialog
+        open={stockShortageDialog?.open || false}
+        onClose={() => setStockShortageDialog(null)}
+        shortageItems={stockShortageDialog?.shortageItems || []}
+        onCreatePurchaseRequest={handleCreatePurchaseRequest}
+        onContinueAnyway={handleContinueAnyway}
+        isCreating={isCreating}
+      />
     </div>
   );
 };

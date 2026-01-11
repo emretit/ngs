@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -50,7 +51,7 @@ export const usePurchaseInvoiceEdit = () => {
     setSaving(true);
 
     try {
-      console.log("🔄 Starting purchase invoice update...");
+      logger.debug("🔄 Starting purchase invoice update...");
 
       // Get current user and company
       const { data: { user } } = await supabase.auth.getUser();
@@ -65,7 +66,7 @@ export const usePurchaseInvoiceEdit = () => {
       if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
 
       // 1. Load current invoice data
-      console.log("📥 Loading current invoice data...");
+      logger.debug("📥 Loading current invoice data...");
       const { data: currentInvoice, error: invoiceError } = await supabase
         .from("purchase_invoices")
         .select("*")
@@ -76,7 +77,7 @@ export const usePurchaseInvoiceEdit = () => {
       if (!currentInvoice) throw new Error("Fatura bulunamadı");
 
       // 2. Calculate differences
-      console.log("🔍 Calculating differences...");
+      logger.debug("🔍 Calculating differences...");
       const addedItems = lineItems.filter(item =>
         item.id.startsWith('temp-') // New items have temp IDs
       );
@@ -93,10 +94,10 @@ export const usePurchaseInvoiceEdit = () => {
                original.discount_rate !== item.discount_rate;
       });
 
-      console.log(`✅ Changes detected: ${addedItems.length} added, ${removedItems.length} removed, ${modifiedItems.length} modified`);
+      logger.debug(`✅ Changes detected: ${addedItems.length} added, ${removedItems.length} removed, ${modifiedItems.length} modified`);
 
       // 3. Update purchase invoice
-      console.log("💾 Updating purchase invoice...");
+      logger.debug("💾 Updating purchase invoice...");
       const { error: updateError } = await supabase
         .from("purchase_invoices")
         .update({
@@ -113,7 +114,7 @@ export const usePurchaseInvoiceEdit = () => {
 
       // 4. Update supplier balance
       if (currentInvoice.supplier_id && Math.abs(total - originalTotal) > 0.01) {
-        console.log("💰 Updating supplier balance...");
+        logger.debug("💰 Updating supplier balance...");
         const balanceDelta = total - originalTotal;
 
         const { data: supplier, error: supplierFetchError } = await supabase
@@ -123,7 +124,7 @@ export const usePurchaseInvoiceEdit = () => {
           .single();
 
         if (supplierFetchError) {
-          console.error("❌ Error fetching supplier balance:", supplierFetchError);
+          logger.error("❌ Error fetching supplier balance:", supplierFetchError);
         } else if (supplier) {
           const newBalance = (supplier.balance || 0) - balanceDelta;
           const { error: supplierUpdateError } = await supabase
@@ -132,15 +133,15 @@ export const usePurchaseInvoiceEdit = () => {
             .eq("id", currentInvoice.supplier_id);
 
           if (supplierUpdateError) {
-            console.error("❌ Error updating supplier balance:", supplierUpdateError);
+            logger.error("❌ Error updating supplier balance:", supplierUpdateError);
           } else {
-            console.log(`✅ Supplier balance updated: ${newBalance}`);
+            logger.debug(`✅ Supplier balance updated: ${newBalance}`);
           }
         }
       }
 
       // 5. Get inventory transaction for this invoice
-      console.log("🔍 Finding inventory transaction...");
+      logger.debug("🔍 Finding inventory transaction...");
       const { data: transactions, error: transactionError } = await supabase
         .from("inventory_transactions")
         .select("id, warehouse_id")
@@ -149,14 +150,14 @@ export const usePurchaseInvoiceEdit = () => {
         .eq("transaction_type", "giris");
 
       if (transactionError) {
-        console.error("❌ Error finding inventory transaction:", transactionError);
+        logger.error("❌ Error finding inventory transaction:", transactionError);
         throw transactionError;
       }
 
       const inventoryTransaction = transactions && transactions.length > 0 ? transactions[0] : null;
 
       if (!inventoryTransaction) {
-        console.warn("⚠️ No inventory transaction found for this invoice");
+        logger.warn("⚠️ No inventory transaction found for this invoice");
         if (addedItems.length > 0 || removedItems.length > 0 || modifiedItems.some(item => {
           const original = originalLineItems.find(o => o.id === item.id);
           return original && original.quantity !== item.quantity;
@@ -167,7 +168,7 @@ export const usePurchaseInvoiceEdit = () => {
 
       // 6. Process removed items
       for (const removedItem of removedItems) {
-        console.log(`🗑️ Processing removed item: ${removedItem.product_name}`);
+        logger.debug(`🗑️ Processing removed item: ${removedItem.product_name}`);
 
         // Delete from purchase_invoice_items
         await supabase
@@ -202,17 +203,17 @@ export const usePurchaseInvoiceEdit = () => {
               })
               .eq("id", existingStock.id);
 
-            console.log(`✅ Stock updated for ${removedItem.product_name}: -${removedItem.quantity}`);
+            logger.debug(`✅ Stock updated for ${removedItem.product_name}: -${removedItem.quantity}`);
           }
         }
       }
 
       // 7. Process added items
       for (const addedItem of addedItems) {
-        console.log(`➕ Processing added item: ${addedItem.product_name}`);
+        logger.debug(`➕ Processing added item: ${addedItem.product_name}`);
 
         if (!addedItem.product_id) {
-          console.warn(`⚠️ Skipping item without product_id: ${addedItem.product_name}`);
+          logger.warn(`⚠️ Skipping item without product_id: ${addedItem.product_name}`);
           continue;
         }
 
@@ -236,7 +237,7 @@ export const usePurchaseInvoiceEdit = () => {
           .single();
 
         if (insertError) {
-          console.error(`❌ Error inserting item:`, insertError);
+          logger.error(`❌ Error inserting item:`, insertError);
           continue;
         }
 
@@ -284,13 +285,13 @@ export const usePurchaseInvoiceEdit = () => {
               });
           }
 
-          console.log(`✅ Stock updated for ${addedItem.product_name}: +${addedItem.quantity}`);
+          logger.debug(`✅ Stock updated for ${addedItem.product_name}: +${addedItem.quantity}`);
         }
       }
 
       // 8. Process modified items
       for (const modifiedItem of modifiedItems) {
-        console.log(`✏️ Processing modified item: ${modifiedItem.product_name}`);
+        logger.debug(`✏️ Processing modified item: ${modifiedItem.product_name}`);
 
         const original = originalLineItems.find(o => o.id === modifiedItem.id);
         if (!original) continue;
@@ -339,13 +340,13 @@ export const usePurchaseInvoiceEdit = () => {
               })
               .eq("id", existingStock.id);
 
-            console.log(`✅ Stock updated for ${modifiedItem.product_name}: ${quantityDelta > 0 ? '+' : ''}${quantityDelta}`);
+            logger.debug(`✅ Stock updated for ${modifiedItem.product_name}: ${quantityDelta > 0 ? '+' : ''}${quantityDelta}`);
           }
         }
       }
 
       // 9. Invalidate caches
-      console.log("🔄 Invalidating caches...");
+      logger.debug("🔄 Invalidating caches...");
       queryClient.invalidateQueries({ queryKey: ['purchaseInvoices'] });
       queryClient.invalidateQueries({ queryKey: ['purchase-invoices-infinite'] });
       queryClient.invalidateQueries({ queryKey: ['product-stock-movements'] });
@@ -354,13 +355,13 @@ export const usePurchaseInvoiceEdit = () => {
       queryClient.invalidateQueries({ queryKey: ['inventory-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
 
-      console.log("✅ Purchase invoice updated successfully!");
+      logger.debug("✅ Purchase invoice updated successfully!");
       toast.success("Fatura başarıyla güncellendi");
 
       return { success: true };
 
     } catch (error: any) {
-      console.error("❌ Error updating purchase invoice:", error);
+      logger.error("❌ Error updating purchase invoice:", error);
       toast.error(error.message || "Fatura güncellenirken hata oluştu");
       throw error;
     } finally {

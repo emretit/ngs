@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { Customer } from "@/types/customer";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -10,7 +11,7 @@ export const usePurchaseInvoicesQuery = (customer: Customer) => {
     queryKey: ['customer-purchase-invoices', customer.id, userData?.company_id],
     queryFn: async () => {
       if (!userData?.company_id) {
-        console.warn('No company_id available');
+        logger.warn('No company_id available');
         return [];
       }
 
@@ -33,12 +34,12 @@ export const usePurchaseInvoicesQuery = (customer: Customer) => {
       ]);
 
       if (customerInvoicesResult.error) {
-        console.error('Error fetching customer purchase invoices:', customerInvoicesResult.error);
+        logger.error('Error fetching customer purchase invoices:', customerInvoicesResult.error);
         throw customerInvoicesResult.error;
       }
 
       if (supplierInvoicesResult.error) {
-        console.error('Error fetching supplier purchase invoices:', supplierInvoicesResult.error);
+        logger.error('Error fetching supplier purchase invoices:', supplierInvoicesResult.error);
         throw supplierInvoicesResult.error;
       }
 

@@ -7,7 +7,7 @@ import { logger } from '@/utils/logger';
 export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDetails> => {
   // Önce integrator'ü kontrol et
   const integrator = await IntegratorService.getSelectedIntegrator();
-  console.log('🔄 Loading invoice details from', integrator, 'API for:', invoiceId);
+  logger.debug('🔄 Loading invoice details from', integrator, 'API for:', invoiceId);
 
   let apiInvoiceDetails: any;
 
@@ -21,7 +21,7 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
       throw new Error(result.error || 'Veriban fatura detayları alınamadı');
     }
 
-    console.log('✅ Veriban API Response:', result.data);
+    logger.debug('✅ Veriban API Response:', result.data);
     apiInvoiceDetails = result.data;
   } else {
     // Nilvera API çağrısı (varsayılan)
@@ -37,15 +37,15 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
       throw new Error(detailsData?.error || 'Nilvera fatura detayları alınamadı');
     }
 
-    console.log('✅ Nilvera API Response detailsData:', detailsData);
+    logger.debug('✅ Nilvera API Response detailsData:', detailsData);
     apiInvoiceDetails = detailsData.invoiceDetails;
   }
 
   // ========================================
   // 🔍 FULL API RESPONSE DEBUG
   // ========================================
-  console.log('\n' + '='.repeat(80));
-  console.log('🔍 FULL API RESPONSE FROM VERIBAN');
+  logger.debug('\n' + '='.repeat(80));
+  logger.debug('🔍 FULL API RESPONSE FROM VERIBAN');
   logger.debug('Full invoice details loaded', {
     invoiceId: apiInvoiceDetails?.id,
     availableKeys: apiInvoiceDetails ? Object.keys(apiInvoiceDetails) : [],
@@ -133,7 +133,7 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
     accountingSupplierParty?.Party?.PartyTaxScheme?.TaxScheme?.ID ||
     '';
 
-  console.log('✅ Extracted supplier info:', { supplierName, supplierTaxNumber });
+  logger.debug('✅ Extracted supplier info:', { supplierName, supplierTaxNumber });
 
   // Fatura tutar bilgilerini doğru alanlardan çek
   const subtotal = parseFloat(
@@ -155,7 +155,7 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
     '0'
   );
   
-  console.log('💰 Invoice amounts:', { subtotal, taxTotal, totalAmount });
+  logger.debug('💰 Invoice amounts:', { subtotal, taxTotal, totalAmount });
 
   // Fatura tarihini doğru şekilde parse et
   let rawInvoiceDate: string | null = null;
@@ -163,13 +163,13 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
     rawInvoiceDate = apiInvoiceDetails?.invoiceDate || 
                     apiInvoiceDetails?.InvoiceDate || 
                     null;
-    console.log('📅 Veriban invoiceDate:', rawInvoiceDate);
+    logger.debug('📅 Veriban invoiceDate:', rawInvoiceDate);
   } else {
     rawInvoiceDate = apiInvoiceDetails?.IssueDate || 
                     apiInvoiceDetails?.issueDate || 
                     apiInvoiceDetails?.InvoiceDate || 
                     null;
-    console.log('📅 Nilvera IssueDate:', rawInvoiceDate);
+    logger.debug('📅 Nilvera IssueDate:', rawInvoiceDate);
   }
   
   // Fallback: Eğer integrator'a göre bulunamadıysa, tüm alanları kontrol et
@@ -179,33 +179,33 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
                     apiInvoiceDetails?.IssueDate || 
                     apiInvoiceDetails?.issueDate || 
                     null;
-    console.log('📅 Fallback invoiceDate:', rawInvoiceDate);
+    logger.debug('📅 Fallback invoiceDate:', rawInvoiceDate);
   }
   
   // Tarih formatını normalize et
   let normalizedInvoiceDate: string;
   if (rawInvoiceDate) {
-    console.log('📅 Raw invoice date value:', rawInvoiceDate, 'Type:', typeof rawInvoiceDate);
+    logger.debug('📅 Raw invoice date value:', rawInvoiceDate, 'Type:', typeof rawInvoiceDate);
     if (rawInvoiceDate.includes('T')) {
       normalizedInvoiceDate = rawInvoiceDate;
-      console.log('📅 Date is ISO format, using as-is');
+      logger.debug('📅 Date is ISO format, using as-is');
     } else if (/^\d{4}-\d{2}-\d{2}$/.test(rawInvoiceDate)) {
       normalizedInvoiceDate = `${rawInvoiceDate}T00:00:00Z`;
-      console.log('📅 Date is YYYY-MM-DD format, converting to ISO');
+      logger.debug('📅 Date is YYYY-MM-DD format, converting to ISO');
     } else {
       const parsedDate = new Date(rawInvoiceDate);
       if (!isNaN(parsedDate.getTime())) {
         normalizedInvoiceDate = parsedDate.toISOString();
-        console.log('📅 Date parsed successfully:', normalizedInvoiceDate);
+        logger.debug('📅 Date parsed successfully:', normalizedInvoiceDate);
       } else {
-        console.warn('⚠️ Invalid date format, using current date as fallback');
+        logger.warn('⚠️ Invalid date format, using current date as fallback');
         normalizedInvoiceDate = new Date().toISOString();
       }
     }
-    console.log('✅ Normalized invoice date:', normalizedInvoiceDate);
+    logger.debug('✅ Normalized invoice date:', normalizedInvoiceDate);
   } else {
-    console.warn('⚠️ No invoice date found in API response! Available keys:', Object.keys(apiInvoiceDetails || {}));
-    console.warn('⚠️ Using current date as fallback');
+    logger.warn('⚠️ No invoice date found in API response! Available keys:', Object.keys(apiInvoiceDetails || {}));
+    logger.warn('⚠️ Using current date as fallback');
     normalizedInvoiceDate = new Date().toISOString();
   }
 
@@ -223,7 +223,7 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
   
   let normalizedDueDate: string | null = null;
   if (rawDueDate) {
-    console.log('📅 Raw due date value:', rawDueDate);
+    logger.debug('📅 Raw due date value:', rawDueDate);
     if (rawDueDate.includes('T')) {
       normalizedDueDate = rawDueDate;
     } else if (/^\d{4}-\d{2}-\d{2}$/.test(rawDueDate)) {
@@ -234,9 +234,9 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
         normalizedDueDate = parsedDate.toISOString();
       }
     }
-    console.log('✅ Normalized due date:', normalizedDueDate);
+    logger.debug('✅ Normalized due date:', normalizedDueDate);
   } else {
-    console.log('ℹ️ No due date found in API response');
+    logger.debug('ℹ️ No due date found in API response');
   }
 
   const invoiceDetails: EInvoiceDetails = {

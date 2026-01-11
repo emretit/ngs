@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import { 
   Dialog,
   DialogContent, 
@@ -89,12 +90,12 @@ const SupplierImportDialog = ({ isOpen, setIsOpen, onImportSuccess }: SupplierIm
         // Önceki eşleştirmeyi kaldır
         if (existingColumn) {
           delete newMapping[existingColumn];
-          console.log(`⚠️ "${existingColumn}" kolonunun "${systemField}" eşleştirmesi kaldırıldı, "${excelColumn}" ile değiştirildi`);
+          logger.debug(`⚠️ "${existingColumn}" kolonunun "${systemField}" eşleştirmesi kaldırıldı, "${excelColumn}" ile değiştirildi`);
         }
         if (existingAIMapping && !newMapping[existingAIMapping.excelColumn]) {
           // AI mapping'i override et
           newMapping[existingAIMapping.excelColumn] = 'none';
-          console.log(`⚠️ AI eşleştirmesi "${existingAIMapping.excelColumn}" → "${systemField}" kaldırıldı, "${excelColumn}" ile değiştirildi`);
+          logger.debug(`⚠️ AI eşleştirmesi "${existingAIMapping.excelColumn}" → "${systemField}" kaldırıldı, "${excelColumn}" ile değiştirildi`);
         }
       }
       

@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { LocationIQAutocompleteResult } from '@/services/locationiqService';
 
 interface City {
@@ -67,7 +68,7 @@ export const findCityId = async (cityName: string): Promise<number | null> => {
       .select('id, name');
 
     if (error || !cities) {
-      console.error('Error fetching cities:', error);
+      logger.error('Error fetching cities:', error);
       return null;
     }
 
@@ -77,7 +78,7 @@ export const findCityId = async (cityName: string): Promise<number | null> => {
 
     return matchedCity?.id || null;
   } catch (error) {
-    console.error('Error finding city ID:', error);
+    logger.error('Error finding city ID:', error);
     return null;
   }
 };
@@ -113,7 +114,7 @@ export const findDistrictId = async (
       .eq('city_id', cityId);
 
     if (error || !districts) {
-      console.error('Error fetching districts:', error);
+      logger.error('Error fetching districts:', error);
       return null;
     }
 
@@ -123,7 +124,7 @@ export const findDistrictId = async (
 
     return matchedDistrict?.id || null;
   } catch (error) {
-    console.error('Error finding district ID:', error);
+    logger.error('Error finding district ID:', error);
     return null;
   }
 };
@@ -260,7 +261,7 @@ export const parseLocationIQResult = async (
       display_name: result.display_name,
     };
   } catch (error) {
-    console.error('Error parsing LocationIQ result:', error);
+    logger.error('Error parsing LocationIQ result:', error);
     return null;
   }
 };

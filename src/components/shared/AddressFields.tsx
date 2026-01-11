@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { logger } from '@/utils/logger';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -86,7 +87,7 @@ export const AddressFields = ({
         }
       }
     } catch (error) {
-      console.error('Error processing autocomplete result:', error);
+      logger.error('Error processing autocomplete result:', error);
     } finally {
       setShowAutocomplete(false);
       clearAutocomplete();

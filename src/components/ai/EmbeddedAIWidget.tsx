@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { useAI } from '@/contexts/AIContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useCompany } from '@/hooks/useCompany';
@@ -207,7 +208,7 @@ export function EmbeddedAIWidget() {
         autoTitle.mutate({ conversationId, firstMessage: text });
       }
     } catch (error: any) {
-      console.error('Message send error:', error);
+      logger.error('Message send error:', error);
       
       let errorMessage = 'Mesaj gönderilemedi';
       

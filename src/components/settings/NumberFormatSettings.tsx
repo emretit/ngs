@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { useSystemParameters } from '@/hooks/useSystemParameters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -280,7 +281,7 @@ export const NumberFormatSettings: React.FC = () => {
 
       toast.success('Format başarıyla kaydedildi');
     } catch (error) {
-      console.error('Error saving format:', error);
+      logger.error('Error saving format:', error);
       toast.error('Format kaydedilirken hata oluştu');
     } finally {
       setSaving(null);
@@ -304,7 +305,7 @@ export const NumberFormatSettings: React.FC = () => {
       await resetSequence(sequenceKey, companyId, 1);
       toast.success('Sıralı numara başarıyla sıfırlandı');
     } catch (error) {
-      console.error('Error resetting sequence:', error);
+      logger.error('Error resetting sequence:', error);
       toast.error('Sıralı numara sıfırlanırken hata oluştu');
     }
   };

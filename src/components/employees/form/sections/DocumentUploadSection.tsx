@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +48,7 @@ export const DocumentUploadSection = ({ employeeId, onDocumentsChange }: Documen
         .order('uploaded_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading documents:', error);
+        logger.error('Error loading documents:', error);
         return;
       }
 
@@ -65,7 +66,7 @@ export const DocumentUploadSection = ({ employeeId, onDocumentsChange }: Documen
         onDocumentsChange?.(existingDocuments);
       }
     } catch (error) {
-      console.error('Error loading documents:', error);
+      logger.error('Error loading documents:', error);
     } finally {
       setIsLoading(false);
     }
@@ -158,7 +159,7 @@ export const DocumentUploadSection = ({ employeeId, onDocumentsChange }: Documen
           description: "Belge başarıyla silindi.",
         });
       } catch (error) {
-        console.error('Error deleting document:', error);
+        logger.error('Error deleting document:', error);
         toast({
           title: "Hata",
           description: "Belge silinirken bir hata oluştu.",

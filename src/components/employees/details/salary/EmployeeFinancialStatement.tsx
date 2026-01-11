@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -128,7 +129,7 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
         fetchTransactions()
       ]);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      logger.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -470,7 +471,7 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
         <Button
           onClick={() => {
             // Masraf ekleme fonksiyonu buraya eklenecek
-            console.log("Masraf ekle");
+            logger.debug("Masraf ekle");
           }}
           className="gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-600/90 hover:from-orange-600/90 hover:to-orange-600/80 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
         >
@@ -481,7 +482,7 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
         <Button
           onClick={() => {
             // Ödeme yapma fonksiyonu buraya eklenecek
-            console.log("Ödeme yap");
+            logger.debug("Ödeme yap");
           }}
           className="gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-green-600 to-green-600/90 hover:from-green-600/90 hover:to-green-600/80 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
         >
@@ -492,7 +493,7 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
         <Button
           onClick={() => {
             // Maaş ekleme fonksiyonu buraya eklenecek
-            console.log("Maaş ekle");
+            logger.debug("Maaş ekle");
           }}
           className="gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-600/90 hover:from-blue-600/90 hover:to-blue-600/80 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
         >

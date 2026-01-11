@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useProduction } from "@/hooks/useProduction";
@@ -56,7 +57,7 @@ const ProductionBOMs = () => {
         .order("name");
       
       if (error) {
-        console.error("Products fetch error:", error);
+        logger.error("Products fetch error:", error);
         return [];
       }
       return data || [];
@@ -136,7 +137,7 @@ const ProductionBOMs = () => {
       setIsDeleteDialogOpen(false);
       setBomToDelete(null);
     } catch (error) {
-      console.error("Delete error:", error);
+      logger.error("Delete error:", error);
       toast.error("Silme işlemi başarısız oldu");
     } finally {
       setIsDeleting(false);
@@ -200,7 +201,7 @@ const ProductionBOMs = () => {
 
           successCount++;
         } catch (err: any) {
-          console.error('Error deleting BOM:', err);
+          logger.error('Error deleting BOM:', err);
           errors.push(err.message || 'Bilinmeyen hata');
         }
       }
@@ -217,7 +218,7 @@ const ProductionBOMs = () => {
       setSelectedBOMs([]);
       setBulkDeleteDialogOpen(false);
     } catch (error: any) {
-      console.error('Bulk delete error:', error);
+      logger.error('Bulk delete error:', error);
       toast.error(error.message || "Reçeteler silinirken hata oluştu");
     }
   };

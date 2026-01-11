@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -162,7 +163,7 @@ export const useExchangeRates = () => {
         description: 'Güncel kurlar alınamadı, geçici referans değerler kullanılıyor.',
       });
     } catch (err) {
-      console.error("Error refreshing exchange rates:", err);
+      logger.error("Error refreshing exchange rates:", err);
       toast.error('Döviz kurları güncelleme hatası', {
         description: err instanceof Error ? err.message : 'Bilinmeyen hata',
       });

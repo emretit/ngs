@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Task, TaskStatus, TaskType } from "@/types/task";
 import { useKanbanTasks } from "./hooks/useKanbanTasks";
@@ -94,7 +95,7 @@ export const TasksKanban = ({
         status: targetStatus
       });
     } catch (error) {
-      console.error("Error updating task status:", error);
+      logger.error("Error updating task status:", error);
       // Revert to original state on error
       setTasksState(tasks);
     }

@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from '@/utils/logger';
 import { ServiceRequestAttachment } from "./types";
 
 export const useServiceFileUpload = () => {
@@ -15,7 +16,7 @@ export const useServiceFileUpload = () => {
           .upload(fileName, file);
 
         if (error) {
-          console.error('File upload error:', error);
+          logger.error('File upload error:', error);
           return null;
         }
 

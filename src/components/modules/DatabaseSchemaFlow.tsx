@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { logger } from '@/utils/logger';
 import {
   ReactFlow,
   Node,
@@ -656,13 +657,13 @@ export const DatabaseSchemaFlow: React.FC = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const { fitView } = useReactFlow();
   
-  console.log('DatabaseSchemaFlow rendered with nodes:', initialNodes.length, 'edges:', initialEdges.length);
+  logger.debug('DatabaseSchemaFlow rendered with nodes:', initialNodes.length, 'edges:', initialEdges.length);
   
   useEffect(() => {
-    console.log('useEffect running, nodes:', nodes.length, 'edges:', edges.length);
+    logger.debug('useEffect running, nodes:', nodes.length, 'edges:', edges.length);
     // Auto fit view after component mounts
     const timer = setTimeout(() => {
-      console.log('Calling fitView');
+      logger.debug('Calling fitView');
       fitView({ padding: 0.2, duration: 1000, includeHiddenNodes: false });
     }, 1000);
     

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import {
   Table,
@@ -92,14 +93,14 @@ const SalesInvoicesTable = ({
         const invoicesWithOutgoing = invoices.filter(inv => inv.outgoing_invoice_id);
         
         if (invoicesWithOutgoing.length === 0) {
-          console.log('ℹ️ [SalesInvoicesTable] Veriban ile ilişkili fatura yok');
+          logger.debug('ℹ️ [SalesInvoicesTable] Veriban ile ilişkili fatura yok');
           setFetchingOutgoingInvoices(false);
           return;
         }
         
         const outgoingIds = invoicesWithOutgoing.map(inv => inv.outgoing_invoice_id);
         
-        console.log('🔍 [SalesInvoicesTable] Checking outgoing_invoice_ids:', outgoingIds);
+        logger.debug('🔍 [SalesInvoicesTable] Checking outgoing_invoice_ids:', outgoingIds);
         
         const { data, error } = await supabase
           .from('outgoing_invoices')
@@ -107,11 +108,11 @@ const SalesInvoicesTable = ({
           .in('id', outgoingIds);
 
         if (error) {
-          console.error('❌ [SalesInvoicesTable] Error fetching outgoing invoices:', error);
+          logger.error('❌ [SalesInvoicesTable] Error fetching outgoing invoices:', error);
           return;
         }
 
-        console.log('✅ [SalesInvoicesTable] Outgoing invoices found:', data?.length || 0);
+        logger.debug('✅ [SalesInvoicesTable] Outgoing invoices found:', data?.length || 0);
 
         if (data) {
           // sales_invoice_id -> outgoing_invoice_id mapping oluştur
@@ -122,10 +123,10 @@ const SalesInvoicesTable = ({
             }
           });
           setOutgoingInvoiceIds(mapping);
-          console.log('📊 [SalesInvoicesTable] Outgoing invoice mapping:', mapping);
+          logger.debug('📊 [SalesInvoicesTable] Outgoing invoice mapping:', mapping);
         }
       } catch (error) {
-        console.error('❌ [SalesInvoicesTable] Exception in fetchOutgoingInvoiceIds:', error);
+        logger.error('❌ [SalesInvoicesTable] Exception in fetchOutgoingInvoiceIds:', error);
       } finally {
         setFetchingOutgoingInvoices(false);
       }
@@ -341,14 +342,14 @@ const SalesInvoicesTable = ({
       
       // Veriban kontrolü - outgoing_invoice_id varsa Veriban ile indir
       if (currentIntegrator === 'veriban' && outgoingInvoiceIds[invoice.id]) {
-        console.log('📄 [PDF Download] Veriban ile indiriliyor:', outgoingInvoiceIds[invoice.id]);
+        logger.debug('📄 [PDF Download] Veriban ile indiriliyor:', outgoingInvoiceIds[invoice.id]);
         await downloadVeribanPdf(outgoingInvoiceIds[invoice.id], invoiceType, 'outgoing');
         return;
       }
       
       // Nilvera kontrolü
       if (invoice.nilvera_invoice_id) {
-        console.log('📄 [PDF Download] Nilvera ile indiriliyor:', invoice.nilvera_invoice_id);
+        logger.debug('📄 [PDF Download] Nilvera ile indiriliyor:', invoice.nilvera_invoice_id);
         await downloadNilveraPdf(invoice.nilvera_invoice_id, invoiceType);
         return;
       }
@@ -356,7 +357,7 @@ const SalesInvoicesTable = ({
       // Hiçbir entegratör ile ilişkili değilse
       toast.error('Bu fatura için PDF bulunamadı. Lütfen önce e-fatura gönderin.');
     } catch (error) {
-      console.error('PDF önizleme hatası:', error);
+      logger.error('PDF önizleme hatası:', error);
     } finally {
       setDownloadingInvoiceId(null);
     }
@@ -485,7 +486,7 @@ const SalesInvoicesTable = ({
                   stateCode={invoice.elogo_status}
                   answerType={invoice.answer_type}
                   onSendClick={() => {
-                    console.log('Sending invoice:', invoice.id);
+                    logger.debug('Sending invoice:', invoice.id);
                     if (onSendInvoice) {
                       onSendInvoice(invoice.id);
                     }

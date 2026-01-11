@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -87,7 +88,7 @@ export const createTask = async (input: TaskInput, conversationId?: string): Pro
     .single();
 
   if (error) {
-    console.error('Task creation error:', error);
+    logger.error('Task creation error:', error);
     throw new Error(`Görev oluşturulamadı: ${error.message}`);
   }
 
@@ -132,7 +133,7 @@ export const listTasks = async (filters: TaskFilters = {}): Promise<Task[]> => {
   const { data, error } = await query;
 
   if (error) {
-    console.error('Task list error:', error);
+    logger.error('Task list error:', error);
     throw new Error(`Görevler yüklenemedi: ${error.message}`);
   }
 
@@ -154,7 +155,7 @@ export const getTask = async (taskId: string): Promise<Task | null> => {
     .single();
 
   if (error) {
-    console.error('Task get error:', error);
+    logger.error('Task get error:', error);
     return null;
   }
 
@@ -180,7 +181,7 @@ export const updateTaskStatus = async (
     .single();
 
   if (error) {
-    console.error('Task status update error:', error);
+    logger.error('Task status update error:', error);
     throw new Error(`Görev durumu güncellenemedi: ${error.message}`);
   }
 
@@ -215,7 +216,7 @@ export const updateTask = async (
     .single();
 
   if (error) {
-    console.error('Task update error:', error);
+    logger.error('Task update error:', error);
     throw new Error(`Görev güncellenemedi: ${error.message}`);
   }
 
@@ -240,7 +241,7 @@ export const deleteTask = async (taskId: string): Promise<boolean> => {
     .eq('user_id', user.id);
 
   if (error) {
-    console.error('Task delete error:', error);
+    logger.error('Task delete error:', error);
     throw new Error(`Görev silinemedi: ${error.message}`);
   }
 
@@ -266,7 +267,7 @@ export const getTaskStatistics = async (): Promise<{
     .eq('company_id', companyId);
 
   if (error) {
-    console.error('Task statistics error:', error);
+    logger.error('Task statistics error:', error);
     return { total: 0, pending: 0, in_progress: 0, completed: 0, overdue: 0 };
   }
 

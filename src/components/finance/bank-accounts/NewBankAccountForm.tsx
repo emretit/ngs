@@ -1,5 +1,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -82,7 +83,7 @@ export function NewBankAccountForm({ onSuccess }: NewBankAccountFormProps) {
     },
     onError: (error) => {
       showError("Banka hesabı oluşturulurken bir hata oluştu.");
-      console.error('Error creating bank account:', error);
+      logger.error('Error creating bank account:', error);
     },
   });
 

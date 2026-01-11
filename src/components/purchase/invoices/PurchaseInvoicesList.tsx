@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ const PurchaseInvoicesList: React.FC<PurchaseInvoicesListProps> = ({ poId }) => 
   
   const handleViewInvoice = (invoice: any) => {
     // Implement invoice viewing (could open a modal with details)
-    console.log("View invoice", invoice);
+    logger.debug("View invoice", invoice);
   };
 
   const handleRecordPayment = (invoice: any) => {

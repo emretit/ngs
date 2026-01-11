@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { logger } from '@/utils/logger';
 import { ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,7 +63,7 @@ export default function PurchaseRequestDetail() {
     try {
       submitMutation.mutate(request.id);
     } catch (error) {
-      console.error('Error submitting request:', error);
+      logger.error('Error submitting request:', error);
     } finally {
       setIsSubmitting(false);
       setIsSubmitDialogOpen(false);
@@ -92,7 +93,7 @@ export default function PurchaseRequestDetail() {
         },
       });
     } catch (error) {
-      console.error('Error converting to RFQ:', error);
+      logger.error('Error converting to RFQ:', error);
     } finally {
       setIsConvertingToRFQ(false);
       setIsConvertToRFQDialogOpen(false);
@@ -124,7 +125,7 @@ export default function PurchaseRequestDetail() {
         },
       });
     } catch (error) {
-      console.error('Error converting to PO:', error);
+      logger.error('Error converting to PO:', error);
     } finally {
       setIsConvertingToPO(false);
       setIsConvertToPODialogOpen(false);

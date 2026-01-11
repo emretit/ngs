@@ -1,4 +1,5 @@
 import { generateExcelReport, downloadFile, saveGeneratedFileRecord, ReportType, ReportFilters, GeneratedFile } from './excelGenerationService';
+import { logger } from '@/utils/logger';
 import { createTask, listTasks, updateTaskStatus, getTaskStatistics, TaskInput, TaskFilters, Task, TaskStatus } from './taskManagementService';
 
 export interface AIFunction {
@@ -205,7 +206,7 @@ export const executeFunctionCall = async (
     if (functionName === 'generate_excel') {
       const { reportType, format = 'xlsx', filters = {} } = parameters;
 
-      console.log('Executing generate_excel:', { reportType, format, filters });
+      logger.debug('Executing generate_excel:', { reportType, format, filters });
 
       const generatedFile = await generateExcelReport(reportType, filters, format);
 
@@ -223,7 +224,7 @@ export const executeFunctionCall = async (
     if (functionName === 'manage_tasks') {
       const { action, task, filters } = parameters;
 
-      console.log('Executing manage_tasks:', { action, task, filters });
+      logger.debug('Executing manage_tasks:', { action, task, filters });
 
       if (action === 'create') {
         const createdTask = await createTask(task);
@@ -259,7 +260,7 @@ export const executeFunctionCall = async (
       error: `Bilinmeyen fonksiyon: ${functionName}`
     };
   } catch (error: any) {
-    console.error('Function execution error:', error);
+    logger.error('Function execution error:', error);
     return {
       success: false,
       error: error.message || 'Fonksiyon çalıştırılamadı'

@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 export interface PartUsage {
@@ -62,12 +63,12 @@ export class ServicePartsInventoryService {
       const { data: stockEntries, error: stockError } = await stockQuery;
 
       if (stockError) {
-        console.error(`Error fetching stock for product ${part.productId}:`, stockError);
+        logger.error(`Error fetching stock for product ${part.productId}:`, stockError);
         continue;
       }
 
       if (!stockEntries || stockEntries.length === 0) {
-        console.warn(`No stock found for product ${part.productId}`);
+        logger.warn(`No stock found for product ${part.productId}`);
         continue;
       }
 
@@ -89,7 +90,7 @@ export class ServicePartsInventoryService {
             .eq('id', stockEntry.id);
 
           if (updateError) {
-            console.error(`Error deducting stock for ${stockEntry.id}:`, updateError);
+            logger.error(`Error deducting stock for ${stockEntry.id}:`, updateError);
           } else {
             // Create inventory transaction record
             await supabase
@@ -111,7 +112,7 @@ export class ServicePartsInventoryService {
       }
 
       if (remainingQuantity > 0) {
-        console.warn(`Insufficient stock for product ${part.productId}. Remaining: ${remainingQuantity}`);
+        logger.warn(`Insufficient stock for product ${part.productId}. Remaining: ${remainingQuantity}`);
       }
     }
   }
@@ -135,7 +136,7 @@ export class ServicePartsInventoryService {
         .eq('company_id', companyId);
 
       if (error) {
-        console.error(`Error checking stock for product ${part.productId}:`, error);
+        logger.error(`Error checking stock for product ${part.productId}:`, error);
         missingParts.push(part);
         continue;
       }
@@ -171,7 +172,7 @@ export class ServicePartsInventoryService {
       .not('service_details', 'is', null);
 
     if (partsError) {
-      console.error('Error fetching service parts:', partsError);
+      logger.error('Error fetching service parts:', partsError);
       return [];
     }
 
@@ -198,7 +199,7 @@ export class ServicePartsInventoryService {
       .lt('quantity', supabase.raw('products.min_stock_level'));
 
     if (stockError) {
-      console.error('Error fetching low stock products:', stockError);
+      logger.error('Error fetching low stock products:', stockError);
       return [];
     }
 
@@ -250,7 +251,7 @@ export class ServicePartsInventoryService {
     const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching parts usage report:', error);
+      logger.error('Error fetching parts usage report:', error);
       return [];
     }
 

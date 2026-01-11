@@ -1,5 +1,6 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toastUtils";
 import type { Task } from "@/types/task";
@@ -33,7 +34,7 @@ export const useTaskDetail = () => {
         .single();
 
       if (error) {
-        console.error("Error updating task:", error);
+        logger.error("Error updating task:", error);
         throw error;
       }
       
@@ -44,7 +45,7 @@ export const useTaskDetail = () => {
       showSuccess('Görev başarıyla güncellendi', { duration: 1000 });
     },
     onError: (error) => {
-      console.error("Mutation error:", error);
+      logger.error("Mutation error:", error);
       showError('Görev güncellenirken hata oluştu: ' + error.message);
     }
   });

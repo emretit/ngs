@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 
 export const useEarchiveInvoices = (enabled = true) => {
@@ -15,7 +16,7 @@ export const useEarchiveInvoices = (enabled = true) => {
         if (error) throw error;
         return data || [];
       } catch (error) {
-        console.error("Error fetching e-archive invoices:", error);
+        logger.error("Error fetching e-archive invoices:", error);
         return [];
       }
     },

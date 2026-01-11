@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { IntegratorService } from '@/services/integratorService';
 
@@ -101,7 +102,7 @@ export const useNilveraCompanyInfo = () => {
       });
 
       if (error) {
-        console.error('Firma bilgileri alma hatası:', error);
+        logger.error('Firma bilgileri alma hatası:', error);
         throw new Error(error.message || 'Firma bilgileri alınamadı');
       }
 
@@ -117,7 +118,7 @@ export const useNilveraCompanyInfo = () => {
       };
 
     } catch (error) {
-      console.error('Firma bilgileri alma hatası:', error);
+      logger.error('Firma bilgileri alma hatası:', error);
       const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
       setError(errorMessage);
       return {
@@ -168,7 +169,7 @@ export const useNilveraCompanyInfo = () => {
       };
 
     } catch (error) {
-      console.error('Mükellef sorgulama hatası:', error);
+      logger.error('Mükellef sorgulama hatası:', error);
       const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
       setError(errorMessage);
       return {

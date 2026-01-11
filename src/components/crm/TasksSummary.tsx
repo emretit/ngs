@@ -1,6 +1,7 @@
 
 // @ts-nocheck
 import React from "react";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,7 +24,7 @@ const TasksSummary = () => {
         .neq("status", "completed");
       
       if (totalError || overdueError) {
-        console.error("Error fetching task stats:", totalError || overdueError);
+        logger.error("Error fetching task stats:", totalError || overdueError);
         throw totalError || overdueError;
       }
       

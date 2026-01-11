@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useInfiniteScroll } from "./useInfiniteScroll";
 import { useCurrentUser } from "./useCurrentUser";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,7 +34,7 @@ export const useActivitiesInfiniteScroll = (
 
       // Kullanıcının company_id'si yoksa boş sonuç döndür
       if (!userData?.company_id) {
-        console.warn("Kullanıcının company_id'si bulunamadı, boş sonuç döndürülüyor");
+        logger.warn("Kullanıcının company_id'si bulunamadı, boş sonuç döndürülüyor");
         return { data: [], hasNextPage: false, totalCount: 0 };
       }
       let query = client
@@ -194,7 +195,7 @@ export const useActivitiesInfiniteScroll = (
       }
 
       if (error) {
-        console.error("Error fetching activities:", error);
+        logger.error("Error fetching activities:", error);
         throw error;
       }
 

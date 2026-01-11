@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { Order, OrderStatus } from "@/types/orders";
 import OrderColumn from "./OrderColumn";
@@ -83,7 +84,7 @@ const OrdersKanbanBoard = ({
       try {
         await onUpdateOrderStatus(draggableId, newStatus);
       } catch (error) {
-        console.error("Sipariş durumu güncellenirken hata:", error);
+        logger.error("Sipariş durumu güncellenirken hata:", error);
         // Hata durumunda React Query otomatik olarak cache'i güncelleyecek
       }
     }

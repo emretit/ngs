@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Opportunity, OpportunityStatus, OpportunitiesState } from "@/types/crm";
@@ -34,7 +35,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
     queryFn: async () => {
       // Company_id kontrolü - güvenlik için
       if (!userData?.company_id) {
-        console.warn('No company_id found for user');
+        logger.warn('No company_id found for user');
         return [];
       }
 
@@ -93,7 +94,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
       const { data, error: queryError } = await query;
 
       if (queryError) {
-        console.error("Error fetching opportunities:", queryError);
+        logger.error("Error fetching opportunities:", queryError);
         throw queryError;
       }
 
@@ -108,7 +109,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
               : item.contact_history;
           }
         } catch (e) {
-          console.error("Error parsing contact history:", e);
+          logger.error("Error parsing contact history:", e);
           contactHistory = [];
         }
 
@@ -211,7 +212,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
       toast.success("Fırsat durumu başarıyla güncellendi", { duration: 1000 });
     },
     onError: (error) => {
-      console.error("Error updating opportunity:", error);
+      logger.error("Error updating opportunity:", error);
       toast.error("Fırsat güncellenirken bir hata oluştu", { duration: 1000 });
     },
   });
@@ -251,7 +252,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
       
       return Promise.resolve();
     } catch (error) {
-      console.error("Error updating opportunity status:", error);
+      logger.error("Error updating opportunity status:", error);
       toast.error("Fırsat durumu güncellenirken bir hata oluştu.", { duration: 1000 });
       throw error;
     }
@@ -287,7 +288,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
 
       return true;
     } catch (error) {
-      console.error("Error updating opportunity:", error);
+      logger.error("Error updating opportunity:", error);
       toast.error("Fırsat güncellenirken bir hata oluştu", { duration: 1000 });
       return false;
     }

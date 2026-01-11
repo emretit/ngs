@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -218,7 +219,7 @@ const ProductWarehouseStock = ({
       queryClient.invalidateQueries({ queryKey: ["product", productId] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
     } catch (error: any) {
-      console.error("Error updating stock:", error);
+      logger.error("Error updating stock:", error);
       toast.error(error.message || "Stok güncellenirken hata oluştu");
     } finally {
       setIsSaving(false);
@@ -289,7 +290,7 @@ const ProductWarehouseStock = ({
       queryClient.invalidateQueries({ queryKey: ["product", productId] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
     } catch (error: any) {
-      console.error("Error adding stock:", error);
+      logger.error("Error adding stock:", error);
       toast.error(error.message || "Stok eklenirken hata oluştu");
     } finally {
       setIsSaving(false);

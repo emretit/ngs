@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useForm, FormProvider } from "react-hook-form";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -223,7 +224,7 @@ const ProposalToOrderCreate = () => {
             try {
               proposalItems = JSON.parse(data.items);
             } catch (e) {
-              console.error("Failed to parse items:", e);
+              logger.error("Failed to parse items:", e);
             }
           } else if (Array.isArray(data.items)) {
             proposalItems = data.items as ProposalItem[];
@@ -305,7 +306,7 @@ const ProposalToOrderCreate = () => {
         }
 
       } catch (err) {
-        console.error("Error fetching proposal:", err);
+        logger.error("Error fetching proposal:", err);
         setError(err instanceof Error ? err.message : "Teklif bilgileri yüklenirken hata oluştu");
       } finally {
         setLoading(false);
@@ -626,7 +627,7 @@ const ProposalToOrderCreate = () => {
           tax_rate: item.tax_rate || DEFAULT_VAT_PERCENTAGE,
           discount_rate: item.discount_rate || 0,
           item_group: 'product',
-          stock_status: 'in_stock',
+          stock_status: 'pending', // Sipariş confirmed olunca stok kontrol edilecek
           sort_order: index + 1
         }))
       };
@@ -645,7 +646,7 @@ const ProposalToOrderCreate = () => {
         navigate("/orders/list");
       }
     } catch (error) {
-      console.error('Error saving order:', error);
+      logger.error('Error saving order:', error);
       const errorMessage = error instanceof Error
         ? error.message
         : "Sipariş kaydedilirken bir hata oluştu";

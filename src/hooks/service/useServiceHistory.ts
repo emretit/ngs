@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ServiceHistoryItem {
@@ -26,7 +27,7 @@ export const useServiceHistory = (serviceRequestId?: string) => {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching service history:", error);
+        logger.error("Error fetching service history:", error);
         throw error;
       }
 
@@ -60,7 +61,7 @@ export const useCreateServiceHistoryEntry = () => {
       .single();
 
     if (error) {
-      console.error("Error creating service history entry:", error);
+      logger.error("Error creating service history entry:", error);
       throw error;
     }
 

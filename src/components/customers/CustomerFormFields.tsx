@@ -1,5 +1,6 @@
 
 import { useTranslation } from "react-i18next";
+import { logger } from '@/utils/logger';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -78,7 +79,7 @@ const CustomerFormFields = ({ formData, setFormData, isEdit = false }: CustomerF
 
         setAvailablePaymentTerms([...INITIAL_PAYMENT_TERMS, ...customTerms]);
       } catch (error) {
-        console.error('Error loading custom terms:', error);
+        logger.error('Error loading custom terms:', error);
       }
     };
 
@@ -140,7 +141,7 @@ const CustomerFormFields = ({ formData, setFormData, isEdit = false }: CustomerF
       setNewTermText("");
       toast.success("Ödeme şartı başarıyla eklendi!");
     } catch (error) {
-      console.error('Error adding custom term:', error);
+      logger.error('Error adding custom term:', error);
       toast.error("Şart eklenirken bir hata oluştu: " + (error as Error).message);
     } finally {
       setIsLoading(false);
@@ -171,7 +172,7 @@ const CustomerFormFields = ({ formData, setFormData, isEdit = false }: CustomerF
 
       toast.success("Ödeme şartı başarıyla silindi!");
     } catch (error) {
-      console.error('Error deleting custom term:', error);
+      logger.error('Error deleting custom term:', error);
       toast.error("Şart silinirken bir hata oluştu: " + (error as Error).message);
     } finally {
       setIsDeleting(false);

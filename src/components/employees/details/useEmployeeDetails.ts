@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -26,7 +27,7 @@ export const useEmployeeDetails = () => {
       if (error) throw error;
       setEmployee(data as Employee);
     } catch (error) {
-      console.error("Error fetching employee:", error);
+      logger.error("Error fetching employee:", error);
       toast({
         variant: "destructive",
         title: "Error",

@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams, useNavigate } from "react-router-dom";
@@ -123,7 +124,7 @@ export const useProductForm = () => {
           let statusValue = data.status;
           if (!statusValue || !validStatuses.includes(statusValue)) {
             statusValue = isActive ? "active" : "inactive";
-            console.log("🟡 Geçersiz status değeri düzeltildi:", data.status, "->", statusValue);
+            logger.debug("🟡 Geçersiz status değeri düzeltildi:", data.status, "->", statusValue);
           }
 
           // Validate and fix unit value
@@ -164,7 +165,7 @@ export const useProductForm = () => {
           });
         }
       } catch (error) {
-        console.error("Error fetching product:", error);
+        logger.error("Error fetching product:", error);
         toast.error("Ürün bilgileri yüklenirken bir hata oluştu.");
       }
     };

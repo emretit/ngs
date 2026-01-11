@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,7 +90,7 @@ const NewWorkOrderDialog = ({ open, onOpenChange, onSuccess }: NewWorkOrderDialo
         .single();
 
       if (error) {
-        console.error("Error creating work order:", error);
+        logger.error("Error creating work order:", error);
         toast.error(error.message || "İş emri oluşturulurken hata oluştu");
         return;
       }
@@ -109,7 +110,7 @@ const NewWorkOrderDialog = ({ open, onOpenChange, onSuccess }: NewWorkOrderDialo
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
-      console.error("Error:", error);
+      logger.error("Error:", error);
       toast.error(error.message || "Bir hata oluştu");
     } finally {
       setLoading(false);

@@ -1,5 +1,6 @@
 
 import { useState, memo } from "react";
+import { logger } from '@/utils/logger';
 import { FileText } from "lucide-react";
 import ProposalTable from "@/components/proposals/ProposalTable";
 import { ProposalKanban } from "@/components/proposals/ProposalKanban";
@@ -91,7 +92,7 @@ const Proposals = memo(() => {
 
   if (error || kanbanError) {
     toast.error("Teklifler yüklenirken bir hata oluştu");
-    console.error("Error loading proposals:", error || kanbanError);
+    logger.error("Error loading proposals:", error || kanbanError);
   }
 
   const handleProposalClick = (proposal: Proposal) => {

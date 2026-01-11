@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { useEinvoiceMukellefCheck } from './useEinvoiceMukellefCheck';
 import { toast } from 'sonner';
 
@@ -25,9 +26,9 @@ export const useAutoMukellefCheck = ({
     const checkMukellef = async () => {
       try {
         const result = await checkEinvoiceMukellef(taxNumber);
-        console.log(`Auto check completed for customer ${customerId}: ${result.isEinvoiceMukellef ? 'Mükellef' : 'Değil'}`);
+        logger.debug(`Auto check completed for customer ${customerId}: ${result.isEinvoiceMukellef ? 'Mükellef' : 'Değil'}`);
       } catch (error) {
-        console.error('Auto mukellef check failed:', error);
+        logger.error('Auto mukellef check failed:', error);
       }
     };
 

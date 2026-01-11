@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,7 +64,7 @@ export const ElogoSettings = () => {
         setElogoData(null);
       }
     } catch (error) {
-      console.error('Error checking e-Logo status:', error);
+      logger.error('Error checking e-Logo status:', error);
     }
   };
 
@@ -97,10 +98,10 @@ export const ElogoSettings = () => {
         }
       });
 
-      console.log('Edge function response:', { data, error });
+      logger.debug('Edge function response:', { data, error });
 
       if (error) {
-        console.error('Edge function error details:', error);
+        logger.error('Edge function error details:', error);
         throw error;
       }
 
@@ -118,7 +119,7 @@ export const ElogoSettings = () => {
         throw new Error(data?.error || "Bilinmeyen hata");
       }
     } catch (error: any) {
-      console.error('e-Logo auth error:', error);
+      logger.error('e-Logo auth error:', error);
       toast({
         variant: "destructive",
         title: "Hata",

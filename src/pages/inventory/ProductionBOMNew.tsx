@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -272,7 +273,7 @@ const ProductionBOMNew = () => {
       
       navigate("/production/boms");
     } catch (error: any) {
-      console.error(error);
+      logger.error(error);
       toast.error(error.message || "Reçete kaydedilirken hata oluştu");
     } finally {
       setSaving(false);

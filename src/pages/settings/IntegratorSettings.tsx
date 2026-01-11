@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 // import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -35,7 +36,7 @@ const IntegratorSettingsPage = ({ isCollapsed, setIsCollapsed }: IntegratorSetti
       setIntegratorStatus(status);
       setSelectedIntegrator(status.selected);
     } catch (error) {
-      console.error('Error loading integrator status:', error);
+      logger.error('Error loading integrator status:', error);
     } finally {
       setLoading(false);
     }
@@ -69,7 +70,7 @@ const IntegratorSettingsPage = ({ isCollapsed, setIsCollapsed }: IntegratorSetti
         });
       }
     } catch (error) {
-      console.error('Error changing integrator:', error);
+      logger.error('Error changing integrator:', error);
       toast({
         variant: "destructive",
         title: "Hata",

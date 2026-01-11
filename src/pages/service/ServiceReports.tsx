@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -32,7 +33,7 @@ export default function ServiceReports() {
 
   const handleExport = (format: 'pdf' | 'excel') => {
     // Export functionality - can be implemented later
-    console.log(`Exporting ${reportType} report as ${format}`);
+    logger.debug(`Exporting ${reportType} report as ${format}`);
   };
 
   return (

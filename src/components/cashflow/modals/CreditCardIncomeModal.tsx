@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -104,7 +105,7 @@ const CreditCardIncomeModal = ({ isOpen, onClose, onSuccess, cardId, cardName, a
 
       onSuccess();
     } catch (error: any) {
-      console.error('Error adding income:', error);
+      logger.error('Error adding income:', error);
       
       // Özel hata mesajlarını kontrol et
       if (error?.message?.includes('Available limit cannot exceed credit limit')) {

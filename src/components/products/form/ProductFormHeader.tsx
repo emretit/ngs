@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { logger } from '@/utils/logger';
 import BackButton from "@/components/ui/back-button";
 import { Package, Save, Plus, Copy } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
@@ -26,30 +27,30 @@ const ProductFormHeader = ({
   const navigate = useNavigate();
 
   const handleSave = async () => {
-    console.log("Save button clicked");
-    console.log("Form is valid?", form.formState.isValid);
-    console.log("Form errors:", form.formState.errors);
+    logger.debug("Save button clicked");
+    logger.debug("Form is valid?", form.formState.isValid);
+    logger.debug("Form errors:", form.formState.errors);
     
     // Trigger validation manually
     const isValid = await form.trigger();
     if (!isValid) {
-      console.log("Form validation failed:", form.formState.errors);
+      logger.debug("Form validation failed:", form.formState.errors);
       return;
     }
     
     return form.handleSubmit((values) => {
-      console.log("Form submitted with values:", values);
+      logger.debug("Form submitted with values:", values);
       return onSubmit(values, false);
     })();
   };
 
   const handleSaveAndNew = async () => {
-    console.log("Save and Add New button clicked");
+    logger.debug("Save and Add New button clicked");
     
     // Trigger validation manually
     const isValid = await form.trigger();
     if (!isValid) {
-      console.log("Form validation failed:", form.formState.errors);
+      logger.debug("Form validation failed:", form.formState.errors);
       return;
     }
     

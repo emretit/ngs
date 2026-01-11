@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -112,13 +113,13 @@ const EInvoiceContent = ({
           .order('line_number', { ascending: true });
         
         if (error) {
-          console.error('Fatura kalemleri yüklenemedi:', error);
+          logger.error('Fatura kalemleri yüklenemedi:', error);
           setInvoiceItems([]);
         } else {
           setInvoiceItems(data || []);
         }
       } catch (err) {
-        console.error('Fatura kalemleri yükleme hatası:', err);
+        logger.error('Fatura kalemleri yükleme hatası:', err);
         setInvoiceItems([]);
       } finally {
         setLoadingItems(false);
@@ -168,7 +169,7 @@ const EInvoiceContent = ({
       // Listeyi yenile
       onRefresh();
     } catch (error: any) {
-      console.error('Silme hatası:', error);
+      logger.error('Silme hatası:', error);
       toast.error(`Fatura silinirken hata oluştu: ${error.message}`);
     }
   };
@@ -441,7 +442,7 @@ const EInvoiceContent = ({
                               try {
                                 await handleDownloadPdf(invoice.id);
                               } catch (error) {
-                                console.error('PDF önizleme hatası:', error);
+                                logger.error('PDF önizleme hatası:', error);
                               } finally {
                                 setDownloadingInvoiceId(null);
                               }
@@ -483,7 +484,7 @@ const EInvoiceContent = ({
                               try {
                                 await handleDownloadPdf(invoice.id);
                               } catch (error) {
-                                console.error('PDF önizleme hatası:', error);
+                                logger.error('PDF önizleme hatası:', error);
                               } finally {
                                 setDownloadingInvoiceId(null);
                               }

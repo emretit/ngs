@@ -1,4 +1,5 @@
 import { useState, memo } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { DropResult } from "@hello-pangea/dnd";
 import { Opportunity, OpportunityStatus } from "@/types/crm";
@@ -154,7 +155,7 @@ const Opportunities = memo(() => {
         .eq('id', opportunityToDelete.id);
 
       if (error) {
-        console.error('Delete error details:', {
+        logger.error('Delete error details:', {
           message: error.message,
           code: error.code,
           details: error.details,
@@ -195,7 +196,7 @@ const Opportunities = memo(() => {
         setIsDetailOpen(false);
       }
     } catch (error: any) {
-      console.error('Error deleting opportunity:', error);
+      logger.error('Error deleting opportunity:', error);
       toast.error(`Fırsat silinirken bir hata oluştu: ${error?.message || 'Bilinmeyen hata'}`, { duration: 2000 });
     } finally {
       setIsDeleting(false);

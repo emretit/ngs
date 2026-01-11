@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,7 +84,7 @@ export const VeribanSettings = () => {
         setVeribanData(null);
       }
     } catch (error) {
-      console.error('Error checking Veriban status:', error);
+      logger.error('Error checking Veriban status:', error);
     }
   };
 
@@ -197,7 +198,7 @@ export const VeribanSettings = () => {
       
       await checkVeribanStatus(); // Refresh status
     } catch (error: any) {
-      console.error('❌ Veriban kaydetme hatası:', error);
+      logger.error('❌ Veriban kaydetme hatası:', error);
       toast({
         variant: "destructive",
         title: "Hata",
@@ -248,9 +249,9 @@ export const VeribanSettings = () => {
         throw new Error("Kayıtlı Veriban bilgileri bulunamadı. Lütfen önce bilgileri kaydedin.");
       }
 
-      console.log('🔐 Veriban auth edge function çağrılıyor...');
-      console.log('📡 Test Mode:', authData.test_mode);
-      console.log('👤 Username:', authData.username);
+      logger.debug('🔐 Veriban auth edge function çağrılıyor...');
+      logger.debug('📡 Test Mode:', authData.test_mode);
+      logger.debug('👤 Username:', authData.username);
 
       const requestBody = {
         action: 'authenticate',
@@ -259,7 +260,7 @@ export const VeribanSettings = () => {
         testMode: authData.test_mode || false
       };
       
-      console.log('📤 Request body:', requestBody);
+      logger.debug('📤 Request body:', requestBody);
 
       const { data, error } = await supabase.functions.invoke('veriban-auth', {
         method: 'POST',
@@ -269,20 +270,20 @@ export const VeribanSettings = () => {
         body: requestBody,
       });
 
-      console.log('✅ Edge function response:', { data, error });
-      console.log('📋 Full error object:', JSON.stringify(error, null, 2));
-      console.log('📋 Full data object:', JSON.stringify(data, null, 2));
+      logger.debug('✅ Edge function response:', { data, error });
+      logger.debug('📋 Full error object:', JSON.stringify(error, null, 2));
+      logger.debug('📋 Full data object:', JSON.stringify(data, null, 2));
 
       if (error) {
-        console.error('❌ Edge function error details:', error);
-        console.error('❌ Error context:', error.context);
-        console.error('❌ Error message:', error.message);
+        logger.error('❌ Edge function error details:', error);
+        logger.error('❌ Error context:', error.context);
+        logger.error('❌ Error message:', error.message);
 
         // Try to get response body if available
         if (error.context instanceof Response) {
           try {
             const responseText = await error.context.text();
-            console.error('❌ Response body:', responseText);
+            logger.error('❌ Response body:', responseText);
             try {
               const responseJson = JSON.parse(responseText);
               if (responseJson.error) {
@@ -297,7 +298,7 @@ export const VeribanSettings = () => {
               }
             }
           } catch (e) {
-            console.error('❌ Could not read response body:', e);
+            logger.error('❌ Could not read response body:', e);
           }
         }
 
@@ -319,7 +320,7 @@ export const VeribanSettings = () => {
       
       // Check if data contains error even if no error object
       if (data && !data.success && data.error) {
-        console.error('❌ Edge function returned error in data:', data.error);
+        logger.error('❌ Edge function returned error in data:', data.error);
         setConnectionStatus(`❌ ${data.error}`);
         throw new Error(data.error);
       }
@@ -332,7 +333,7 @@ export const VeribanSettings = () => {
           .eq('company_id', profile.company_id);
 
         if (updateError) {
-          console.error('is_active güncelleme hatası:', updateError);
+          logger.error('is_active güncelleme hatası:', updateError);
         }
 
         setIsConnected(true);
@@ -348,7 +349,7 @@ export const VeribanSettings = () => {
         throw new Error(errorMsg);
       }
     } catch (error: any) {
-      console.error('❌ Veriban auth error:', error);
+      logger.error('❌ Veriban auth error:', error);
       
       // Extract error message from different error formats
       let errorMessage = "Veriban bağlantısı başarısız";
@@ -411,7 +412,7 @@ export const VeribanSettings = () => {
         throw new Error("Kayıtlı Veriban bilgileri bulunamadı");
       }
 
-      console.log('🧪 Mevcut bağlantı test ediliyor...');
+      logger.debug('🧪 Mevcut bağlantı test ediliyor...');
 
       const { data, error } = await supabase.functions.invoke('veriban-auth', {
         body: {
@@ -437,7 +438,7 @@ export const VeribanSettings = () => {
         throw new Error(data?.error || 'Bağlantı testi başarısız');
       }
     } catch (error: any) {
-      console.error('❌ Bağlantı testi hatası:', error);
+      logger.error('❌ Bağlantı testi hatası:', error);
       setConnectionStatus(`❌ Test başarısız: ${error.message || 'Bilinmeyen hata'}`);
       toast({
         variant: "destructive",

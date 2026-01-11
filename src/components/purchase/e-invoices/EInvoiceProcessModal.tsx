@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -76,7 +77,7 @@ export default function EInvoiceProcessModal({
   const loadInvoiceDetails = async () => {
     setIsLoading(true);
     try {
-      console.log('🔄 Loading invoice details for:', invoice.id);
+      logger.debug('🔄 Loading invoice details for:', invoice.id);
 
       const { data, error } = await supabase.functions.invoke('nilvera-invoice-details', {
         body: {
@@ -85,20 +86,20 @@ export default function EInvoiceProcessModal({
         }
       });
 
-      console.log('📡 Invoice details response:', { data, error });
+      logger.debug('📡 Invoice details response:', { data, error });
 
       if (error) {
-        console.error('❌ Supabase function error:', error);
+        logger.error('❌ Supabase function error:', error);
         throw new Error(error.message || 'Fatura detayları alınamadı');
       }
 
       if (!data) {
-        console.error('❌ No data received from function');
+        logger.error('❌ No data received from function');
         throw new Error('Function response is empty');
       }
 
       if (!data.success) {
-        console.error('❌ Function returned error:', data.error);
+        logger.error('❌ Function returned error:', data.error);
         throw new Error(data.error || 'Fatura detayları alınamadı');
       }
 
@@ -119,11 +120,11 @@ export default function EInvoiceProcessModal({
           isMatched: false
         }));
 
-        console.log('✅ Parsed invoice items:', items.length);
-        console.log('📄 First item:', items[0]);
+        logger.debug('✅ Parsed invoice items:', items.length);
+        logger.debug('📄 First item:', items[0]);
         setInvoiceItems(items);
       } else {
-        console.log('⚠️ No items found in invoice details');
+        logger.debug('⚠️ No items found in invoice details');
         // Create a single item from invoice totals as fallback
         const fallbackItem: InvoiceItem = {
           id: 'fallback-item',
@@ -143,7 +144,7 @@ export default function EInvoiceProcessModal({
         setInvoiceItems([fallbackItem]);
       }
     } catch (error: any) {
-      console.error('❌ Error loading invoice details:', error);
+      logger.error('❌ Error loading invoice details:', error);
       toast.error(error.message || "Fatura detayları yüklenirken hata oluştu");
     } finally {
       setIsLoading(false);
@@ -162,7 +163,7 @@ export default function EInvoiceProcessModal({
         setProducts(data);
       }
     } catch (error) {
-      console.error('Error loading products:', error);
+      logger.error('Error loading products:', error);
     }
   };
 
@@ -343,7 +344,7 @@ export default function EInvoiceProcessModal({
       .single();
     
     if (supplierFetchError) {
-      console.error('❌ Error fetching supplier balance:', supplierFetchError);
+      logger.error('❌ Error fetching supplier balance:', supplierFetchError);
       // Hata olsa bile devam et, sadece logla
     } else if (supplierBalanceData) {
       const newSupplierBalance = (supplierBalanceData.balance || 0) - invoice.totalAmount;
@@ -353,10 +354,10 @@ export default function EInvoiceProcessModal({
         .eq('id', supplierId);
       
       if (supplierUpdateError) {
-        console.error('❌ Error updating supplier balance:', supplierUpdateError);
+        logger.error('❌ Error updating supplier balance:', supplierUpdateError);
         // Hata olsa bile devam et, sadece logla
       } else {
-        console.log('✅ Supplier balance updated:', newSupplierBalance);
+        logger.debug('✅ Supplier balance updated:', newSupplierBalance);
       }
     }
   };
@@ -364,7 +365,7 @@ export default function EInvoiceProcessModal({
   const sendAlindiResponse = async () => {
     // TODO: Implement actual ALINDI response sending via Nilvera API
     // For now, this is a placeholder
-    console.log('Sending ALINDI response for invoice:', invoice.id);
+    logger.debug('Sending ALINDI response for invoice:', invoice.id);
     
     // This would be the actual API call:
     const { data, error } = await supabase.functions.invoke('nilvera-invoices', {

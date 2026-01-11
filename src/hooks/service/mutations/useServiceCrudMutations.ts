@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { ServiceRequestFormData } from "../types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -13,7 +14,7 @@ export const useServiceCrudMutations = () => {
   // Create service request mutation
   const createServiceRequestMutation = useMutation({
     mutationFn: async ({ formData, files }: { formData: ServiceRequestFormData; files: File[] }) => {
-      console.log("Creating service request with data:", formData);
+      logger.debug("Creating service request with data:", formData);
       
       if (!userData?.company_id) {
         throw new Error("Company ID is required");
@@ -47,7 +48,7 @@ export const useServiceCrudMutations = () => {
         company_id: userData.company_id,
       };
 
-      console.log("Submitting service request data:", serviceRequestData);
+      logger.debug("Submitting service request data:", serviceRequestData);
 
       const { data, error } = await supabase
         .from('service_requests')
@@ -56,11 +57,11 @@ export const useServiceCrudMutations = () => {
         .single();
 
       if (error) {
-        console.error("Error creating service request:", error);
+        logger.error("Error creating service request:", error);
         throw error;
       }
 
-      console.log("Service request created successfully:", data);
+      logger.debug("Service request created successfully:", data);
 
       // Upload files if any
       if (files && files.length > 0) {
@@ -76,7 +77,7 @@ export const useServiceCrudMutations = () => {
             .upload(filePath, file);
 
           if (uploadError) {
-            console.error("Error uploading file:", uploadError);
+            logger.error("Error uploading file:", uploadError);
             continue;
           }
 
@@ -96,7 +97,7 @@ export const useServiceCrudMutations = () => {
             .eq('id', data.id);
 
           if (updateError) {
-            console.error("Error updating attachments:", updateError);
+            logger.error("Error updating attachments:", updateError);
           }
         }
       }
@@ -111,7 +112,7 @@ export const useServiceCrudMutations = () => {
       });
     },
     onError: (error) => {
-      console.error("Create service request error:", error);
+      logger.error("Create service request error:", error);
       toast({
         variant: "destructive",
         title: "Hata",
@@ -123,7 +124,7 @@ export const useServiceCrudMutations = () => {
   // Update service request mutation
   const updateServiceRequestMutation = useMutation({
     mutationFn: async ({ id, updateData, newFiles }: { id: string; updateData: Partial<ServiceRequestFormData>; newFiles?: File[] }) => {
-      console.log("Updating service request:", id, updateData);
+      logger.debug("Updating service request:", id, updateData);
       
       if (!userData?.company_id) {
         throw new Error("Company ID is required");
@@ -157,7 +158,7 @@ export const useServiceCrudMutations = () => {
             .upload(filePath, file);
 
           if (uploadError) {
-            console.error("Error uploading file:", uploadError);
+            logger.error("Error uploading file:", uploadError);
             continue;
           }
 
@@ -197,7 +198,7 @@ export const useServiceCrudMutations = () => {
         attachments: attachmentsForDb
       };
 
-      console.log("Update payload:", updatePayload);
+      logger.debug("Update payload:", updatePayload);
 
       const { data, error } = await supabase
         .from('service_requests')
@@ -208,11 +209,11 @@ export const useServiceCrudMutations = () => {
         .single();
 
       if (error) {
-        console.error("Error updating service request:", error);
+        logger.error("Error updating service request:", error);
         throw error;
       }
 
-      console.log("Service request updated successfully:", data);
+      logger.debug("Service request updated successfully:", data);
 
       // Eğer teknisyen değiştiyse ve yeni bir teknisyen atandıysa push notification gönder
       if (isTechnicianChanged && newAssignedTechnician) {
@@ -258,17 +259,17 @@ export const useServiceCrudMutations = () => {
               });
 
               if (pushError) {
-                console.error('Push notification gönderme hatası:', pushError);
+                logger.error('Push notification gönderme hatası:', pushError);
               } else {
-                console.log('Push notification başarıyla gönderildi:', pushData);
+                logger.debug('Push notification başarıyla gönderildi:', pushData);
               }
             } catch (pushErr) {
-              console.error('Push notification çağrı hatası:', pushErr);
+              logger.error('Push notification çağrı hatası:', pushErr);
               // Push notification hatası kritik değil, devam et
             }
           }
         } catch (notifErr) {
-          console.error('Bildirim gönderme hatası:', notifErr);
+          logger.error('Bildirim gönderme hatası:', notifErr);
           // Bildirim hatası kritik değil, devam et
         }
       }
@@ -283,7 +284,7 @@ export const useServiceCrudMutations = () => {
       });
     },
     onError: (error) => {
-      console.error("Update service request error:", error);
+      logger.error("Update service request error:", error);
       toast({
         variant: "destructive",
         title: "Hata",

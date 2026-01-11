@@ -1,4 +1,5 @@
 import { useInfiniteScroll } from "./useInfiniteScroll";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -94,7 +95,7 @@ export const useBudgetsList = (filters: UseBudgetsFilters = {}) => {
     const { data: allBudgets, error: budgetsError } = await budgetsQuery;
 
     if (budgetsError) {
-      console.error("Error fetching budgets:", budgetsError);
+      logger.error("Error fetching budgets:", budgetsError);
       throw budgetsError;
     }
 

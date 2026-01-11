@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { Vehicle, VehicleFormData } from '@/types/vehicle';
 import { toast } from '@/hooks/use-toast';
@@ -62,7 +63,7 @@ export const useCreateVehicle = () => {
         description: "Araç eklenirken bir hata oluştu.",
         variant: "destructive",
       });
-      console.error('Vehicle creation error:', error);
+      logger.error('Vehicle creation error:', error);
     },
   });
 };
@@ -96,7 +97,7 @@ export const useUpdateVehicle = () => {
         description: "Araç güncellenirken bir hata oluştu.",
         variant: "destructive",
       });
-      console.error('Vehicle update error:', error);
+      logger.error('Vehicle update error:', error);
     },
   });
 };
@@ -126,7 +127,7 @@ export const useDeleteVehicle = () => {
         description: "Araç silinirken bir hata oluştu.",
         variant: "destructive",
       });
-      console.error('Vehicle deletion error:', error);
+      logger.error('Vehicle deletion error:', error);
     },
   });
 };

@@ -1,4 +1,5 @@
 import { useInfiniteScroll } from "./useInfiniteScroll";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { Delivery } from "@/types/deliveries";
 
@@ -70,7 +71,7 @@ export const useDeliveriesInfiniteScroll = (filters: UseDeliveriesFilters = {}) 
     const { data, error, count } = await query;
 
     if (error) {
-      console.error("Error fetching deliveries:", error);
+      logger.error("Error fetching deliveries:", error);
       throw error;
     }
 

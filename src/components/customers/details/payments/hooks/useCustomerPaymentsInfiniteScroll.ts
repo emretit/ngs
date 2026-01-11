@@ -1,4 +1,5 @@
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Payment } from "@/types/payment";
@@ -31,7 +32,7 @@ export const useCustomerPaymentsInfiniteScroll = (filters: UseCustomerPaymentsFi
       .range(from, to);
 
     if (error) {
-      console.error('Error fetching customer payments:', error);
+      logger.error('Error fetching customer payments:', error);
       throw error;
     }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -56,7 +57,7 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
         if (error) throw error;
         setCities(data || []);
       } catch (error) {
-        console.error('Error loading cities:', error);
+        logger.error('Error loading cities:', error);
       } finally {
         setLoadingCities(false);
       }
@@ -81,7 +82,7 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
           setValue("neighborhood_id", undefined);
           setNeighborhoods([]);
         } catch (error) {
-          console.error('Error loading districts:', error);
+          logger.error('Error loading districts:', error);
         } finally {
           setLoadingDistricts(false);
         }
@@ -108,7 +109,7 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
           // Reset neighborhood selection
           setValue("neighborhood_id", undefined);
         } catch (error) {
-          console.error('Error loading neighborhoods:', error);
+          logger.error('Error loading neighborhoods:', error);
         } finally {
           setLoadingNeighborhoods(false);
         }

@@ -1,5 +1,6 @@
 
 import React, { useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { 
   Dialog, 
   DialogContent,
@@ -81,7 +82,7 @@ const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
   // Initialize state when dialog opens with existing item data
   useEffect(() => {
     if (open && selectedProduct) {
-      console.log('ProductEditDialog opened - quantity:', quantity, 'customPrice:', customPrice, 'discountRate:', discountRate);
+      logger.debug('ProductEditDialog opened - quantity:', quantity, 'customPrice:', customPrice, 'discountRate:', discountRate);
       
       // Edit mode'da mevcut değerleri kullan - prop'lar zaten doğru değerlerle geliyor
       // Sadece emin olmak için set ediyoruz

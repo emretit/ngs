@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,10 +50,10 @@ export const useEInvoice = () => {
       return data;
     },
     onSuccess: (data, salesInvoiceId) => {
-      console.log("🎯 E-fatura gönderim cevabı:", data);
-      console.log("🎯 Data success:", data?.success);
-      console.log("🎯 Data status:", data?.status);
-      console.log("🎯 Data message:", data?.message);
+      logger.debug("🎯 E-fatura gönderim cevabı:", data);
+      logger.debug("🎯 Data success:", data?.success);
+      logger.debug("🎯 Data status:", data?.status);
+      logger.debug("🎯 Data message:", data?.message);
       
       if (data?.success) {
         toast.success(t('toast.eInvoiceSent'));
@@ -76,7 +77,7 @@ export const useEInvoice = () => {
       }
     },
     onError: (error: any, salesInvoiceId) => {
-      console.error("E-fatura gönderim hatası:", error);
+      logger.error("E-fatura gönderim hatası:", error);
       
       // Edge function'dan gelen detaylı hata mesajını göster
       let errorMessage = "E-fatura gönderilirken bir hata oluştu";
@@ -123,7 +124,7 @@ export const useEInvoice = () => {
       }
     },
     onError: (error) => {
-      console.error("Durum kontrolü hatası:", error);
+      logger.error("Durum kontrolü hatası:", error);
       toast.error(t('toast.statusCheckError'));
     },
   });
@@ -151,7 +152,7 @@ export const useEInvoice = () => {
       }
     },
     onError: (error) => {
-      console.error("Müşteri alias güncelleme hatası:", error);
+      logger.error("Müşteri alias güncelleme hatası:", error);
       toast.error(t('toast.customerUpdateFailed'));
     },
   });
@@ -180,7 +181,7 @@ export const useEInvoiceStatus = (salesInvoiceId?: string) => {
     if (!salesInvoiceId) return;
 
     const fetchStatus = async () => {
-      console.log("🔄 E-fatura durumu çekiliyor:", salesInvoiceId);
+      logger.debug("🔄 E-fatura durumu çekiliyor:", salesInvoiceId);
       setIsLoading(true);
       setError(null);
       
@@ -207,7 +208,7 @@ export const useEInvoiceStatus = (salesInvoiceId?: string) => {
           .maybeSingle();
           
         if (error) throw error;
-        console.log("🔄 E-fatura durumu çekildi:", data);
+        logger.debug("🔄 E-fatura durumu çekildi:", data);
         
         // Convert sales_invoices data to EInvoiceStatusTracking format
         if (data) {
@@ -247,7 +248,7 @@ export const useEInvoiceStatus = (salesInvoiceId?: string) => {
   const refreshStatus = async () => {
     if (!salesInvoiceId) return;
     
-    console.log("🔄 E-fatura durumu yenileniyor:", salesInvoiceId);
+    logger.debug("🔄 E-fatura durumu yenileniyor:", salesInvoiceId);
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -272,7 +273,7 @@ export const useEInvoiceStatus = (salesInvoiceId?: string) => {
         .maybeSingle();
         
       if (error) throw error;
-      console.log("🔄 E-fatura durumu güncellendi:", data);
+      logger.debug("🔄 E-fatura durumu güncellendi:", data);
       
       // Convert sales_invoices data to EInvoiceStatusTracking format
       if (data) {

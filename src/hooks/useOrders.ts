@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -13,10 +14,12 @@ import {
 import { toast } from "sonner";
 import { useCurrentUser } from "./useCurrentUser";
 import { useInfiniteScroll } from "./useInfiniteScroll";
+import { useStockReservation } from "./useStockReservation";
 
 export const useOrders = () => {
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
+  const { reserveStock, releaseReservation } = useStockReservation();
   const [filters, setFilters] = useState<OrderFilters>({
     status: 'all',
     customer_id: 'all',
@@ -30,7 +33,7 @@ export const useOrders = () => {
   const fetchOrders = async (): Promise<Order[]> => {
     // Company_id kontrolü - güvenlik için
     if (!userData?.company_id) {
-      console.warn('No company_id found for user');
+      logger.warn('No company_id found for user');
       return [];
     }
 
@@ -206,7 +209,7 @@ export const useOrders = () => {
         .eq("id", orderData.proposal_id);
       
       if (proposalError) {
-        console.warn("Proposal durumu güncellenirken hata oluştu:", proposalError);
+        logger.warn("Proposal durumu güncellenirken hata oluştu:", proposalError);
       }
     }
 
@@ -286,12 +289,28 @@ export const useOrders = () => {
   };
 
   // Sipariş durumu güncelle
-  const updateOrderStatus = async ({ id, status }: { id: string, status: OrderStatus }): Promise<Order> => {
+  const updateOrderStatus = async ({ id, status }: { id: string, status: OrderStatus }) => {
     if (!userData?.company_id) {
       toast.error("Şirket bilgisi bulunamadı");
       throw new Error("Company ID not found");
     }
 
+    // Mevcut sipariş durumunu al
+    const { data: currentOrder, error: fetchError } = await supabase
+      .from("orders")
+      .select("status")
+      .eq("id", id)
+      .eq("company_id", userData.company_id)
+      .single();
+
+    if (fetchError) {
+      toast.error("Sipariş bilgisi alınamadı");
+      throw fetchError;
+    }
+
+    const previousStatus = currentOrder.status;
+
+    // Sipariş durumunu güncelle
     const { error } = await supabase
       .from("orders")
       .update({ status })
@@ -303,8 +322,59 @@ export const useOrders = () => {
       throw error;
     }
 
+    // Stok rezervasyon yönetimi
+    let reservationResult = null;
+    
+    try {
+      // Sipariş onaylandığında stok rezerve et
+      if (status === 'confirmed' && previousStatus !== 'confirmed') {
+        logger.debug("📦 [useOrders] Reserving stock for confirmed order:", id);
+        reservationResult = await reserveStock({ orderId: id });
+        
+        // Stok yetersizliği varsa, component'e bildir (dialog göstermek için)
+        if (reservationResult.shortageItems && reservationResult.shortageItems.length > 0) {
+          logger.warn("⚠️ [useOrders] Stock shortage detected:", reservationResult.shortageItems);
+          // Return the result with shortage info - component will handle dialog
+          return {
+            orderId: id,
+            status,
+            hasShortage: true,
+            shortageItems: reservationResult.shortageItems,
+            reservationResult
+          };
+        }
+        
+        if (!reservationResult.success) {
+          logger.warn("⚠️ [useOrders] Stock reservation had issues:", reservationResult.errors);
+          if (reservationResult.errors.length > 0) {
+            toast.warning(`Sipariş onaylandı ancak bazı ürünlerde stok sorunu var`);
+          }
+        }
+      }
+      
+      // Sipariş iptal edildiğinde rezervasyonu serbest bırak
+      if (status === 'cancelled' && previousStatus !== 'cancelled') {
+        logger.debug("🔓 [useOrders] Releasing stock reservation for cancelled order:", id);
+        const releaseResult = await releaseReservation({ orderId: id });
+        
+        if (!releaseResult.success) {
+          logger.warn("⚠️ [useOrders] Stock release had issues:", releaseResult.errors);
+        }
+      }
+    } catch (stockError) {
+      // Stok rezervasyon hatası sipariş durumu güncellemesini engellemez
+      logger.error("❌ [useOrders] Stock reservation error:", stockError);
+      toast.warning("Sipariş durumu güncellendi ancak stok rezervasyonunda sorun oluştu");
+    }
+
     toast.success("Sipariş durumu başarıyla güncellendi");
-    return { id } as Order;
+    return {
+      orderId: id,
+      status,
+      hasShortage: false,
+      shortageItems: [],
+      reservationResult
+    };
   };
 
   // Sipariş sil
@@ -352,7 +422,7 @@ export const useOrders = () => {
       .eq("company_id", userData.company_id);
 
     if (error) {
-      console.error("Order stats error:", error);
+      logger.error("Order stats error:", error);
       return {
         total: 0,
         pending: 0,
@@ -514,7 +584,7 @@ export const useOrdersInfiniteScroll = (filters?: OrderFilters, pageSize: number
     
     // Kullanıcının company_id'si yoksa boş sonuç döndür
     if (!userData?.company_id) {
-      console.warn("Kullanıcının company_id'si bulunamadı, boş sonuç döndürülüyor");
+      logger.warn("Kullanıcının company_id'si bulunamadı, boş sonuç döndürülüyor");
       return { data: [], hasNextPage: false, totalCount: 0 };
     }
 
@@ -570,7 +640,7 @@ export const useOrdersInfiniteScroll = (filters?: OrderFilters, pageSize: number
       .range(from, to);
 
     if (error) {
-      console.error("Error fetching orders:", error);
+      logger.error("Error fetching orders:", error);
       throw error;
     }
 

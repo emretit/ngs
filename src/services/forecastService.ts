@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { chatWithAI } from './geminiService';
 
 export interface MonthlyRevenue {
@@ -90,7 +91,7 @@ export async function getHistoricalRevenue(
 
     return result.sort((a, b) => a.date.getTime() - b.date.getTime());
   } catch (error) {
-    console.error('Error fetching historical revenue:', error);
+    logger.error('Error fetching historical revenue:', error);
     return [];
   }
 }
@@ -242,7 +243,7 @@ Tahmin edilen gelecek 3 ay: ${forecast.map(f => '₺' + f.revenue.toLocaleString
         aiInsight = response.content;
       }
     } catch (error) {
-      console.error('AI insight generation failed:', error);
+      logger.error('AI insight generation failed:', error);
     }
 
     return {
@@ -253,7 +254,7 @@ Tahmin edilen gelecek 3 ay: ${forecast.map(f => '₺' + f.revenue.toLocaleString
       aiInsight,
     };
   } catch (error) {
-    console.error('Error generating revenue forecast:', error);
+    logger.error('Error generating revenue forecast:', error);
     throw error;
   }
 }

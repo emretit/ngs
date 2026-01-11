@@ -1,4 +1,5 @@
 import React from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -199,28 +200,28 @@ export const ActivityFeed: React.FC = () => {
       title: "Yeni Fatura",
       description: "Satış faturası oluştur",
       icon: <FileText className="h-6 w-6" />,
-      onClick: () => console.log("Navigate to invoice"),
+      onClick: () => logger.debug("Navigate to invoice"),
       color: "border-blue-200 hover:border-blue-300 hover:bg-blue-50"
     },
     {
       title: "Müşteri Ekle",
       description: "Yeni müşteri kaydı",
       icon: <Users className="h-6 w-6" />,
-      onClick: () => console.log("Navigate to customer"),
+      onClick: () => logger.debug("Navigate to customer"),
       color: "border-green-200 hover:border-green-300 hover:bg-green-50"
     },
     {
       title: "Toplantı Planla",
       description: "Yeni toplantı oluştur",
       icon: <Calendar className="h-6 w-6" />,
-      onClick: () => console.log("Navigate to calendar"),
+      onClick: () => logger.debug("Navigate to calendar"),
       color: "border-purple-200 hover:border-purple-300 hover:bg-purple-50"
     },
     {
       title: "Rapor Al",
       description: "Mali rapor oluştur",
       icon: <TrendingUp className="h-6 w-6" />,
-      onClick: () => console.log("Generate report"),
+      onClick: () => logger.debug("Generate report"),
       color: "border-orange-200 hover:border-orange-300 hover:bg-orange-50"
     }
   ];

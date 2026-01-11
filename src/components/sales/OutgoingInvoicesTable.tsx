@@ -1,4 +1,5 @@
 import React from "react";
+import { logger } from '@/utils/logger';
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import {
@@ -206,7 +207,7 @@ const OutgoingInvoicesTable: React.FC<OutgoingInvoicesTableProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        console.log('Invoice details:', invoice);
+                        logger.debug('Invoice details:', invoice);
                       }}
                       className="h-8 w-8"
                       title="Detayları Görüntüle"

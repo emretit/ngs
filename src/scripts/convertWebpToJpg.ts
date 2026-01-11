@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { convertImageToJpg } from '@/utils/imageConverter';
 
 interface Product {
@@ -14,7 +15,7 @@ interface Product {
 }
 
 export async function convertAllWebpToJpg() {
-  console.log('🚀 WebP -> JPG dönüşümü başlatılıyor...');
+  logger.debug('🚀 WebP -> JPG dönüşümü başlatılıyor...');
   
   try {
     // 1. Tüm WebP görselli ürünleri çek
@@ -25,16 +26,16 @@ export async function convertAllWebpToJpg() {
       .like('image_url', '%.webp');
     
     if (fetchError) {
-      console.error('❌ Ürünler çekilirken hata:', fetchError);
+      logger.error('❌ Ürünler çekilirken hata:', fetchError);
       return;
     }
     
     if (!products || products.length === 0) {
-      console.log('✅ WebP görselli ürün bulunamadı. Tümü zaten JPG formatında!');
+      logger.debug('✅ WebP görselli ürün bulunamadı. Tümü zaten JPG formatında!');
       return;
     }
     
-    console.log(`📊 ${products.length} adet WebP görselli ürün bulundu`);
+    logger.debug(`📊 ${products.length} adet WebP görselli ürün bulundu`);
     
     let successCount = 0;
     let errorCount = 0;
@@ -42,13 +43,13 @@ export async function convertAllWebpToJpg() {
     // 2. Her ürünü işle
     for (let i = 0; i < products.length; i++) {
       const product = products[i];
-      console.log(`\n[${i + 1}/${products.length}] İşleniyor: ${product.name}`);
+      logger.debug(`\n[${i + 1}/${products.length}] İşleniyor: ${product.name}`);
       
       try {
         if (!product.image_url) continue;
         
         // Görseli fetch et
-        console.log('  📥 Görsel indiriliyor...');
+        logger.debug('  📥 Görsel indiriliyor...');
         const response = await fetch(product.image_url);
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -58,14 +59,14 @@ export async function convertAllWebpToJpg() {
         const file = new File([blob], 'image.webp', { type: 'image/webp' });
         
         // JPG'ye çevir
-        console.log('  🔄 JPG\'ye çevriliyor...');
+        logger.debug('  🔄 JPG\'ye çevriliyor...');
         const jpgFile = await convertImageToJpg(file);
         
         // Yeni dosya adı oluştur
         const newFilePath = `products/${Date.now()}.jpg`;
         
         // Storage'a yükle
-        console.log('  📤 Yükleniyor...');
+        logger.debug('  📤 Yükleniyor...');
         const { error: uploadError } = await supabase.storage
           .from('products')
           .upload(newFilePath, jpgFile);
@@ -84,7 +85,7 @@ export async function convertAllWebpToJpg() {
         }
         
         // Ürünü güncelle
-        console.log('  💾 Veritabanı güncelleniyor...');
+        logger.debug('  💾 Veritabanı güncelleniyor...');
         const { error: updateError } = await supabase
           .from('products')
           .update({ image_url: urlData.publicUrl })
@@ -97,32 +98,32 @@ export async function convertAllWebpToJpg() {
         // Eski WebP dosyasını sil
         const oldPath = product.image_url.split('/products/')[1];
         if (oldPath) {
-          console.log('  🗑️  Eski dosya siliniyor...');
+          logger.debug('  🗑️  Eski dosya siliniyor...');
           await supabase.storage
             .from('products')
             .remove([`products/${oldPath}`]);
         }
         
         successCount++;
-        console.log(`  ✅ Başarılı!`);
+        logger.debug(`  ✅ Başarılı!`);
         
       } catch (error) {
         errorCount++;
-        console.error(`  ❌ Hata:`, error);
+        logger.error(`  ❌ Hata:`, error);
       }
       
       // Rate limiting için bekle (1 saniye)
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
-    console.log('\n' + '='.repeat(50));
-    console.log(`🎉 Dönüşüm tamamlandı!`);
-    console.log(`✅ Başarılı: ${successCount}`);
-    console.log(`❌ Hatalı: ${errorCount}`);
-    console.log('='.repeat(50));
+    logger.debug('\n' + '='.repeat(50));
+    logger.debug(`🎉 Dönüşüm tamamlandı!`);
+    logger.debug(`✅ Başarılı: ${successCount}`);
+    logger.debug(`❌ Hatalı: ${errorCount}`);
+    logger.debug('='.repeat(50));
     
   } catch (error) {
-    console.error('❌ Script hatası:', error);
+    logger.error('❌ Script hatası:', error);
   }
 }
 

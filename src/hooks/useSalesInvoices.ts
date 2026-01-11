@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ export interface SalesInvoice {
   fatura_no: string;
   customer_id: string;
   order_id?: string;
+  service_request_id?: string;
   employee_id?: string;
   company_id?: string;
   fatura_tarihi: string;
@@ -214,7 +216,7 @@ export const useSalesInvoices = () => {
         .single();
       
       if (customerFetchError) {
-        console.error('❌ Error fetching customer balance:', customerFetchError);
+        logger.error('❌ Error fetching customer balance:', customerFetchError);
         // Hata olsa bile devam et, sadece logla
       } else if (customerData) {
         const newCustomerBalance = (customerData.balance || 0) + (invoiceData.toplam_tutar as number);
@@ -224,10 +226,10 @@ export const useSalesInvoices = () => {
           .eq('id', invoiceData.customer_id);
         
         if (customerUpdateError) {
-          console.error('❌ Error updating customer balance:', customerUpdateError);
+          logger.error('❌ Error updating customer balance:', customerUpdateError);
           // Hata olsa bile devam et, sadece logla
         } else {
-          console.log('✅ Customer balance updated:', newCustomerBalance);
+          logger.debug('✅ Customer balance updated:', newCustomerBalance);
         }
       }
     }
@@ -343,7 +345,7 @@ export const useSalesInvoices = () => {
             filter: `company_id=eq.${profile.company_id}`
           },
           (payload) => {
-            console.log('🔄 Sales invoice changed:', payload.eventType, payload.new || payload.old);
+            logger.debug('🔄 Sales invoice changed:', payload.eventType, payload.new || payload.old);
             // Invalidate queries to refetch data
             queryClient.invalidateQueries({ queryKey: ['salesInvoices'] });
           }

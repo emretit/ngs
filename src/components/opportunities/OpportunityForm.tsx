@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -159,7 +160,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
         throw error;
       }
     } catch (error) {
-      console.error('Error updating opportunity type:', error);
+      logger.error('Error updating opportunity type:', error);
       toast.error("Fırsat tipi güncellenirken hata oluştu");
     }
   };
@@ -178,7 +179,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
         throw error;
       }
     } catch (error) {
-      console.error('Error deleting opportunity type:', error);
+      logger.error('Error deleting opportunity type:', error);
       toast.error("Fırsat tipi silinirken hata oluştu");
     }
   };
@@ -205,7 +206,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log("handleSubmit çağrıldı", formData);
+    logger.debug("handleSubmit çağrıldı", formData);
     
     if (!formData.title.trim()) {
       toast.error("Fırsat başlığı gereklidir");
@@ -215,7 +216,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
     setIsSubmitting(true);
     
     try {
-      console.log("Fırsat oluşturuluyor...", formData);
+      logger.debug("Fırsat oluşturuluyor...", formData);
 
       const { error } = await supabase
         .from("opportunities")
@@ -233,11 +234,11 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
         });
 
       if (error) {
-        console.error("Fırsat oluşturma hatası:", error);
+        logger.error("Fırsat oluşturma hatası:", error);
         throw error;
       }
 
-      console.log("Fırsat başarıyla oluşturuldu");
+      logger.debug("Fırsat başarıyla oluşturuldu");
 
       // Refresh opportunities data
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
@@ -264,7 +265,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
       });
       onClose();
     } catch (error) {
-      console.error("Error creating opportunity:", error);
+      logger.error("Error creating opportunity:", error);
       toast.error("Fırsat oluşturulurken bir hata oluştu");
     } finally {
       setIsSubmitting(false);

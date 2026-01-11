@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -161,7 +162,7 @@ const TransactionsManager = () => {
       setAttachmentUrl(null);
       setIsFormOpen(false);
     } catch (error) {
-      console.error('Failed to create transaction:', error);
+      logger.error('Failed to create transaction:', error);
     }
   };
 
@@ -177,7 +178,7 @@ const TransactionsManager = () => {
     try {
       await deleteTransaction(transactionToDelete);
     } catch (error) {
-      console.error('Error deleting transaction:', error);
+      logger.error('Error deleting transaction:', error);
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
@@ -191,7 +192,7 @@ const TransactionsManager = () => {
   };
 
   const exportToExcel = () => {
-    console.log('Exporting to Excel...');
+    logger.debug('Exporting to Excel...');
   };
 
 

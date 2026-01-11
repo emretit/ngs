@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,7 +71,7 @@ const BudgetEntry = () => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
         // TODO: Implement Excel import logic
-        console.log("Import file:", file.name);
+        logger.debug("Import file:", file.name);
       }
     };
     input.click();
@@ -143,7 +144,7 @@ const BudgetEntry = () => {
         description: `${sourceBudgets.length} bütçe kaydı ${targetYear} yılına kopyalandı.`,
       });
     } catch (error: any) {
-      console.error("Copy error:", error);
+      logger.error("Copy error:", error);
       toast({
         variant: "destructive",
         title: "Hata",
@@ -185,7 +186,7 @@ const BudgetEntry = () => {
           setBudgetStatus(budgets.status || "draft");
         }
       } catch (error) {
-        console.error("Error fetching budget status:", error);
+        logger.error("Error fetching budget status:", error);
       }
     };
 

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -7,7 +8,7 @@ export const useDeleteEmployee = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      console.log('🔵 [useDeleteEmployee] Deleting employee:', id);
+      logger.debug('🔵 [useDeleteEmployee] Deleting employee:', id);
       
       // Database fonksiyonunu çağır - tüm temizlik işlemlerini yapar
       const { error } = await supabase.rpc('delete_employee_with_cleanup', {
@@ -15,11 +16,11 @@ export const useDeleteEmployee = () => {
       });
 
       if (error) {
-        console.error('❌ [useDeleteEmployee] Error:', error);
+        logger.error('❌ [useDeleteEmployee] Error:', error);
         throw error;
       }
       
-      console.log('✅ [useDeleteEmployee] Employee deleted successfully');
+      logger.debug('✅ [useDeleteEmployee] Employee deleted successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -27,7 +28,7 @@ export const useDeleteEmployee = () => {
     },
     onError: (error) => {
       toast.error("Çalışan silinirken bir hata oluştu");
-      console.error('Employee deletion error:', error);
+      logger.error('Employee deletion error:', error);
     },
   });
 };

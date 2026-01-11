@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
@@ -46,7 +47,7 @@ const RepresentativeSelect = ({ formData, setFormData }: RepresentativeSelectPro
 
         setRepresentatives(formattedData);
       } catch (error) {
-        console.error("Error fetching representatives:", error);
+        logger.error("Error fetching representatives:", error);
       } finally {
         setIsLoading(false);
       }

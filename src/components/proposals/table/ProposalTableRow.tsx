@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Proposal, ProposalStatus, proposalStatusColors, proposalStatusLabels } from "@/types/proposal";
 import { Edit2, MoreHorizontal, Trash2, Printer, ShoppingCart, Receipt, Copy, FileEdit, Users, UserPlus, GitBranch, Check } from "lucide-react";
@@ -69,13 +70,13 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
           .order('revision_number', { ascending: true });
 
         if (error) {
-          console.error('Error fetching revisions:', error);
+          logger.error('Error fetching revisions:', error);
           return;
         }
 
         setRevisions(data || []);
       } catch (error) {
-        console.error('Error fetching revisions:', error);
+        logger.error('Error fetching revisions:', error);
       }
     };
 
@@ -150,7 +151,7 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
       
       toast.success("PDF yeni sekmede açıldı");
     } catch (error) {
-      console.error('PDF generation error:', error);
+      logger.error('PDF generation error:', error);
       toast.error("PDF oluşturulurken hata oluştu: " + (error as Error).message);
     }
   };

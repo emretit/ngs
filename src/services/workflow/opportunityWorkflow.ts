@@ -1,5 +1,6 @@
 
 import { taskWorkflow } from './taskWorkflow';
+import { logger } from '@/utils/logger';
 import { mockCrmService, mockTasksAPI } from '@/services/mockCrm';
 import { formatDateOffset } from './utils';
 import { TaskStatus } from '@/types/task';
@@ -20,7 +21,7 @@ export const handleOpportunityCreation = async (opportunity: any) => {
     
     return { success: true };
   } catch (error) {
-    console.error("Error in opportunity creation workflow:", error);
+    logger.error("Error in opportunity creation workflow:", error);
     return { success: false, error };
   }
 };
@@ -63,7 +64,7 @@ export const handleOpportunityStatusChange = async (
     
     return { success: true };
   } catch (error) {
-    console.error("Error in opportunity status change workflow:", error);
+    logger.error("Error in opportunity status change workflow:", error);
     return { success: false, error };
   }
 };

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { logger } from '@/utils/logger';
 import { useAuth } from '@/auth/AuthContext'
 
 export function LoginForm() {
@@ -31,7 +32,7 @@ export function LoginForm() {
           throw error
         }
         // Success! The AuthContext will handle state updates
-        console.log('Login successful')
+        logger.debug('Login successful')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Operation failed')

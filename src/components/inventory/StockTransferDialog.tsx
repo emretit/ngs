@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
@@ -252,7 +253,7 @@ export default function StockTransferDialog({
       }
       onClose();
     } catch (error: any) {
-      console.error("Error creating stock transfer:", error);
+      logger.error("Error creating stock transfer:", error);
       toast.error(error.message || "Depo transferi oluşturulurken hata oluştu");
     } finally {
       setIsSubmitting(false);

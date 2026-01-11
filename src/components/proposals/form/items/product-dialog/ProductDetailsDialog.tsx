@@ -1,5 +1,6 @@
 
 import React, { useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { 
   Dialog, 
   DialogContent,
@@ -81,7 +82,7 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
   // Reset state when dialog opens with a product (yeni ekleme için)
   useEffect(() => {
     if (open && selectedProduct) {
-      console.log('ProductDetailsDialog opened (yeni ekleme) - quantity:', quantity, 'customPrice:', customPrice, 'discountRate:', discountRate);
+      logger.debug('ProductDetailsDialog opened (yeni ekleme) - quantity:', quantity, 'customPrice:', customPrice, 'discountRate:', discountRate);
       
       // Yeni ekleme modunda varsayılan değerleri set et
       setQuantity(1);

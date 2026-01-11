@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogCancelButton, UnifiedDialogActionButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,7 +73,7 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', account
           });
         }
       } catch (e) {
-        console.error('Error pre-filling bank account:', e);
+        logger.error('Error pre-filling bank account:', e);
         toast.error("Hesap bilgileri yüklenirken hata oluştu");
       } finally {
         setIsPrefilling(false);
@@ -156,7 +157,7 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', account
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Error creating bank account:', error);
+      logger.error('Error creating bank account:', error);
       toast.error("Banka hesabı oluşturulurken hata oluştu");
     } finally {
       setIsLoading(false);

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { FormProvider, UseFormReturn } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -11,9 +12,10 @@ import { TimePicker } from "@/components/ui/time-picker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Building2, FileText, CheckCircle2, CheckCircle2 as CheckIcon, ChevronDown, ChevronUp, Settings2, Globe, RotateCcw } from "lucide-react";
+import { Building2, FileText, CheckCircle2, CheckCircle2 as CheckIcon, ChevronDown, ChevronUp, Settings2, Globe, RotateCcw, Calendar, RefreshCcw } from "lucide-react";
 import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
 import { cn } from "@/lib/utils";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 
 interface InvoiceHeaderCardProps {
   // Customer fields
@@ -55,6 +57,7 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
   compact = true,
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const { exchangeRates, lastUpdate, refreshExchangeRates, loading } = useExchangeRates();
 
   // E-fatura ayarları değiştirilmiş mi kontrol et
   const hasAdvancedChanges = 
@@ -63,6 +66,39 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
     formData.send_type !== "ELEKTRONIK" ||
     formData.sales_platform !== "NORMAL" ||
     formData.is_despatch === true;
+
+  // Otomatik döviz kuru güncelleme - para birimi değiştiğinde
+  useEffect(() => {
+    if (formData.para_birimi !== "TRY") {
+      const rate = exchangeRates.find(r => r.currency_code === formData.para_birimi);
+      if (rate?.forex_selling && rate.forex_selling !== formData.exchange_rate) {
+        onFieldChange("exchange_rate", rate.forex_selling);
+      }
+    }
+  }, [formData.para_birimi, exchangeRates]);
+
+  // Kur bilgisini al
+  const getCurrentRate = () => {
+    if (formData.para_birimi === "TRY") return null;
+    const rate = exchangeRates.find(r => r.currency_code === formData.para_birimi);
+    return rate?.forex_selling || null;
+  };
+
+  const getLastUpdateText = () => {
+    if (!lastUpdate) return "Güncelleme bilgisi yok";
+    
+    try {
+      const date = new Date(lastUpdate);
+      return date.toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      logger.error('Date parsing error:', error);
+      return 'Geçersiz tarih';
+    }
+  };
 
   return (
     <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl relative z-10">
@@ -172,48 +208,91 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
             />
           </div>
 
-          {/* Para Birimi */}
-          <div>
-            <Label className="text-xs">Para Birimi</Label>
-            <Select
-              value={formData.para_birimi}
-              onValueChange={(value) => {
-                onFieldChange("para_birimi", value);
-                if (value === "TRY") {
-                  onFieldChange("exchange_rate", 1);
-                }
-              }}
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="TRY">TRY</SelectItem>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="EUR">EUR</SelectItem>
-                <SelectItem value="GBP">GBP</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Boş alan - Para birimi ve döviz kuru aşağıda olacak */}
+          <div></div>
         </div>
 
-        {/* Döviz Kuru - Sadece TRY değilse */}
-        {formData.para_birimi !== "TRY" && (
-          <div className="flex items-center gap-2 p-2 bg-amber-50 rounded-lg border border-amber-100">
-            <Label className="text-xs text-amber-700 whitespace-nowrap">Döviz Kuru:</Label>
-            <Input
-              type="number"
-              step="0.0001"
-              min="0.0001"
-              value={formData.exchange_rate || 1}
-              onChange={(e) => onFieldChange("exchange_rate", parseFloat(e.target.value) || 1)}
-              className="h-7 w-24 text-sm"
-            />
-            <span className="text-xs text-amber-600">
-              1 {formData.para_birimi} = {formData.exchange_rate || 1} TRY
-            </span>
+        {/* Para Birimi ve Döviz Kuru - Tek Satırda */}
+        <div className="p-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+          <div className="flex items-center gap-3">
+            {/* Para Birimi Seçimi */}
+            <div className="flex items-center gap-2">
+              <Label className="text-xs font-semibold text-amber-900 whitespace-nowrap">Para Birimi:</Label>
+              <Select
+                value={formData.para_birimi}
+                onValueChange={(value) => {
+                  onFieldChange("para_birimi", value);
+                  if (value === "TRY") {
+                    onFieldChange("exchange_rate", 1);
+                  }
+                }}
+              >
+                <SelectTrigger className="h-8 w-24 text-xs bg-white border-amber-300">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TRY">TRY</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                  <SelectItem value="GBP">GBP</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Döviz Kuru - Sadece TRY değilse */}
+            {formData.para_birimi !== "TRY" && (
+              <>
+                <div className="h-5 w-px bg-amber-300" />
+                
+                <div className="flex items-center justify-between gap-2 flex-1">
+                  {/* Sol: Kur Bilgisi */}
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-amber-900 whitespace-nowrap">
+                        1 {formData.para_birimi} =
+                      </span>
+                      <Input
+                        type="number"
+                        step="0.0001"
+                        min="0.0001"
+                        value={formData.exchange_rate || 1}
+                        onChange={(e) => onFieldChange("exchange_rate", parseFloat(e.target.value) || 1)}
+                        className="h-7 w-24 text-xs font-medium text-amber-900 bg-white border-amber-300 text-right"
+                      />
+                      <span className="text-xs font-semibold text-amber-900">TRY</span>
+                    </div>
+                  </div>
+                  
+                  {/* Orta: Güncel Kur */}
+                  {getCurrentRate() && (
+                    <div className="text-[10px] text-amber-600 whitespace-nowrap">
+                      Güncel: {getCurrentRate()?.toFixed(4)} TRY
+                    </div>
+                  )}
+                  
+                  {/* Sağ: Tarih ve Yenile */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-[10px] text-amber-600">
+                      <Calendar className="h-2.5 w-2.5" />
+                      <span>{getLastUpdateText()}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 hover:bg-amber-100 shrink-0"
+                      onClick={refreshExchangeRates}
+                      disabled={loading}
+                      title="Kurları Yenile"
+                    >
+                      <RefreshCcw className={`h-3 w-3 text-amber-700 ${loading ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Gelişmiş E-Fatura Ayarları - Collapsible */}
         <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>

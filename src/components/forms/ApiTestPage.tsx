@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { turkeyApiService } from "@/services/turkeyApiService";
@@ -15,12 +16,12 @@ const ApiTestPage: React.FC = () => {
     setResults(null);
 
     try {
-      console.log("🚀 API Test başlıyor...");
+      logger.debug("🚀 API Test başlıyor...");
 
       // 1. İlleri getir
-      console.log("1️⃣ İller getiriliyor...");
+      logger.debug("1️⃣ İller getiriliyor...");
       const cities = await turkeyApiService.getCitiesForSelect();
-      console.log("✅ İller alındı:", cities.length, "adet");
+      logger.debug("✅ İller alındı:", cities.length, "adet");
 
       if (cities.length === 0) {
         throw new Error("Hiç il verisi alınamadı!");
@@ -32,9 +33,9 @@ const ApiTestPage: React.FC = () => {
         throw new Error("İstanbul bulunamadı!");
       }
 
-      console.log("2️⃣ İstanbul ilçeleri getiriliyor...");
+      logger.debug("2️⃣ İstanbul ilçeleri getiriliyor...");
       const districts = await turkeyApiService.getDistrictsByCityId(istanbul.id);
-      console.log("✅ İstanbul ilçeleri alındı:", districts.length, "adet");
+      logger.debug("✅ İstanbul ilçeleri alındı:", districts.length, "adet");
 
       if (districts.length === 0) {
         throw new Error("İstanbul için ilçe verisi alınamadı!");
@@ -46,9 +47,9 @@ const ApiTestPage: React.FC = () => {
         throw new Error("Kadıköy bulunamadı!");
       }
 
-      console.log("3️⃣ Kadıköy mahalleleri getiriliyor...");
+      logger.debug("3️⃣ Kadıköy mahalleleri getiriliyor...");
       const neighborhoods = await turkeyApiService.getNeighborhoodsByDistrictIdForSelect(kadikoy.id);
-      console.log("✅ Kadıköy mahalleleri alındı:", neighborhoods.length, "adet");
+      logger.debug("✅ Kadıköy mahalleleri alındı:", neighborhoods.length, "adet");
 
       setResults({
         cities: cities.slice(0, 5), // İlk 5 ili göster
@@ -64,7 +65,7 @@ const ApiTestPage: React.FC = () => {
       });
 
     } catch (err: any) {
-      console.error("❌ API Test hatası:", err);
+      logger.error("❌ API Test hatası:", err);
       setError(err.message || "Bilinmeyen hata");
     } finally {
       setLoading(false);
@@ -75,7 +76,7 @@ const ApiTestPage: React.FC = () => {
     turkeyApiService.clearCache();
     setResults(null);
     setError(null);
-    console.log("🧹 Cache temizlendi");
+    logger.debug("🧹 Cache temizlendi");
   };
 
   return (

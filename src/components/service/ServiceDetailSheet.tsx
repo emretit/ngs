@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import {
   Sheet,
   SheetContent,
@@ -65,7 +66,7 @@ const ServiceDetailSheet: React.FC<ServiceDetailSheetProps> = ({
       const templates = await PdfExportService.getServiceTemplates();
       setTemplates(templates);
     } catch (error) {
-      console.error('Error loading service templates:', error);
+      logger.error('Error loading service templates:', error);
     }
   };
 
@@ -82,7 +83,7 @@ const ServiceDetailSheet: React.FC<ServiceDetailSheetProps> = ({
         .order('row_number', { ascending: true });
 
       if (error) {
-        console.error('Error loading service items:', error);
+        logger.error('Error loading service items:', error);
         return [];
       }
       return data || [];
@@ -191,7 +192,7 @@ const ServiceDetailSheet: React.FC<ServiceDetailSheetProps> = ({
       });
       toast.success("Servis PDF'i yeni sekmede açıldı");
     } catch (error) {
-      console.error('PDF generation error:', error);
+      logger.error('PDF generation error:', error);
       toast.error("PDF oluşturulurken hata oluştu: " + (error as Error).message);
     } finally {
       setIsLoading(false);

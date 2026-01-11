@@ -41,6 +41,7 @@ import TimePayrollHeader from "@/components/payroll/TimePayrollHeader";
 import TimePayrollFilterBar from "@/components/payroll/TimePayrollFilterBar";
 import TimePayrollBulkActions from "@/components/payroll/TimePayrollBulkActions";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
+import { BulkPayrollGenerator } from "@/components/payroll/BulkPayrollGenerator";
 
 interface FilterState {
   companyId: string | null;
@@ -125,6 +126,7 @@ const TimePayrollPage: React.FC = () => {
 
   const [selectedCell, setSelectedCell] = useState<{ employeeId: string; date: Date } | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [bulkPayrollOpen, setBulkPayrollOpen] = useState(false);
 
   // State for bordro tab - selected employee for payroll calculation
   const [selectedEmployeeForPayroll, setSelectedEmployeeForPayroll] = useState<string | null>(
@@ -341,7 +343,7 @@ const TimePayrollPage: React.FC = () => {
       <TimePayrollHeader 
         stats={timesheetStats}
         onCalculatePayroll={() => {
-          toast({ title: "Toplu hesaplama başlatılıyor..." });
+          setBulkPayrollOpen(true);
         }}
         onPayrollSettings={() => {
           setActiveTab("timesheet");
@@ -593,6 +595,21 @@ const TimePayrollPage: React.FC = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+      {/* Bulk Payroll Generator Dialog */}
+      <BulkPayrollGenerator
+        open={bulkPayrollOpen}
+        onOpenChange={setBulkPayrollOpen}
+        initialYear={filters.periodYear}
+        initialMonth={filters.periodMonth}
+        onSuccess={(result) => {
+          toast({
+            title: "Başarılı!",
+            description: `${result.successCount} çalışan için bordro oluşturuldu`,
+          });
+          queryClient.invalidateQueries({ queryKey: ["payroll_runs"] });
+        }}
+      />
     </div>
   );
 };

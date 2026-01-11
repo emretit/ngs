@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -139,7 +140,7 @@ export default function ServiceTemplateEdit() {
         .eq('status', 'aktif')
         .order('first_name');
       if (error) {
-        console.error('Error fetching technicians:', error);
+        logger.error('Error fetching technicians:', error);
         return [];
       }
       return data || [];

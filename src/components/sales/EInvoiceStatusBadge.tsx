@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, Clock, CheckCircle, XCircle, AlertCircle, RefreshCw, UserCheck } from "lucide-react";
@@ -44,13 +45,13 @@ const EInvoiceStatusBadge: React.FC<EInvoiceStatusBadgeProps> = ({
     const handleStatusUpdate = (event: CustomEvent) => {
       const { salesInvoiceId: updatedInvoiceId, status: newStatus } = event.detail;
       if (updatedInvoiceId === salesInvoiceId) {
-        console.log("🔄 E-fatura durumu güncellendi, yeniden yükleniyor:", newStatus);
+        logger.debug("🔄 E-fatura durumu güncellendi, yeniden yükleniyor:", newStatus);
         refreshStatus();
       }
     };
 
     const handleBulkUpdate = () => {
-      console.log("🔄 Toplu durum güncellemesi, tüm badge'ler yenileniyor...");
+      logger.debug("🔄 Toplu durum güncellemesi, tüm badge'ler yenileniyor...");
       refreshStatus();
     };
 

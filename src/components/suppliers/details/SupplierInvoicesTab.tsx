@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,7 +61,7 @@ const SupplierInvoicesTab = ({ supplierId, supplierName }: SupplierInvoicesTabPr
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching purchase invoices:', error);
+        logger.error('Error fetching purchase invoices:', error);
         throw error;
       }
 
@@ -80,7 +81,7 @@ const SupplierInvoicesTab = ({ supplierId, supplierName }: SupplierInvoicesTabPr
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching sales invoices:', error);
+        logger.error('Error fetching sales invoices:', error);
         throw error;
       }
 

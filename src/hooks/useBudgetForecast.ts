@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -82,7 +83,7 @@ export const useBudgetForecast = (filters?: ForecastFilters) => {
 
       setForecasts(data || []);
     } catch (err: any) {
-      console.error("fetchForecasts error:", err);
+      logger.error("fetchForecasts error:", err);
       setError(err.message);
       toast({
         variant: "destructive",
@@ -134,7 +135,7 @@ export const useBudgetForecast = (filters?: ForecastFilters) => {
 
       return data;
     } catch (err: any) {
-      console.error("upsertForecast error:", err);
+      logger.error("upsertForecast error:", err);
       toast({
         variant: "destructive",
         title: "Hata",
@@ -161,7 +162,7 @@ export const useBudgetForecast = (filters?: ForecastFilters) => {
         description: "Tahmin silindi.",
       });
     } catch (err: any) {
-      console.error("deleteForecast error:", err);
+      logger.error("deleteForecast error:", err);
       toast({
         variant: "destructive",
         title: "Hata",

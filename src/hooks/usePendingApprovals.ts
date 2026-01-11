@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/hooks/useCompany";
 
@@ -46,7 +47,7 @@ export function usePendingApprovals() {
         .limit(10);
 
       if (error) {
-        console.error("Error fetching pending approvals:", error);
+        logger.error("Error fetching pending approvals:", error);
         return [];
       }
 
@@ -99,7 +100,7 @@ export function usePendingApprovals() {
                 break;
             }
           } catch (err) {
-            console.error(`Error fetching ${approval.object_type} data:`, err);
+            logger.error(`Error fetching ${approval.object_type} data:`, err);
           }
 
           return {

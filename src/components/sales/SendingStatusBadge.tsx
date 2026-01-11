@@ -1,4 +1,5 @@
 import React from "react";
+import { logger } from '@/utils/logger';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
@@ -33,7 +34,7 @@ const SendingStatusBadge: React.FC<SendingStatusBadgeProps> = ({
   status,
   onSendClick
 }) => {
-  console.warn(
+  logger.warn(
     '[DEPRECATED] SendingStatusBadge is deprecated. Use EInvoiceStateBadge instead.\n' +
     'See component documentation for migration guide.'
   );

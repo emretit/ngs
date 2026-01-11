@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,7 +65,7 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
       if (error) throw error;
       setCategories(data || []);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      logger.error('Error fetching categories:', error);
     }
   };
 
@@ -151,7 +152,7 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Error adding expense:', error);
+      logger.error('Error adding expense:', error);
       toast.error("Masraf işlemi eklenirken hata oluştu");
     } finally {
       setIsLoading(false);

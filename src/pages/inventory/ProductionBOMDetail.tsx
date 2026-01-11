@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,7 +56,7 @@ const ProductionBOMDetail = () => {
       setIsDeleteDialogOpen(false);
     },
     onError: (error) => {
-      console.error("Delete error:", error);
+      logger.error("Delete error:", error);
       toast.error("Silme işlemi başarısız oldu");
       setIsDeleteDialogOpen(false);
     },

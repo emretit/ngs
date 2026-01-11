@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { OrgChart } from "@/components/organization/OrgChart";
 import OrganizationPageHeader from "@/components/organization/OrganizationPageHeader";
@@ -84,9 +85,9 @@ export default function OrganizationChart() {
   }, [departments, employees]);
 
   const handleCreateDepartment = () => {
-    console.log("Departman Ekle butonuna tıklandı");
+    logger.debug("Departman Ekle butonuna tıklandı");
     setIsAddDepartmentDialogOpen(true);
-    console.log("Dialog state true olarak ayarlandı");
+    logger.debug("Dialog state true olarak ayarlandı");
   };
 
   return (

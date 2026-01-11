@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -96,7 +97,7 @@ const SuppliersTable = ({
       
       toast.success("Tedarikçi durumu başarıyla güncellendi.", { duration: 1000 });
     } catch (error) {
-      console.error('Error updating supplier status:', error);
+      logger.error('Error updating supplier status:', error);
       toast.error("Tedarikçi durumu güncellenirken bir hata oluştu.", { duration: 1000 });
     }
   };
@@ -122,7 +123,7 @@ const SuppliersTable = ({
       
       toast.success("Tedarikçi başarıyla silindi.", { duration: 1000 });
     } catch (error) {
-      console.error('Error deleting supplier:', error);
+      logger.error('Error deleting supplier:', error);
       toast.error(error instanceof Error ? error.message : "Tedarikçi silinirken bir hata oluştu.", { duration: 1000 });
     } finally {
       setIsDeleting(false);

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { logger } from '@/utils/logger';
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -32,7 +33,7 @@ export const useSupplierPaymentsInfiniteScroll = (filters: UseSupplierPaymentsFi
       .range(from, to);
 
     if (error) {
-      console.error('Error fetching supplier payments:', error);
+      logger.error('Error fetching supplier payments:', error);
       throw error;
     }
 
@@ -106,7 +107,7 @@ export const useSupplierPaymentsInfiniteScroll = (filters: UseSupplierPaymentsFi
             }
           }
         } catch (err) {
-          console.error('Error fetching account/check:', err);
+          logger.error('Error fetching account/check:', err);
         }
         
         const result: any = {

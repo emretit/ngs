@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -177,7 +178,7 @@ export const EmployeePayrollContent = ({
         description: "Bordro hesaplandı",
       });
     } catch (error: any) {
-      console.error("Payroll calculation error:", error);
+      logger.error("Payroll calculation error:", error);
       toast({
         title: "Hata",
         description: error.message || "Bordro hesaplanırken hata oluştu",
@@ -193,15 +194,31 @@ export const EmployeePayrollContent = ({
 
     setIsSaving(true);
     try {
-      // TODO: Save to payroll_runs and payroll_items tables
-      toast({
-        title: "Başarılı",
-        description: "Bordro kaydedildi",
-      });
+      // Import edilecek
+      const { saveSingleEmployeePayroll } = await import('@/services/payrollFinanceService');
+      const { user } = await supabase.auth.getUser();
+      
+      // Bordroyu kaydet
+      const result = await saveSingleEmployeePayroll(
+        companyId,
+        employeeId,
+        selectedYear,
+        selectedMonth,
+        calculation,
+        user.data.user?.id
+      );
+
+      if (result.success) {
+        toast({
+          title: "Başarılı",
+          description: `Bordro kaydedildi. Payroll Run ID: ${result.payrollRunId}`,
+        });
+      }
     } catch (error: any) {
+      logger.error('Bordro kaydetme hatası:', error);
       toast({
         title: "Hata",
-        description: "Bordro kaydedilemedi",
+        description: error.message || "Bordro kaydedilemedi",
         variant: "destructive",
       });
     } finally {
@@ -247,7 +264,7 @@ export const EmployeePayrollContent = ({
         description: "PDF bordro fişi indirildi",
       });
     } catch (error: any) {
-      console.error("PDF generation error:", error);
+      logger.error("PDF generation error:", error);
       toast({
         title: "Hata",
         description: "PDF oluşturulurken hata oluştu",
@@ -283,7 +300,7 @@ export const EmployeePayrollContent = ({
         description: "Excel bordro fişi indirildi",
       });
     } catch (error: any) {
-      console.error("Excel generation error:", error);
+      logger.error("Excel generation error:", error);
       toast({
         title: "Hata",
         description: "Excel oluşturulurken hata oluştu",

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -365,7 +366,7 @@ const NewServiceRequest = () => {
           .upload(filePath, file);
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
+          logger.error('Upload error:', uploadError);
           toast.error(`${file.name} yüklenirken hata oluştu`);
           continue;
         }
@@ -386,7 +387,7 @@ const NewServiceRequest = () => {
         toast.success(`${uploadedFiles.length} dosya yüklendi`);
       }
     } catch (error) {
-      console.error('File upload error:', error);
+      logger.error('File upload error:', error);
       toast.error('Dosya yüklenirken bir hata oluştu');
     } finally {
       setUploadingFiles(false);
@@ -461,7 +462,7 @@ const NewServiceRequest = () => {
             receivedByUserId = employee.user_id;
           }
         } catch (err) {
-          console.warn('Employee user_id bulunamadı:', err);
+          logger.warn('Employee user_id bulunamadı:', err);
           // Eğer employee bulunamazsa, değeri direkt kullan (belki zaten user_id'dir)
           receivedByUserId = data.received_by;
         }
@@ -525,7 +526,7 @@ const NewServiceRequest = () => {
             break;
           }
 
-          console.error('Insert hatası:', error);
+          logger.error('Insert hatası:', error);
 
           // Unique constraint hatası kontrolü (23505 veya 409 conflict)
           const isUniqueConstraintError = 
@@ -544,9 +545,9 @@ const NewServiceRequest = () => {
             // Yeni numara üret
             try {
               serviceNumber = await generateServiceNumber();
-              console.log('Yeni servis numarası üretildi:', serviceNumber);
+              logger.debug('Yeni servis numarası üretildi:', serviceNumber);
             } catch (genError) {
-              console.error('Yeni numara üretme hatası:', genError);
+              logger.error('Yeni numara üretme hatası:', genError);
               throw new Error('Yeni servis numarası üretilemedi. Lütfen tekrar deneyin.');
             }
             
@@ -559,7 +560,7 @@ const NewServiceRequest = () => {
           throw error;
 
         } catch (err: any) {
-          console.error('Catch bloğunda hata:', err);
+          logger.error('Catch bloğunda hata:', err);
           
           // Unique constraint hatası kontrolü
           const isUniqueConstraintError = 
@@ -618,7 +619,7 @@ const NewServiceRequest = () => {
             .insert(serviceItemsToInsert);
 
           if (itemsError) {
-            console.error('Service items eklenirken hata:', itemsError);
+            logger.error('Service items eklenirken hata:', itemsError);
             throw itemsError;
           }
         }
@@ -638,7 +639,7 @@ const NewServiceRequest = () => {
       }, 1500);
     },
     onError: (error: any) => {
-      console.error('Servis oluşturma hatası:', error);
+      logger.error('Servis oluşturma hatası:', error);
       toast.error('Servis talebi oluşturulurken bir hata oluştu', {
         description: error.message || 'Bilinmeyen hata',
       });

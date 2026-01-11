@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
@@ -140,7 +141,7 @@ export default function NewInventoryCount() {
 
       setCountItems(items);
     } catch (error: any) {
-      console.error("Error loading warehouse products:", error);
+      logger.error("Error loading warehouse products:", error);
       toast.error("Ürünler yüklenirken hata oluştu");
     } finally {
       setIsLoadingProducts(false);
@@ -197,7 +198,7 @@ export default function NewInventoryCount() {
       toast.success("Stok sayımı başarıyla oluşturuldu");
       navigate("/inventory/counts");
     } catch (error: any) {
-      console.error("Error creating count:", error);
+      logger.error("Error creating count:", error);
       toast.error(error.message || "Sayım oluşturulurken hata oluştu");
     } finally {
       setIsSubmitting(false);

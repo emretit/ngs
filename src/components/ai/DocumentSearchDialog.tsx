@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import {
   Dialog,
   DialogContent,
@@ -106,7 +107,7 @@ export function DocumentSearchDialog({
             .then((result) => {
               if (result) setGoogleDriveResults(result.files);
             })
-            .catch((err) => console.error('Google Drive search error:', err))
+            .catch((err) => logger.error('Google Drive search error:', err))
         );
       }
 
@@ -117,7 +118,7 @@ export function DocumentSearchDialog({
             .then((result) => {
               if (result) setSharePointResults(result.files);
             })
-            .catch((err) => console.error('SharePoint search error:', err))
+            .catch((err) => logger.error('SharePoint search error:', err))
         );
       }
 
@@ -126,7 +127,7 @@ export function DocumentSearchDialog({
         promises.push(
           searchPaftaDocuments(query)
             .then((results) => setPaftaResults(results))
-            .catch((err) => console.error('PAFTA search error:', err))
+            .catch((err) => logger.error('PAFTA search error:', err))
         );
       }
 

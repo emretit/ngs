@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { mockCrmService } from "@/services/mockCrm";
 import { v4 as uuidv4 } from "uuid";
 import { ProposalFormData } from "@/types/proposal-form";
@@ -12,7 +13,7 @@ export const useProposalCreation = () => {
     try {
       setIsLoading(true);
       
-      console.log("Creating proposal with data:", formData);
+      logger.debug("Creating proposal with data:", formData);
       
       // Calculate totals from items
       const totals = formData.items ? calculateProposalTotals(formData.items) : { total: 0 };
@@ -57,7 +58,7 @@ export const useProposalCreation = () => {
       
       return result;
     } catch (error) {
-      console.error("Error creating proposal:", error);
+      logger.error("Error creating proposal:", error);
       throw error;
     } finally {
       setIsLoading(false);

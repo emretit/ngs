@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { logger } from '@/utils/logger';
 import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 import { TemplateSchema } from '@/types/pdf-template';
@@ -56,7 +57,7 @@ export const usePdfCompanyInfo = (form: UseFormReturn<TemplateSchema>) => {
         }
       }
     } catch (error) {
-      console.error('Error loading company info:', error);
+      logger.error('Error loading company info:', error);
       if (showToast) {
         toast.error('Şirket bilgileri yüklenirken hata oluştu');
       }

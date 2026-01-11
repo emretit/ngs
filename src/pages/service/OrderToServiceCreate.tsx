@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -105,7 +106,7 @@ const OrderToServiceCreate = () => {
 
         setOrder(orderData);
       } catch (e: any) {
-        console.error("Error fetching order:", e);
+        logger.error("Error fetching order:", e);
         setError(e.message || "Sipariş bilgileri yüklenirken bir hata oluştu");
       } finally {
         setLoading(false);

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -113,7 +114,7 @@ const CustomerNew = () => {
         .select()
         .single();
       if (error) {
-        console.error('Customer add error:', error);
+        logger.error('Customer add error:', error);
         throw error;
       }
       return newCustomer;
@@ -124,7 +125,7 @@ const CustomerNew = () => {
       navigate('/customers');
     },
     onError: (error) => {
-      console.error('Form submission error:', error);
+      logger.error('Form submission error:', error);
       toast.error("Müşteri eklenirken bir hata oluştu. Lütfen tekrar deneyin.");
     },
   });
@@ -133,7 +134,7 @@ const CustomerNew = () => {
     try {
       await mutation.mutateAsync(formData);
     } catch (error) {
-      console.error('Form submission error:', error);
+      logger.error('Form submission error:', error);
     }
   };
   return (

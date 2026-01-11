@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { useForm } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,7 +95,7 @@ const AddTransaction = () => {
       setSelectedFile(null);
       setAttachmentUrl(null);
     } catch (error) {
-      console.error('Failed to create transaction:', error);
+      logger.error('Failed to create transaction:', error);
     }
   };
 

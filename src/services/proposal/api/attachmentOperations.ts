@@ -1,5 +1,6 @@
 
 import { ProposalAttachment } from "@/types/proposal";
+import { logger } from '@/utils/logger';
 import { getProposalById } from "./crudOperations";
 import { updateProposal } from "./crudOperations";
 
@@ -20,7 +21,7 @@ export async function addProposalAttachment(id: string, attachment: ProposalAtta
     
     return updateProposal(id, { attachments: updatedAttachments });
   } catch (error) {
-    console.error('Error adding proposal attachment:', error);
+    logger.error('Error adding proposal attachment:', error);
     return { data: null, error };
   }
 }

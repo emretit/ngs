@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 
 interface Technician {
@@ -37,7 +38,7 @@ export const useTechnicians = () => {
         
         setTechnicians(formattedTechnicians);
       } catch (err) {
-        console.error('Error fetching technicians:', err);
+        logger.error('Error fetching technicians:', err);
         setError(err as Error);
       } finally {
         setIsLoading(false);

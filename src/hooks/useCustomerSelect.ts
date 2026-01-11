@@ -1,5 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { Customer } from "@/types/customer";
 import { Supplier } from "@/types/supplier";
@@ -42,7 +43,7 @@ export const useCustomerSelect = () => {
         .limit(10000); // Yüksek limit - tüm müşterileri çekmek için
 
       if (error) {
-        console.error("Error fetching customers:", error);
+        logger.error("Error fetching customers:", error);
         throw error;
       }
       

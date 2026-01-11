@@ -1,5 +1,6 @@
 
 import React from "react";
+import { logger } from '@/utils/logger';
 import {
   Sheet,
   SheetContent,
@@ -57,7 +58,7 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
       const data = await PdfExportService.getTemplates(undefined, 'quote');
       setTemplates(data);
     } catch (error) {
-      console.error('Error loading templates:', error);
+      logger.error('Error loading templates:', error);
     }
   };
 
@@ -92,7 +93,7 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
       
       toast("PDF yeni sekmede açıldı");
     } catch (error) {
-      console.error('PDF generation error:', error);
+      logger.error('PDF generation error:', error);
       toast.error("PDF oluşturulurken hata oluştu: " + (error as Error).message);
     } finally {
       setIsLoading(false);

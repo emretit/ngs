@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import SalesInvoicesHeader from "@/components/sales/SalesInvoicesHeader";
 import SalesInvoiceFilterBar from "@/components/sales/SalesInvoiceFilterBar";
@@ -77,9 +78,9 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
       try {
         const status = await IntegratorService.checkIntegratorStatus();
         setIntegratorStatus(status);
-        console.log('📊 [SalesInvoices] Integrator status:', status);
+        logger.debug('📊 [SalesInvoices] Integrator status:', status);
       } catch (error) {
-        console.error('Error loading integrator status:', error);
+        logger.error('Error loading integrator status:', error);
       }
     };
     loadIntegratorStatus();
@@ -88,27 +89,27 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
   // Entegratöre göre fatura gönderme fonksiyonu
   const sendInvoice = useCallback((invoiceId: string) => {
     if (!integratorStatus) {
-      console.warn('⚠️ [SalesInvoices] Integrator status not loaded yet');
+      logger.warn('⚠️ [SalesInvoices] Integrator status not loaded yet');
       toast.warning('Entegratör durumu yükleniyor, lütfen bekleyin...');
       return;
     }
 
-    console.log('📤 [SalesInvoices] Sending invoice to integrator:', integratorStatus.selected);
+    logger.debug('📤 [SalesInvoices] Sending invoice to integrator:', integratorStatus.selected);
 
     // Tekrar gönderimi önlemek için ref'e ekle
     sentInvoicesRef.current.add(invoiceId);
 
     if (integratorStatus.selected === 'veriban' && integratorStatus.veriban) {
-      console.log('📤 [SalesInvoices] Sending to Veriban...');
+      logger.debug('📤 [SalesInvoices] Sending to Veriban...');
       sendVeribanInvoice({ salesInvoiceId: invoiceId, forceResend: false });
     } else if (integratorStatus.selected === 'nilvera' && integratorStatus.nilvera) {
-      console.log('📤 [SalesInvoices] Sending to Nilvera...');
+      logger.debug('📤 [SalesInvoices] Sending to Nilvera...');
       sendNilveraInvoice(invoiceId);
     } else if (integratorStatus.selected === 'elogo' && integratorStatus.elogo) {
-      console.log('⚠️ [SalesInvoices] e-Logo entegrasyonu henüz desteklenmiyor');
+      logger.debug('⚠️ [SalesInvoices] e-Logo entegrasyonu henüz desteklenmiyor');
       toast.info('e-Logo entegrasyonu yakında eklenecek');
     } else {
-      console.warn('⚠️ [SalesInvoices] Selected integrator is not active');
+      logger.warn('⚠️ [SalesInvoices] Selected integrator is not active');
       toast.warning('Seçili entegratör aktif değil. Lütfen ayarlar sayfasından kontrol edin.');
     }
   }, [integratorStatus, sendVeribanInvoice, sendNilveraInvoice]);
@@ -130,7 +131,7 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
     );
 
     if (pendingInvoices.length > 0) {
-      console.log(`📤 [SalesInvoices] ${pendingInvoices.length} adet "GİB'e Gönderilmeyi Bekliyor" durumundaki fatura bulundu, otomatik gönderiliyor...`);
+      logger.debug(`📤 [SalesInvoices] ${pendingInvoices.length} adet "GİB'e Gönderilmeyi Bekliyor" durumundaki fatura bulundu, otomatik gönderiliyor...`);
 
       // Her faturayı sırayla gönder (paralel gönderim yapmamak için)
       pendingInvoices.forEach((invoice, index) => {
@@ -138,7 +139,7 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
         sentInvoicesRef.current.add(invoice.id);
 
         setTimeout(() => {
-          console.log(`📤 [SalesInvoices] Otomatik gönderiliyor: ${invoice.fatura_no || invoice.id}`);
+          logger.debug(`📤 [SalesInvoices] Otomatik gönderiliyor: ${invoice.fatura_no || invoice.id}`);
           sendInvoice(invoice.id);
         }, index * 1000); // Her faturayı 1 saniye arayla gönder
       });
@@ -176,7 +177,7 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
                                   invoice.fatura_no.length <= 50;
           
           const statusCheckId = isValidFaturaNo ? invoice.fatura_no : invoice.id;
-          console.log(`🔄 [SalesInvoices] Durum kontrolü yapılıyor: ${statusCheckId} (fatura_no: ${invoice.fatura_no || 'yok'})`);
+          logger.debug(`🔄 [SalesInvoices] Durum kontrolü yapılıyor: ${statusCheckId} (fatura_no: ${invoice.fatura_no || 'yok'})`);
           checkedInvoicesRef.current.add(invoice.id);
           
           checkVeribanStatus(invoice.id, {
@@ -224,7 +225,7 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
         successCount++;
       } catch (error) {
         errorCount++;
-        console.error(`Fatura silme hatası (${id}):`, error);
+        logger.error(`Fatura silme hatası (${id}):`, error);
       }
     }
 

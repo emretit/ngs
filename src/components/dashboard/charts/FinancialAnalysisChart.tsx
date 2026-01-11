@@ -1,4 +1,5 @@
 import { memo, useState, useMemo, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, ShoppingCart } from "lucide-react";
 import { ChartCard, TimePeriod, ChartType } from "./ChartCard";
@@ -29,7 +30,7 @@ const SalesAnalysisChartWrapper = memo(({ timePeriod }: { timePeriod: TimePeriod
   const { data, isLoading, error } = useSalesAnalysis({ timePeriod });
 
   if (error) {
-    console.error("Sales analysis data fetch error:", error);
+    logger.error("Sales analysis data fetch error:", error);
     return (
       <div className="h-[450px] w-full flex items-center justify-center">
         <p className="text-muted-foreground">Veri yüklenirken bir hata oluştu.</p>

@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -164,7 +165,7 @@ export const UserListTable = ({
         .eq('user_id', userId);
       
       if (rolesError) {
-        console.error('Error deleting user roles:', rolesError);
+        logger.error('Error deleting user roles:', rolesError);
         throw new Error('Kullanıcı rollerini silerken hata oluştu: ' + rolesError.message);
       }
       
@@ -176,7 +177,7 @@ export const UserListTable = ({
         .select();
 
       if (error) {
-        console.error('Error deleting profile:', error);
+        logger.error('Error deleting profile:', error);
         throw new Error('Kullanıcı profilini silerken hata oluştu: ' + error.message);
       }
 
@@ -190,7 +191,7 @@ export const UserListTable = ({
       onUserUpdated();
     },
     onError: (error: any) => {
-      console.error('Delete user error:', error);
+      logger.error('Delete user error:', error);
       toast.error(error.message || "Kullanıcı silinirken hata oluştu");
     },
   });

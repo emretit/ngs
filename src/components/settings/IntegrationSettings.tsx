@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -148,7 +149,7 @@ export function IntegrationSettings() {
       setTeamsConnection(teams);
       setTeamsWebhooks(webhooks);
     } catch (err) {
-      console.error('Error loading connections:', err);
+      logger.error('Error loading connections:', err);
     } finally {
       setLoading(false);
     }

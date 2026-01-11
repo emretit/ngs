@@ -1,4 +1,5 @@
 import { getNodesBounds, getViewportForBounds } from '@xyflow/react';
+import { logger } from '@/utils/logger';
 import { toPng } from 'html-to-image';
 
 export const exportToPng = async (
@@ -57,7 +58,7 @@ export const exportToPng = async (
 
     return true;
   } catch (error) {
-    console.error('Error exporting to PNG:', error);
+    logger.error('Error exporting to PNG:', error);
     throw error;
   }
 };

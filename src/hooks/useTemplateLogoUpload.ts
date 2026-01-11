@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -59,7 +60,7 @@ export const useTemplateLogoUpload = () => {
 
       return publicUrl;
     } catch (error: any) {
-      console.error('Template logo upload error:', error);
+      logger.error('Template logo upload error:', error);
       toast({
         variant: "destructive",
         title: "Yükleme Hatası",
@@ -94,7 +95,7 @@ export const useTemplateLogoUpload = () => {
 
       return true;
     } catch (error: any) {
-      console.error('Template logo delete error:', error);
+      logger.error('Template logo delete error:', error);
       toast({
         variant: "destructive",
         title: "Silme Hatası",

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -135,7 +136,7 @@ const WarehouseEdit = () => {
       toast.error("Depo güncellenirken bir hata oluştu.", {
         description: error.message,
       });
-      console.error("Error updating warehouse:", error);
+      logger.error("Error updating warehouse:", error);
     },
   });
 

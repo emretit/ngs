@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
@@ -220,7 +221,7 @@ export default function NewStockExit() {
       toast.success("Stok çıkışı başarıyla oluşturuldu");
       navigate("/inventory/transactions");
     } catch (error: any) {
-      console.error("Error creating stock exit:", error);
+      logger.error("Error creating stock exit:", error);
       toast.error(error.message || "Stok çıkışı oluşturulurken hata oluştu");
     } finally {
       setIsSubmitting(false);

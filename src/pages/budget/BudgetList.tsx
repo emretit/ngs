@@ -1,4 +1,5 @@
 import { useState, useCallback, memo } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import BudgetsHeader from "@/components/budget/BudgetsHeader";
 import BudgetsFilterBar from "@/components/budget/BudgetsFilterBar";
@@ -108,7 +109,7 @@ const BudgetList = memo(() => {
 
   if (error) {
     toast.error("Bütçeler yüklenirken bir hata oluştu");
-    console.error("Error loading budgets:", error);
+    logger.error("Error loading budgets:", error);
   }
 
   return (

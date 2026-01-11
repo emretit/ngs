@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 /**
  * Güvenli logout işlemi
@@ -9,7 +10,7 @@ export const safeSignOut = async () => {
     try {
       await supabase.auth.signOut({ scope: 'global' });
     } catch (e) {
-      console.warn('Supabase signOut failed (ignored):', e);
+      logger.warn('Supabase signOut failed (ignored):', e);
     }
 
     // Kapsamlı temizlik
@@ -33,7 +34,7 @@ export const safeSignOut = async () => {
 
     return { success: true, message: 'Successfully signed out' };
   } catch (error: any) {
-    console.error('Error during safe sign out:', error);
+    logger.error('Error during safe sign out:', error);
     return { success: false, message: 'Error during sign out', error: error.message };
   }
 };
@@ -115,7 +116,7 @@ export const clearAuthTokens = () => {
       
 
     } catch (e) {
-      console.warn('clearAuthTokens encountered an issue:', e);
+      logger.warn('clearAuthTokens encountered an issue:', e);
     }
   }
 };
@@ -128,7 +129,7 @@ export const refreshAuthState = async () => {
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error) {
-      console.error('Error refreshing auth state:', error);
+      logger.error('Error refreshing auth state:', error);
       clearAuthTokens();
       return false;
     }
@@ -140,7 +141,7 @@ export const refreshAuthState = async () => {
     
     return true;
   } catch (error) {
-    console.error('Unexpected error refreshing auth state:', error);
+    logger.error('Unexpected error refreshing auth state:', error);
     clearAuthTokens();
     return false;
   }

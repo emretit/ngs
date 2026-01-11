@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
@@ -117,7 +118,7 @@ export const useProductSearchDialog = (
             const { data: batchStockData, error: batchStockError } = await stockQuery;
 
             if (batchStockError) {
-              console.error(`Error fetching warehouse stock batch ${i + 1}/${totalBatches}:`, batchStockError);
+              logger.error(`Error fetching warehouse stock batch ${i + 1}/${totalBatches}:`, batchStockError);
               // Batch hatası olsa bile devam et
               continue;
             }
@@ -130,7 +131,7 @@ export const useProductSearchDialog = (
               });
             }
           } catch (error) {
-            console.error(`Error in warehouse stock batch ${i + 1}/${totalBatches}:`, error);
+            logger.error(`Error in warehouse stock batch ${i + 1}/${totalBatches}:`, error);
             // Hata olsa bile devam et
           }
         }
@@ -142,7 +143,7 @@ export const useProductSearchDialog = (
           stock_quantity: stockMap.get(product.id) || 0
         }));
       } catch (error) {
-        console.error("Error fetching products:", error);
+        logger.error("Error fetching products:", error);
         return [];
       }
     },
@@ -160,13 +161,13 @@ export const useProductSearchDialog = (
     
     // Eğer seçilen ürün, düzenlenen satırdaki ürünle aynıysa mevcut değerleri kullan
     if (currentEditingValues && currentEditingValues.productId && product.id === currentEditingValues.productId) {
-      console.log('Same product selected, using existing values:', currentEditingValues);
+      logger.debug('Same product selected, using existing values:', currentEditingValues);
       setQuantity(currentEditingValues.quantity);
       setCustomPrice(currentEditingValues.unitPrice);
       setDiscountRate(currentEditingValues.discountRate);
     } else {
       // Farklı ürün seçildi, varsayılan değerler
-      console.log('Different product selected, using defaults');
+      logger.debug('Different product selected, using defaults');
       setCustomPrice(product.price);
       setQuantity(1);
       setDiscountRate(0);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { logger } from '@/utils/logger';
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -148,7 +149,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         const data = await PdfExportService.getTemplates(undefined, 'quote');
         setTemplates(data);
       } catch (error) {
-        console.error('Error loading templates:', error);
+        logger.error('Error loading templates:', error);
       } finally {
         setIsLoadingTemplates(false);
       }

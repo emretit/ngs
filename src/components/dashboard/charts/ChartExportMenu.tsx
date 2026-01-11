@@ -1,4 +1,5 @@
 import { memo, useState } from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,7 +34,7 @@ export const ChartExportMenu = memo(({
       await handleExport(format, data, elementId, filename);
       toast.success(`${format.toUpperCase()} olarak dışa aktarıldı!`);
     } catch (error) {
-      console.error('Export error:', error);
+      logger.error('Export error:', error);
       toast.error('Dışa aktarma başarısız oldu');
     } finally {
       setIsExporting(false);

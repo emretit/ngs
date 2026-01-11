@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { getCurrencyOptions } from "../../utils/currencyUtils";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { Input } from "@/components/ui/input";
@@ -55,7 +56,7 @@ const PriceAndDiscountSection: React.FC<PriceAndDiscountSectionProps> = ({
   // Sync local state with props - always sync when props change
   useEffect(() => {
     const priceToUse = customPrice !== undefined ? customPrice : convertedPrice;
-    console.log('PriceAndDiscountSection sync - customPrice:', customPrice, 'convertedPrice:', convertedPrice, 'using:', priceToUse);
+    logger.debug('PriceAndDiscountSection sync - customPrice:', customPrice, 'convertedPrice:', convertedPrice, 'using:', priceToUse);
     setLocalPrice(priceToUse);
   }, [customPrice, convertedPrice]);
 

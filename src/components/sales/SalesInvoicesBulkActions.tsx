@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import { X, Trash2, Download, Mail, FileSpreadsheet, Send, CheckCircle } from "lucide-react";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
@@ -24,13 +25,13 @@ const SalesInvoicesBulkActions = ({
   const handleBulkExport = () => {
     // Excel export işlemi
     toast.info("Excel dışa aktarma özelliği yakında eklenecek");
-    console.log("Exporting selected invoices:", selectedInvoices);
+    logger.debug("Exporting selected invoices:", selectedInvoices);
   };
 
   const handleBulkEmail = () => {
     // Toplu e-posta gönderimi
     toast.info("Toplu e-posta gönderimi yakında eklenecek");
-    console.log("Sending bulk email for invoices:", selectedInvoices);
+    logger.debug("Sending bulk email for invoices:", selectedInvoices);
   };
 
   const handleBulkEInvoice = () => {
@@ -66,7 +67,7 @@ const SalesInvoicesBulkActions = ({
   const handleBulkMarkAsPaid = () => {
     // Toplu ödendi olarak işaretle
     toast.info("Toplu ödeme işaretleme yakında eklenecek");
-    console.log("Marking invoices as paid:", selectedInvoices);
+    logger.debug("Marking invoices as paid:", selectedInvoices);
   };
 
   const handleBulkDelete = () => {

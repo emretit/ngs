@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +26,7 @@ const EmployeeDetails = () => {
         .eq('id', id)
         .maybeSingle();
       if (error) {
-        console.error('Error fetching employee:', error);
+        logger.error('Error fetching employee:', error);
         throw error;
       }
       return data;

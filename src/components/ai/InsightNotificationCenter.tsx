@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -74,7 +75,7 @@ export function InsightNotificationCenter({ companyId }: InsightNotificationCent
       setInsights(sorted.slice(0, 10));
       setUnreadCount(sorted.filter(i => !i.is_read).length);
     } catch (err) {
-      console.error('Error loading insights:', err);
+      logger.error('Error loading insights:', err);
     }
   };
 

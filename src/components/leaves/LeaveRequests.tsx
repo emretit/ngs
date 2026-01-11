@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,7 +100,7 @@ const LeaveRequests = () => {
     queryKey: ["leaves", userData?.company_id, statusFilter, startDate, endDate],
     queryFn: async () => {
       if (!userData?.company_id) {
-        console.warn("Company ID not found");
+        logger.warn("Company ID not found");
         return [];
       }
 
@@ -131,7 +132,7 @@ const LeaveRequests = () => {
         const { data, error: queryError } = await query;
 
         if (queryError) {
-          console.error("Error fetching leaves:", queryError);
+          logger.error("Error fetching leaves:", queryError);
           toast.error("İzinler yüklenirken hata oluştu: " + queryError.message);
           return [];
         }
@@ -156,7 +157,7 @@ const LeaveRequests = () => {
 
         return processedData;
       } catch (err: any) {
-        console.error("Error in leave query:", err);
+        logger.error("Error in leave query:", err);
         toast.error("Veri yüklenirken hata oluştu: " + (err.message || "Bilinmeyen hata"));
         return [];
       }
@@ -279,7 +280,7 @@ const LeaveRequests = () => {
   }, [selectedLeaves, queryClient]);
 
   if (error) {
-    console.error("Error loading leaves:", error);
+    logger.error("Error loading leaves:", error);
   }
 
   return (

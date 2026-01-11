@@ -1,4 +1,5 @@
 import { memo, useState, useEffect, useRef } from "react";
+import { logger } from '@/utils/logger';
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -197,7 +198,7 @@ export const UnifiedAIPanel = memo(({ embedded = false }: UnifiedAIPanelProps) =
       });
 
     } catch (error: any) {
-      console.error('Send message error:', error);
+      logger.error('Send message error:', error);
       toast({
         title: "Hata",
         description: error.message || "Mesaj gönderilemedi",

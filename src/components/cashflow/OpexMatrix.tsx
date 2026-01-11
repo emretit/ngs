@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -122,7 +123,7 @@ const OpexMatrix = () => {
 
       setPersonnelData(personnelDataArray);
     } catch (error) {
-      console.error('Error fetching personnel data:', error);
+      logger.error('Error fetching personnel data:', error);
       toast.error("Personel verileri yüklenirken hata oluştu");
     } finally {
       setLoading(false);
@@ -177,7 +178,7 @@ const OpexMatrix = () => {
       }));
 
     } catch (error) {
-      console.error('Error fetching expense data:', error);
+      logger.error('Error fetching expense data:', error);
     }
   }, [selectedYear]);
 

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useInfiniteScroll } from './useInfiniteScroll';
@@ -505,7 +506,7 @@ export const usePurchaseOrdersInfiniteScroll = (filters?: PurchaseOrderFilters, 
       .range(from, to);
 
     if (error) {
-      console.error("Error fetching purchase orders:", error);
+      logger.error("Error fetching purchase orders:", error);
       throw error;
     }
 

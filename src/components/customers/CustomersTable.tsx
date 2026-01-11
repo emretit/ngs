@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useTranslation } from "react-i18next";
 import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "sonner";
@@ -96,7 +97,7 @@ const CustomersTable = ({
       
       toast.success("Müşteri durumu başarıyla güncellendi.", { duration: 1000 });
     } catch (error) {
-      console.error('Error updating customer status:', error);
+      logger.error('Error updating customer status:', error);
       toast.error("Müşteri durumu güncellenirken bir hata oluştu.", { duration: 1000 });
     }
   };
@@ -117,7 +118,7 @@ const CustomersTable = ({
       
       toast.success("Müşteri başarıyla silindi.", { duration: 1000 });
     } catch (error) {
-      console.error('Error deleting customer:', error);
+      logger.error('Error deleting customer:', error);
       toast.error("Müşteri silinirken bir hata oluştu.", { duration: 1000 });
     } finally {
       setIsDeleting(false);

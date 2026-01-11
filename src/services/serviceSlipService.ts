@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { ServiceSlipData, ServiceSlipFormData } from '@/types/service-slip';
 
 export class ServiceSlipService {
@@ -216,7 +217,7 @@ export class ServiceSlipService {
       .eq('id', slipId);
 
     if (requestError) {
-      console.error('Service request status update failed:', requestError);
+      logger.error('Service request status update failed:', requestError);
     }
 
     // Return data in ServiceSlipData format for compatibility

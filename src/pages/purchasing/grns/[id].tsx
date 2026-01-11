@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { logger } from '@/utils/logger';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,7 +71,7 @@ export default function GRNDetail() {
     try {
       await updateStatus.mutateAsync({ id: grn.id, status: 'putaway' });
     } catch (error) {
-      console.error('Error updating status:', error);
+      logger.error('Error updating status:', error);
     }
   };
 

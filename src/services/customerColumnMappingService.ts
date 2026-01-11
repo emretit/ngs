@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 /**
  * Customer Column Mapping Service using Google Gemini AI
@@ -98,7 +99,7 @@ export const mapCustomerColumnsWithAI = async (
   excelColumns: string[]
 ): Promise<MappingResult> => {
   try {
-    console.log('🔍 AI Mapping başlatılıyor...', { 
+    logger.debug('🔍 AI Mapping başlatılıyor...', { 
       excelColumnsCount: excelColumns.length,
       excelColumns: excelColumns 
     });
@@ -108,7 +109,7 @@ export const mapCustomerColumnsWithAI = async (
       description: `${info.description} (Örnekler: ${info.examples.join(', ')}) ${info.required ? '[ZORUNLU]' : '[İSTEĞE BAĞLI]'}`
     }));
 
-    console.log('📤 Gemini API\'ye gönderiliyor...', { 
+    logger.debug('📤 Gemini API\'ye gönderiliyor...', { 
       sourceColumns: excelColumns,
       targetFieldsCount: targetFields.length 
     });
@@ -123,27 +124,27 @@ export const mapCustomerColumnsWithAI = async (
     });
 
     if (error) {
-      console.error('❌ Supabase function error:', error);
+      logger.error('❌ Supabase function error:', error);
       return fallbackMapping(excelColumns);
     }
 
     if (data?.error) {
-      console.error('❌ AI mapping error:', data.error);
-      console.error('📋 Raw response:', data);
+      logger.error('❌ AI mapping error:', data.error);
+      logger.error('📋 Raw response:', data);
       return fallbackMapping(excelColumns);
     }
 
-    console.log('✅ AI Response alındı:', data);
+    logger.debug('✅ AI Response alındı:', data);
 
     const result = data;
 
     // Validate and parse mappings
     if (!result || !result.mappings || !Array.isArray(result.mappings)) {
-      console.warn('⚠️ Invalid response structure, fallback kullanılıyor:', result);
+      logger.warn('⚠️ Invalid response structure, fallback kullanılıyor:', result);
       return fallbackMapping(excelColumns);
     }
 
-    console.log(`📊 AI'dan ${result.mappings.length} eşleştirme geldi`);
+    logger.debug(`📊 AI'dan ${result.mappings.length} eşleştirme geldi`);
 
     const validatedMappings = (result.mappings || [])
       .filter((m: any) => {
@@ -157,7 +158,7 @@ export const mapCustomerColumnsWithAI = async (
         }
         
         if (confidence < 50) {
-          console.log(`⏭️ Düşük confidence, atlanıyor:`, { ...m, normalizedConfidence: confidence });
+          logger.debug(`⏭️ Düşük confidence, atlanıyor:`, { ...m, normalizedConfidence: confidence });
           return false;
         }
         return true;
@@ -167,7 +168,7 @@ export const mapCustomerColumnsWithAI = async (
         const targetField = (m.target || m.systemField || '').trim();
         const isValid = Object.keys(SYSTEM_FIELDS).includes(targetField);
         if (!isValid) {
-          console.log(`⏭️ Geçersiz target field, atlanıyor:`, m);
+          logger.debug(`⏭️ Geçersiz target field, atlanıyor:`, m);
         }
         return isValid;
       })
@@ -182,7 +183,7 @@ export const mapCustomerColumnsWithAI = async (
           confidence = confidence * 100;
         }
         
-        console.log(`✅ Eşleştirme: "${excelColumn}" → ${systemField} (confidence: ${Math.round(confidence)})`);
+        logger.debug(`✅ Eşleştirme: "${excelColumn}" → ${systemField} (confidence: ${Math.round(confidence)})`);
         
         return {
           excelColumn,
@@ -198,17 +199,17 @@ export const mapCustomerColumnsWithAI = async (
       const existing = systemFieldMap.get(mapping.systemField);
       if (!existing || mapping.confidence > existing.confidence) {
         if (existing) {
-          console.log(`⚠️ Duplicate system field "${mapping.systemField}": "${existing.excelColumn}" (${existing.confidence}%) yerine "${mapping.excelColumn}" (${mapping.confidence}%) seçildi`);
+          logger.debug(`⚠️ Duplicate system field "${mapping.systemField}": "${existing.excelColumn}" (${existing.confidence}%) yerine "${mapping.excelColumn}" (${mapping.confidence}%) seçildi`);
         }
         systemFieldMap.set(mapping.systemField, mapping);
       } else {
-        console.log(`⚠️ Duplicate system field "${mapping.systemField}": "${mapping.excelColumn}" (${mapping.confidence}%) atlandı, "${existing.excelColumn}" (${existing.confidence}%) tutuldu`);
+        logger.debug(`⚠️ Duplicate system field "${mapping.systemField}": "${mapping.excelColumn}" (${mapping.confidence}%) atlandı, "${existing.excelColumn}" (${existing.confidence}%) tutuldu`);
       }
     });
 
     const finalMappings = Array.from(systemFieldMap.values());
 
-    console.log(`✅ ${finalMappings.length} geçerli eşleştirme oluşturuldu (duplicate'ler temizlendi)`);
+    logger.debug(`✅ ${finalMappings.length} geçerli eşleştirme oluşturuldu (duplicate'ler temizlendi)`);
 
     const mappedExcelColumns = new Set(finalMappings.map((m: any) => m.excelColumn.toLowerCase()));
     const unmappedColumns = excelColumns.filter(
@@ -216,7 +217,7 @@ export const mapCustomerColumnsWithAI = async (
     );
 
     if (unmappedColumns.length > 0) {
-      console.log(`⚠️ Eşleştirilemeyen kolonlar:`, unmappedColumns);
+      logger.debug(`⚠️ Eşleştirilemeyen kolonlar:`, unmappedColumns);
     }
 
     const avgConfidence = finalMappings.length > 0
@@ -229,13 +230,13 @@ export const mapCustomerColumnsWithAI = async (
       confidence: Math.round(avgConfidence)
     };
 
-    console.log('📋 Final mapping result:', finalResult);
+    logger.debug('📋 Final mapping result:', finalResult);
 
     return finalResult;
 
   } catch (error: any) {
-    console.error('❌ AI mapping exception:', error);
-    console.error('Stack:', error.stack);
+    logger.error('❌ AI mapping exception:', error);
+    logger.error('Stack:', error.stack);
     return fallbackMapping(excelColumns);
   }
 };

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -100,7 +101,7 @@ const ProposalDetailSidePanel = ({ proposal, isOpen, onClose }: ProposalDetailSi
       toast.success("Teklif başarıyla güncellendi");
     },
     onError: (error) => {
-      console.error("Error updating proposal:", error);
+      logger.error("Error updating proposal:", error);
       toast.error("Teklif güncellenirken bir hata oluştu");
     }
   });

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { logger } from '@/utils/logger';
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -65,7 +66,7 @@ export const CompanySettingsTab = () => {
         .single();
 
       if (error) {
-        console.error('Update error details:', error);
+        logger.error('Update error details:', error);
         throw error;
       }
       
@@ -87,7 +88,7 @@ export const CompanySettingsTab = () => {
         duration: 1000,
       });
     } catch (error: any) {
-      console.error('Error saving system settings:', error);
+      logger.error('Error saving system settings:', error);
       const errorMessage = error?.message || error?.details || 'Sistem ayarları kaydedilirken hata oluştu';
       toast.error(`Hata: ${errorMessage}`);
     } finally {

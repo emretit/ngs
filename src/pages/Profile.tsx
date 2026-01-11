@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -76,7 +77,7 @@ const Profile = () => {
           await supabase.storage.from('employee_avatars').remove([fileName]);
         } catch (error) {
           // Silme başarısız olsa bile devam et
-          console.warn("Could not delete old avatar:", error);
+          logger.warn("Could not delete old avatar:", error);
         }
       }
 
@@ -106,7 +107,7 @@ const Profile = () => {
       setFormData(prev => ({ ...prev, avatar_url: publicUrl }));
       toast.success("Profil fotoğrafı güncellendi");
     } catch (error: any) {
-      console.error("Avatar upload error:", error);
+      logger.error("Avatar upload error:", error);
       toast.error(error.message || "Profil fotoğrafı yüklenirken bir hata oluştu");
     } finally {
       setIsUploadingAvatar(false);
@@ -152,7 +153,7 @@ const Profile = () => {
       toast.success("Profil bilgileri güncellendi");
       setIsEditing(false);
     } catch (error: any) {
-      console.error("Profile update error:", error);
+      logger.error("Profile update error:", error);
       toast.error(error.message || "Profil güncellenirken bir hata oluştu");
     } finally {
       setIsSaving(false);

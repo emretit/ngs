@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { logger } from '@/utils/logger';
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
@@ -198,7 +199,7 @@ export function useModuleReport() {
     const { data, error } = await query;
 
     if (error) {
-      console.error(`Error fetching ${module} data:`, error);
+      logger.error(`Error fetching ${module} data:`, error);
       return [];
     }
 
@@ -278,7 +279,7 @@ export function useModuleReport() {
       toast.dismiss(toastId);
       toast.success(`${config.displayName} raporu indirildi! (${data.length} kayıt)`);
     } catch (error) {
-      console.error("Excel export error:", error);
+      logger.error("Excel export error:", error);
       toast.dismiss();
       toast.error("Excel raporu oluşturulamadı");
     }
@@ -487,7 +488,7 @@ export function useModuleReport() {
       toast.dismiss(toastId);
       toast.success(`${config.displayName} raporu hazır!`);
     } catch (error) {
-      console.error("PDF export error:", error);
+      logger.error("PDF export error:", error);
       toast.dismiss();
       toast.error("PDF raporu oluşturulamadı");
     }
@@ -500,7 +501,7 @@ export function useModuleReport() {
       .select("*", { count: "exact", head: true });
 
     if (error) {
-      console.error(`Error getting count for ${module}:`, error);
+      logger.error(`Error getting count for ${module}:`, error);
       return 0;
     }
 

@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 /**
  * Veriban'a gönderilmiş faturaların en yüksek fatura numarasını alır
@@ -20,12 +21,12 @@ export const getLastVeribanInvoiceNumber = async (
       .limit(100);
 
     if (error) {
-      console.error('❌ Veriban fatura numarası sorgulama hatası:', error);
+      logger.error('❌ Veriban fatura numarası sorgulama hatası:', error);
       return null;
     }
 
     if (!invoices || invoices.length === 0) {
-      console.log('ℹ️ Veriban\'a gönderilmiş fatura bulunamadı');
+      logger.debug('ℹ️ Veriban\'a gönderilmiş fatura bulunamadı');
       return null;
     }
 
@@ -126,13 +127,13 @@ export const getLastVeribanInvoiceNumber = async (
     }
 
     if (maxNumber) {
-      console.log('✅ Veriban\'dan en yüksek fatura numarası bulundu:', maxNumber);
+      logger.debug('✅ Veriban\'dan en yüksek fatura numarası bulundu:', maxNumber);
       return maxNumber;
     }
 
     return null;
   } catch (error) {
-    console.error('❌ Veriban fatura numarası alınırken hata:', error);
+    logger.error('❌ Veriban fatura numarası alınırken hata:', error);
     return null;
   }
 };
@@ -172,7 +173,7 @@ export const extractSequenceFromInvoiceNumber = (
     if (serie) {
       // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
       if (invoiceNumber.length !== 16) {
-        console.warn('⚠️ GİB formatı 16 karakter değil:', invoiceNumber, 'Uzunluk:', invoiceNumber.length);
+        logger.warn('⚠️ GİB formatı 16 karakter değil:', invoiceNumber, 'Uzunluk:', invoiceNumber.length);
         return null;
       }
 
@@ -181,7 +182,7 @@ export const extractSequenceFromInvoiceNumber = (
 
       // Numara bu prefix ile başlamıyorsa null döndür
       if (!invoiceNumber.startsWith(prefix)) {
-        console.warn('⚠️ Fatura numarası prefix ile başlamıyor:', invoiceNumber, 'Prefix:', prefix);
+        logger.warn('⚠️ Fatura numarası prefix ile başlamıyor:', invoiceNumber, 'Prefix:', prefix);
         return null;
       }
 
@@ -189,7 +190,7 @@ export const extractSequenceFromInvoiceNumber = (
       const sequencePart = invoiceNumber.substring(prefix.length); // 7 karakterden sonra 9 karakter
       
       if (sequencePart.length !== 9) {
-        console.warn('⚠️ Sıra numarası kısmı 9 karakter değil:', sequencePart, 'Uzunluk:', sequencePart.length);
+        logger.warn('⚠️ Sıra numarası kısmı 9 karakter değil:', sequencePart, 'Uzunluk:', sequencePart.length);
         return null;
       }
 
@@ -240,7 +241,7 @@ export const extractSequenceFromInvoiceNumber = (
 
     return sequence;
   } catch (error) {
-    console.error('❌ Sıra numarası çıkarılırken hata:', error);
+    logger.error('❌ Sıra numarası çıkarılırken hata:', error);
     return null;
   }
 };
@@ -280,7 +281,7 @@ export const validateVeribanInvoiceNumberFormat = (
     if (serie) {
       // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
       if (invoiceNumber.length !== 16) {
-        console.warn('⚠️ GİB formatı 16 karakter değil:', invoiceNumber, 'Uzunluk:', invoiceNumber.length);
+        logger.warn('⚠️ GİB formatı 16 karakter değil:', invoiceNumber, 'Uzunluk:', invoiceNumber.length);
         return false;
       }
 
@@ -330,7 +331,7 @@ export const validateVeribanInvoiceNumberFormat = (
     
     return !isNaN(sequence) && sequence > 0;
   } catch (error) {
-    console.error('❌ Format kontrolü sırasında hata:', error);
+    logger.error('❌ Format kontrolü sırasında hata:', error);
     return false;
   }
 };

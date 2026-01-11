@@ -1,5 +1,6 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toastUtils";
 import type { Task } from "@/types/task";
@@ -24,7 +25,7 @@ export const usePipelineMutations = () => {
     },
     onError: (error) => {
       showError('Error updating task status');
-      console.error('Error updating task:', error);
+      logger.error('Error updating task:', error);
     }
   });
 
@@ -32,7 +33,7 @@ export const usePipelineMutations = () => {
   const updateDealStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: Deal['status'] }) => {
       // This would be a real Supabase query in production
-      console.log(`Updating deal ${id} status to ${status}`);
+      logger.debug(`Updating deal ${id} status to ${status}`);
       // Simulate a delay
       await new Promise(resolve => setTimeout(resolve, 500));
       // In production, this would be:
@@ -48,7 +49,7 @@ export const usePipelineMutations = () => {
     },
     onError: (error) => {
       showError('Error updating deal status');
-      console.error('Error updating deal:', error);
+      logger.error('Error updating deal:', error);
     }
   });
 

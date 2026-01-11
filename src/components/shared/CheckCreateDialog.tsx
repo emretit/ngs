@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from '@/utils/logger';
 import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { useForm, FormProvider } from "react-hook-form";
@@ -379,16 +380,16 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
       if (editingCheck?.id) {
         const { error } = await supabase.from("checks").update(payload).eq("id", editingCheck.id);
         if (error) {
-          console.error("Check update error:", error);
+          logger.error("Check update error:", error);
           throw error;
         }
         insertedCheckId = editingCheck.id;
       } else {
-        console.log("Inserting check with payload:", payload);
+        logger.debug("Inserting check with payload:", payload);
         const { data: insertedCheck, error } = await supabase.from("checks").insert([payload]).select("id").single();
         if (error) {
-          console.error("Check insert error:", error);
-          console.error("Payload was:", JSON.stringify(payload, null, 2));
+          logger.error("Check insert error:", error);
+          logger.error("Payload was:", JSON.stringify(payload, null, 2));
           throw error;
         }
         insertedCheckId = insertedCheck?.id || null;

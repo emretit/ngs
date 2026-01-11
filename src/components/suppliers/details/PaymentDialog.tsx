@@ -88,9 +88,9 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
       if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
 
       const [cashRes, bankRes, cardRes, partnerRes] = await Promise.all([
-        supabase.from('cash_accounts').select('id, name').eq('company_id', profile.company_id),
+        supabase.from('cash_accounts').select('id, name'),
         supabase.from('bank_accounts').select('id, account_name, bank_name').eq("is_active", true),
-        supabase.from('credit_cards').select('id, card_name').eq('company_id', profile.company_id),
+        supabase.from('credit_cards').select('id, card_name'),
         supabase.from('partner_accounts').select('id, partner_name')
       ]);
 

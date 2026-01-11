@@ -80,9 +80,8 @@ const PurchasingDashboard = () => {
         // Purchase Requests - only status field
         supabase
           .from('purchase_requests')
-          .select('status', { count: 'exact', head: false })
-          .eq('company_id', userData.company_id),
-        
+          .select('status', { count: 'exact', head: false }),
+
         // Purchase Orders - only status and total_amount
         supabase
           .from('purchase_orders')
@@ -92,14 +91,12 @@ const PurchasingDashboard = () => {
         // RFQs - only status field
         supabase
           .from('rfqs')
-          .select('status', { count: 'exact', head: false })
-          .eq('company_id', userData.company_id),
-        
+          .select('status', { count: 'exact', head: false }),
+
         // Vendor Invoices - only payment_status and total_amount
         supabase
           .from('supplier_invoices')
-          .select('payment_status, total_amount', { count: 'exact', head: false })
-          .eq('company_id', userData.company_id),
+          .select('payment_status, total_amount', { count: 'exact', head: false }),
       ]);
 
       // Calculate PR stats

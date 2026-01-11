@@ -50,7 +50,6 @@ export const useEInvoiceData = (invoiceId: string | undefined) => {
         .from('suppliers')
         .select('id, name, tax_number, email, company_id')
         .eq('status', 'aktif')
-        .eq('company_id', userCompanyId) // Sadece kullanıcının şirketinin tedarikçileri
         .order('name')
         .limit(500);
       if (suppliersError) throw suppliersError;

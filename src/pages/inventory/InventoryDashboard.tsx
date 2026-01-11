@@ -92,9 +92,8 @@ const InventoryDashboard = ({ isCollapsed, setIsCollapsed }: InventoryDashboardP
         // Transactions count and pending count
         supabase
           .from('inventory_transactions')
-          .select('status', { count: 'exact', head: false })
-          .eq('company_id', userData.company_id),
-        
+          .select('status', { count: 'exact', head: false }),
+
         // Critical stock count (products with stock <= min_stock_level)
         supabase
           .from('products')

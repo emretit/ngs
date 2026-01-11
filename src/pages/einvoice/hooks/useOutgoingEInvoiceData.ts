@@ -51,7 +51,6 @@ export const useOutgoingEInvoiceData = (invoiceId: string | undefined) => {
         .from('customers')
         .select('id, name, company, tax_number, email, company_id')
         .eq('status', 'aktif')
-        .eq('company_id', userCompanyId) // Sadece kullanıcının şirketinin müşterileri
         .order('name')
         .limit(500);
       if (customersError) throw customersError;

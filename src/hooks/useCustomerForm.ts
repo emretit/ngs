@@ -428,7 +428,6 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
           .from('customers')
           .update(updateData)
           .eq('id', id)
-          .eq('company_id', company_id) // RLS için ek kontrol
           .select();
         
         if (updateError) {

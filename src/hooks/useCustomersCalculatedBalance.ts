@@ -30,16 +30,14 @@ export const useCustomersCalculatedBalance = (customers: Customer[]) => {
         supabase
           .from('payments')
           .select('id, customer_id, payment_date, amount, currency, payment_direction, payment_type')
-          .in('customer_id', customerIds)
-          .eq('company_id', userData.company_id),
-        
+          .in('customer_id', customerIds),
+
         // Sales invoices
         supabase
           .from('sales_invoices')
           .select('id, customer_id, fatura_tarihi, issue_time, toplam_tutar, para_birimi')
-          .in('customer_id', customerIds)
-          .eq('company_id', userData.company_id),
-        
+          .in('customer_id', customerIds),
+
         // Purchase invoices (hem customer_id hem supplier_id ile)
         supabase
           .from('purchase_invoices')

@@ -37,9 +37,6 @@ const routePrefetchMap: Record<string, () => Promise<any>> = {
   // Service routes
   '/service': () => import('@/pages/service/ServiceDashboard'),
   '/service/management': () => import('@/pages/service/ServiceManagement'),
-  '/service/kanban': () => import('@/pages/service/ServiceKanbanView'),
-  '/service/calendar': () => import('@/pages/service/ServiceCalendarView'),
-  '/service/map': () => import('@/pages/service/ServiceMapView'),
   
   // Order routes
   '/orders': () => import('@/pages/Orders'),

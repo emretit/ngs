@@ -47,7 +47,6 @@ const AuditLogs = () => {
     let query = supabase
       .from('audit_logs')
       .select('*', { count: 'exact' })
-      .eq('company_id', userCompanyId)
       .order('created_at', { ascending: false });
 
     if (actionFilter && actionFilter !== 'all') {

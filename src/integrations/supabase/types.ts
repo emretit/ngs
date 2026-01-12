@@ -13697,7 +13697,6 @@ export type Database = {
         | { Args: { table_name: string }; Returns: string }
       enablelongtransactions: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
-      execute_readonly_query: { Args: { query_text: string }; Returns: Json }
       generate_document_number: {
         Args: { p_company_id: string; p_doc_type: string }
         Returns: string

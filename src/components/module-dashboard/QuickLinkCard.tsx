@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QuickLinkCardConfig, colorVariantClasses, statColorClasses } from "./types";
 import { cn } from "@/lib/utils";
+import CardSummary from "./CardSummary";
 
 interface QuickLinkCardProps {
   config: QuickLinkCardConfig;
@@ -76,8 +77,10 @@ const QuickLinkCard = ({ config, dateLabel }: QuickLinkCardProps) => {
           </div>
         )}
 
-        {/* Custom Content or Stats */}
-        {config.customContent ? (
+        {/* Content Priority: summaryConfig > customContent > stats */}
+        {config.summaryConfig ? (
+          <CardSummary {...config.summaryConfig} />
+        ) : config.customContent ? (
           config.customContent
         ) : (
           <div className="space-y-3">

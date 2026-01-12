@@ -5,7 +5,7 @@ import { useSalesInvoices } from "@/hooks/useSalesInvoices";
 import { useIncomingInvoices } from "@/hooks/useIncomingInvoices";
 import { formatCurrency } from "@/utils/formatters";
 import InvoiceAnalysisManager from "@/components/invoices/InvoiceAnalysisManager";
-import { ModuleDashboard, ModuleDashboardConfig, QuickLinkCardConfig } from "@/components/module-dashboard";
+import { ModuleDashboard, ModuleDashboardConfig, QuickLinkCardConfig, CardSummaryProps } from "@/components/module-dashboard";
 
 interface InvoiceManagementProps {
   isCollapsed: boolean;
@@ -36,7 +36,9 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
 
   // Satış faturaları istatistikleri
   const totalSalesInvoices = salesInvoices?.length || 0;
+  const paidSalesInvoices = salesInvoices?.filter(inv => inv.odeme_durumu === 'odendi').length || 0;
   const pendingSalesInvoices = salesInvoices?.filter(inv => inv.odeme_durumu === 'odenmedi').length || 0;
+  const partialSalesInvoices = salesInvoices?.filter(inv => inv.odeme_durumu === 'kismi_odendi').length || 0;
   const totalSalesAmount = salesInvoices?.reduce((sum, inv) => sum + (inv.toplam_tutar || 0), 0) || 0;
 
   // E-Fatura istatistikleri
@@ -47,6 +49,50 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
     analysisRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  // CardSummary configurations
+  const salesSummary: CardSummaryProps = {
+    mainMetric: { value: totalSalesInvoices, label: "Toplam Fatura", color: "blue" },
+    statusGrid: [
+      { label: "Ödenmemiş", value: pendingSalesInvoices, color: "red" },
+      { label: "Kısmi", value: partialSalesInvoices, color: "yellow" },
+      { label: "Ödendi", value: paidSalesInvoices, color: "green" },
+    ],
+    footer: {
+      type: "value",
+      valueLabel: "Toplam Tutar",
+      value: formatCurrency(totalSalesAmount, 'TRY'),
+      valueColor: "success",
+    },
+    compact: true,
+    gridCols: 3,
+  };
+
+  const purchaseSummary: CardSummaryProps = {
+    mainMetric: { value: "-", label: "Toplam Fatura", color: "green" },
+    statusGrid: [
+      { label: "Bekleyen", value: "-", color: "yellow" },
+      { label: "Ödenen", value: "-", color: "green" },
+    ],
+    compact: true,
+    gridCols: 2,
+  };
+
+  const eInvoiceSummary: CardSummaryProps = {
+    mainMetric: { value: totalIncomingInvoices, label: "Bu Ay Gelen", color: "purple" },
+    statusGrid: [
+      { label: "İşlendi", value: "-", color: "green" },
+      { label: "Bekliyor", value: "-", color: "yellow" },
+    ],
+    footer: {
+      type: "value",
+      valueLabel: "Toplam Tutar",
+      value: formatCurrency(totalIncomingAmount, 'TRY'),
+      valueColor: "success",
+    },
+    compact: true,
+    gridCols: 2,
+  };
+
   const cards: QuickLinkCardConfig[] = [
     {
       id: "sales-invoices",
@@ -55,18 +101,8 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
       icon: Receipt,
       color: "blue",
       href: "/sales-invoices",
-      newButton: {
-        href: "/sales-invoices/create",
-      },
-      stats: [
-        { label: "Toplam Fatura", value: totalSalesInvoices },
-        { label: "Ödenmemiş", value: pendingSalesInvoices, color: "warning" },
-      ],
-      footerStat: {
-        label: "Toplam Tutar",
-        value: formatCurrency(totalSalesAmount, 'TRY'),
-        color: "success",
-      },
+      newButton: { href: "/sales-invoices/create" },
+      summaryConfig: salesSummary,
     },
     {
       id: "purchase-invoices",
@@ -75,18 +111,8 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
       icon: Receipt,
       color: "green",
       href: "/purchase-invoices",
-      newButton: {
-        href: "/purchase-invoices",
-      },
-      stats: [
-        { label: "Bu Ay", value: "-" },
-        { label: "Bekleyen", value: "-", color: "warning" },
-      ],
-      footerStat: {
-        label: "Toplam",
-        value: "-",
-        color: "default",
-      },
+      newButton: { href: "/purchase-invoices" },
+      summaryConfig: purchaseSummary,
     },
     {
       id: "e-invoices",
@@ -95,15 +121,7 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
       icon: FileText,
       color: "purple",
       href: "/e-invoice",
-      stats: [
-        { label: "Bu Ay", value: totalIncomingInvoices },
-        { label: "İşlenmemiş", value: "-", color: "warning" },
-      ],
-      footerStat: {
-        label: "Toplam Tutar",
-        value: formatCurrency(totalIncomingAmount, 'TRY'),
-        color: "success",
-      },
+      summaryConfig: eInvoiceSummary,
     },
     {
       id: "invoice-analysis",
@@ -114,18 +132,30 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
       href: "#analysis",
       customContent: (
         <div className="space-y-3" onClick={(e) => { e.stopPropagation(); scrollToAnalysis(); }}>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Kayıtlı Aylar</span>
-            <span className="text-sm font-bold text-foreground">-</span>
+          <div className="text-center bg-orange-50 rounded-lg p-2.5">
+            <div className="text-xl font-bold text-foreground">Hazır</div>
+            <div className="text-[10px] font-medium text-muted-foreground">Analiz Durumu</div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Ortalama</span>
-            <span className="text-sm font-bold text-green-600">-</span>
+          <div className="grid grid-cols-2 gap-1.5 text-xs">
+            <div className="bg-blue-50 rounded-lg p-2 border border-blue-200">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                <span className="font-medium text-[10px] text-blue-700">Kayıtlı Ay</span>
+              </div>
+              <div className="text-sm font-bold text-blue-600">-</div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-2 border border-green-200">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                <span className="font-medium text-[10px] text-green-700">Ortalama</span>
+              </div>
+              <div className="text-sm font-bold text-green-600">-</div>
+            </div>
           </div>
-          <div className="pt-2 border-t border-border">
-            <div className="flex items-center gap-1">
+          <div className="rounded-lg border border-border bg-muted/30 p-2">
+            <div className="flex items-center gap-1.5">
               <TrendingUp className="h-3 w-3 text-green-600" />
-              <span className="text-xs text-muted-foreground">Analiz Hazır</span>
+              <span className="text-[10px] text-muted-foreground">Detaylı analiz için tıklayın</span>
             </div>
           </div>
         </div>

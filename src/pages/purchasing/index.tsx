@@ -10,7 +10,7 @@ import { formatCurrency } from "@/utils/formatters";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { ModuleDashboard, ModuleDashboardConfig, QuickLinkCardConfig } from "@/components/module-dashboard";
+import { ModuleDashboard, ModuleDashboardConfig, QuickLinkCardConfig, CardSummaryProps } from "@/components/module-dashboard";
 
 const PurchasingDashboard = () => {
   const { userData } = useCurrentUser();
@@ -24,7 +24,7 @@ const PurchasingDashboard = () => {
           prStats: { draft: 0, pending: 0, approved: 0, rejected: 0, total: 0 },
           poStats: { draft: 0, pending: 0, confirmed: 0, received: 0, total: 0, totalValue: 0 },
           rfqStats: { active: 0, pending: 0, completed: 0, total: 0 },
-          invoiceStats: { total: 0, unpaid: 0, totalAmount: 0 },
+          invoiceStats: { total: 0, unpaid: 0, paid: 0, partial: 0, totalAmount: 0 },
         };
       }
 
@@ -74,7 +74,9 @@ const PurchasingDashboard = () => {
       const invoices = invoiceResult.data || [];
       const invoiceStats = {
         total: invoiceResult.count || 0,
-        unpaid: invoices.filter((inv: any) => inv.payment_status === "unpaid" || inv.payment_status === "partial").length,
+        unpaid: invoices.filter((inv: any) => inv.payment_status === "unpaid").length,
+        paid: invoices.filter((inv: any) => inv.payment_status === "paid").length,
+        partial: invoices.filter((inv: any) => inv.payment_status === "partial").length,
         totalAmount: invoices.reduce((sum: number, inv: any) => sum + (inv.total_amount || 0), 0),
       };
 
@@ -91,7 +93,78 @@ const PurchasingDashboard = () => {
     prStats: { draft: 0, pending: 0, approved: 0, rejected: 0, total: 0 },
     poStats: { draft: 0, pending: 0, confirmed: 0, received: 0, total: 0, totalValue: 0 },
     rfqStats: { active: 0, pending: 0, completed: 0, total: 0 },
-    invoiceStats: { total: 0, unpaid: 0, totalAmount: 0 },
+    invoiceStats: { total: 0, unpaid: 0, paid: 0, partial: 0, totalAmount: 0 },
+  };
+
+  // CardSummary configurations
+  const prSummary: CardSummaryProps = {
+    mainMetric: { value: stats.prStats.total, label: "Toplam Talep", color: "blue" },
+    statusGrid: [
+      { label: "Taslak", value: stats.prStats.draft, color: "gray" },
+      { label: "Bekleyen", value: stats.prStats.pending, color: "yellow" },
+      { label: "Onaylı", value: stats.prStats.approved, color: "green" },
+      { label: "Reddedilen", value: stats.prStats.rejected, color: "red" },
+    ],
+    footer: stats.prStats.total > 0 ? {
+      type: "progress",
+      progressLabel: "Onay Oranı",
+      progressValue: Math.round((stats.prStats.approved / stats.prStats.total) * 100),
+      progressColor: "green",
+    } : undefined,
+    compact: true,
+    gridCols: 2,
+  };
+
+  const rfqSummary: CardSummaryProps = {
+    mainMetric: { value: stats.rfqStats.total, label: "Toplam RFQ", color: "purple" },
+    statusGrid: [
+      { label: "Aktif", value: stats.rfqStats.active, color: "blue" },
+      { label: "Bekleyen", value: stats.rfqStats.pending, color: "yellow" },
+      { label: "Tamamlanan", value: stats.rfqStats.completed, color: "green" },
+    ],
+    footer: stats.rfqStats.total > 0 ? {
+      type: "progress",
+      progressLabel: "Tamamlanma Oranı",
+      progressValue: Math.round((stats.rfqStats.completed / stats.rfqStats.total) * 100),
+      progressColor: "purple",
+    } : undefined,
+    compact: true,
+    gridCols: 3,
+  };
+
+  const poSummary: CardSummaryProps = {
+    mainMetric: { value: stats.poStats.total, label: "Toplam Sipariş", color: "green" },
+    statusGrid: [
+      { label: "Taslak", value: stats.poStats.draft, color: "gray" },
+      { label: "Onayda", value: stats.poStats.pending, color: "yellow" },
+      { label: "Onaylı", value: stats.poStats.confirmed, color: "green" },
+      { label: "Teslim", value: stats.poStats.received, color: "blue" },
+    ],
+    footer: {
+      type: "value",
+      valueLabel: "Toplam Tutar",
+      value: formatCurrency(stats.poStats.totalValue, 'TRY'),
+      valueColor: "success",
+    },
+    compact: true,
+    gridCols: 2,
+  };
+
+  const invoiceSummary: CardSummaryProps = {
+    mainMetric: { value: stats.invoiceStats.total, label: "Toplam Fatura", color: "orange" },
+    statusGrid: [
+      { label: "Ödenmemiş", value: stats.invoiceStats.unpaid, color: "red" },
+      { label: "Kısmi", value: stats.invoiceStats.partial, color: "yellow" },
+      { label: "Ödendi", value: stats.invoiceStats.paid, color: "green" },
+    ],
+    footer: {
+      type: "value",
+      valueLabel: "Toplam Tutar",
+      value: formatCurrency(stats.invoiceStats.totalAmount, 'TRY'),
+      valueColor: "success",
+    },
+    compact: true,
+    gridCols: 3,
   };
 
   const cards: QuickLinkCardConfig[] = [
@@ -103,15 +176,7 @@ const PurchasingDashboard = () => {
       color: "blue",
       href: "/purchasing/requests",
       newButton: { href: "/purchasing/requests/new" },
-      stats: [
-        { label: "Toplam Talep", value: stats.prStats.total },
-        { label: "Bekleyen Onay", value: stats.prStats.pending, color: "warning" },
-      ],
-      footerStat: {
-        label: "Onaylanan",
-        value: stats.prStats.approved,
-        color: "success",
-      },
+      summaryConfig: prSummary,
     },
     {
       id: "rfqs",
@@ -121,15 +186,7 @@ const PurchasingDashboard = () => {
       color: "purple",
       href: "/purchasing/rfqs",
       newButton: { href: "/purchasing/rfqs/new" },
-      stats: [
-        { label: "Aktif RFQ", value: stats.rfqStats.active },
-        { label: "Bekleyen Teklif", value: stats.rfqStats.pending, color: "warning" },
-      ],
-      footerStat: {
-        label: "Tamamlanan",
-        value: stats.rfqStats.completed,
-        color: "success",
-      },
+      summaryConfig: rfqSummary,
     },
     {
       id: "purchase-orders",
@@ -139,15 +196,7 @@ const PurchasingDashboard = () => {
       color: "green",
       href: "/purchasing/orders",
       newButton: { href: "/purchasing/orders/new" },
-      stats: [
-        { label: "Toplam Sipariş", value: stats.poStats.total },
-        { label: "Onayda", value: stats.poStats.pending, color: "warning" },
-      ],
-      footerStat: {
-        label: "Toplam Tutar",
-        value: formatCurrency(stats.poStats.totalValue, 'TRY'),
-        color: "success",
-      },
+      summaryConfig: poSummary,
     },
     {
       id: "supplier-invoices",
@@ -157,15 +206,7 @@ const PurchasingDashboard = () => {
       color: "orange",
       href: "/purchasing/invoices",
       newButton: { href: "/purchasing/invoices/new" },
-      stats: [
-        { label: "Toplam Fatura", value: stats.invoiceStats.total },
-        { label: "Ödenmemiş", value: stats.invoiceStats.unpaid, color: "warning" },
-      ],
-      footerStat: {
-        label: "Toplam Tutar",
-        value: formatCurrency(stats.invoiceStats.totalAmount, 'TRY'),
-        color: "success",
-      },
+      summaryConfig: invoiceSummary,
     },
   ];
 

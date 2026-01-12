@@ -8968,6 +8968,7 @@ export type Database = {
           exchange_rate: number | null
           fatura_no: string | null
           fatura_tarihi: string
+          fatura_tipi2: string | null
           id: string
           indirim_tutari: number
           internet_info: Json | null
@@ -9031,6 +9032,7 @@ export type Database = {
           exchange_rate?: number | null
           fatura_no?: string | null
           fatura_tarihi?: string
+          fatura_tipi2?: string | null
           id?: string
           indirim_tutari?: number
           internet_info?: Json | null
@@ -9094,6 +9096,7 @@ export type Database = {
           exchange_rate?: number | null
           fatura_no?: string | null
           fatura_tarihi?: string
+          fatura_tipi2?: string | null
           id?: string
           indirim_tutari?: number
           internet_info?: Json | null

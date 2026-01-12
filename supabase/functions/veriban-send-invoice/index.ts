@@ -291,6 +291,24 @@ serve(async (req) => {
                     
                     if (statusResult.success && statusResult.data?.invoiceNumber) {
                       const veribanInvoiceNumber = statusResult.data.invoiceNumber;
+                      const veribanInvoiceProfile = statusResult.data.invoiceProfile || '';
+                      
+                      // ========================================
+                      // ÖNEMLİ: InvoiceProfile kontrolü
+                      // E-Arşiv ve E-Fatura numaralarını ayrı tut
+                      // ========================================
+                      const isMatchingProfile = 
+                        (finalInvoiceProfile === 'EARSIVFATURA' && veribanInvoiceProfile === 'EARSIVFATURA') ||
+                        (finalInvoiceProfile !== 'EARSIVFATURA' && veribanInvoiceProfile !== 'EARSIVFATURA');
+                      
+                      if (!isMatchingProfile) {
+                        console.log('⏭️ Profile eşleşmiyor, atlaniyor:', {
+                          targetProfile: finalInvoiceProfile,
+                          foundProfile: veribanInvoiceProfile,
+                          invoiceNumber: veribanInvoiceNumber
+                        });
+                        continue; // Bu faturayı atla
+                      }
                       
                       // GİB formatı kontrolü: 16 karakter ve prefix ile başlamalı
                       if (veribanInvoiceNumber && veribanInvoiceNumber.startsWith(prefix) && veribanInvoiceNumber.length === 16) {
@@ -298,7 +316,11 @@ serve(async (req) => {
                         const num = parseInt(sequencePart);
                         if (!isNaN(num) && num > maxSequence) {
                           maxSequence = num;
-                          console.log('✅ Veriban API\'sinden daha yüksek numara bulundu:', veribanInvoiceNumber, '-> Sequence:', num);
+                          console.log('✅ Veriban API\'sinden daha yüksek numara bulundu:', {
+                            invoiceNumber: veribanInvoiceNumber,
+                            profile: veribanInvoiceProfile,
+                            sequence: num
+                          });
                         }
                       }
                     }

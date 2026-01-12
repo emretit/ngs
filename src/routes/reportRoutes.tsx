@@ -10,11 +10,17 @@ const HRReports = React.lazy(() => import("@/pages/reports/HRReports"));
 const VehicleReports = React.lazy(() => import("@/pages/reports/VehicleReports"));
 const PurchasingReports = React.lazy(() => import("@/pages/reports/PurchasingReports"));
 const ReportsOverview = React.lazy(() => import("@/pages/reports/ReportsOverview"));
+const VatAnalysisReports = React.lazy(() => import("@/pages/reports/VatAnalysisReports"));
 
 export const reportRoutes: RouteConfig[] = [
   {
     path: "/reports",
     component: ReportsOverview,
+    protected: true,
+  },
+  {
+    path: "/reports/vat-analysis",
+    component: VatAnalysisReports,
     protected: true,
   },
   {

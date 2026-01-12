@@ -461,6 +461,12 @@ export const navItems = [
         translationKey: "nav.reportsOverview",
       },
       {
+        path: "/reports/vat-analysis",
+        icon: BarChart3,
+        label: "KDV Analizi",
+        translationKey: "nav.vatAnalysis",
+      },
+      {
         path: "/reports/sales",
         icon: TrendingUp,
         label: "Satış Raporları",

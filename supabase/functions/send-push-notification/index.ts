@@ -154,7 +154,61 @@ Deno.serve(async (req) => {
       notificationData = payload.data || {};
     } else if (payload.record) {
       // Webhook'tan gelen format (service_requests tablosu güncellendiğinde)
-      // Webhook'lar internal olarak çağrıldığı için auth gerekmez
+      // Validate webhook origin - only accept from internal Supabase triggers
+      const webhookSecret = Deno.env.get('WEBHOOK_SECRET');
+      const requestSignature = req.headers.get('x-webhook-signature');
+      
+      // If WEBHOOK_SECRET is configured, validate the signature
+      if (webhookSecret) {
+        if (!requestSignature) {
+          console.error('❌ Webhook signature missing');
+          return new Response(JSON.stringify({ 
+            error: 'Webhook signature required',
+            details: 'x-webhook-signature header is missing'
+          }), {
+            headers: corsHeaders,
+            status: 401
+          });
+        }
+        
+        // Verify the signature matches (simple HMAC validation)
+        const expectedSignature = await generateWebhookSignature(JSON.stringify(payload), webhookSecret);
+        if (requestSignature !== expectedSignature) {
+          console.error('❌ Invalid webhook signature');
+          return new Response(JSON.stringify({ 
+            error: 'Invalid webhook signature',
+            details: 'Signature verification failed'
+          }), {
+            headers: corsHeaders,
+            status: 401
+          });
+        }
+        console.log('✅ Webhook signature verified');
+      } else {
+        // Fallback: Check for internal Supabase headers that indicate it's from a database trigger
+        const supabaseWebhookHeader = req.headers.get('x-supabase-webhook');
+        const userAgent = req.headers.get('user-agent') || '';
+        
+        // Log the webhook call for audit
+        console.log('⚠️ Webhook call without signature verification:', {
+          hasSupabaseHeader: !!supabaseWebhookHeader,
+          userAgent: userAgent.substring(0, 50),
+          ip: req.headers.get('x-forwarded-for') || 'unknown'
+        });
+        
+        // Only allow if it looks like an internal Supabase call
+        if (!supabaseWebhookHeader && !userAgent.includes('Supabase')) {
+          console.error('❌ Unauthorized webhook call - missing internal headers');
+          return new Response(JSON.stringify({ 
+            error: 'Unauthorized',
+            details: 'Webhook calls must originate from Supabase or include proper authentication'
+          }), {
+            headers: corsHeaders,
+            status: 401
+          });
+        }
+      }
+      
       isWebhook = true;
       const serviceRequest = payload.record;
       
@@ -580,5 +634,30 @@ async function signWithRSA256(data: string, privateKeyPem: string) {
   }
   const base64Signature = btoa(signatureBinaryString);
   return base64Signature.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+// Webhook signature generation for HMAC validation
+async function generateWebhookSignature(payload: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(payload)
+  );
+  
+  const signatureArray = new Uint8Array(signature);
+  let signatureBinaryString = '';
+  for (let i = 0; i < signatureArray.length; i++) {
+    signatureBinaryString += String.fromCharCode(signatureArray[i]);
+  }
+  return btoa(signatureBinaryString);
 }
 

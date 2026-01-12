@@ -37,6 +37,8 @@ export const useVeribanInvoiceSend = () => {
     mutationFn: async ({ 
       salesInvoiceId, 
       forceResend = false,
+      // UI'dan gelen zorla profile - DB'deki değeri override eder
+      requestedProfile,
       // E-Arşiv özel parametreleri
       invoiceTransportationType = 'ELEKTRONIK',
       isInvoiceCreatedAtDelivery = false,
@@ -45,12 +47,14 @@ export const useVeribanInvoiceSend = () => {
     }: { 
       salesInvoiceId: string; 
       forceResend?: boolean;
+      /** UI'dan gelen zorla profile - "E-Arşiv Gönder" butonundan */
+      requestedProfile?: 'EARSIVFATURA' | 'TEMELFATURA' | 'TICARIFATURA';
       invoiceTransportationType?: 'ELEKTRONIK' | 'KAGIT';
       isInvoiceCreatedAtDelivery?: boolean;
       isInternetSalesInvoice?: boolean;
       receiverMailAddresses?: string[];
     }) => {
-      logger.debug('🚀 [useVeribanInvoiceSend] Sending invoice to Veriban:', salesInvoiceId, 'forceResend:', forceResend);
+      logger.debug('🚀 [useVeribanInvoiceSend] Sending invoice to Veriban:', salesInvoiceId, 'forceResend:', forceResend, 'requestedProfile:', requestedProfile);
       
       // Önce fatura profilini belirle
       const { data: invoice } = await supabase
@@ -59,16 +63,21 @@ export const useVeribanInvoiceSend = () => {
         .eq('id', salesInvoiceId)
         .single();
       
-      // Profile belirleme: Mevcut değilse müşteri mükellef durumuna göre otomatik seç
-      let invoiceProfile = invoice?.invoice_profile;
+      // Profile belirleme sırası:
+      // 1. UI'dan gelen requestedProfile (en öncelikli - "E-Arşiv Gönder" butonundan)
+      // 2. DB'deki invoice_profile
+      // 3. Müşteri mükellef durumuna göre varsayılan
+      let invoiceProfile = requestedProfile || invoice?.invoice_profile;
       if (!invoiceProfile) {
         const isEInvoiceMukellef = invoice?.customers?.is_einvoice_mukellef;
         invoiceProfile = isEInvoiceMukellef ? 'TEMELFATURA' : 'EARSIVFATURA';
         logger.debug('📋 [useVeribanInvoiceSend] Otomatik profile seçildi:', invoiceProfile);
+      } else if (requestedProfile) {
+        logger.debug('📋 [useVeribanInvoiceSend] UI\'dan gelen requestedProfile kullanılıyor:', requestedProfile);
       }
       
       const isEArchive = invoiceProfile === 'EARSIVFATURA';
-      logger.debug('📋 [useVeribanInvoiceSend] İşlem tipi:', isEArchive ? 'E-Arşiv' : 'E-Fatura');
+      logger.debug('📋 [useVeribanInvoiceSend] İşlem tipi:', isEArchive ? 'E-Arşiv' : 'E-Fatura', '| Profile:', invoiceProfile);
       
       // GÖNDERİM BAŞLARKEN HEMEN DURUMU GÜNCELLE
       try {

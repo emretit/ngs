@@ -199,10 +199,49 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
     setDeleteDialogOpen(false);
   };
 
-  const handleSendEInvoice = async () => {
+  const handleSendEInvoice = async (forceEArchive?: boolean) => {
     if (!id) return;
     
     try {
+      // E-Arşiv mi E-Fatura mı belirleme
+      // forceEArchive parametresi butondan gelir, aksi halde mevcut duruma bakılır
+      const isEArchive = forceEArchive ?? (
+        invoice.invoice_profile === 'EARSIVFATURA' || 
+        invoice.fatura_tipi2 === 'e-arşiv' ||
+        invoice.customer?.is_einvoice_mukellef === false
+      );
+      
+      const targetProfile = isEArchive ? 'EARSIVFATURA' : 
+        (invoice.invoice_profile || 'TEMELFATURA');
+      
+      logger.debug('📋 [SalesInvoiceDetail] Gönderim türü belirlendi:', {
+        isEArchive,
+        targetProfile,
+        forceEArchive,
+        invoice_profile: invoice.invoice_profile,
+        customer_is_einvoice_mukellef: invoice.customer?.is_einvoice_mukellef
+      });
+      
+      // E-Arşiv ise ve profile henüz EARSIVFATURA değilse, önce DB'yi güncelle
+      if (isEArchive && invoice.invoice_profile !== 'EARSIVFATURA') {
+        logger.debug('📝 [SalesInvoiceDetail] invoice_profile EARSIVFATURA olarak güncelleniyor...');
+        
+        const { error: profileUpdateError } = await supabase
+          .from('sales_invoices')
+          .update({ invoice_profile: 'EARSIVFATURA' })
+          .eq('id', id);
+        
+        if (profileUpdateError) {
+          logger.error('❌ [SalesInvoiceDetail] invoice_profile güncellenemedi:', profileUpdateError);
+          toast.error('Fatura profili güncellenemedi');
+          return;
+        }
+        
+        // Local state'i güncelle
+        setInvoice((prev: any) => ({ ...prev, invoice_profile: 'EARSIVFATURA' }));
+        logger.debug('✅ [SalesInvoiceDetail] invoice_profile EARSIVFATURA olarak güncellendi');
+      }
+      
       // Fatura numarası kontrolü - tüm entegratörler için
       if (!invoice?.fatura_no) {
         logger.debug('📝 [SalesInvoiceDetail] Fatura numarası yok, otomatik üretiliyor...');
@@ -225,16 +264,19 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
           return;
         }
         
-        // Hangi formatı kullanacağımızı belirle
+        // Hangi formatı kullanacağımızı belirle - E-Arşiv için farklı format
         let formatKey = 'invoice_number_format';
         let checkVeriban = false;
         
         if (usingVeriban) {
-          formatKey = 'veriban_invoice_number_format';
+          // E-Arşiv için ayrı format key, E-Fatura için mevcut
+          formatKey = isEArchive ? 'earchive_invoice_number_format' : 'veriban_invoice_number_format';
           checkVeriban = true;
         } else if (usingNilvera) {
           formatKey = 'einvoice_number_format';
         }
+        
+        logger.debug('📝 [SalesInvoiceDetail] Numara formatı:', { formatKey, isEArchive, usingVeriban });
         
         // Otomatik fatura numarası üret
         const invoiceDate = invoice.fatura_tarihi ? new Date(invoice.fatura_tarihi) : new Date();
@@ -265,9 +307,13 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
         toast.success(`Fatura numarası oluşturuldu: ${autoInvoiceNumber}`);
       }
       
-      // E-fatura gönderimini başlat
+      // E-fatura/E-arşiv gönderimini başlat
       if (usingVeriban) {
-        sendVeribanInvoice({ salesInvoiceId: id });
+        // requestedProfile ile hook'a hangi profile'ın kullanılacağını bildir
+        sendVeribanInvoice({ 
+          salesInvoiceId: id,
+          requestedProfile: targetProfile as 'EARSIVFATURA' | 'TEMELFATURA' | 'TICARIFATURA'
+        });
       } else {
         sendNilveraInvoice(id);
       }
@@ -418,7 +464,7 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                 
                 return (
                   <Button
-                    onClick={handleSendEInvoice}
+                    onClick={() => handleSendEInvoice(isEArchive)}
                     disabled={isSending}
                     className={`gap-2 px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-semibold ${
                       isEArchive

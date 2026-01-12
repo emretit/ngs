@@ -179,25 +179,32 @@ serve(async (req) => {
 
     // Fatura numarası üretimi (E-Arşiv için EAR seri kodu)
     let invoiceNumber = invoice.fatura_no;
-    if (!invoiceNumber) {
+    
+    // E-Arşiv için seri kodu al (varsayılan EAR)
+    const { data: formatParam } = await supabase
+      .from('system_parameters')
+      .select('parameter_value')
+      .eq('parameter_key', 'earchive_invoice_number_format')
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+    
+    let earchiveSerie = formatParam?.parameter_value || 'EAR';
+    earchiveSerie = earchiveSerie.trim().toUpperCase().substring(0, 3);
+    if (!earchiveSerie || earchiveSerie.length !== 3) {
+      earchiveSerie = 'EAR';
+    }
+    
+    // ⭐ KRİTİK: Fatura numarası yoksa VEYA E-Arşiv serisi ile başlamıyorsa yeni numara üret
+    // Bu sayede FAT serili fatura E-Arşiv'e gönderilirken EAR serili numara alır
+    const needsNewNumber = !invoiceNumber || !invoiceNumber.startsWith(earchiveSerie);
+    
+    if (needsNewNumber) {
       console.log('📝 [E-Arşiv] Fatura numarası üretiliyor...');
+      console.log('📋 [E-Arşiv] Mevcut numara:', invoiceNumber || '(yok)');
+      console.log('📋 [E-Arşiv] Beklenen seri:', earchiveSerie);
       
       try {
-        // E-Arşiv için seri kodu al
-        const { data: formatParam } = await supabase
-          .from('system_parameters')
-          .select('parameter_value')
-          .eq('parameter_key', 'earchive_invoice_number_format')
-          .eq('company_id', profile.company_id)
-          .maybeSingle();
-        
-        let serie = formatParam?.parameter_value || 'EAR';
-        serie = serie.trim().toUpperCase().substring(0, 3);
-        
-        if (!serie || serie.length !== 3) {
-          serie = 'EAR';
-        }
-        
+        const serie = earchiveSerie;
         console.log('📋 [E-Arşiv] Seri Kodu:', serie);
         
         // Yıl

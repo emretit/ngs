@@ -23,6 +23,71 @@ export interface VeribanSoapResponse {
 }
 
 /**
+ * E-Arşiv Transfer Parameters
+ * E-Arşiv için özel parametreler
+ */
+export interface EArchiveTransferParams {
+  fileName: string;
+  fileDataType: string;
+  binaryData: string; // base64 ZIP
+  binaryDataHash: string; // MD5
+  customerAlias?: string;
+  isDirectSend: boolean;
+  integrationCode?: string;
+  // E-Arşiv özel parametreleri
+  invoiceTransportationType: 'ELEKTRONIK' | 'KAGIT';
+  isInvoiceCreatedAtDelivery?: boolean;
+  isInternetSalesInvoice?: boolean;
+  receiverMailAddresses?: string[];
+}
+
+/**
+ * Veriban Error Codes
+ * C# test kodundan alınan hata kodları
+ */
+export const VERIBAN_ERROR_CODES: Record<number, string> = {
+  5000: 'Sistem hatası',
+  5001: 'Parametre hatası',
+  5002: 'Giriş başarısız',
+  5003: 'Oturum hatası',
+  5004: 'Erişim hatası',
+  5101: 'Hash hatası',
+  5102: 'Arşiv ekleme hatası',
+  5103: 'Kuyruk ekleme hatası',
+  5201: 'İptal hatası',
+  5301: 'Kuyruk sorgulama hatası',
+  5302: 'Belge sorgulama hatası',
+  5401: 'Belge indirme hatası',
+  5501: 'İşlem hatası',
+};
+
+/**
+ * Veriban State Codes
+ * Fatura durum kodları
+ */
+export const VERIBAN_STATE_CODES: Record<number, string> = {
+  1: 'İşleniyor',
+  2: 'İşlenmeye Bekliyor',
+  3: 'İşleniyor',
+  4: 'Hatalı',
+  5: 'Başarılı',
+};
+
+/**
+ * Get human-readable error message from Veriban error code
+ */
+export function getVeribanErrorMessage(code: number): string {
+  return VERIBAN_ERROR_CODES[code] || `Bilinmeyen hata (kod: ${code})`;
+}
+
+/**
+ * Get human-readable state message from Veriban state code
+ */
+export function getVeribanStateMessage(code: number): string {
+  return VERIBAN_STATE_CODES[code] || `Bilinmeyen durum (kod: ${code})`;
+}
+
+/**
  * SOAP Client for Veriban Webservice
  */
 export class VeribanSoapClient {
@@ -272,6 +337,241 @@ export class VeribanSoapClient {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Transfer failed',
+      };
+    }
+  }
+
+  /**
+   * Transfer E-Archive Invoice File (E-Arşiv Fatura Gönderimi)
+   * E-Arşiv faturaları için özel parametreler içerir
+   * 
+   * C# örnek kodundan: TRANSFER_EARSIV_FATURA_TEST()
+   * 
+   * @param sessionCode - Oturum kodu
+   * @param params - E-Arşiv transfer parametreleri
+   * @param url - Webservice URL
+   */
+  static async transferEArchiveInvoice(
+    sessionCode: string,
+    params: EArchiveTransferParams,
+    url: string
+  ): Promise<VeribanSoapResponse> {
+    const {
+      fileName,
+      fileDataType,
+      binaryData,
+      binaryDataHash,
+      customerAlias = '',
+      isDirectSend,
+      integrationCode = '',
+      // E-Arşiv özel parametreleri
+      invoiceTransportationType = 'ELEKTRONIK',
+      isInvoiceCreatedAtDelivery = false,
+      isInternetSalesInvoice = false,
+      receiverMailAddresses = [],
+    } = params;
+
+    const fileDataTypeNum = fileDataType.toString();
+    const isDirectSendStr = isDirectSend ? 'true' : 'false';
+    const isCreatedAtDeliveryStr = isInvoiceCreatedAtDelivery ? 'true' : 'false';
+    const isInternetSalesStr = isInternetSalesInvoice ? 'true' : 'false';
+
+    // Mail adresleri için XML oluştur
+    const mailAddressesXml = receiverMailAddresses.length > 0 
+      ? receiverMailAddresses.map(mail => `<tem:string>${this.escapeXml(mail)}</tem:string>`).join('')
+      : '';
+
+    // E-Arşiv için genişletilmiş SOAP request
+    // NOT: Bu metod normal TransferSalesInvoiceFile ile aynı endpoint'i kullanır
+    // Fark UBL XML içindeki InvoiceProfile'da ve ek parametrelerde
+    const useIntegrationCodeMethod = !!integrationCode;
+    
+    const soapRequest = useIntegrationCodeMethod ?
+    `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:TransferSalesInvoiceFileWithIntegrationCode>
+      <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
+      <tem:transferFile>
+        <tem:FileNameWithExtension>${this.escapeXml(fileName)}</tem:FileNameWithExtension>
+        <tem:FileDataType>${fileDataTypeNum}</tem:FileDataType>
+        <tem:BinaryData>${binaryData}</tem:BinaryData>
+        <tem:BinaryDataHash>${this.escapeXml(binaryDataHash)}</tem:BinaryDataHash>
+        <tem:CustomerAlias>${this.escapeXml(customerAlias || '')}</tem:CustomerAlias>
+        <tem:IsDirectSend>${isDirectSendStr}</tem:IsDirectSend>
+        <tem:InvoiceTransportationType>${invoiceTransportationType}</tem:InvoiceTransportationType>
+        <tem:IsInvoiceCreatedAtDelivery>${isCreatedAtDeliveryStr}</tem:IsInvoiceCreatedAtDelivery>
+        <tem:IsInternetSalesInvoice>${isInternetSalesStr}</tem:IsInternetSalesInvoice>
+        ${mailAddressesXml ? `<tem:ReceiverMailTargetAddresses>${mailAddressesXml}</tem:ReceiverMailTargetAddresses>` : ''}
+      </tem:transferFile>
+      <tem:uniqueIntegrationCode>${this.escapeXml(integrationCode)}</tem:uniqueIntegrationCode>
+    </tem:TransferSalesInvoiceFileWithIntegrationCode>
+  </soapenv:Body>
+</soapenv:Envelope>` :
+    `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:TransferSalesInvoiceFile>
+      <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
+      <tem:transferFile>
+        <tem:FileNameWithExtension>${this.escapeXml(fileName)}</tem:FileNameWithExtension>
+        <tem:FileDataType>${fileDataTypeNum}</tem:FileDataType>
+        <tem:BinaryData>${binaryData}</tem:BinaryData>
+        <tem:BinaryDataHash>${this.escapeXml(binaryDataHash)}</tem:BinaryDataHash>
+        <tem:CustomerAlias>${this.escapeXml(customerAlias || '')}</tem:CustomerAlias>
+        <tem:IsDirectSend>${isDirectSendStr}</tem:IsDirectSend>
+        <tem:InvoiceTransportationType>${invoiceTransportationType}</tem:InvoiceTransportationType>
+        <tem:IsInvoiceCreatedAtDelivery>${isCreatedAtDeliveryStr}</tem:IsInvoiceCreatedAtDelivery>
+        <tem:IsInternetSalesInvoice>${isInternetSalesStr}</tem:IsInternetSalesInvoice>
+        ${mailAddressesXml ? `<tem:ReceiverMailTargetAddresses>${mailAddressesXml}</tem:ReceiverMailTargetAddresses>` : ''}
+      </tem:transferFile>
+    </tem:TransferSalesInvoiceFile>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+    try {
+      const soapAction = useIntegrationCodeMethod ? 'TransferSalesInvoiceFileWithIntegrationCode' : 'TransferSalesInvoiceFile';
+
+      console.log('📤 [E-Arşiv] TransferEArchiveInvoice SOAP Request:');
+      console.log('📄 SOAPAction:', soapAction);
+      console.log('📄 InvoiceTransportationType:', invoiceTransportationType);
+      console.log('📄 IsInternetSalesInvoice:', isInternetSalesStr);
+      console.log('📄 ReceiverMailAddresses:', receiverMailAddresses.join(', ') || '(yok)');
+
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': soapAction,
+        },
+        body: soapRequest,
+      });
+
+      console.log('📥 Response Status:', response.status);
+      const xmlText = await response.text();
+      console.log('📥 Response Body (first 2000 chars):', xmlText.substring(0, 2000));
+
+      return this.parseTransferResponse(xmlText);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'E-Archive Transfer failed',
+      };
+    }
+  }
+
+  /**
+   * Cancel E-Archive Invoice (E-Arşiv Fatura İptal)
+   * E-Arşiv faturaları iptal edilebilir (E-Fatura'dan farklı olarak)
+   * 
+   * C# örnek kodundan: FATURA_IPTAL_TEST()
+   * Metod: CancelSalesInvoiceWithInvoiceNumber
+   * 
+   * @param sessionCode - Oturum kodu
+   * @param params - İptal parametreleri
+   * @param url - Webservice URL
+   */
+  static async cancelEArchiveInvoice(
+    sessionCode: string,
+    params: {
+      invoiceNumber: string;
+      cancelDate?: string; // ISO format datetime
+    },
+    url: string
+  ): Promise<VeribanSoapResponse> {
+    const { invoiceNumber, cancelDate } = params;
+    
+    // Cancel date: eğer verilmemişse şu anki zaman
+    const cancelDateStr = cancelDate || new Date().toISOString();
+
+    const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:CancelSalesInvoiceWithInvoiceNumber>
+      <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
+      <tem:invoiceNumber>${this.escapeXml(invoiceNumber)}</tem:invoiceNumber>
+      <tem:cancelDate>${this.escapeXml(cancelDateStr)}</tem:cancelDate>
+    </tem:CancelSalesInvoiceWithInvoiceNumber>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+    try {
+      console.log('📤 [E-Arşiv] CancelEArchiveInvoice SOAP Request:');
+      console.log('📄 InvoiceNumber:', invoiceNumber);
+      console.log('📄 CancelDate:', cancelDateStr);
+
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': 'CancelSalesInvoiceWithInvoiceNumber',
+        },
+        body: soapRequest,
+      });
+
+      console.log('📥 Response Status:', response.status);
+      const xmlText = await response.text();
+      console.log('📥 Response Body:', xmlText.substring(0, 1000));
+
+      return this.parseCancelResponse(xmlText);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'E-Archive Cancel failed',
+      };
+    }
+  }
+
+  /**
+   * Parse cancel response XML
+   */
+  private static parseCancelResponse(xmlText: string): VeribanSoapResponse {
+    try {
+      // Check for SOAP fault first
+      const faultCodeMatch = xmlText.match(/<FaultCode[^>]*>(.*?)<\/FaultCode>/i);
+      const faultDescMatch = xmlText.match(/<FaultDescription[^>]*>(.*?)<\/FaultDescription>/i);
+      const faultStringMatch = xmlText.match(/<faultstring[^>]*>(.*?)<\/faultstring>/i);
+      const soapFaultMatch = xmlText.match(/<soap:Fault[^>]*>[\s\S]*?<soap:faultstring[^>]*>(.*?)<\/soap:faultstring>/i);
+
+      if (faultCodeMatch || faultDescMatch || faultStringMatch || soapFaultMatch) {
+        const errorMsg = faultDescMatch?.[1] || faultStringMatch?.[1] || soapFaultMatch?.[1] || faultCodeMatch?.[1] || 'Bilinmeyen SOAP hatası';
+        console.error('❌ SOAP Fault detected in cancel:', errorMsg);
+        return {
+          success: false,
+          error: errorMsg.trim(),
+        };
+      }
+
+      // Check for OperationCompleted
+      const operationCompletedMatch = xmlText.match(/<OperationCompleted[^>]*>(.*?)<\/OperationCompleted>/);
+      const operationCompleted = operationCompletedMatch ? operationCompletedMatch[1].trim().toLowerCase() === 'true' : false;
+
+      // Get description
+      const descriptionMatch = xmlText.match(/<Description[^>]*>(.*?)<\/Description>/);
+      const description = descriptionMatch ? descriptionMatch[1].trim() : '';
+
+      if (!operationCompleted) {
+        return {
+          success: false,
+          error: description || 'İptal işlemi başarısız',
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          operationCompleted,
+          description,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'XML parse error',
       };
     }
   }
@@ -1631,6 +1931,7 @@ export class VeribanSoapClient {
 
   /**
    * Parse invoice status response XML (for Sales Invoice)
+   * E-Arşiv için InvoiceProfile, GIBReportStateCode, MailStateCode alanları eklendi
    */
   private static parseInvoiceStatusResponse(xmlText: string): VeribanSoapResponse {
     try {
@@ -1648,6 +1949,50 @@ export class VeribanSoapClient {
 
       const answerTypeCodeMatch = xmlText.match(/<AnswerTypeCode[^>]*>(.*?)<\/AnswerTypeCode>/);
       const answerTypeCode = answerTypeCodeMatch ? parseInt(answerTypeCodeMatch[1].trim()) : 0;
+
+      // ========================================
+      // YENİ: InvoiceProfile alanını parse et
+      // E-Arşiv ve E-Fatura ayrımı için kritik
+      // ========================================
+      let invoiceProfile = '';
+      
+      // Pattern 1: Standard <InvoiceProfile>...</InvoiceProfile>
+      const invoiceProfileMatch1 = xmlText.match(/<InvoiceProfile[^>]*>(.*?)<\/InvoiceProfile>/i);
+      if (invoiceProfileMatch1) {
+        invoiceProfile = invoiceProfileMatch1[1].trim();
+      }
+      
+      // Pattern 2: With namespace <tem:InvoiceProfile>...</tem:InvoiceProfile>
+      if (!invoiceProfile) {
+        const invoiceProfileMatch2 = xmlText.match(/<tem:InvoiceProfile[^>]*>(.*?)<\/tem:InvoiceProfile>/i);
+        if (invoiceProfileMatch2) {
+          invoiceProfile = invoiceProfileMatch2[1].trim();
+        }
+      }
+      
+      // Pattern 3: Any namespace <ns:InvoiceProfile>...</ns:InvoiceProfile>
+      if (!invoiceProfile) {
+        const invoiceProfileMatch3 = xmlText.match(/<[^:>]*:InvoiceProfile[^>]*>(.*?)<\/[^:>]*:InvoiceProfile>/i);
+        if (invoiceProfileMatch3) {
+          invoiceProfile = invoiceProfileMatch3[1].trim();
+        }
+      }
+
+      // ========================================
+      // YENİ: E-Arşiv özel alanlarını parse et
+      // GIB rapor durumu ve mail durumu
+      // ========================================
+      const gibReportStateCodeMatch = xmlText.match(/<GIBReportStateCode[^>]*>(.*?)<\/GIBReportStateCode>/i);
+      const gibReportStateCode = gibReportStateCodeMatch ? parseInt(gibReportStateCodeMatch[1].trim()) : null;
+
+      const gibReportStateNameMatch = xmlText.match(/<GIBReportStateName[^>]*>(.*?)<\/GIBReportStateName>/i);
+      const gibReportStateName = gibReportStateNameMatch ? gibReportStateNameMatch[1].trim() : '';
+
+      const mailStateCodeMatch = xmlText.match(/<MailStateCode[^>]*>(.*?)<\/MailStateCode>/i);
+      const mailStateCode = mailStateCodeMatch ? parseInt(mailStateCodeMatch[1].trim()) : null;
+
+      const mailStateNameMatch = xmlText.match(/<MailStateName[^>]*>(.*?)<\/MailStateName>/i);
+      const mailStateName = mailStateNameMatch ? mailStateNameMatch[1].trim() : '';
 
       // Look for InvoiceNumber in the response (Veriban may return it in status response)
       // NOTE: Sadece açıkça InvoiceNumber tag'i varsa parse ediyoruz
@@ -1705,6 +2050,9 @@ export class VeribanSoapClient {
       const message = messageMatch ? messageMatch[1].trim() : '';
 
       console.log('📋 [parseInvoiceStatusResponse] InvoiceNumber (parsed):', invoiceNumber);
+      console.log('📋 [parseInvoiceStatusResponse] InvoiceProfile (parsed):', invoiceProfile || '(bulunamadı)');
+      console.log('📋 [parseInvoiceStatusResponse] GIBReportStateCode:', gibReportStateCode);
+      console.log('📋 [parseInvoiceStatusResponse] MailStateCode:', mailStateCode);
       console.log('📋 [parseInvoiceStatusResponse] ErrorMessage:', errorMessage);
       console.log('📋 [parseInvoiceStatusResponse] Message:', message);
       console.log('📋 [parseInvoiceStatusResponse] StateDescription:', stateDescription);
@@ -1721,6 +2069,7 @@ export class VeribanSoapClient {
         console.log('📊 AnswerStateCode:', answerStateCode);
         console.log('📊 AnswerTypeCode:', answerTypeCode);
         console.log('📋 InvoiceNumber:', invoiceNumber || '(bulunamadı)');
+        console.log('📋 InvoiceProfile:', invoiceProfile || '(bulunamadı)');
         console.log('\n📄 [parseInvoiceStatusResponse] Full XML Response:');
         console.log(xmlText);
         console.log('='.repeat(80) + '\n');
@@ -1775,6 +2124,12 @@ export class VeribanSoapClient {
           answerStateCode,
           answerTypeCode,
           invoiceNumber, // Add InvoiceNumber to response
+          invoiceProfile, // YENİ: TEMELFATURA, TICARIFATURA, EARSIVFATURA
+          // E-Arşiv özel alanları
+          gibReportStateCode,
+          gibReportStateName,
+          mailStateCode,
+          mailStateName,
           errorMessage, // Add ErrorMessage for detailed error info
           message, // Add Message for additional info
         },

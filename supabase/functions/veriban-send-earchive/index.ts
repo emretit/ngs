@@ -376,22 +376,27 @@ serve(async (req) => {
     if (!finalXmlContent) {
       console.log('📝 [E-Arşiv] UBL XML oluşturuluyor...');
       
-      const ublResult = generateUBLTRXML(invoice, invoice.companies, invoice.customers, invoice.sales_invoice_items);
-      
-      if (!ublResult.success || !ublResult.xml) {
+      try {
+        // Invoice objesi içinde companies, customers, sales_invoice_items zaten var
+        // generateUBLTRXML tek invoice objesi ve opsiyonel ettn alıyor
+        finalXmlContent = generateUBLTRXML(invoice, ettn);
+        
+        // ETTN yoksa UUID oluştur
+        if (!ettn) {
+          ettn = crypto.randomUUID();
+        }
+        
+        console.log('✅ [E-Arşiv] UBL XML oluşturuldu, ETTN:', ettn);
+      } catch (ublError) {
+        console.error('❌ [E-Arşiv] UBL XML oluşturma hatası:', ublError);
         return new Response(JSON.stringify({
           success: false,
-          error: ublResult.error || 'UBL XML oluşturulamadı'
+          error: `UBL XML oluşturulamadı: ${ublError instanceof Error ? ublError.message : String(ublError)}`
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      
-      finalXmlContent = ublResult.xml;
-      ettn = ublResult.ettn || '';
-      
-      console.log('✅ [E-Arşiv] UBL XML oluşturuldu, ETTN:', ettn);
     }
 
     // Customer alias belirle

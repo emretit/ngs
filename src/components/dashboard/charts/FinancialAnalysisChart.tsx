@@ -300,7 +300,7 @@ export const FinancialAnalysisChart = memo(({ data, isLoading }: FinancialAnalys
         <div className="min-w-0 w-full">
           {chartType === 'financial' ? (
             <div id="financial-chart-container" className="h-[450px] w-full min-w-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
                 <ComposedChart 
                   data={comboChartData} 
                   margin={{ top: 20, right: 40, bottom: 60, left: 20 }}

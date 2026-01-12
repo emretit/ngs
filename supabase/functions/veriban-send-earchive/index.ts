@@ -271,17 +271,29 @@ serve(async (req) => {
                       const veribanInvoiceNumber = statusResult.data.invoiceNumber;
                       const veribanInvoiceProfile = statusResult.data.invoiceProfile || '';
                       
-                      // Sadece E-Arşiv faturaları kontrol et
+                      // ⭐ ÖNEMLİ: Sadece E-Arşiv faturaları kontrol et
+                      // E-Fatura ve E-Arşiv numaraları karışmamalı
                       if (veribanInvoiceProfile !== 'EARSIVFATURA') {
+                        console.log('⏭️ [E-Arşiv] E-Arşiv değil, atlanıyor:', {
+                          invoiceNumber: veribanInvoiceNumber,
+                          profile: veribanInvoiceProfile,
+                          expected: 'EARSIVFATURA'
+                        });
                         continue;
                       }
                       
+                      // GİB formatı kontrolü: 16 karakter ve prefix ile başlamalı
                       if (veribanInvoiceNumber.startsWith(prefix) && veribanInvoiceNumber.length === 16) {
                         const sequencePart = veribanInvoiceNumber.substring(prefix.length);
                         const num = parseInt(sequencePart);
                         if (!isNaN(num) && num > maxSequence) {
                           maxSequence = num;
-                          console.log('✅ [E-Arşiv] Veriban\'dan daha yüksek numara bulundu:', veribanInvoiceNumber);
+                          console.log('✅ [E-Arşiv] Veriban\'dan daha yüksek numara bulundu:', {
+                            invoiceNumber: veribanInvoiceNumber,
+                            profile: veribanInvoiceProfile,
+                            sequence: num,
+                            prefix
+                          });
                         }
                       }
                     }

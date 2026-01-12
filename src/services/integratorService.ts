@@ -28,9 +28,28 @@ export class IntegratorService {
    */
   static async getSelectedIntegrator(): Promise<IntegratorType> {
     try {
+      // Get current user's company_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        logger.debug('Kullanıcı oturumu bulunamadı, varsayılan olarak Nilvera kullanılıyor');
+        return 'nilvera';
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        logger.debug('Company ID bulunamadı, varsayılan olarak Nilvera kullanılıyor');
+        return 'nilvera';
+      }
+
       const { data, error } = await supabase
         .from('integrator_settings')
         .select('selected_integrator')
+        .eq('company_id', profile.company_id)
         .single();
 
       if (error) {

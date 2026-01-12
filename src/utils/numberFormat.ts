@@ -64,12 +64,12 @@ export const formatNumber = (
 ): string => {
   const now = date || new Date();
 
-  // GİB formatı kontrolü: invoice_number_format, einvoice_number_format ve veriban_invoice_number_format için özel işlem
-  if (formatKey === 'invoice_number_format' || formatKey === 'einvoice_number_format' || formatKey === 'veriban_invoice_number_format') {
+  // GİB formatı kontrolü: invoice_number_format, einvoice_number_format, veriban_invoice_number_format ve earchive_invoice_number_format için özel işlem
+  if (formatKey === 'invoice_number_format' || formatKey === 'einvoice_number_format' || formatKey === 'veriban_invoice_number_format' || formatKey === 'earchive_invoice_number_format') {
     let serie: string;
     
-    // einvoice_number_format ve veriban_invoice_number_format için format sadece seri kodu olabilir (örn: 'FAT')
-    if ((formatKey === 'einvoice_number_format' || formatKey === 'veriban_invoice_number_format') && format.length === 3 && /^[A-Z0-9]{3}$/.test(format)) {
+    // einvoice_number_format, veriban_invoice_number_format ve earchive_invoice_number_format için format sadece seri kodu olabilir (örn: 'FAT', 'EAR')
+    if ((formatKey === 'einvoice_number_format' || formatKey === 'veriban_invoice_number_format' || formatKey === 'earchive_invoice_number_format') && format.length === 3 && /^[A-Z0-9]{3}$/.test(format)) {
       serie = format;
     } else {
       // Format'tan seri kısmını çıkar (tire ve placeholder'ları kaldır)
@@ -244,6 +244,7 @@ const getTableInfo = (formatKey: string): { table: string; column: string } | nu
     'proposal_number_format': { table: 'proposals', column: 'number' },
     'invoice_number_format': { table: 'sales_invoices', column: 'fatura_no' },
     'veriban_invoice_number_format': { table: 'sales_invoices', column: 'fatura_no' },
+    'earchive_invoice_number_format': { table: 'sales_invoices', column: 'fatura_no' }, // E-Arşiv için
     'service_number_format': { table: 'service_requests', column: 'service_number' },
     'order_number_format': { table: 'orders', column: 'order_number' },
     'customer_number_format': { table: 'customers', column: 'number' }, // customers tablosunda number kolonu yoksa null dönecek
@@ -317,13 +318,13 @@ const getMaxNumberFromDatabase = async (
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
     const day = now.getDate().toString().padStart(2, '0');
     
-    // GİB formatı için özel işlem: invoice_number_format, einvoice_number_format ve veriban_invoice_number_format ise
-    if (formatKey === 'invoice_number_format' || formatKey === 'einvoice_number_format' || formatKey === 'veriban_invoice_number_format') {
+    // GİB formatı için özel işlem: invoice_number_format, einvoice_number_format, veriban_invoice_number_format ve earchive_invoice_number_format
+    if (formatKey === 'invoice_number_format' || formatKey === 'einvoice_number_format' || formatKey === 'veriban_invoice_number_format' || formatKey === 'earchive_invoice_number_format') {
       // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
       let serie: string;
       
-      // einvoice_number_format ve veriban_invoice_number_format için format sadece seri kodu olabilir (örn: 'FAT')
-      if ((formatKey === 'einvoice_number_format' || formatKey === 'veriban_invoice_number_format') && format.length === 3 && /^[A-Z0-9]{3}$/.test(format)) {
+      // einvoice_number_format, veriban_invoice_number_format ve earchive_invoice_number_format için format sadece seri kodu olabilir (örn: 'FAT', 'EAR')
+      if ((formatKey === 'einvoice_number_format' || formatKey === 'veriban_invoice_number_format' || formatKey === 'earchive_invoice_number_format') && format.length === 3 && /^[A-Z0-9]{3}$/.test(format)) {
         serie = format;
       } else {
         // Format'tan seri kısmını çıkar
@@ -437,13 +438,16 @@ export const generateNumber = async (
   checkVeriban: boolean = false
 ): Promise<string> => {
   try {
+    logger.debug('🔢 [generateNumber] Başlıyor:', { formatKey, companyId, checkVeriban });
     const format = await getNumberFormat(formatKey, companyId);
-    
+    logger.debug('📋 [generateNumber] Format alındı:', format);
+
     // Önce veritabanındaki en yüksek numarayı bul
     let maxNumber = await getMaxNumberFromDatabase(formatKey, companyId, customDate);
+    logger.debug('📊 [generateNumber] DB\'den max numara:', maxNumber);
     
-    // Veriban entegrasyonu aktifse ve veriban_invoice_number_format ise, Veriban'dan da kontrol et
-    if (checkVeriban && formatKey === 'veriban_invoice_number_format' && companyId) {
+    // Veriban entegrasyonu aktifse ve veriban_invoice_number_format veya earchive_invoice_number_format ise, Veriban'dan da kontrol et
+    if (checkVeriban && (formatKey === 'veriban_invoice_number_format' || formatKey === 'earchive_invoice_number_format') && companyId) {
       try {
         const { 
           getLastVeribanInvoiceNumber, 
@@ -496,12 +500,13 @@ export const generateNumber = async (
     }
 
     // Eğer 100 denemede uygun numara bulunamazsa, fallback
-    logger.warn('Uygun numara bulunamadı, fallback kullanılıyor');
-    return formatNumber(format, nextNumber, customDate);
+    logger.warn('⚠️ [generateNumber] Uygun numara bulunamadı, fallback kullanılıyor');
+    return formatNumber(format, nextNumber, customDate, formatKey);
   } catch (error) {
-    logger.error('Numara üretilirken hata:', error);
-    // Fallback olarak basit bir numara üret
-    return `AUTO-${Date.now()}`;
+    logger.error('❌ [generateNumber] Numara üretilirken hata:', error);
+    // E-Arşiv veya E-Fatura için sadece seri kodunu döndürme
+    // Bunun yerine hata fırlat
+    throw error;
   }
 };
 

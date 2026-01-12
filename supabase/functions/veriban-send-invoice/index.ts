@@ -772,6 +772,12 @@ serve(async (req) => {
       // Öncelik: Bizim oluşturduğumuz numara > Veriban'dan dönen numara
       // Çünkü bizim numara invoice_profile'a göre doğru seri kodu kullanıyor (EAR/NGS)
       
+      console.log('🔍 [Debug] Fatura numarası kontrolü:', {
+        invoiceFaturaNo: invoice.fatura_no,
+        veribanInvoiceNumber: veribanInvoiceNumber,
+        invoiceProfile: finalInvoiceProfile
+      });
+      
       if (invoice.fatura_no) {
         // Bizim oluşturduğumuz fatura numarası varsa, onu koru
         console.log('✅ [Veriban Send] Mevcut fatura numarası korunuyor:', invoice.fatura_no);

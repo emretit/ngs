@@ -25,7 +25,6 @@ import { useEInvoice } from "@/hooks/useEInvoice";
 import { useVeribanInvoice } from "@/hooks/useVeribanInvoice";
 import { IntegratorService } from "@/services/integratorService";
 import { useNilveraCompanyInfo } from "@/hooks/useNilveraCompanyInfo";
-import { generateInvoiceNumber } from "@/utils/invoiceNumberGenerator";
 
 // Constants
 const DEFAULT_VAT_PERCENTAGE = 18;
@@ -869,30 +868,11 @@ const CreateSalesInvoice = () => {
       const cleanedInternetInfo = Object.keys(eInvoiceData.internet_info || {}).length > 0 ? eInvoiceData.internet_info : null;
       const cleanedReturnInvoiceInfo = Object.keys(eInvoiceData.return_invoice_info || {}).length > 0 ? eInvoiceData.return_invoice_info : null;
 
-      // 🆕 Fatura numarası - manuel girilmiş ise kullan, yoksa otomatik oluştur
-      let finalInvoiceNumber = invoiceData.invoice_number;
+      // Fatura numarası - manuel girilmiş ise kullan, yoksa null bırak
+      // Numara e-fatura/e-arşiv gönderildiğinde backend tarafından otomatik üretilecek
+      let finalInvoiceNumber = invoiceData.invoice_number || null;
       
-      if (!finalInvoiceNumber && userData?.company_id) {
-        logger.debug('📝 [CreateSalesInvoice] Fatura numarası otomatik oluşturuluyor...', { 
-          invoice_profile: invoiceData.invoice_profile,
-          company_id: userData.company_id 
-        });
-        
-        // invoice_profile'a göre doğru seri kodu ile fatura numarası oluştur
-        finalInvoiceNumber = await generateInvoiceNumber({
-          invoiceProfile: invoiceData.invoice_profile,
-          companyId: userData.company_id
-        });
-        
-        if (finalInvoiceNumber) {
-          logger.debug('✅ [CreateSalesInvoice] Fatura numarası otomatik oluşturuldu:', finalInvoiceNumber);
-          toast.success(`Fatura numarası atandı: ${finalInvoiceNumber}`);
-        } else {
-          logger.warn('⚠️ [CreateSalesInvoice] Fatura numarası oluşturulamadı, boş bırakılıyor');
-        }
-      }
-      
-      logger.debug('📝 [CreateSalesInvoice] Fatura kaydediliyor, numara:', finalInvoiceNumber || 'yok');
+      logger.debug('📝 [CreateSalesInvoice] Fatura kaydediliyor, numara:', finalInvoiceNumber || 'yok (gönderildiğinde backend tarafından atanacak)');
 
       // Determine fatura_tipi2 based on invoice_profile
       // E-fatura mükellefi olmayan müşterilere e-arşiv faturası kesilir

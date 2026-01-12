@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useMemo, forwardRef } from "react";
 import { 
   ComposedChart,
   Line,
@@ -66,7 +66,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export const SalesAnalysisChart = memo(({ data, timePeriod }: SalesAnalysisChartProps) => {
+export const SalesAnalysisChart = memo(forwardRef<HTMLDivElement, SalesAnalysisChartProps>(
+  ({ data, timePeriod }, ref) => {
   const chartData = data || [];
 
   // Ortalama satış değeri (reference line için)
@@ -78,15 +79,15 @@ export const SalesAnalysisChart = memo(({ data, timePeriod }: SalesAnalysisChart
 
   if (!chartData || chartData.length === 0) {
     return (
-      <div className="h-[450px] w-full flex items-center justify-center">
+      <div ref={ref} className="h-[450px] w-full flex items-center justify-center">
         <p className="text-muted-foreground">Veri bulunamadı</p>
       </div>
     );
   }
 
   return (
-    <div className="h-[450px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div ref={ref} className="h-[450px] w-full min-w-[300px] min-h-[300px]">
+      <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
         <ComposedChart 
           data={chartData} 
           margin={{ top: 20, right: 40, bottom: 60, left: 20 }}
@@ -264,7 +265,7 @@ export const SalesAnalysisChart = memo(({ data, timePeriod }: SalesAnalysisChart
       </ResponsiveContainer>
     </div>
   );
-});
+}));
 
 SalesAnalysisChart.displayName = "SalesAnalysisChart";
 

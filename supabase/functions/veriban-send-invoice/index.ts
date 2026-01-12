@@ -768,26 +768,28 @@ serve(async (req) => {
         updated_at: new Date().toISOString(),
       };
 
-      // Eğer Veriban'dan fatura numarası döndüyse, fatura_no alanına kaydet
-      // Öncelik: Veriban'dan dönen numara > Mevcut fatura numarası
-      if (veribanInvoiceNumber) {
-        // Veriban'dan dönen numara mevcut numaradan farklıysa güncelle
-        if (!invoice.fatura_no || invoice.fatura_no !== veribanInvoiceNumber) {
-          updateData.fatura_no = veribanInvoiceNumber;
-          xmlDataUpdate.veribanInvoiceNumber = veribanInvoiceNumber;
-          console.log('✅ [Veriban Send] Veriban fatura numarası fatura_no alanına kaydedildi:', veribanInvoiceNumber);
-        } else {
-          console.log('ℹ️ [Veriban Send] Fatura numarası zaten kayıtlı:', veribanInvoiceNumber);
-          xmlDataUpdate.veribanInvoiceNumber = veribanInvoiceNumber;
+      // 🆕 Fatura numarası yönetimi:
+      // Öncelik: Bizim oluşturduğumuz numara > Veriban'dan dönen numara
+      // Çünkü bizim numara invoice_profile'a göre doğru seri kodu kullanıyor (EAR/NGS)
+      
+      if (invoice.fatura_no) {
+        // Bizim oluşturduğumuz fatura numarası varsa, onu koru
+        console.log('✅ [Veriban Send] Mevcut fatura numarası korunuyor:', invoice.fatura_no);
+        xmlDataUpdate.veribanInvoiceNumber = invoice.fatura_no;
+        
+        // Veriban'dan farklı bir numara döndüyse, onu da xml_data'ya kaydet (referans için)
+        if (veribanInvoiceNumber && veribanInvoiceNumber !== invoice.fatura_no) {
+          xmlDataUpdate.veribanReturnedNumber = veribanInvoiceNumber;
+          console.log('ℹ️ [Veriban Send] Veriban farklı bir numara döndürdü (referans için kaydedildi):', veribanInvoiceNumber);
         }
+      } else if (veribanInvoiceNumber) {
+        // Bizim numara yoksa ama Veriban'dan numara döndüyse, onu kullan
+        updateData.fatura_no = veribanInvoiceNumber;
+        xmlDataUpdate.veribanInvoiceNumber = veribanInvoiceNumber;
+        console.log('✅ [Veriban Send] Veriban fatura numarası kullanılıyor:', veribanInvoiceNumber);
       } else {
-        // Veriban'dan numara dönmediyse, mevcut numarayı koru
-        if (invoice.fatura_no) {
-          console.log('ℹ️ [Veriban Send] Veriban\'dan fatura numarası dönmedi, mevcut numara korunuyor:', invoice.fatura_no);
-          xmlDataUpdate.veribanInvoiceNumber = invoice.fatura_no;
-        } else {
-          console.warn('⚠️ [Veriban Send] Veriban\'dan fatura numarası dönmedi ve mevcut fatura numarası da yok. Fatura henüz işlenmemiş olabilir.');
-        }
+        // Hiçbir numara yoksa uyarı ver
+        console.warn('⚠️ [Veriban Send] Ne bizim ne de Veriban\'dan fatura numarası var. Fatura henüz işlenmemiş olabilir.');
       }
 
       const { error: updateError } = await supabase

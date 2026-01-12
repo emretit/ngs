@@ -103,6 +103,9 @@ verify_jwt = true
 [functions.veriban-send-invoice]
 verify_jwt = true
 
+[functions.veriban-send-earchive]
+verify_jwt = true
+
 [functions.send-push-notification]
 verify_jwt = false
 

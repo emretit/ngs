@@ -36,22 +36,49 @@ export const useVeribanInvoiceSend = () => {
   const sendInvoiceMutation = useMutation({
     mutationFn: async ({ 
       salesInvoiceId, 
-      forceResend = false 
+      forceResend = false,
+      // E-Arşiv özel parametreleri
+      invoiceTransportationType = 'ELEKTRONIK',
+      isInvoiceCreatedAtDelivery = false,
+      isInternetSalesInvoice = false,
+      receiverMailAddresses = [],
     }: { 
       salesInvoiceId: string; 
-      forceResend?: boolean 
+      forceResend?: boolean;
+      invoiceTransportationType?: 'ELEKTRONIK' | 'KAGIT';
+      isInvoiceCreatedAtDelivery?: boolean;
+      isInternetSalesInvoice?: boolean;
+      receiverMailAddresses?: string[];
     }) => {
       logger.debug('🚀 [useVeribanInvoiceSend] Sending invoice to Veriban:', salesInvoiceId, 'forceResend:', forceResend);
       
+      // Önce fatura profilini belirle
+      const { data: invoice } = await supabase
+        .from('sales_invoices')
+        .select('invoice_profile, customers(is_einvoice_mukellef)')
+        .eq('id', salesInvoiceId)
+        .single();
+      
+      // Profile belirleme: Mevcut değilse müşteri mükellef durumuna göre otomatik seç
+      let invoiceProfile = invoice?.invoice_profile;
+      if (!invoiceProfile) {
+        const isEInvoiceMukellef = invoice?.customers?.is_einvoice_mukellef;
+        invoiceProfile = isEInvoiceMukellef ? 'TEMELFATURA' : 'EARSIVFATURA';
+        logger.debug('📋 [useVeribanInvoiceSend] Otomatik profile seçildi:', invoiceProfile);
+      }
+      
+      const isEArchive = invoiceProfile === 'EARSIVFATURA';
+      logger.debug('📋 [useVeribanInvoiceSend] İşlem tipi:', isEArchive ? 'E-Arşiv' : 'E-Fatura');
+      
       // GÖNDERİM BAŞLARKEN HEMEN DURUMU GÜNCELLE
-      // Bu sayede kullanıcı arayüzde hemen değişikliği görür
       try {
         const { error: updateError } = await supabase
           .from('sales_invoices')
           .update({ 
-            einvoice_status: 'sending', // Gönderiliyor durumuna çek
-            elogo_status: 3, // StateCode 3 = Gönderim listesinde
-            durum: 'gonderildi' // Fatura durumu da "gönderildi" olsun
+            einvoice_status: 'sending',
+            elogo_status: 3,
+            durum: 'gonderildi',
+            invoice_profile: invoiceProfile, // Profile'ı da kaydet
           })
           .eq('id', salesInvoiceId);
         
@@ -59,7 +86,6 @@ export const useVeribanInvoiceSend = () => {
           logger.error('⚠️ [useVeribanInvoiceSend] Durum güncelleme hatası:', updateError);
         } else {
           logger.debug('✅ [useVeribanInvoiceSend] Fatura durumu "sending" (StateCode=3) olarak güncellendi');
-          // Hemen query'leri yenile
           queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
           queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
         }
@@ -71,16 +97,31 @@ export const useVeribanInvoiceSend = () => {
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
           reject(new Error('Fatura gönderimi zaman aşımına uğradı. İşlem çok uzun sürüyor. Lütfen durumu kontrol edin.'));
-        }, 30000); // 30 saniye
+        }, 30000);
       });
       
+      // E-Arşiv veya E-Fatura edge function'ını seç
+      const functionName = isEArchive ? 'veriban-send-earchive' : 'veriban-send-invoice';
+      logger.debug('📨 [useVeribanInvoiceSend] Çağrılacak fonksiyon:', functionName);
+      
+      // Request body hazırla
+      const requestBody: any = { 
+        invoiceId: salesInvoiceId,
+        isDirectSend: true,
+        forceResend: forceResend,
+      };
+      
+      // E-Arşiv için özel parametreleri ekle
+      if (isEArchive) {
+        requestBody.invoiceTransportationType = invoiceTransportationType;
+        requestBody.isInvoiceCreatedAtDelivery = isInvoiceCreatedAtDelivery;
+        requestBody.isInternetSalesInvoice = isInternetSalesInvoice;
+        requestBody.receiverMailAddresses = receiverMailAddresses;
+      }
+      
       // Race between the function call and timeout
-      const invokePromise = supabase.functions.invoke('veriban-send-invoice', {
-        body: { 
-          invoiceId: salesInvoiceId,
-          isDirectSend: true, // Direkt GİB'e gönder
-          forceResend: forceResend, // Kullanıcı onayı ile zorla tekrar gönder
-        }
+      const invokePromise = supabase.functions.invoke(functionName, {
+        body: requestBody
       });
       
       const result = await Promise.race([
@@ -201,7 +242,8 @@ export const useVeribanInvoiceSend = () => {
           logger.error('⚠️ [useVeribanInvoiceSend] Başarılı gönderim sonrası durum güncelleme hatası:', err);
         }
         
-        toast.success('E-fatura başarıyla Veriban sistemine gönderildi');
+        const isEArchive = data?.invoiceProfile === 'EARSIVFATURA';
+        toast.success(isEArchive ? 'E-Arşiv fatura başarıyla gönderildi' : 'E-Fatura başarıyla gönderildi');
         // E-fatura durumunu ve satış faturaları listesini yenile
         queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
         queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });

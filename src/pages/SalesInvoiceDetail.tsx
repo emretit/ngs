@@ -131,6 +131,16 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
       const invoiceData = await fetchInvoiceById(id!);
       setInvoice(invoiceData);
       
+      // Debug: Fatura tipi bilgilerini logla
+      logger.debug('📋 [SalesInvoiceDetail] Invoice loaded:', {
+        invoice_profile: invoiceData?.invoice_profile,
+        fatura_tipi2: invoiceData?.fatura_tipi2,
+        customer_is_einvoice_mukellef: invoiceData?.customer?.is_einvoice_mukellef,
+        willShowEArchive: invoiceData?.invoice_profile === 'EARSIVFATURA' || 
+                          invoiceData?.fatura_tipi2 === 'e-arşiv' ||
+                          invoiceData?.customer?.is_einvoice_mukellef === false
+      });
+      
       // Set customer_id in form when invoice is loaded
       if (invoiceData?.customer_id) {
         form.setValue("customer_id", invoiceData.customer_id);
@@ -398,26 +408,40 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                 </Badge>
               </div>
               
-              {/* E-Fatura Gönder Butonu */}
-              {(!invoice.einvoice_status || invoice.einvoice_status === 'draft' || invoice.einvoice_status === 'error') && (
-                <Button
-                  onClick={handleSendEInvoice}
-                  disabled={isSending}
-                  className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
-                >
-                  {isSending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Gönderiliyor...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4" />
-                      <span>E-Fatura Gönder</span>
-                    </>
-                  )}
-                </Button>
-              )}
+              {/* E-Fatura/E-Arşiv Gönder Butonu - Dinamik Metin */}
+              {(!invoice.einvoice_status || invoice.einvoice_status === 'draft' || invoice.einvoice_status === 'error') && (() => {
+                // Fatura tipini belirle: invoice_profile, fatura_tipi2 veya müşteri bilgisine göre
+                const isEArchive = 
+                  invoice.invoice_profile === 'EARSIVFATURA' || 
+                  invoice.fatura_tipi2 === 'e-arşiv' ||
+                  (invoice.customer?.is_einvoice_mukellef === false);
+                
+                return (
+                  <Button
+                    onClick={handleSendEInvoice}
+                    disabled={isSending}
+                    className={`gap-2 px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-semibold ${
+                      isEArchive
+                        ? 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white'
+                        : 'bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white'
+                    }`}
+                  >
+                    {isSending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Gönderiliyor...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        <span>
+                          {isEArchive ? 'E-Arşiv Gönder' : 'E-Fatura Gönder'}
+                        </span>
+                      </>
+                    )}
+                  </Button>
+                );
+              })()}
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

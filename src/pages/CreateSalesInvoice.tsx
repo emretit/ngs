@@ -349,10 +349,21 @@ const CreateSalesInvoice = () => {
           }));
           
           // Kullanıcıya bilgi ver
-          const message = selected.is_einvoice_mukellef 
+          const message = selected.is_einvoice_mukellef
             ? `✅ Müşteri e-fatura mükellefi - E-Fatura (${autoSelectedProfile}) otomatik seçildi`
             : `ℹ️ Müşteri e-fatura mükellefi değil - E-Arşiv Fatura (${autoSelectedProfile}) otomatik seçildi`;
           logger.debug(message);
+          
+          // Toast ile kullanıcıya bilgi ver
+          if (selected.is_einvoice_mukellef === true) {
+            toast.success('E-Fatura mükellefi müşteri seçildi', {
+              description: 'Fatura, e-fatura olarak gönderilecektir.'
+            });
+          } else {
+            toast.info('E-Arşiv fatura seçildi', {
+              description: 'Müşteri e-fatura mükellefi değil. Fatura e-arşiv olarak gönderilecektir.'
+            });
+          }
         }
         // 2. SONRA: einvoice_document_type alanını kontrol et (yedek)
         else if (selected.einvoice_document_type) {
@@ -863,6 +874,10 @@ const CreateSalesInvoice = () => {
       
       logger.debug('📝 [CreateSalesInvoice] Fatura kaydediliyor, numara:', finalInvoiceNumber || 'yok (E-Fatura gönderildiğinde atanacak)');
 
+      // Determine fatura_tipi2 based on invoice_profile
+      // E-fatura mükellefi olmayan müşterilere e-arşiv faturası kesilir
+      const faturaTipi2 = invoiceData.invoice_profile === 'EARSIVFATURA' ? 'e-arşiv' : 'e-fatura';
+
       // Prepare invoice data
       const invoicePayload = {
         customer_id: customerId,
@@ -873,6 +888,7 @@ const CreateSalesInvoice = () => {
         vade_tarihi: invoiceData.due_date ? format(invoiceData.due_date, 'yyyy-MM-dd') : null,
         invoice_type: invoiceData.invoice_type,
         invoice_profile: invoiceData.invoice_profile,
+        fatura_tipi2: faturaTipi2,
         send_type: invoiceData.send_type,
         sales_platform: invoiceData.sales_platform,
         is_despatch: invoiceData.is_despatch,
@@ -965,11 +981,15 @@ const CreateSalesInvoice = () => {
 
       logger.debug("✅ [CreateSalesInvoice] Invoice saved successfully", { invoiceId: invoice.id });
       
-      // Show success message
+      // Show success message with invoice type info
+      const invoiceTypeText = faturaTipi2 === 'e-arşiv' ? 'E-Arşiv' : 'E-Fatura';
+      
       if (finalInvoiceNumber) {
-        toast.success(`Fatura başarıyla kaydedildi (${finalInvoiceNumber})`);
+        toast.success(`${invoiceTypeText} faturası başarıyla kaydedildi (${finalInvoiceNumber})`);
       } else {
-        toast.success("Fatura kaydedildi. E-Fatura göndermek için 'E-Fatura Gönder' butonuna tıklayın.");
+        toast.success(`${invoiceTypeText} faturası kaydedildi`, {
+          description: `${invoiceTypeText} göndermek için '${invoiceTypeText} Gönder' butonuna tıklayın.`
+        });
       }
       
       navigate(`/sales-invoices/${invoice.id}`);

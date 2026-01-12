@@ -53,20 +53,21 @@ const SalesInvoicesTableHeader = ({
             key={column.id}
             className={cn(
               "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide",
-              column.id === 'tarih' || column.id === 'tutar' || column.id === 'tip' || column.id === 'e_fatura_durumu' || column.id === 'actions' ? "text-center" : "text-left",
+              column.id === 'tarih' || column.id === 'tutar' || column.id === 'tip' || column.id === 'fatura_tipi2' || column.id === 'e_fatura_durumu' || column.id === 'actions' ? "text-center" : "text-left",
               column.sortable && "cursor-pointer hover:bg-slate-200"
             )}
             onClick={column.sortable ? () => onSort(column.id) : undefined}
           >
             <div className={cn(
               "flex items-center gap-1",
-              column.id === 'actions' || column.id === 'tarih' || column.id === 'tutar' || column.id === 'tip' || column.id === 'e_fatura_durumu' ? "justify-center" : "justify-start"
+              column.id === 'actions' || column.id === 'tarih' || column.id === 'tutar' || column.id === 'tip' || column.id === 'fatura_tipi2' || column.id === 'e_fatura_durumu' ? "justify-center" : "justify-start"
             )}>
               {column.id === 'fatura_no' && <span className="text-lg mr-2">📄</span>}
               {column.id === 'musteri' && <span className="text-lg mr-2">👤</span>}
               {column.id === 'tarih' && <span className="text-lg mr-2">📅</span>}
               {column.id === 'tutar' && <span className="text-lg mr-2">💰</span>}
               {column.id === 'tip' && <span className="text-lg mr-2">🏷️</span>}
+              {column.id === 'fatura_tipi2' && <span className="text-lg mr-2">📋</span>}
               {column.id === 'e_fatura_durumu' && <span className="text-lg mr-2">📊</span>}
               {column.id === 'actions' && <span className="text-lg mr-2">⚙️</span>}
               <span>{column.label}</span>

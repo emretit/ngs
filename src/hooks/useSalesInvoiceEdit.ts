@@ -90,6 +90,9 @@ export const useSalesInvoiceEdit = () => {
     try {
       setSaving(true);
 
+      // Determine fatura_tipi2 based on invoice_profile
+      const faturaTipi2 = formData.invoice_profile === 'EARSIVFATURA' ? 'e-arşiv' : 'e-fatura';
+
       // Update invoice
       const { error: invoiceError } = await supabase
         .from("sales_invoices")
@@ -110,6 +113,7 @@ export const useSalesInvoiceEdit = () => {
           document_type: formData.document_type,
           invoice_type: formData.invoice_type,
           invoice_profile: formData.invoice_profile,
+          fatura_tipi2: faturaTipi2,
           send_type: formData.send_type,
           sales_platform: formData.sales_platform,
           is_despatch: formData.is_despatch,

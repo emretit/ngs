@@ -25,6 +25,8 @@ const createCustomSupabaseClient = () => {
     global: {
       headers: {
         'X-Client-Info': 'ngs-app',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
       },
     }
   });

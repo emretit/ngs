@@ -345,10 +345,21 @@ const EditSalesInvoice = () => {
           }));
           
           // Kullanıcıya bilgi ver
-          const message = selected.is_einvoice_mukellef 
+          const message = selected.is_einvoice_mukellef
             ? `✅ Müşteri e-fatura mükellefi - E-Fatura (${autoSelectedProfile}) otomatik seçildi`
             : `ℹ️ Müşteri e-fatura mükellefi değil - E-Arşiv Fatura (${autoSelectedProfile}) otomatik seçildi`;
           logger.debug(message);
+          
+          // Toast ile kullanıcıya bilgi ver
+          if (selected.is_einvoice_mukellef === true) {
+            toast.success('E-Fatura mükellefi müşteri seçildi', {
+              description: 'Fatura, e-fatura olarak gönderilecektir.'
+            });
+          } else {
+            toast.info('E-Arşiv fatura seçildi', {
+              description: 'Müşteri e-fatura mükellefi değil. Fatura e-arşiv olarak gönderilecektir.'
+            });
+          }
         }
         // 2. SONRA: einvoice_document_type alanını kontrol et (yedek)
         else if (selected.einvoice_document_type) {
@@ -737,6 +748,10 @@ const EditSalesInvoice = () => {
       
       logger.debug('📝 [EditSalesInvoice] Fatura güncelleniyor, numara:', finalInvoiceNumber || 'yok (E-Fatura gönderildiğinde atanacak)');
 
+      // Determine fatura_tipi2 based on invoice_profile
+      // E-fatura mükellefi olmayan müşterilere e-arşiv faturası kesilir
+      const faturaTipi2 = invoiceData.invoice_profile === 'EARSIVFATURA' ? 'e-arşiv' : 'e-fatura';
+
       // Prepare invoice data
       const invoicePayload = {
         customer_id: customerId,
@@ -747,6 +762,7 @@ const EditSalesInvoice = () => {
         vade_tarihi: invoiceData.due_date ? format(invoiceData.due_date, 'yyyy-MM-dd') : null,
         invoice_type: invoiceData.invoice_type,
         invoice_profile: invoiceData.invoice_profile,
+        fatura_tipi2: faturaTipi2,
         send_type: invoiceData.send_type,
         sales_platform: invoiceData.sales_platform,
         is_despatch: invoiceData.is_despatch,

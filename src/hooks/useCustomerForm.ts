@@ -70,6 +70,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
     second_postal_code: "",
     payment_terms: "",
     is_einvoice_mukellef: false,
+    einvoice_document_type: "ArchiveInvoice", // Default olarak E-Arşiv Fatura
   });
 
   // E-fatura mükellef data ile form doldurma
@@ -162,6 +163,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
           second_postal_code: customer.second_postal_code ?? "",
           payment_terms: customer.payment_terms ?? "",
           is_einvoice_mukellef: customer.is_einvoice_mukellef ?? false,
+          einvoice_document_type: customer.einvoice_document_type ?? "ArchiveInvoice",
         };
 
         setFormData(newFormData);

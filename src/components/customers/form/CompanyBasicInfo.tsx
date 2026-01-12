@@ -33,18 +33,36 @@ const CompanyBasicInfo = ({ formData, setFormData }: CompanyBasicInfoProps) => {
   // Nilvera'dan gelen mükellef bilgilerini form data'ya ekle
   useEffect(() => {
     if (mukellefInfo) {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        // Nilvera mükellef bilgilerini form data'ya ekle
-        company: prevFormData.company || mukellefInfo.companyName || prevFormData.company,
-        tax_office: prevFormData.tax_office || mukellefInfo.taxOffice || prevFormData.tax_office,
-        address: prevFormData.address || mukellefInfo.address || prevFormData.address,
-        // E-fatura mükellefi bilgileri - mukellefInfo bulunduysa müşteri e-fatura mükellefi
-        einvoice_alias_name: prevFormData.einvoice_alias_name || mukellefInfo.aliasName || prevFormData.einvoice_alias_name,
-        is_einvoice_mukellef: true, // mukellefInfo bulunduysa müşteri e-fatura mükellefi
-        // DocumentType bilgisini ekle
-        einvoice_document_type: mukellefInfo.documentType || prevFormData.einvoice_document_type,
-      }));
+      setFormData((prevFormData) => {
+        // E-belge tipini belirle: Eğer e-fatura mükellefi ise (Invoice/EINVOICE) Invoice, değilse documentType'ı kullan veya ArchiveInvoice
+        let documentType = prevFormData.einvoice_document_type || "ArchiveInvoice";
+        
+        if (mukellefInfo.documentType) {
+          // Eğer documentType Invoice veya EINVOICE ise, Invoice olarak ayarla
+          if (mukellefInfo.documentType === "Invoice" || mukellefInfo.documentType === "EINVOICE") {
+            documentType = "Invoice";
+          } else {
+            // Diğer durumlarda documentType'ı kullan
+            documentType = mukellefInfo.documentType;
+          }
+        } else {
+          // documentType yoksa ama mükellefInfo varsa, varsayılan olarak Invoice yap
+          documentType = "Invoice";
+        }
+
+        return {
+          ...prevFormData,
+          // Nilvera mükellef bilgilerini form data'ya ekle
+          company: prevFormData.company || mukellefInfo.companyName || prevFormData.company,
+          tax_office: prevFormData.tax_office || mukellefInfo.taxOffice || prevFormData.tax_office,
+          address: prevFormData.address || mukellefInfo.address || prevFormData.address,
+          // E-fatura mükellefi bilgileri - mukellefInfo bulunduysa müşteri e-fatura mükellefi
+          einvoice_alias_name: prevFormData.einvoice_alias_name || mukellefInfo.aliasName || prevFormData.einvoice_alias_name,
+          is_einvoice_mukellef: true, // mukellefInfo bulunduysa müşteri e-fatura mükellefi
+          // DocumentType bilgisini ekle
+          einvoice_document_type: documentType,
+        };
+      });
     }
   }, [mukellefInfo, setFormData]);
 

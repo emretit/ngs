@@ -68,7 +68,7 @@ export const useSwitchCompany = () => {
         .from('user_companies')
         .select('id, company_id')
         .eq('user_id', user.id)
-        
+        .eq('company_id', companyId)
         .single();
 
       if (checkError || !userCompany) {

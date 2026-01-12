@@ -297,7 +297,17 @@ export function detectPageContext(pathname: string): PageContext {
   }
 
   // Default context for unknown routes
-  logger.warn('Unknown route for context detection', { pathname });
+  // Don't warn for auth routes or common system routes
+  const isAuthRoute = normalizedPath.startsWith('/signin') || 
+                      normalizedPath.startsWith('/signup') || 
+                      normalizedPath.startsWith('/auth') ||
+                      normalizedPath === '/' ||
+                      normalizedPath.startsWith('/reset-password');
+  
+  if (!isAuthRoute) {
+    logger.warn('Unknown route for context detection', { pathname });
+  }
+  
   return {
     route: normalizedPath,
     module: 'General',

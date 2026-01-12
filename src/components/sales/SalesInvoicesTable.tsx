@@ -142,6 +142,7 @@ const SalesInvoicesTable = ({
     { id: 'tarih', label: 'Tarih', visible: true, sortable: true },
     { id: 'tutar', label: 'Tutar', visible: true, sortable: true },
     { id: 'tip', label: 'Fatura Tipi', visible: true, sortable: false },
+    { id: 'fatura_tipi2', label: 'Fatura Tipi 2', visible: true, sortable: false },
     { id: 'e_fatura_durumu', label: 'E-Fatura Durumu', visible: true, sortable: false },
     { id: 'actions', label: 'İşlemler', visible: true, sortable: false }
   ];
@@ -389,6 +390,7 @@ const SalesInvoicesTable = ({
               <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
               <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
               <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
               <TableCell className="py-2 px-3"><Skeleton className="h-6 w-6" /></TableCell>
             </TableRow>
           ))}
@@ -411,7 +413,7 @@ const SalesInvoicesTable = ({
       <TableBody>
         {filteredInvoices.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+            <TableCell colSpan={9} className="text-center py-8 text-gray-500">
               Bu kriterlere uygun fatura bulunamadı
             </TableCell>
           </TableRow>
@@ -480,6 +482,17 @@ const SalesInvoicesTable = ({
                   {invoice.invoice_profile && getInvoiceProfileBadge(invoice.invoice_profile)}
                   {!invoice.invoice_type && !invoice.invoice_profile && getDocumentTypeBadge(invoice.document_type)}
                 </div>
+              </TableCell>
+              <TableCell className="text-center py-2 px-3" onClick={() => onSelectInvoice(invoice)}>
+                {invoice.fatura_tipi2 ? (
+                  invoice.fatura_tipi2 === 'e-arşiv' ? (
+                    <Badge variant="outline" className="border-purple-500 text-purple-700 bg-purple-50">e-Arşiv</Badge>
+                  ) : (
+                    <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">e-Fatura</Badge>
+                  )
+                ) : (
+                  <span className="text-gray-400 text-xs">-</span>
+                )}
               </TableCell>
               <TableCell className="text-center py-2 px-3" onClick={(e) => e.stopPropagation()}>
                 <EInvoiceStateBadge 

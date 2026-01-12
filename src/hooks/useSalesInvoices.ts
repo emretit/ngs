@@ -32,6 +32,8 @@ export interface SalesInvoice {
   xml_data?: any;
   ek_belgeler?: any;
   // E-fatura kolonları
+  invoice_profile?: string;
+  fatura_tipi2?: string;
   einvoice_status?: 'draft' | 'sending' | 'sent' | 'delivered' | 'accepted' | 'rejected' | 'cancelled' | 'error';
   nilvera_invoice_id?: string;
   einvoice_sent_at?: string;
@@ -45,6 +47,7 @@ export interface SalesInvoice {
     name: string;
     tax_number?: string;
     company?: string;
+    is_einvoice_mukellef?: boolean;
   };
   supplier?: {
     name: string;
@@ -130,7 +133,9 @@ export const useSalesInvoices = () => {
       .from("sales_invoices")
       .select(`
         *,
-        customer:customers(name, tax_number, company),
+        invoice_profile,
+        fatura_tipi2,
+        customer:customers(name, tax_number, company, is_einvoice_mukellef),
         supplier:suppliers(name, tax_number, company)
       `)
       .eq("id", id)

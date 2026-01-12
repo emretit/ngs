@@ -196,15 +196,17 @@ serve(async (req) => {
           .eq('company_id', profile.company_id)
           .maybeSingle();
         
-        // Seri kodu (3 karakter, örn: FAT)
-        let serie = formatParam?.parameter_value || 'FAT';
+        // Seri kodu (3 karakter, örn: FAT veya EAR)
+        // E-Arşiv için varsayılan 'EAR', E-Fatura için varsayılan 'FAT'
+        const defaultSerie = finalInvoiceProfile === 'EARSIVFATURA' ? 'EAR' : 'FAT';
+        let serie = formatParam?.parameter_value || defaultSerie;
         serie = serie.trim().toUpperCase().substring(0, 3);
         
         if (!serie || serie.length !== 3) {
-          serie = 'FAT'; // Varsayılan seri
+          serie = defaultSerie; // Varsayılan seri (profile'a göre)
         }
         
-        console.log('📋 Seri Kodu:', serie);
+        console.log('📋 Seri Kodu:', serie, '| Profile:', finalInvoiceProfile);
         
         // Yıl
         const invoiceDate = invoice.fatura_tarihi ? new Date(invoice.fatura_tarihi) : new Date();

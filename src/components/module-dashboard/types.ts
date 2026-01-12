@@ -4,6 +4,46 @@ import { ReactNode } from "react";
 // Color variants for consistent theming
 export type ColorVariant = "blue" | "green" | "purple" | "orange" | "red" | "amber" | "cyan" | "pink" | "teal" | "indigo";
 
+// Status Grid Colors
+export type StatusGridColor = "red" | "yellow" | "green" | "blue" | "purple" | "orange" | "gray" | "indigo" | "amber" | "cyan" | "pink" | "teal";
+
+// Card Summary Types
+export interface CardSummaryMetricConfig {
+  value: string | number;
+  label: string;
+  color?: ColorVariant;
+}
+
+export interface CardSummaryGridItem {
+  label: string;
+  value: string | number;
+  color: StatusGridColor;
+  dotColor?: string;
+}
+
+export interface CardSummaryFooterConfig {
+  type: "progress" | "value" | "custom";
+  // progress için
+  progressLabel?: string;
+  progressValue?: number; // 0-100
+  progressTarget?: string;
+  progressColor?: StatusGridColor;
+  // value için
+  valueLabel?: string;
+  value?: string | number;
+  valueColor?: "success" | "warning" | "danger" | "default";
+  // custom için
+  customContent?: ReactNode;
+}
+
+export interface CardSummaryProps {
+  mainMetric: CardSummaryMetricConfig;
+  statusGrid: CardSummaryGridItem[];
+  footer?: CardSummaryFooterConfig;
+  compact?: boolean;
+  gridCols?: 2 | 3 | 4;
+}
+
 // Quick Link Card Configuration
 export interface QuickLinkCardConfig {
   id: string;
@@ -30,6 +70,8 @@ export interface QuickLinkCardConfig {
     href?: string;
     label?: string;
   };
+  // Card Summary configuration (replaces stats with rich summary)
+  summaryConfig?: CardSummaryProps;
   // Custom content (replaces stats)
   customContent?: ReactNode;
   // Badge on date label
@@ -168,4 +210,26 @@ export const statColorClasses: Record<"default" | "success" | "warning" | "dange
   success: "text-green-600",
   warning: "text-orange-600",
   danger: "text-red-600",
+};
+
+// Status Grid Color mapping
+export const statusGridColorClasses: Record<StatusGridColor, {
+  bg: string;
+  border: string;
+  dot: string;
+  text: string;
+  value: string;
+}> = {
+  red: { bg: "bg-red-50", border: "border-red-200", dot: "bg-red-500", text: "text-red-700", value: "text-red-600" },
+  yellow: { bg: "bg-yellow-50", border: "border-yellow-200", dot: "bg-yellow-500", text: "text-yellow-700", value: "text-yellow-600" },
+  green: { bg: "bg-green-50", border: "border-green-200", dot: "bg-green-500", text: "text-green-700", value: "text-green-600" },
+  blue: { bg: "bg-blue-50", border: "border-blue-200", dot: "bg-blue-500", text: "text-blue-700", value: "text-blue-600" },
+  purple: { bg: "bg-purple-50", border: "border-purple-200", dot: "bg-purple-500", text: "text-purple-700", value: "text-purple-600" },
+  orange: { bg: "bg-orange-50", border: "border-orange-200", dot: "bg-orange-500", text: "text-orange-700", value: "text-orange-600" },
+  gray: { bg: "bg-gray-50", border: "border-gray-200", dot: "bg-gray-500", text: "text-gray-700", value: "text-gray-600" },
+  indigo: { bg: "bg-indigo-50", border: "border-indigo-200", dot: "bg-indigo-500", text: "text-indigo-700", value: "text-indigo-600" },
+  amber: { bg: "bg-amber-50", border: "border-amber-200", dot: "bg-amber-500", text: "text-amber-700", value: "text-amber-600" },
+  cyan: { bg: "bg-cyan-50", border: "border-cyan-200", dot: "bg-cyan-500", text: "text-cyan-700", value: "text-cyan-600" },
+  pink: { bg: "bg-pink-50", border: "border-pink-200", dot: "bg-pink-500", text: "text-pink-700", value: "text-pink-600" },
+  teal: { bg: "bg-teal-50", border: "border-teal-200", dot: "bg-teal-500", text: "text-teal-700", value: "text-teal-600" },
 };

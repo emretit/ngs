@@ -2,9 +2,9 @@ import { memo, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAllAccounts } from "@/hooks/useAccountsData";
 import { useCashflowCategories } from "@/hooks/useCashflowCategories";
-import { DollarSign, Building, Wallet, CreditCard, Receipt, Calculator, Plus } from "lucide-react";
+import { DollarSign, Building, Wallet, CreditCard, Receipt, Calculator } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
-import { ModuleDashboard, ModuleDashboardConfig, QuickLinkCardConfig } from "@/components/module-dashboard";
+import { ModuleDashboard, ModuleDashboardConfig, QuickLinkCardConfig, CardSummaryProps } from "@/components/module-dashboard";
 
 const Cashflow = () => {
   const navigate = useNavigate();
@@ -13,16 +13,18 @@ const Cashflow = () => {
 
   // Calculate totals - memoized
   const stats = useMemo(() => {
-    const totalAccounts = (allAccounts?.cashAccounts?.length || 0) +
-      (allAccounts?.bankAccounts?.length || 0) +
-      (allAccounts?.creditCards?.length || 0) +
-      (allAccounts?.partnerAccounts?.length || 0);
+    const cashCount = allAccounts?.cashAccounts?.length || 0;
+    const bankCount = allAccounts?.bankAccounts?.length || 0;
+    const cardCount = allAccounts?.creditCards?.length || 0;
+    const partnerCount = allAccounts?.partnerAccounts?.length || 0;
 
-    const totalBalance =
-      (allAccounts?.cashAccounts?.reduce((sum, acc) => sum + acc.current_balance, 0) || 0) +
-      (allAccounts?.bankAccounts?.reduce((sum, acc) => sum + acc.current_balance, 0) || 0) +
-      (allAccounts?.creditCards?.reduce((sum, acc) => sum + acc.current_balance, 0) || 0) +
-      (allAccounts?.partnerAccounts?.reduce((sum, acc) => sum + acc.current_balance, 0) || 0);
+    const cashBalance = allAccounts?.cashAccounts?.reduce((sum, acc) => sum + acc.current_balance, 0) || 0;
+    const bankBalance = allAccounts?.bankAccounts?.reduce((sum, acc) => sum + acc.current_balance, 0) || 0;
+    const cardBalance = allAccounts?.creditCards?.reduce((sum, acc) => sum + acc.current_balance, 0) || 0;
+    const partnerBalance = allAccounts?.partnerAccounts?.reduce((sum, acc) => sum + acc.current_balance, 0) || 0;
+
+    const totalAccounts = cashCount + bankCount + cardCount + partnerCount;
+    const totalBalance = cashBalance + bankBalance + cardBalance + partnerBalance;
 
     const incomeCategories = categories.filter(cat => cat.type === 'income').length;
     const expenseCategories = categories.filter(cat => cat.type === 'expense').length;
@@ -30,11 +32,86 @@ const Cashflow = () => {
     return {
       totalAccounts,
       totalBalance,
+      cashCount,
+      bankCount,
+      cardCount,
+      partnerCount,
+      cashBalance,
+      bankBalance,
+      cardBalance,
+      partnerBalance,
       incomeCategories,
       expenseCategories,
       totalCategories: incomeCategories + expenseCategories,
     };
   }, [allAccounts, categories]);
+
+  // CardSummary configurations
+  const accountsSummary: CardSummaryProps = {
+    mainMetric: { value: stats.totalAccounts, label: "Toplam Hesap", color: "blue" },
+    statusGrid: [
+      { label: "Kasa", value: stats.cashCount, color: "green" },
+      { label: "Banka", value: stats.bankCount, color: "blue" },
+      { label: "Kredi Kartı", value: stats.cardCount, color: "orange" },
+      { label: "Ortaklık", value: stats.partnerCount, color: "purple" },
+    ],
+    footer: {
+      type: "value",
+      valueLabel: "Toplam Bakiye",
+      value: formatCurrency(stats.totalBalance, 'TRY'),
+      valueColor: "success",
+    },
+    compact: true,
+    gridCols: 2,
+  };
+
+  const expensesSummary: CardSummaryProps = {
+    mainMetric: { value: stats.totalCategories, label: "Toplam Kategori", color: "green" },
+    statusGrid: [
+      { label: "Gelir", value: stats.incomeCategories, color: "green" },
+      { label: "Gider", value: stats.expenseCategories, color: "red" },
+    ],
+    footer: {
+      type: "progress",
+      progressLabel: "Gelir Oranı",
+      progressValue: stats.totalCategories > 0 
+        ? Math.round((stats.incomeCategories / stats.totalCategories) * 100) 
+        : 0,
+      progressColor: "green",
+    },
+    compact: true,
+    gridCols: 2,
+  };
+
+  const budgetSummary: CardSummaryProps = {
+    mainMetric: { value: "Aktif", label: "Bütçe Durumu", color: "purple" },
+    statusGrid: [
+      { label: "Planlanan", value: "-", color: "blue" },
+      { label: "Gerçekleşen", value: "-", color: "green" },
+    ],
+    compact: true,
+    gridCols: 2,
+  };
+
+  const checksSummary: CardSummaryProps = {
+    mainMetric: { value: "-", label: "Toplam Çek/Senet", color: "orange" },
+    statusGrid: [
+      { label: "Bekleyen", value: "-", color: "yellow" },
+      { label: "Tahsil", value: "-", color: "green" },
+    ],
+    compact: true,
+    gridCols: 2,
+  };
+
+  const loansSummary: CardSummaryProps = {
+    mainMetric: { value: "-", label: "Aktif Kredi", color: "red" },
+    statusGrid: [
+      { label: "Ödenen", value: "-", color: "green" },
+      { label: "Kalan", value: "-", color: "red" },
+    ],
+    compact: true,
+    gridCols: 2,
+  };
 
   const cards: QuickLinkCardConfig[] = [
     {
@@ -44,17 +121,8 @@ const Cashflow = () => {
       icon: Building,
       color: "blue",
       href: "/cashflow/bank-accounts",
-      newButton: {
-        href: "/cashflow/bank-accounts",
-      },
-      stats: [
-        { label: "Toplam Hesap", value: stats.totalAccounts },
-      ],
-      footerStat: {
-        label: "Toplam Bakiye",
-        value: formatCurrency(stats.totalBalance, 'TRY'),
-        color: "success",
-      },
+      newButton: { href: "/cashflow/bank-accounts" },
+      summaryConfig: accountsSummary,
     },
     {
       id: "expenses",
@@ -63,17 +131,8 @@ const Cashflow = () => {
       icon: Receipt,
       color: "green",
       href: "/cashflow/expenses",
-      newButton: {
-        href: "/cashflow/expenses",
-      },
-      stats: [
-        { label: "Kategoriler", value: stats.totalCategories },
-      ],
-      footerStat: {
-        label: "Gelir/Gider",
-        value: `${stats.incomeCategories}/${stats.expenseCategories}`,
-        color: "success",
-      },
+      newButton: { href: "/cashflow/expenses" },
+      summaryConfig: expensesSummary,
     },
     {
       id: "budget",
@@ -82,17 +141,8 @@ const Cashflow = () => {
       icon: Calculator,
       color: "purple",
       href: "/cashflow/budget-management",
-      newButton: {
-        href: "/cashflow/budget-management",
-      },
-      stats: [
-        { label: "Durum", value: "Aktif" },
-      ],
-      footerStat: {
-        label: "Yönetim",
-        value: "Açık",
-        color: "success",
-      },
+      newButton: { href: "/cashflow/budget-management" },
+      summaryConfig: budgetSummary,
     },
     {
       id: "checks-notes",
@@ -101,17 +151,8 @@ const Cashflow = () => {
       icon: Wallet,
       color: "orange",
       href: "/cashflow/checks-notes",
-      newButton: {
-        href: "/cashflow/checks-notes",
-      },
-      stats: [
-        { label: "Durum", value: "Aktif" },
-      ],
-      footerStat: {
-        label: "Takip",
-        value: "Açık",
-        color: "success",
-      },
+      newButton: { href: "/cashflow/checks-notes" },
+      summaryConfig: checksSummary,
     },
     {
       id: "loans",
@@ -120,17 +161,8 @@ const Cashflow = () => {
       icon: CreditCard,
       color: "red",
       href: "/cashflow/loans",
-      newButton: {
-        href: "/cashflow/loans",
-      },
-      stats: [
-        { label: "Durum", value: "Aktif" },
-      ],
-      footerStat: {
-        label: "Yönetim",
-        value: "Açık",
-        color: "success",
-      },
+      newButton: { href: "/cashflow/loans" },
+      summaryConfig: loansSummary,
     },
   ];
 

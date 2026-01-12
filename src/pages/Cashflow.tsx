@@ -145,7 +145,7 @@ const Cashflow = () => {
 
   const loading = accountsLoading || categoriesLoading;
 
-  return <ModuleDashboard config={config} isLoading={loading} gridCols={5} />;
+  return <ModuleDashboard config={config} isLoading={loading} gridCols={4} />;
 };
 
 export default memo(Cashflow);

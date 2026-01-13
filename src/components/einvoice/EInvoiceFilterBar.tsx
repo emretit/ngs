@@ -21,6 +21,7 @@ interface EInvoiceFilterBarProps {
   invoiceType?: 'incoming' | 'outgoing';
   customerTaxNumber?: string;
   setCustomerTaxNumber?: (value: string) => void;
+  isRefreshDisabled?: boolean;
 }
 
 const EInvoiceFilterBar = ({
@@ -36,7 +37,8 @@ const EInvoiceFilterBar = ({
   isRefreshing = false,
   invoiceType,
   customerTaxNumber,
-  setCustomerTaxNumber
+  setCustomerTaxNumber,
+  isRefreshDisabled = false
 }: EInvoiceFilterBarProps) => {
   // Tarih aralığını formatla
   const formatDate = (date: Date | undefined) => {
@@ -113,8 +115,14 @@ const EInvoiceFilterBar = ({
         <Button 
           className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300" 
           onClick={onRefresh}
-          disabled={isRefreshing}
-          title={dateRangeText ? `Tarih aralığı: ${dateRangeText}` : 'E-Fatura çek'}
+          disabled={isRefreshing || isRefreshDisabled}
+          title={
+            isRefreshDisabled 
+              ? 'Lütfen önce bir müşteri seçin (VKN)' 
+              : dateRangeText 
+                ? `Tarih aralığı: ${dateRangeText}` 
+                : 'E-Fatura çek'
+          }
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span>E-Fatura Çek</span>

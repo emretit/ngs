@@ -130,6 +130,17 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   
   const handleRefresh = async () => {
     try {
+      // Giden faturalar için müşteri VKN kontrolü
+      if (invoiceType === 'outgoing') {
+        if (!customerTaxNumber || customerTaxNumber.length < 10) {
+          toast.error('Lütfen önce bir müşteri seçin (VKN)', {
+            description: 'Giden faturaları çekmek için müşteri seçimi zorunludur.',
+            id: 'fetching-invoices'
+          });
+          return;
+        }
+      }
+
       const integrator = await IntegratorService.getSelectedIntegrator();
       const integratorNames: Record<string, string> = {
         'nilvera': 'Nilvera',
@@ -139,9 +150,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
       const integratorName = integratorNames[integrator] || 'Entegratör';
       
       const message = invoiceType === 'outgoing' 
-        ? customerTaxNumber 
-          ? `${integratorName}'dan müşteri VKN ${customerTaxNumber} için giden faturalar çekiliyor...`
-          : `${integratorName}'dan tüm giden faturalar çekiliyor...`
+        ? `${integratorName}'dan müşteri VKN ${customerTaxNumber} için giden faturalar çekiliyor...`
         : `${integratorName}'dan gelen faturalar çekiliyor...`;
       
       toast.loading(message, { id: 'fetching-invoices' });
@@ -263,6 +272,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
           invoiceType={invoiceType}
           customerTaxNumber={customerTaxNumber}
           setCustomerTaxNumber={setCustomerTaxNumber}
+          isRefreshDisabled={invoiceType === 'outgoing' && (!customerTaxNumber || customerTaxNumber.length < 10)}
         />
         <EInvoiceContent
           invoices={filteredInvoices}

@@ -11,7 +11,7 @@ import { VeribanSoapClient } from '../_shared/veriban-soap-helper.ts';
  * - Her şirket için Veriban API'sini kullanarak durum günceller
  * 
  * Cron ayarı için: Supabase Dashboard > Database > Cron Jobs
- * Schedule: */15 * * * * (Her 15 dakikada bir)
+ * Schedule: Her 15 dakikada bir
  */
 
 const corsHeaders = {

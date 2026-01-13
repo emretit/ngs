@@ -357,8 +357,8 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
   const isTCKN = customerTaxNumber && customerTaxNumber.length === 11;
   const isVKN = customerTaxNumber && customerTaxNumber.length === 10;
 
-  // E-Arşiv kontrolü
-  const isEArchive = invoiceProfile === 'EARSIVFATURA';
+  // E-Arşiv kontrolü (invoice_profile kullan, ProfileID XML'de gönderilmiyor)
+  const isEArchive = invoice.invoice_profile === 'EARSIVFATURA';
   
   if (isTCKN || isVKN) {
     xml += `

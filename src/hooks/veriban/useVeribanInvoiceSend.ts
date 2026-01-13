@@ -231,28 +231,120 @@ export const useVeribanInvoiceSend = () => {
       logger.debug("🎯 Veriban e-fatura gönderim cevabı:", data);
       
       if (data?.success) {
+        const isEArchive = data?.invoiceProfile === 'EARSIVFATURA';
+        const transferFileUniqueId = data?.transferFileUniqueId;
+        
         // Başarılı gönderimde durumu 'sent' olarak güncelle
         try {
           const { error: updateError } = await supabase
             .from('sales_invoices')
             .update({ 
               einvoice_status: 'sent', // GİB'e gönderildi
-              elogo_status: 2, // StateCode 2 = İmza bekliyor / GİB'e iletilmeyi bekliyor
               durum: 'gonderildi'
+              // elogo_status sabit yazılmıyor - transfer status'tan gelecek
             })
             .eq('id', salesInvoiceId);
           
           if (updateError) {
             logger.error('⚠️ [useVeribanInvoiceSend] Başarılı gönderim sonrası durum güncelleme hatası:', updateError);
           } else {
-            logger.debug('✅ [useVeribanInvoiceSend] Fatura durumu "sent" (StateCode=2) olarak güncellendi');
+            logger.debug('✅ [useVeribanInvoiceSend] Fatura durumu "sent" olarak güncellendi');
           }
         } catch (err) {
           logger.error('⚠️ [useVeribanInvoiceSend] Başarılı gönderim sonrası durum güncelleme hatası:', err);
         }
         
-        const isEArchive = data?.invoiceProfile === 'EARSIVFATURA';
+        // ⭐ E-Arşiv için otomatik transfer status kontrolü
+        if (isEArchive && transferFileUniqueId) {
+          logger.info('🔄 [useVeribanInvoiceSend] E-Arşiv transfer status kontrolü başlatılıyor...');
+          logger.info('📋 Transfer File Unique ID:', transferFileUniqueId);
+          
+          // 5 saniye bekle - Veriban faturayı işlesin
+          setTimeout(async () => {
+            try {
+              logger.info('🔍 [useVeribanInvoiceSend] Transfer status sorgulanıyor (1. deneme)...');
+              
+              const { data: statusResult, error: statusError } = await supabase.functions.invoke('veriban-transfer-status', {
+                body: { transferFileUniqueId }
+              });
+              
+              if (statusError) {
+                logger.error('❌ [useVeribanInvoiceSend] Transfer status hatası:', statusError);
+                return;
+              }
+              
+              if (statusResult?.success) {
+                const stateCode = statusResult.status?.stateCode;
+                const stateDescription = statusResult.status?.stateDescription;
+                
+                logger.info(`📊 [useVeribanInvoiceSend] Transfer status: StateCode=${stateCode}, Description=${stateDescription}`);
+                
+                // Durumu güncelle
+                const { error: updateErr } = await supabase
+                  .from('sales_invoices')
+                  .update({
+                    elogo_status: stateCode,
+                    einvoice_status: stateCode === 5 ? 'delivered' : (stateCode === 4 ? 'error' : 'sent'),
+                    einvoice_error_message: stateCode === 4 ? stateDescription : null
+                  })
+                  .eq('id', salesInvoiceId);
+                
+                if (updateErr) {
+                  logger.error('❌ [useVeribanInvoiceSend] DB güncelleme hatası:', updateErr);
+                } else {
+                  logger.info(`✅ [useVeribanInvoiceSend] elogo_status=${stateCode} olarak güncellendi`);
+                }
+                
+                // UI'ı yenile
+                queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+                queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
+                
+                // Hala işleniyor ise (stateCode 2 veya 3) tekrar dene
+                if (stateCode === 2 || stateCode === 3) {
+                  logger.info('🔄 [useVeribanInvoiceSend] Hala işleniyor, 10 saniye sonra tekrar denenecek...');
+                  
+                  setTimeout(async () => {
+                    try {
+                      logger.info('🔍 [useVeribanInvoiceSend] Transfer status sorgulanıyor (2. deneme)...');
+                      
+                      const { data: retryResult } = await supabase.functions.invoke('veriban-transfer-status', {
+                        body: { transferFileUniqueId }
+                      });
+                      
+                      if (retryResult?.success && retryResult.status?.stateCode) {
+                        const retryStateCode = retryResult.status.stateCode;
+                        logger.info(`📊 [useVeribanInvoiceSend] 2. deneme sonucu: StateCode=${retryStateCode}`);
+                        
+                        await supabase
+                          .from('sales_invoices')
+                          .update({
+                            elogo_status: retryStateCode,
+                            einvoice_status: retryStateCode === 5 ? 'delivered' : (retryStateCode === 4 ? 'error' : 'sent'),
+                            einvoice_error_message: retryStateCode === 4 ? retryResult.status.stateDescription : null
+                          })
+                          .eq('id', salesInvoiceId);
+                        
+                        queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+                        queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
+                        
+                        logger.info(`✅ [useVeribanInvoiceSend] 2. deneme: elogo_status=${retryStateCode} olarak güncellendi`);
+                      }
+                    } catch (retryErr) {
+                      logger.error('❌ [useVeribanInvoiceSend] 2. deneme hatası:', retryErr);
+                    }
+                  }, 10000); // 10 saniye sonra tekrar
+                }
+              } else {
+                logger.warn('⚠️ [useVeribanInvoiceSend] Transfer status başarısız:', statusResult?.error);
+              }
+            } catch (err) {
+              logger.error('❌ [useVeribanInvoiceSend] Transfer status kontrolü hatası:', err);
+            }
+          }, 5000); // 5 saniye bekle
+        }
+        
         toast.success(isEArchive ? 'E-Arşiv fatura başarıyla gönderildi' : 'E-Fatura başarıyla gönderildi');
+        
         // E-fatura durumunu ve satış faturaları listesini yenile
         queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
         queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });

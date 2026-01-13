@@ -172,9 +172,10 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
     issueDate: issueDate
   });
   
-  // Invoice type (ProfileID göndermiyoruz - Veriban otomatik belirliyor)
+  // Invoice type and profile
   const invoiceType = invoice.invoice_type || 'SATIS';
-  console.log('📋 [UBL] Invoice Type:', invoiceType);
+  const invoiceProfile = invoice.invoice_profile || 'TICARIFATURA';
+  console.log('📋 [UBL] Invoice Type:', invoiceType, 'Profile:', invoiceProfile);
   
   // Currency
   const currency = invoice.para_birimi || 'TRY';
@@ -311,6 +312,7 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
   }
   
   xml += `
+  <cbc:ProfileID>${escapeXml(invoiceProfile)}</cbc:ProfileID>
   <cbc:InvoiceTypeCode>${escapeXml(invoiceType)}</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>
   <cbc:LineCountNumeric>${items.length}</cbc:LineCountNumeric>`;

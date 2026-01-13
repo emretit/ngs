@@ -684,11 +684,6 @@ serve(async (req) => {
           updateData.fatura_no = finalInvoiceNumber;
         }
         xmlDataUpdate.veribanInvoiceNumber = finalInvoiceNumber;
-        
-        // Eğer Veriban gerçekten bir numara döndürdüyse (nadiren olur), onu da kaydet
-        if (veribanInvoiceNumber && veribanInvoiceNumber !== finalInvoiceNumber) {
-          xmlDataUpdate.veribanReturnedNumber = veribanInvoiceNumber;
-        }
       }
 
       await supabase

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:CustomizationID>TR1.2</cbc:CustomizationID>
+  <cbc:ProfileID>TEMELFATURA</cbc:ProfileID>
+  <cbc:ID>EAR2026000000999</cbc:ID>
+  <cbc:UUID>12345678-1234-1234-1234-123456789abc</cbc:UUID>
+  <cbc:IssueDate>2026-01-13</cbc:IssueDate>
+  <cbc:IssueTime>14:30:00</cbc:IssueTime>
+  <cbc:InvoiceTypeCode>SATIS</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>TRY</cbc:DocumentCurrencyCode>
+  
+  <!-- Satıcı Bilgileri (Veriban Test Hesabı) -->
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">9240481875</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>Veriban Elkt. Veri İşleme ve Saklama Hiz. A.Ş.</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Test Sokak</cbc:StreetName>
+        <cbc:BuildingNumber>1</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Beşiktaş</cbc:CitySubdivisionName>
+        <cbc:CityName>İstanbul</cbc:CityName>
+        <cac:Country>
+          <cbc:Name>Türkiye</cbc:Name>
+        </cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme>
+          <cbc:Name>Beşiktaş</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  
+  <!-- Alıcı Bilgileri (Test Müşteri - E-Fatura Mükellefiyeti YOK) -->
+  <cac:AccountingCustomerParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="TCKN">12345678901</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>Test Müşteri</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Müşteri Sokak</cbc:StreetName>
+        <cbc:BuildingNumber>5</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Kadıköy</cbc:CitySubdivisionName>
+        <cbc:CityName>İstanbul</cbc:CityName>
+        <cac:Country>
+          <cbc:Name>Türkiye</cbc:Name>
+        </cac:Country>
+      </cac:PostalAddress>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  
+  <!-- Vergi Toplamı -->
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="TRY">180.00</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="TRY">1000.00</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="TRY">180.00</cbc:TaxAmount>
+      <cbc:Percent>18</cbc:Percent>
+      <cac:TaxCategory>
+        <cac:TaxScheme>
+          <cbc:Name>KDV</cbc:Name>
+          <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  
+  <!-- Genel Toplamlar -->
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="TRY">1000.00</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="TRY">1000.00</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="TRY">1180.00</cbc:TaxInclusiveAmount>
+    <cbc:PayableAmount currencyID="TRY">1180.00</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  
+  <!-- Fatura Satırı -->
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="C62">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="TRY">1000.00</cbc:LineExtensionAmount>
+    <cac:Item>
+      <cbc:Name>Test Ürün</cbc:Name>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="TRY">1000.00</cbc:PriceAmount>
+    </cac:Price>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="TRY">180.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="TRY">1000.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="TRY">180.00</cbc:TaxAmount>
+        <cbc:Percent>18</cbc:Percent>
+        <cac:TaxCategory>
+          <cac:TaxScheme>
+            <cbc:Name>KDV</cbc:Name>
+            <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+  </cac:InvoiceLine>
+</Invoice>

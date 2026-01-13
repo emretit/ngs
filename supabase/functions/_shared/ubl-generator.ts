@@ -311,8 +311,14 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
     xml += `\n  <cbc:DueDate>${dueDate}</cbc:DueDate>`;
   }
   
+  // ⭐ E-Arşiv için ProfileID gönderilmemeli - Veriban otomatik belirler
+  // E-Arşiv dışındaki profiller için ProfileID ekle
+  const isEArchive = invoiceProfile === 'EARSIVFATURA';
+  if (!isEArchive) {
+    xml += `\n  <cbc:ProfileID>${escapeXml(invoiceProfile)}</cbc:ProfileID>`;
+  }
+  
   xml += `
-  <cbc:ProfileID>${escapeXml(invoiceProfile)}</cbc:ProfileID>
   <cbc:InvoiceTypeCode>${escapeXml(invoiceType)}</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>
   <cbc:LineCountNumeric>${items.length}</cbc:LineCountNumeric>`;

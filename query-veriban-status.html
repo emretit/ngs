@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veriban E-Arşiv Fatura Durum Sorgulama</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+            margin-top: 0;
+        }
+        .info-box {
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #1d4ed8;
+        }
+        .button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        .success {
+            background: #d1fae5;
+            border-color: #10b981;
+        }
+        .error {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f4f6;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        pre {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px 5px 5px 0;
+        }
+        .status-success { background: #d1fae5; color: #065f46; }
+        .status-error { background: #fee2e2; color: #991b1b; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-processing { background: #dbeafe; color: #1e40af; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 E-Arşiv Fatura Durum Sorgulama</h1>
+        
+        <div class="info-box">
+            <h3 style="margin-top:0">📄 Fatura Bilgileri</h3>
+            <p><strong>Fatura No:</strong> EAR2026000000002</p>
+            <p><strong>ETTN:</strong> 0740f0c7-667a-4516-9b7e-5beba36b4dad</p>
+            <p><strong>Transfer ID:</strong> A455298B-17C1-409D-870E-01F8017009E1</p>
+            <p><strong>Database ID:</strong> f45a0371-96b0-4e5b-8124-d727f5cfd6c9</p>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3>⚙️ İşlemler</h3>
+            <button class="button" onclick="queryByInvoiceNumber()">
+                📄 Fatura Numarası ile Sorgula
+            </button>
+            <button class="button" onclick="queryByUUID()">
+                🆔 ETTN (UUID) ile Sorgula
+            </button>
+            <button class="button" onclick="queryTransferStatus()">
+                📦 Transfer Durumu Sorgula
+            </button>
+            <button class="button" onclick="updateDatabase()">
+                💾 Veritabanını Güncelle
+            </button>
+        </div>
+
+        <div id="result"></div>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+            <h3>📖 Durum Kodları</h3>
+            <ul>
+                <li><span class="status-badge status-pending">0</span> Beklemede / Henüz işlenmemiş</li>
+                <li><span class="status-badge status-pending">1</span> Taslak</li>
+                <li><span class="status-badge status-processing">2</span> İmza Bekliyor / Gönderilmeyi Bekliyor</li>
+                <li><span class="status-badge status-processing">3</span> Gönderildi / Gönderim Listesinde</li>
+                <li><span class="status-badge status-error">4</span> Hatalı</li>
+                <li><span class="status-badge status-success">5</span> Başarılı - GİB'e İletildi</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://nlwogfdhvxwvgcuhskij.supabase.co';
+        const SESSION_CODE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0NDdhZmFiNS1jNjYwLTQ4YjMtOWFmYy1hMjE2MTcwMzQ2ODAiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIyMTcxOCIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJOR1NATkdTIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiTkdTIMSwTEVUxLDFnsSwTSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL3N1cm5hbWUiOiJURUtOT0xPSsSwTEVSxLAiLCJHaG9zdFVzZXIiOiJGYWxzZSIsIkFjY291bnRVbmlxdWVJZCI6IkU2N0Y3M0EyLUMzMkEtNDlBQi1BMDcxLTVENURFMDRGNjA5OSIsIkFjY291bnRUaXRsZSI6Ik5HUyDEsExFVMSwxZ7EsE0gVEVLTk9MT0rEsExFUsSwIFZFIEfDnFZFTkzEsEsgU8SwU1RFTUxFUsSwIEzEsE3EsFRFRCDFnsSwUktFVMSwIiwiQWNjb3VudFJlZ2lzdGVyTnVtYmVyIjoiNjMxMTgzNTk0MiIsIkFjY291bnRCcmFuY2hDb2RlIjoiIiwiQ2xpZW50SVAiOiIxMC4xLjEuMjA3IiwiQ2xpZW50QWdlbnQiOiJFSW52b2ljZVdlYlNlcnZpY2VfSW50ZWdyYXRpb25TZXJ2aWNlX0xvZ2luIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjpbIntcIlZlcmliYW5TeXN0ZW1UeXBlXCI6MTEsXCJBY2NvdW50UHJvY2Vzc1R5cGVcIjoxfSIsIntcIlZlcmliYW5TeXN0ZW1UeXBlXCI6MTIsXCJBY2NvdW50UHJvY2Vzc1R5cGVcIjoxfSJdLCJuYmYiOjE3NjgyOTE3ODksImV4cCI6MTc2ODMzNDk4OSwiaXNzIjoidmVyaWJhbi5jb20udHIiLCJhdWQiOiJ2ZXJpYmFuLmNvbS50ciJ9.0XH4eSAbz0RvxpbWKhv94f71mDfEhZFxNBYa5SxuatA';
+        const WEBSERVICE_URL = 'https://efaturatransfer.veriban.com.tr/IntegrationService.svc';
+
+        function escapeXml(unsafe) {
+            return unsafe.replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&apos;');
+        }
+
+        function showLoading() {
+            document.getElementById('result').innerHTML = '<div class="result"><div class="loading"></div> Veriban API sorgulanıyor...</div>';
+        }
+
+        function showResult(title, data, isSuccess = true) {
+            const resultDiv = document.getElementById('result');
+            const className = isSuccess ? 'result success' : 'result error';
+            resultDiv.innerHTML = `
+                <div class="${className}">
+                    <h3>${title}</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        async function queryByInvoiceNumber() {
+            showLoading();
+            try {
+                const invoiceNumber = 'EAR2026000000002';
+                const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:GetSalesInvoiceStatusWithInvoiceNumber>
+      <tem:sessionCode>${escapeXml(SESSION_CODE)}</tem:sessionCode>
+      <tem:invoiceNumber>${escapeXml(invoiceNumber)}</tem:invoiceNumber>
+    </tem:GetSalesInvoiceStatusWithInvoiceNumber>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+                const response = await fetch(WEBSERVICE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/xml; charset=utf-8',
+                        'SOAPAction': 'GetSalesInvoiceStatusWithInvoiceNumber',
+                    },
+                    body: soapRequest,
+                });
+
+                const xmlText = await response.text();
+                console.log('Response XML:', xmlText);
+                
+                // Parse response
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                
+                const result = {
+                    success: response.ok,
+                    status: response.status,
+                    stateCode: xmlDoc.getElementsByTagName('StateCode')[0]?.textContent,
+                    stateName: xmlDoc.getElementsByTagName('StateName')[0]?.textContent,
+                    stateDescription: xmlDoc.getElementsByTagName('StateDescription')[0]?.textContent,
+                    invoiceProfile: xmlDoc.getElementsByTagName('InvoiceProfile')[0]?.textContent,
+                    errorMessage: xmlDoc.getElementsByTagName('ErrorMessage')[0]?.textContent,
+                    rawXml: xmlText
+                };
+
+                showResult('✅ Fatura Numarası ile Durum Sorgulaması', result, result.stateCode !== '4');
+            } catch (error) {
+                showResult('❌ Hata', { error: error.message }, false);
+            }
+        }
+
+        async function queryByUUID() {
+            showLoading();
+            try {
+                const uuid = '0740f0c7-667a-4516-9b7e-5beba36b4dad';
+                const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:GetSalesInvoiceStatusWithInvoiceUUID>
+      <tem:sessionCode>${escapeXml(SESSION_CODE)}</tem:sessionCode>
+      <tem:invoiceUUID>${escapeXml(uuid)}</tem:invoiceUUID>
+    </tem:GetSalesInvoiceStatusWithInvoiceUUID>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+                const response = await fetch(WEBSERVICE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/xml; charset=utf-8',
+                        'SOAPAction': 'GetSalesInvoiceStatusWithInvoiceUUID',
+                    },
+                    body: soapRequest,
+                });
+
+                const xmlText = await response.text();
+                console.log('Response XML:', xmlText);
+                
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                
+                const result = {
+                    success: response.ok,
+                    status: response.status,
+                    stateCode: xmlDoc.getElementsByTagName('StateCode')[0]?.textContent,
+                    stateName: xmlDoc.getElementsByTagName('StateName')[0]?.textContent,
+                    stateDescription: xmlDoc.getElementsByTagName('StateDescription')[0]?.textContent,
+                    invoiceProfile: xmlDoc.getElementsByTagName('InvoiceProfile')[0]?.textContent,
+                    rawXml: xmlText
+                };
+
+                showResult('✅ ETTN (UUID) ile Durum Sorgulaması', result, result.stateCode !== '4');
+            } catch (error) {
+                showResult('❌ Hata', { error: error.message }, false);
+            }
+        }
+
+        async function queryTransferStatus() {
+            showLoading();
+            try {
+                const transferId = 'A455298B-17C1-409D-870E-01F8017009E1';
+                const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:GetTransferSalesInvoiceFileStatus>
+      <tem:sessionCode>${escapeXml(SESSION_CODE)}</tem:sessionCode>
+      <tem:transferFileUniqueId>${escapeXml(transferId)}</tem:transferFileUniqueId>
+    </tem:GetTransferSalesInvoiceFileStatus>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+                const response = await fetch(WEBSERVICE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/xml; charset=utf-8',
+                        'SOAPAction': 'GetTransferSalesInvoiceFileStatus',
+                    },
+                    body: soapRequest,
+                });
+
+                const xmlText = await response.text();
+                console.log('Response XML:', xmlText);
+                
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                
+                const result = {
+                    success: response.ok,
+                    status: response.status,
+                    stateCode: xmlDoc.getElementsByTagName('StateCode')[0]?.textContent,
+                    stateName: xmlDoc.getElementsByTagName('StateName')[0]?.textContent,
+                    stateDescription: xmlDoc.getElementsByTagName('StateDescription')[0]?.textContent,
+                    rawXml: xmlText
+                };
+
+                showResult('✅ Transfer Durum Sorgulaması', result, result.stateCode !== '4');
+            } catch (error) {
+                showResult('❌ Hata', { error: error.message }, false);
+            }
+        }
+
+        async function updateDatabase() {
+            showResult('ℹ️ Bilgi', {
+                message: 'Veritabanı güncellemesi için UI üzerinden "E-Fatura Durumu Çek" butonuna tıklayın.',
+                alternativeUrl: `${SUPABASE_URL}/functions/v1/veriban-invoice-status`,
+                payload: {
+                    invoiceNumber: 'EAR2026000000002'
+                }
+            }, true);
+        }
+
+        // Page load
+        console.log('Veriban E-Arşiv Fatura Durum Sorgulama Hazır');
+        console.log('Session Code:', SESSION_CODE.substring(0, 50) + '...');
+    </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<Invoice xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:qdt="urn:oasis:names:specification:ubl:schema:xsd:QualifiedDatatypes-2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:udt="urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2" xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" xmlns:ubltr="urn:oasis:names:specification:ubl:schema:xsd:TurkishCustomizationExtensionComponents" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ccts="urn:un:unece:uncefact:documentation:2" xsi:schemaLocation="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2 UBLTR-Invoice-2.0.xsd" xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
+  <cbc:UBLVersionID>2.0</cbc:UBLVersionID>
+  <cbc:CustomizationID>TR1.0</cbc:CustomizationID>
+  <cbc:ProfileID>TICARIFATURA</cbc:ProfileID>
+  <cbc:ID>TST2015000000001</cbc:ID>
+  <cbc:CopyIndicator>false</cbc:CopyIndicator>
+  <cbc:UUID>f77d6061-9fa5-44b0-bfa6-e507e6cd3db7</cbc:UUID>
+  <cbc:IssueDate>2015-02-12</cbc:IssueDate>
+  <cbc:IssueTime>00:00:00</cbc:IssueTime>
+  <cbc:InvoiceTypeCode>SATIS</cbc:InvoiceTypeCode>
+  <cbc:Note>YALNIZ BİN YÜZ SEKSEN TL.</cbc:Note>
+  <cbc:DocumentCurrencyCode listID="ISO 4217 Alpha" listAgencyName="United Nations Economic Commission for Europe" listName="Currency" listVersionID="2001">TRL</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>1</cbc:LineCountNumeric>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cbc:WebsiteURI>www.veriban.com.tr</cbc:WebsiteURI>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">9240481875</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="TICARETSICILNO">868635</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="MERSISNO">0170004360800010</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>Veriban Elkt. Veri İşleme ve  Saklama Hiz. A.Ş.</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Atakan Sk.</cbc:StreetName>
+        <cbc:BuildingName>Escort Plaza</cbc:BuildingName>
+        <cbc:BuildingNumber>14</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Mecidiyeköy</cbc:CitySubdivisionName>
+        <cbc:CityName>İstanbul</cbc:CityName>
+        <cbc:PostalZone>34000</cbc:PostalZone>
+        <cac:Country>
+          <cbc:IdentificationCode>TR</cbc:IdentificationCode>
+          <cbc:Name />
+        </cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme>
+          <cbc:Name>Zincirlikuyu</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty>
+    <cac:Party>
+      <cbc:WebsiteURI>www.bilgera.com.tr</cbc:WebsiteURI>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">1700293317</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="TICARETSICILNO">637504</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="MERSISNO">0170029331700014</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>Bilgera Yazılım A.Ş.</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Atakan Sk.</cbc:StreetName>
+        <cbc:BuildingName>Escort Plaza</cbc:BuildingName>
+        <cbc:BuildingNumber>14</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Mecidiyeköy</cbc:CitySubdivisionName>
+        <cbc:CityName>İstanbul</cbc:CityName>
+        <cbc:PostalZone>34000</cbc:PostalZone>
+        <cac:Country>
+          <cbc:IdentificationCode>TR</cbc:IdentificationCode>
+          <cbc:Name />
+        </cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme>
+          <cbc:Name>Zincirlikuyu</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="TRL">180</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="TRL">1000</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="TRL">180</cbc:TaxAmount>
+      <cbc:Percent>18</cbc:Percent>
+      <cac:TaxCategory>
+        <cbc:TaxExemptionReason />
+        <cac:TaxScheme>
+          <cbc:Name>0015</cbc:Name>
+          <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="TRL">1000</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="TRL">1000</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="TRL">1180</cbc:TaxInclusiveAmount>
+    <cbc:AllowanceTotalAmount currencyID="TRL">0</cbc:AllowanceTotalAmount>
+    <cbc:PayableAmount currencyID="TRL">1180</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="NIU">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="TRL">1000</cbc:LineExtensionAmount>
+    <cac:AllowanceCharge>
+      <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+      <cbc:MultiplierFactorNumeric>0</cbc:MultiplierFactorNumeric>
+      <cbc:Amount currencyID="TRL">0</cbc:Amount>
+      <cbc:BaseAmount currencyID="TRL">1000</cbc:BaseAmount>
+    </cac:AllowanceCharge>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="TRL">180</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="TRL">1000</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="TRL">180</cbc:TaxAmount>
+        <cbc:Percent>18</cbc:Percent>
+        <cac:TaxCategory>
+          <cac:TaxScheme>
+            <cbc:Name>GERÇEK USULDE KATMA DEĞER VERGİSİ</cbc:Name>
+            <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description />
+      <cbc:Name>PC</cbc:Name>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="TRL">1000</cbc:PriceAmount>
+    </cac:Price>
+  </cac:InvoiceLine>
+</Invoice>
+

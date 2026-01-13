@@ -1,0 +1,1223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://tempuri.org/" elementFormDefault="qualified" targetNamespace="http://tempuri.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Login">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="userName" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="password" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="LoginResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="LoginResult" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="VeribanServiceFault" type="tns:VeribanServiceFault" />
+  <xs:complexType name="VeribanServiceFault">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="1" form="unqualified" name="FaultCode" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="1" form="unqualified" name="FaultDescription" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Logout">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="LogoutResponse">
+    <xs:complexType />
+  </xs:element>
+  <xs:element name="CheckRegisterNumberIsEInvoiceCustomer">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="customerRegisterNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CheckRegisterNumberIsEInvoiceCustomerResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CheckRegisterNumberIsEInvoiceCustomerResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="OperationResult">
+    <xs:sequence>
+      <xs:element minOccurs="1" maxOccurs="1" name="OperationCompleted" type="xs:boolean" />
+      <xs:element minOccurs="0" maxOccurs="1" name="Description" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="TransferSalesInvoiceFile">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFile" type="tns:EArchiveTransferFile" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="EArchiveTransferFile">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:TransferFile">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="ReceiverMailTargetAddresses" type="tns:ArrayOfString" />
+          <xs:element minOccurs="0" maxOccurs="1" name="ReceiverGsmNo" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="InvoiceTransportationType" type="tns:InvoiceTransportationTypes" />
+          <xs:element minOccurs="1" maxOccurs="1" name="IsInvoiceCreatedAtDelivery" type="xs:boolean" />
+          <xs:element minOccurs="1" maxOccurs="1" name="IsInternetSalesInvoice" type="xs:boolean" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="TransferFile">
+    <xs:sequence>
+      <xs:element minOccurs="1" maxOccurs="1" name="FileDataType" type="tns:TransferDocumentDataTypes" />
+      <xs:element minOccurs="0" maxOccurs="1" name="FileNameWithExtension" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="1" name="BinaryData" type="xs:base64Binary" />
+      <xs:element minOccurs="0" maxOccurs="1" name="BinaryDataHash" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:simpleType name="TransferDocumentDataTypes">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="XML_INZIP" />
+      <xs:enumeration value="TXT_INZIP" />
+      <xs:enumeration value="CSV_INZIP" />
+      <xs:enumeration value="XLS_INZIP" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="ArrayOfString">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="string" nillable="true" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:simpleType name="InvoiceTransportationTypes">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="NONE" />
+      <xs:enumeration value="ELEKTRONIK" />
+      <xs:enumeration value="KAGIT" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="TransferSalesInvoiceFileResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="TransferSalesInvoiceFileResult" type="tns:TransferResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="TransferResult">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:OperationResult">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="TransferFileUniqueId" type="xs:string" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="TransferSalesInvoiceFileWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFile" type="tns:EArchiveTransferFile" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferSalesInvoiceFileWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="TransferSalesInvoiceFileWithIntegrationCodeResult" type="tns:TransferResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferOkcInvoiceFile">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFile" type="tns:EArchiveTransferFile" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferOkcInvoiceFileResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="TransferOkcInvoiceFileResult" type="tns:TransferResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferOkcInvoiceFileWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFile" type="tns:EArchiveTransferFile" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferOkcInvoiceFileWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="TransferOkcInvoiceFileWithIntegrationCodeResult" type="tns:TransferResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferManufacturedReceiptFile">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFile" type="tns:EArchiveManufacturedFile" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="EArchiveManufacturedFile">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:TransferFile">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="ReceiverMailTargetAddresses" type="tns:ArrayOfString" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="TransferManufacturedReceiptFileResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="TransferManufacturedReceiptFileResult" type="tns:TransferResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferManufacturedReceiptFileWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFile" type="tns:EArchiveManufacturedFile" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferManufacturedReceiptFileWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="TransferManufacturedReceiptFileWithIntegrationCodeResult" type="tns:TransferResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferSelfEmploymentReceiptFile">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFile" type="tns:EArchiveSelfEmploymentFile" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="EArchiveSelfEmploymentFile">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:TransferFile">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="ReceiverMailTargetAddresses" type="tns:ArrayOfString" />
+          <xs:element minOccurs="1" maxOccurs="1" name="ReceiptTransportationType" type="tns:InvoiceTransportationTypes" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="TransferSelfEmploymentReceiptFileResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="TransferSelfEmploymentReceiptFileResult" type="tns:TransferResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferSelfEmploymentReceiptFileWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFile" type="tns:EArchiveSelfEmploymentFile" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferSelfEmploymentReceiptFileWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="TransferSelfEmploymentReceiptFileWithIntegrationCodeResult" type="tns:TransferResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferOkcOldDocumentFile">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFile" type="tns:EArchiveOkcDocumentFile" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="EArchiveOkcDocumentFile">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:TransferFile" />
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="TransferOkcOldDocumentFileResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="TransferOkcOldDocumentFileResult" type="tns:TransferResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferOkcOldDocumentFileWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFile" type="tns:EArchiveOkcDocumentFile" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferOkcOldDocumentFileWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="TransferOkcOldDocumentFileWithIntegrationCodeResult" type="tns:TransferResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferOkcNewDocumentFile">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFile" type="tns:EArchiveOkcDocumentFile" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferOkcNewDocumentFileResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="TransferOkcNewDocumentFileResult" type="tns:TransferResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferOkcNewDocumentFileWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFile" type="tns:EArchiveOkcDocumentFile" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransferOkcNewDocumentFileWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="TransferOkcNewDocumentFileWithIntegrationCodeResult" type="tns:TransferResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSalesInvoiceUUIDListWithCustomerRegisterNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="customerRegisterNumber" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="dtStartIssueTime" type="xs:dateTime" />
+        <xs:element minOccurs="1" maxOccurs="1" name="dtEndIssueTime" type="xs:dateTime" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSalesInvoiceUUIDListWithCustomerRegisterNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetSalesInvoiceUUIDListWithCustomerRegisterNumberResult" type="tns:ArrayOfString" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcInvoiceUUIDListWithCustomerRegisterNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="customerRegisterNumber" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="dtStartIssueTime" type="xs:dateTime" />
+        <xs:element minOccurs="1" maxOccurs="1" name="dtEndIssueTime" type="xs:dateTime" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcInvoiceUUIDListWithCustomerRegisterNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetOkcInvoiceUUIDListWithCustomerRegisterNumberResult" type="tns:ArrayOfString" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferFileStatus">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFileUniqueId" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferFileStatusResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetTransferFileStatusResult" type="tns:TransferQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="TransferQueryResult">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:DocumentQueryResult">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="InsertTime" nillable="true" type="xs:dateTime" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="DocumentQueryResult">
+    <xs:sequence>
+      <xs:element minOccurs="1" maxOccurs="1" name="StateCode" type="xs:int" />
+      <xs:element minOccurs="0" maxOccurs="1" name="StateName" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="1" name="StateDescription" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="GetTransferFileStatusWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferFileStatusWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetTransferFileStatusWithIntegrationCodeResult" type="tns:TransferQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferOkcInvoiceFileStatus">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFileUniqueId" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferOkcInvoiceFileStatusResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetTransferOkcInvoiceFileStatusResult" type="tns:TransferQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferOkcInvoiceFileStatusWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferOkcInvoiceFileStatusWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetTransferOkcInvoiceFileStatusWithIntegrationCodeResult" type="tns:TransferQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferManufacturedFileStatus">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFileUniqueId" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferManufacturedFileStatusResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetTransferManufacturedFileStatusResult" type="tns:TransferQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferManufacturedFileStatusWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferManufacturedFileStatusWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetTransferManufacturedFileStatusWithIntegrationCodeResult" type="tns:TransferQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferSelfEmploymentFileStatus">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFileUniqueId" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferSelfEmploymentFileStatusResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetTransferSelfEmploymentFileStatusResult" type="tns:TransferQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferSelfEmploymentFileStatusWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferSelfEmploymentFileStatusWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetTransferSelfEmploymentFileStatusWithIntegrationCodeResult" type="tns:TransferQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferOkcDocumentFileStatus">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="transferFileUniqueId" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferOkcDocumentFileStatusResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetTransferOkcDocumentFileStatusResult" type="tns:TransferQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferOkcDocumentFileStatusWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetTransferOkcDocumentFileStatusWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetTransferOkcDocumentFileStatusWithIntegrationCodeResult" type="tns:TransferQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSalesInvoiceStatusWithInvoiceUUID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="invoiceUUID" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSalesInvoiceStatusWithInvoiceUUIDResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetSalesInvoiceStatusWithInvoiceUUIDResult" type="tns:EArchiveInvoiceQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="EArchiveInvoiceQueryResult">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:DocumentQueryResult">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="GIBReportStateCode" type="xs:int" />
+          <xs:element minOccurs="0" maxOccurs="1" name="GIBReportStateName" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="GIBReportUUID" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="MailStateCode" type="xs:int" />
+          <xs:element minOccurs="0" maxOccurs="1" name="MailStateName" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="SmsStateCode" type="xs:int" />
+          <xs:element minOccurs="0" maxOccurs="1" name="SmsStateName" type="xs:string" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="GetSalesInvoiceStatusWithInvoiceNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="invoiceNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSalesInvoiceStatusWithInvoiceNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetSalesInvoiceStatusWithInvoiceNumberResult" type="tns:EArchiveInvoiceQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSalesInvoiceStatusWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSalesInvoiceStatusWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetSalesInvoiceStatusWithIntegrationCodeResult" type="tns:EArchiveInvoiceQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcInvoiceStatusWithInvoiceUUID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="invoiceUUID" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcInvoiceStatusWithInvoiceUUIDResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetOkcInvoiceStatusWithInvoiceUUIDResult" type="tns:EArchiveInvoiceQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcInvoiceStatusWithInvoiceNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="invoiceNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcInvoiceStatusWithInvoiceNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetOkcInvoiceStatusWithInvoiceNumberResult" type="tns:EArchiveInvoiceQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcInvoiceStatusWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcInvoiceStatusWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetOkcInvoiceStatusWithIntegrationCodeResult" type="tns:EArchiveInvoiceQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetManufacturedReceiptStatusWithReceiptUUID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="receiptUUID" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetManufacturedReceiptStatusWithReceiptUUIDResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetManufacturedReceiptStatusWithReceiptUUIDResult" type="tns:EArchiveReceiptQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="EArchiveReceiptQueryResult">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:DocumentQueryResult">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="GIBReportStateCode" type="xs:int" />
+          <xs:element minOccurs="0" maxOccurs="1" name="GIBReportStateName" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="GIBReportUUID" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="MailStateCode" type="xs:int" />
+          <xs:element minOccurs="0" maxOccurs="1" name="MailStateName" type="xs:string" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="GetManufacturedReceiptStatusWithReceiptNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="receiptNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetManufacturedReceiptStatusWithReceiptNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetManufacturedReceiptStatusWithReceiptNumberResult" type="tns:EArchiveReceiptQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetManufacturedReceiptStatusWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetManufacturedReceiptStatusWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetManufacturedReceiptStatusWithIntegrationCodeResult" type="tns:EArchiveReceiptQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSelfEmploymentReceiptStatusWithReceiptUUID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="receiptUUID" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSelfEmploymentReceiptStatusWithReceiptUUIDResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetSelfEmploymentReceiptStatusWithReceiptUUIDResult" type="tns:EArchiveReceiptQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSelfEmploymentReceiptStatusWithReceiptNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="receiptNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSelfEmploymentReceiptStatusWithReceiptNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetSelfEmploymentReceiptStatusWithReceiptNumberResult" type="tns:EArchiveReceiptQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSelfEmploymentReceiptStatusWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetSelfEmploymentReceiptStatusWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetSelfEmploymentReceiptStatusWithIntegrationCodeResult" type="tns:EArchiveReceiptQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcOldDocumentStatusWithZReportDate">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="OKCSicilNo" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="ZReportDate" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcOldDocumentStatusWithZReportDateResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetOkcOldDocumentStatusWithZReportDateResult" type="tns:EArchiveOkcDocumentQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="EArchiveOkcDocumentQueryResult">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:DocumentQueryResult">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="GIBReportStateCode" type="xs:int" />
+          <xs:element minOccurs="0" maxOccurs="1" name="GIBReportStateName" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="GIBReportUUID" type="xs:string" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="GetOkcOldDocumentStatusWithZReportNo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="OKCSicilNo" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="ZReportNo" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcOldDocumentStatusWithZReportNoResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetOkcOldDocumentStatusWithZReportNoResult" type="tns:EArchiveOkcDocumentQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcOldDocumentStatusWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="OKCSicilNo" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcOldDocumentStatusWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetOkcOldDocumentStatusWithIntegrationCodeResult" type="tns:EArchiveOkcDocumentQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcNewDocumentStatusWithYMReportNo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="OKCSicilNo" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="YMReportNo" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcNewDocumentStatusWithYMReportNoResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetOkcNewDocumentStatusWithYMReportNoResult" type="tns:EArchiveOkcDocumentQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcNewDocumentStatusWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="OKCSicilNo" type="xs:string" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetOkcNewDocumentStatusWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="GetOkcNewDocumentStatusWithIntegrationCodeResult" type="tns:EArchiveOkcDocumentQueryResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelSalesInvoiceWithInvoiceUUID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="cancelledTime" type="xs:dateTime" />
+        <xs:element minOccurs="0" maxOccurs="1" name="invoiceUUID" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelSalesInvoiceWithInvoiceUUIDResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CancelSalesInvoiceWithInvoiceUUIDResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelSalesInvoiceWithInvoiceNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="cancelledTime" type="xs:dateTime" />
+        <xs:element minOccurs="0" maxOccurs="1" name="invoiceNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelSalesInvoiceWithInvoiceNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CancelSalesInvoiceWithInvoiceNumberResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelSalesInvoiceWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="cancelledTime" type="xs:dateTime" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelSalesInvoiceWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CancelSalesInvoiceWithIntegrationCodeResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelOkcInvoiceWithInvoiceUUID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="cancelledTime" type="xs:dateTime" />
+        <xs:element minOccurs="0" maxOccurs="1" name="invoiceUUID" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelOkcInvoiceWithInvoiceUUIDResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CancelOkcInvoiceWithInvoiceUUIDResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelOkcInvoiceWithInvoiceNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="cancelledTime" type="xs:dateTime" />
+        <xs:element minOccurs="0" maxOccurs="1" name="invoiceNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelOkcInvoiceWithInvoiceNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CancelOkcInvoiceWithInvoiceNumberResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelOkcInvoiceWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="cancelledTime" type="xs:dateTime" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelOkcInvoiceWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CancelOkcInvoiceWithIntegrationCodeResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelManufacturedReceiptWithReceiptUUID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="cancelledTime" type="xs:dateTime" />
+        <xs:element minOccurs="0" maxOccurs="1" name="receiptUUID" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelManufacturedReceiptWithReceiptUUIDResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CancelManufacturedReceiptWithReceiptUUIDResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelManufacturedReceiptWithReceiptNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="cancelledTime" type="xs:dateTime" />
+        <xs:element minOccurs="0" maxOccurs="1" name="receiptNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelManufacturedReceiptWithReceiptNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CancelManufacturedReceiptWithReceiptNumberResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelManufacturedReceiptWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="cancelledTime" type="xs:dateTime" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelManufacturedReceiptWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CancelManufacturedReceiptWithIntegrationCodeResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelSelfEmploymentReceiptWithReceiptUUID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="cancelledTime" type="xs:dateTime" />
+        <xs:element minOccurs="0" maxOccurs="1" name="receiptUUID" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelSelfEmploymentReceiptWithReceiptUUIDResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CancelSelfEmploymentReceiptWithReceiptUUIDResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelSelfEmploymentReceiptWithReceiptNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="cancelledTime" type="xs:dateTime" />
+        <xs:element minOccurs="0" maxOccurs="1" name="receiptNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelSelfEmploymentReceiptWithReceiptNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CancelSelfEmploymentReceiptWithReceiptNumberResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelSelfEmploymentReceiptWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="cancelledTime" type="xs:dateTime" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CancelSelfEmploymentReceiptWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="CancelSelfEmploymentReceiptWithIntegrationCodeResult" type="tns:OperationResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadSalesInvoiceWithInvoiceUUID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="downloadDataType" type="tns:DownloadDocumentDataTypes" />
+        <xs:element minOccurs="0" maxOccurs="1" name="invoiceUUID" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="DownloadDocumentDataTypes">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="XML_INZIP" />
+      <xs:enumeration value="HTML_INZIP" />
+      <xs:enumeration value="IMAGE_INZIP" />
+      <xs:enumeration value="PDF_INZIP" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="DownloadSalesInvoiceWithInvoiceUUIDResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="DownloadSalesInvoiceWithInvoiceUUIDResult" type="tns:DownloadResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="DownloadResult">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="1" name="ReferenceCode" type="xs:string" />
+      <xs:element minOccurs="1" maxOccurs="1" name="DownloadFileReady" type="xs:boolean" />
+      <xs:element minOccurs="0" maxOccurs="1" name="DownloadDescription" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="1" name="DownloadFile" type="tns:DownloadFile" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="DownloadFile">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="1" name="FileName" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="1" name="FileExtension" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="1" name="FileHash" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="1" name="FileData" type="xs:base64Binary" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="DownloadSalesInvoiceWithInvoiceNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="downloadDataType" type="tns:DownloadDocumentDataTypes" />
+        <xs:element minOccurs="0" maxOccurs="1" name="invoiceNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadSalesInvoiceWithInvoiceNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="DownloadSalesInvoiceWithInvoiceNumberResult" type="tns:DownloadResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadSalesInvoiceWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="downloadDataType" type="tns:DownloadDocumentDataTypes" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadSalesInvoiceWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="DownloadSalesInvoiceWithIntegrationCodeResult" type="tns:DownloadResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadOkcInvoiceWithInvoiceUUID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="downloadDataType" type="tns:DownloadDocumentDataTypes" />
+        <xs:element minOccurs="0" maxOccurs="1" name="invoiceUUID" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadOkcInvoiceWithInvoiceUUIDResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="DownloadOkcInvoiceWithInvoiceUUIDResult" type="tns:DownloadResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadOkcInvoiceWithInvoiceNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="downloadDataType" type="tns:DownloadDocumentDataTypes" />
+        <xs:element minOccurs="0" maxOccurs="1" name="invoiceNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadOkcInvoiceWithInvoiceNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="DownloadOkcInvoiceWithInvoiceNumberResult" type="tns:DownloadResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadOkcInvoiceWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="downloadDataType" type="tns:DownloadDocumentDataTypes" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadOkcInvoiceWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="DownloadOkcInvoiceWithIntegrationCodeResult" type="tns:DownloadResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadManufacturedReceiptWithReceiptUUID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="downloadDataType" type="tns:DownloadDocumentDataTypes" />
+        <xs:element minOccurs="0" maxOccurs="1" name="receiptUUID" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadManufacturedReceiptWithReceiptUUIDResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="DownloadManufacturedReceiptWithReceiptUUIDResult" type="tns:DownloadResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadManufacturedReceiptWithReceiptNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="downloadDataType" type="tns:DownloadDocumentDataTypes" />
+        <xs:element minOccurs="0" maxOccurs="1" name="receiptNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadManufacturedReceiptWithReceiptNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="DownloadManufacturedReceiptWithReceiptNumberResult" type="tns:DownloadResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadManufacturedReceiptWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="downloadDataType" type="tns:DownloadDocumentDataTypes" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadManufacturedReceiptWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="DownloadManufacturedReceiptWithIntegrationCodeResult" type="tns:DownloadResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadSelfEmploymentReceiptWithReceiptUUID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="downloadDataType" type="tns:DownloadDocumentDataTypes" />
+        <xs:element minOccurs="0" maxOccurs="1" name="receiptUUID" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadSelfEmploymentReceiptWithReceiptUUIDResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="DownloadSelfEmploymentReceiptWithReceiptUUIDResult" type="tns:DownloadResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadSelfEmploymentReceiptWithReceiptNumber">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="downloadDataType" type="tns:DownloadDocumentDataTypes" />
+        <xs:element minOccurs="0" maxOccurs="1" name="receiptNumber" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadSelfEmploymentReceiptWithReceiptNumberResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="DownloadSelfEmploymentReceiptWithReceiptNumberResult" type="tns:DownloadResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadSelfEmploymentReceiptWithIntegrationCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="sessionCode" type="xs:string" />
+        <xs:element minOccurs="1" maxOccurs="1" name="downloadDataType" type="tns:DownloadDocumentDataTypes" />
+        <xs:element minOccurs="0" maxOccurs="1" name="uniqueIntegrationCode" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DownloadSelfEmploymentReceiptWithIntegrationCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="1" name="DownloadSelfEmploymentReceiptWithIntegrationCodeResult" type="tns:DownloadResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

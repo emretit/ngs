@@ -322,7 +322,7 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
               <div>
                 <Label className="text-xs">Fatura Tipi</Label>
                 <Select
-                  value={formData.invoice_type}
+                  value={formData.invoice_type || "SATIS"}
                   onValueChange={(value) => onFieldChange("invoice_type", value)}
                 >
                   <SelectTrigger className="h-8 text-xs">
@@ -348,7 +348,7 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
                 <div>
                   <Label className="text-xs">Fatura Profili (E-Fatura)</Label>
                   <Select
-                    value={formData.invoice_profile}
+                    value={formData.invoice_profile || ""}
                     onValueChange={(value) => onFieldChange("invoice_profile", value)}
                   >
                     <SelectTrigger className="h-8 text-xs">
@@ -405,7 +405,7 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
               <div>
                 <Label className="text-xs">Satış Platformu</Label>
                 <Select
-                  value={formData.sales_platform}
+                  value={formData.sales_platform || "NORMAL"}
                   onValueChange={(value) => onFieldChange("sales_platform", value)}
                 >
                   <SelectTrigger className="h-8 text-xs">

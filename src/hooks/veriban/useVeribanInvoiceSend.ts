@@ -275,9 +275,18 @@ export const useVeribanInvoiceSend = () => {
               
               if (statusResult?.success) {
                 const stateCode = statusResult.status?.stateCode;
-                const stateDescription = statusResult.status?.stateDescription;
+                const stateDescription = statusResult.status?.stateDescription || '(açıklama yok)';
+                const userFriendlyStatus = statusResult.status?.userFriendlyStatus || 'Bilinmeyen';
                 
-                logger.info(`📊 [useVeribanInvoiceSend] Transfer status: StateCode=${stateCode}, Description=${stateDescription}`);
+                logger.info(`📊 [useVeribanInvoiceSend] Transfer status: StateCode=${stateCode}, Status="${userFriendlyStatus}", Description=${stateDescription}`);
+                
+                // StateCode=4 ise hata mesajını göster
+                if (stateCode === 4) {
+                  logger.error(`❌ [useVeribanInvoiceSend] E-Arşiv fatura hatası: ${stateDescription}`);
+                  toast.error(`E-Arşiv fatura hatası: ${stateDescription}`, {
+                    duration: 10000, // 10 saniye göster
+                  });
+                }
                 
                 // Durumu güncelle
                 const { error: updateErr } = await supabase
@@ -285,7 +294,8 @@ export const useVeribanInvoiceSend = () => {
                   .update({
                     elogo_status: stateCode,
                     einvoice_status: stateCode === 5 ? 'delivered' : (stateCode === 4 ? 'error' : 'sent'),
-                    einvoice_error_message: stateCode === 4 ? stateDescription : null
+                    einvoice_error_message: stateCode === 4 ? stateDescription : null,
+                    updated_at: new Date().toISOString(),
                   })
                   .eq('id', salesInvoiceId);
                 
@@ -300,6 +310,7 @@ export const useVeribanInvoiceSend = () => {
                 queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
                 
                 // Hala işleniyor ise (stateCode 2 veya 3) tekrar dene
+                // StateCode=4 ise hata var, tekrar deneme yapma
                 if (stateCode === 2 || stateCode === 3) {
                   logger.info('🔄 [useVeribanInvoiceSend] Hala işleniyor, 10 saniye sonra tekrar denenecek...');
                   
@@ -313,14 +324,26 @@ export const useVeribanInvoiceSend = () => {
                       
                       if (retryResult?.success && retryResult.status?.stateCode) {
                         const retryStateCode = retryResult.status.stateCode;
-                        logger.info(`📊 [useVeribanInvoiceSend] 2. deneme sonucu: StateCode=${retryStateCode}`);
+                        const retryStateDescription = retryResult.status.stateDescription || '(açıklama yok)';
+                        const retryUserFriendlyStatus = retryResult.status.userFriendlyStatus || 'Bilinmeyen';
+                        
+                        logger.info(`📊 [useVeribanInvoiceSend] 2. deneme sonucu: StateCode=${retryStateCode}, Status="${retryUserFriendlyStatus}", Description=${retryStateDescription}`);
+                        
+                        // StateCode=4 ise hata mesajını göster
+                        if (retryStateCode === 4) {
+                          logger.error(`❌ [useVeribanInvoiceSend] E-Arşiv fatura hatası: ${retryStateDescription}`);
+                          toast.error(`E-Arşiv fatura hatası: ${retryStateDescription}`, {
+                            duration: 10000, // 10 saniye göster
+                          });
+                        }
                         
                         await supabase
                           .from('sales_invoices')
                           .update({
                             elogo_status: retryStateCode,
                             einvoice_status: retryStateCode === 5 ? 'delivered' : (retryStateCode === 4 ? 'error' : 'sent'),
-                            einvoice_error_message: retryStateCode === 4 ? retryResult.status.stateDescription : null
+                            einvoice_error_message: retryStateCode === 4 ? retryStateDescription : null,
+                            updated_at: new Date().toISOString(),
                           })
                           .eq('id', salesInvoiceId);
                         

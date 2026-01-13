@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<OknEskiNesilVeri>
+  <mukellefVknTckn>9240481875</mukellefVknTckn>
+  <raporYil>2019</raporYil>
+  <raporDonem>1</raporDonem>
+  <raporGunu>1</raporGunu>
+  <okcRaporNo>Z-1234</okcRaporNo>
+  <okcSicilNo>123456789012345</okcSicilNo>
+  <satisTutar>1000</satisTutar>
+  <vergi>
+    <vergiAdi>KDV</vergiAdi>
+    <vergiTutar>180</vergiTutar>
+  </vergi>
+  <vergi>
+    <vergiAdi>OTV</vergiAdi>
+    <vergiTutar>75</vergiTutar>
+  </vergi>
+</OknEskiNesilVeri>

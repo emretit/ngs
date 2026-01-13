@@ -1,0 +1,1786 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy" xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:tns="http://tempuri.org/" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="IntegrationService" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://tempuri.org/Imports">
+      <xsd:import schemaLocation="http://earsivtransfertest.veriban.com.tr/IntegrationService.svc?xsd=xsd0" namespace="http://tempuri.org/" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="IIntegrationService_Login_InputMessage">
+    <wsdl:part name="parameters" element="tns:Login" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_Login_OutputMessage">
+    <wsdl:part name="parameters" element="tns:LoginResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_Login_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_Logout_InputMessage">
+    <wsdl:part name="parameters" element="tns:Logout" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_Logout_OutputMessage">
+    <wsdl:part name="parameters" element="tns:LogoutResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_Logout_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CheckRegisterNumberIsEInvoiceCustomer_InputMessage">
+    <wsdl:part name="parameters" element="tns:CheckRegisterNumberIsEInvoiceCustomer" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CheckRegisterNumberIsEInvoiceCustomer_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CheckRegisterNumberIsEInvoiceCustomerResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CheckRegisterNumberIsEInvoiceCustomer_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferSalesInvoiceFile_InputMessage">
+    <wsdl:part name="parameters" element="tns:TransferSalesInvoiceFile" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferSalesInvoiceFile_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TransferSalesInvoiceFileResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferSalesInvoiceFile_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferSalesInvoiceFileWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:TransferSalesInvoiceFileWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferSalesInvoiceFileWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TransferSalesInvoiceFileWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferSalesInvoiceFileWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcInvoiceFile_InputMessage">
+    <wsdl:part name="parameters" element="tns:TransferOkcInvoiceFile" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcInvoiceFile_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TransferOkcInvoiceFileResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcInvoiceFile_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcInvoiceFileWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:TransferOkcInvoiceFileWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcInvoiceFileWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TransferOkcInvoiceFileWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcInvoiceFileWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferManufacturedReceiptFile_InputMessage">
+    <wsdl:part name="parameters" element="tns:TransferManufacturedReceiptFile" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferManufacturedReceiptFile_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TransferManufacturedReceiptFileResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferManufacturedReceiptFile_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferManufacturedReceiptFileWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:TransferManufacturedReceiptFileWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferManufacturedReceiptFileWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TransferManufacturedReceiptFileWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferManufacturedReceiptFileWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferSelfEmploymentReceiptFile_InputMessage">
+    <wsdl:part name="parameters" element="tns:TransferSelfEmploymentReceiptFile" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferSelfEmploymentReceiptFile_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TransferSelfEmploymentReceiptFileResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferSelfEmploymentReceiptFile_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferSelfEmploymentReceiptFileWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:TransferSelfEmploymentReceiptFileWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferSelfEmploymentReceiptFileWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TransferSelfEmploymentReceiptFileWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferSelfEmploymentReceiptFileWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcOldDocumentFile_InputMessage">
+    <wsdl:part name="parameters" element="tns:TransferOkcOldDocumentFile" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcOldDocumentFile_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TransferOkcOldDocumentFileResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcOldDocumentFile_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcOldDocumentFileWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:TransferOkcOldDocumentFileWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcOldDocumentFileWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TransferOkcOldDocumentFileWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcOldDocumentFileWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcNewDocumentFile_InputMessage">
+    <wsdl:part name="parameters" element="tns:TransferOkcNewDocumentFile" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcNewDocumentFile_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TransferOkcNewDocumentFileResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcNewDocumentFile_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcNewDocumentFileWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:TransferOkcNewDocumentFileWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcNewDocumentFileWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TransferOkcNewDocumentFileWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_TransferOkcNewDocumentFileWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSalesInvoiceUUIDListWithCustomerRegisterNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetSalesInvoiceUUIDListWithCustomerRegisterNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSalesInvoiceUUIDListWithCustomerRegisterNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetSalesInvoiceUUIDListWithCustomerRegisterNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSalesInvoiceUUIDListWithCustomerRegisterNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcInvoiceUUIDListWithCustomerRegisterNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcInvoiceUUIDListWithCustomerRegisterNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcInvoiceUUIDListWithCustomerRegisterNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcInvoiceUUIDListWithCustomerRegisterNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcInvoiceUUIDListWithCustomerRegisterNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferFileStatus_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferFileStatus" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferFileStatus_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferFileStatusResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferFileStatus_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferFileStatusWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferFileStatusWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferFileStatusWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferFileStatusWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferFileStatusWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferOkcInvoiceFileStatus_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferOkcInvoiceFileStatus" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferOkcInvoiceFileStatus_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferOkcInvoiceFileStatusResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferOkcInvoiceFileStatus_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferOkcInvoiceFileStatusWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferOkcInvoiceFileStatusWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferOkcInvoiceFileStatusWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferOkcInvoiceFileStatusWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferOkcInvoiceFileStatusWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferManufacturedFileStatus_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferManufacturedFileStatus" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferManufacturedFileStatus_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferManufacturedFileStatusResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferManufacturedFileStatus_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferManufacturedFileStatusWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferManufacturedFileStatusWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferManufacturedFileStatusWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferManufacturedFileStatusWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferManufacturedFileStatusWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferSelfEmploymentFileStatus_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferSelfEmploymentFileStatus" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferSelfEmploymentFileStatus_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferSelfEmploymentFileStatusResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferSelfEmploymentFileStatus_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferSelfEmploymentFileStatusWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferSelfEmploymentFileStatusWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferSelfEmploymentFileStatusWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferSelfEmploymentFileStatusWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferSelfEmploymentFileStatusWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferOkcDocumentFileStatus_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferOkcDocumentFileStatus" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferOkcDocumentFileStatus_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferOkcDocumentFileStatusResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferOkcDocumentFileStatus_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferOkcDocumentFileStatusWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferOkcDocumentFileStatusWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferOkcDocumentFileStatusWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetTransferOkcDocumentFileStatusWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetTransferOkcDocumentFileStatusWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSalesInvoiceStatusWithInvoiceUUID_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetSalesInvoiceStatusWithInvoiceUUID" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSalesInvoiceStatusWithInvoiceUUID_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetSalesInvoiceStatusWithInvoiceUUIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSalesInvoiceStatusWithInvoiceUUID_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSalesInvoiceStatusWithInvoiceNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetSalesInvoiceStatusWithInvoiceNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSalesInvoiceStatusWithInvoiceNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetSalesInvoiceStatusWithInvoiceNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSalesInvoiceStatusWithInvoiceNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSalesInvoiceStatusWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetSalesInvoiceStatusWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSalesInvoiceStatusWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetSalesInvoiceStatusWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSalesInvoiceStatusWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcInvoiceStatusWithInvoiceUUID_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcInvoiceStatusWithInvoiceUUID" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcInvoiceStatusWithInvoiceUUID_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcInvoiceStatusWithInvoiceUUIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcInvoiceStatusWithInvoiceUUID_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcInvoiceStatusWithInvoiceNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcInvoiceStatusWithInvoiceNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcInvoiceStatusWithInvoiceNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcInvoiceStatusWithInvoiceNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcInvoiceStatusWithInvoiceNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcInvoiceStatusWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcInvoiceStatusWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcInvoiceStatusWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcInvoiceStatusWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcInvoiceStatusWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetManufacturedReceiptStatusWithReceiptUUID_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetManufacturedReceiptStatusWithReceiptUUID" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetManufacturedReceiptStatusWithReceiptUUID_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetManufacturedReceiptStatusWithReceiptUUIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetManufacturedReceiptStatusWithReceiptUUID_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetManufacturedReceiptStatusWithReceiptNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetManufacturedReceiptStatusWithReceiptNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetManufacturedReceiptStatusWithReceiptNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetManufacturedReceiptStatusWithReceiptNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetManufacturedReceiptStatusWithReceiptNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetManufacturedReceiptStatusWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetManufacturedReceiptStatusWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetManufacturedReceiptStatusWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetManufacturedReceiptStatusWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetManufacturedReceiptStatusWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSelfEmploymentReceiptStatusWithReceiptUUID_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetSelfEmploymentReceiptStatusWithReceiptUUID" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSelfEmploymentReceiptStatusWithReceiptUUID_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetSelfEmploymentReceiptStatusWithReceiptUUIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSelfEmploymentReceiptStatusWithReceiptUUID_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSelfEmploymentReceiptStatusWithReceiptNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetSelfEmploymentReceiptStatusWithReceiptNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSelfEmploymentReceiptStatusWithReceiptNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetSelfEmploymentReceiptStatusWithReceiptNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSelfEmploymentReceiptStatusWithReceiptNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSelfEmploymentReceiptStatusWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetSelfEmploymentReceiptStatusWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSelfEmploymentReceiptStatusWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetSelfEmploymentReceiptStatusWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetSelfEmploymentReceiptStatusWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcOldDocumentStatusWithZReportDate_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcOldDocumentStatusWithZReportDate" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcOldDocumentStatusWithZReportDate_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcOldDocumentStatusWithZReportDateResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcOldDocumentStatusWithZReportDate_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcOldDocumentStatusWithZReportNo_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcOldDocumentStatusWithZReportNo" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcOldDocumentStatusWithZReportNo_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcOldDocumentStatusWithZReportNoResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcOldDocumentStatusWithZReportNo_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcOldDocumentStatusWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcOldDocumentStatusWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcOldDocumentStatusWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcOldDocumentStatusWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcOldDocumentStatusWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcNewDocumentStatusWithYMReportNo_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcNewDocumentStatusWithYMReportNo" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcNewDocumentStatusWithYMReportNo_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcNewDocumentStatusWithYMReportNoResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcNewDocumentStatusWithYMReportNo_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcNewDocumentStatusWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcNewDocumentStatusWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcNewDocumentStatusWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetOkcNewDocumentStatusWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_GetOkcNewDocumentStatusWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSalesInvoiceWithInvoiceUUID_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelSalesInvoiceWithInvoiceUUID" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSalesInvoiceWithInvoiceUUID_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelSalesInvoiceWithInvoiceUUIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSalesInvoiceWithInvoiceUUID_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSalesInvoiceWithInvoiceNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelSalesInvoiceWithInvoiceNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSalesInvoiceWithInvoiceNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelSalesInvoiceWithInvoiceNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSalesInvoiceWithInvoiceNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSalesInvoiceWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelSalesInvoiceWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSalesInvoiceWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelSalesInvoiceWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSalesInvoiceWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelOkcInvoiceWithInvoiceUUID_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelOkcInvoiceWithInvoiceUUID" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelOkcInvoiceWithInvoiceUUID_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelOkcInvoiceWithInvoiceUUIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelOkcInvoiceWithInvoiceUUID_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelOkcInvoiceWithInvoiceNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelOkcInvoiceWithInvoiceNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelOkcInvoiceWithInvoiceNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelOkcInvoiceWithInvoiceNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelOkcInvoiceWithInvoiceNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelOkcInvoiceWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelOkcInvoiceWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelOkcInvoiceWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelOkcInvoiceWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelOkcInvoiceWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelManufacturedReceiptWithReceiptUUID_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelManufacturedReceiptWithReceiptUUID" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelManufacturedReceiptWithReceiptUUID_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelManufacturedReceiptWithReceiptUUIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelManufacturedReceiptWithReceiptUUID_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelManufacturedReceiptWithReceiptNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelManufacturedReceiptWithReceiptNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelManufacturedReceiptWithReceiptNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelManufacturedReceiptWithReceiptNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelManufacturedReceiptWithReceiptNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelManufacturedReceiptWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelManufacturedReceiptWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelManufacturedReceiptWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelManufacturedReceiptWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelManufacturedReceiptWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSelfEmploymentReceiptWithReceiptUUID_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelSelfEmploymentReceiptWithReceiptUUID" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSelfEmploymentReceiptWithReceiptUUID_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelSelfEmploymentReceiptWithReceiptUUIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSelfEmploymentReceiptWithReceiptUUID_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSelfEmploymentReceiptWithReceiptNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelSelfEmploymentReceiptWithReceiptNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSelfEmploymentReceiptWithReceiptNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelSelfEmploymentReceiptWithReceiptNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSelfEmploymentReceiptWithReceiptNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSelfEmploymentReceiptWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelSelfEmploymentReceiptWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSelfEmploymentReceiptWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelSelfEmploymentReceiptWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_CancelSelfEmploymentReceiptWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSalesInvoiceWithInvoiceUUID_InputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadSalesInvoiceWithInvoiceUUID" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSalesInvoiceWithInvoiceUUID_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadSalesInvoiceWithInvoiceUUIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSalesInvoiceWithInvoiceUUID_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSalesInvoiceWithInvoiceNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadSalesInvoiceWithInvoiceNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSalesInvoiceWithInvoiceNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadSalesInvoiceWithInvoiceNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSalesInvoiceWithInvoiceNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSalesInvoiceWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadSalesInvoiceWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSalesInvoiceWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadSalesInvoiceWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSalesInvoiceWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadOkcInvoiceWithInvoiceUUID_InputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadOkcInvoiceWithInvoiceUUID" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadOkcInvoiceWithInvoiceUUID_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadOkcInvoiceWithInvoiceUUIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadOkcInvoiceWithInvoiceUUID_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadOkcInvoiceWithInvoiceNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadOkcInvoiceWithInvoiceNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadOkcInvoiceWithInvoiceNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadOkcInvoiceWithInvoiceNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadOkcInvoiceWithInvoiceNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadOkcInvoiceWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadOkcInvoiceWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadOkcInvoiceWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadOkcInvoiceWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadOkcInvoiceWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadManufacturedReceiptWithReceiptUUID_InputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadManufacturedReceiptWithReceiptUUID" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadManufacturedReceiptWithReceiptUUID_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadManufacturedReceiptWithReceiptUUIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadManufacturedReceiptWithReceiptUUID_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadManufacturedReceiptWithReceiptNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadManufacturedReceiptWithReceiptNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadManufacturedReceiptWithReceiptNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadManufacturedReceiptWithReceiptNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadManufacturedReceiptWithReceiptNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadManufacturedReceiptWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadManufacturedReceiptWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadManufacturedReceiptWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadManufacturedReceiptWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadManufacturedReceiptWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSelfEmploymentReceiptWithReceiptUUID_InputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadSelfEmploymentReceiptWithReceiptUUID" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSelfEmploymentReceiptWithReceiptUUID_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadSelfEmploymentReceiptWithReceiptUUIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSelfEmploymentReceiptWithReceiptUUID_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSelfEmploymentReceiptWithReceiptNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadSelfEmploymentReceiptWithReceiptNumber" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSelfEmploymentReceiptWithReceiptNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadSelfEmploymentReceiptWithReceiptNumberResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSelfEmploymentReceiptWithReceiptNumber_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSelfEmploymentReceiptWithIntegrationCode_InputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadSelfEmploymentReceiptWithIntegrationCode" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSelfEmploymentReceiptWithIntegrationCode_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DownloadSelfEmploymentReceiptWithIntegrationCodeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IIntegrationService_DownloadSelfEmploymentReceiptWithIntegrationCode_VeribanServiceFault_FaultMessage">
+    <wsdl:part name="detail" element="tns:VeribanServiceFault" />
+  </wsdl:message>
+  <wsdl:portType name="IIntegrationService">
+    <wsdl:operation name="Login">
+      <wsdl:input wsaw:Action="Login" message="tns:IIntegrationService_Login_InputMessage" />
+      <wsdl:output wsaw:Action="Login" message="tns:IIntegrationService_Login_OutputMessage" />
+      <wsdl:fault wsaw:Action="Login" name="VeribanServiceFault" message="tns:IIntegrationService_Login_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="Logout">
+      <wsdl:input wsaw:Action="Logout" message="tns:IIntegrationService_Logout_InputMessage" />
+      <wsdl:output wsaw:Action="Logout" message="tns:IIntegrationService_Logout_OutputMessage" />
+      <wsdl:fault wsaw:Action="Logout" name="VeribanServiceFault" message="tns:IIntegrationService_Logout_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CheckRegisterNumberIsEInvoiceCustomer">
+      <wsdl:input wsaw:Action="CheckRegisterNumberIsEInvoiceCustomer" message="tns:IIntegrationService_CheckRegisterNumberIsEInvoiceCustomer_InputMessage" />
+      <wsdl:output wsaw:Action="CheckRegisterNumberIsEInvoiceCustomer" message="tns:IIntegrationService_CheckRegisterNumberIsEInvoiceCustomer_OutputMessage" />
+      <wsdl:fault wsaw:Action="CheckRegisterNumberIsEInvoiceCustomer" name="VeribanServiceFault" message="tns:IIntegrationService_CheckRegisterNumberIsEInvoiceCustomer_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TransferSalesInvoiceFile">
+      <wsdl:input wsaw:Action="TransferSalesInvoiceFile" message="tns:IIntegrationService_TransferSalesInvoiceFile_InputMessage" />
+      <wsdl:output wsaw:Action="TransferSalesInvoiceFile" message="tns:IIntegrationService_TransferSalesInvoiceFile_OutputMessage" />
+      <wsdl:fault wsaw:Action="TransferSalesInvoiceFile" name="VeribanServiceFault" message="tns:IIntegrationService_TransferSalesInvoiceFile_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TransferSalesInvoiceFileWithIntegrationCode">
+      <wsdl:input wsaw:Action="TransferSalesInvoiceFileWithIntegrationCode" message="tns:IIntegrationService_TransferSalesInvoiceFileWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="TransferSalesInvoiceFileWithIntegrationCode" message="tns:IIntegrationService_TransferSalesInvoiceFileWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="TransferSalesInvoiceFileWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_TransferSalesInvoiceFileWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TransferOkcInvoiceFile">
+      <wsdl:input wsaw:Action="TransferOkcInvoiceFile" message="tns:IIntegrationService_TransferOkcInvoiceFile_InputMessage" />
+      <wsdl:output wsaw:Action="TransferOkcInvoiceFile" message="tns:IIntegrationService_TransferOkcInvoiceFile_OutputMessage" />
+      <wsdl:fault wsaw:Action="TransferOkcInvoiceFile" name="VeribanServiceFault" message="tns:IIntegrationService_TransferOkcInvoiceFile_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TransferOkcInvoiceFileWithIntegrationCode">
+      <wsdl:input wsaw:Action="TransferOkcInvoiceFileWithIntegrationCode" message="tns:IIntegrationService_TransferOkcInvoiceFileWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="TransferOkcInvoiceFileWithIntegrationCode" message="tns:IIntegrationService_TransferOkcInvoiceFileWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="TransferOkcInvoiceFileWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_TransferOkcInvoiceFileWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TransferManufacturedReceiptFile">
+      <wsdl:input wsaw:Action="TransferManufacturedReceiptFile" message="tns:IIntegrationService_TransferManufacturedReceiptFile_InputMessage" />
+      <wsdl:output wsaw:Action="TransferManufacturedReceiptFile" message="tns:IIntegrationService_TransferManufacturedReceiptFile_OutputMessage" />
+      <wsdl:fault wsaw:Action="TransferManufacturedReceiptFile" name="VeribanServiceFault" message="tns:IIntegrationService_TransferManufacturedReceiptFile_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TransferManufacturedReceiptFileWithIntegrationCode">
+      <wsdl:input wsaw:Action="TransferManufacturedReceiptFileWithIntegrationCode" message="tns:IIntegrationService_TransferManufacturedReceiptFileWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="TransferManufacturedReceiptFileWithIntegrationCode" message="tns:IIntegrationService_TransferManufacturedReceiptFileWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="TransferManufacturedReceiptFileWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_TransferManufacturedReceiptFileWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TransferSelfEmploymentReceiptFile">
+      <wsdl:input wsaw:Action="TransferSelfEmploymentReceiptFile" message="tns:IIntegrationService_TransferSelfEmploymentReceiptFile_InputMessage" />
+      <wsdl:output wsaw:Action="TransferSelfEmploymentReceiptFile" message="tns:IIntegrationService_TransferSelfEmploymentReceiptFile_OutputMessage" />
+      <wsdl:fault wsaw:Action="TransferSelfEmploymentReceiptFile" name="VeribanServiceFault" message="tns:IIntegrationService_TransferSelfEmploymentReceiptFile_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TransferSelfEmploymentReceiptFileWithIntegrationCode">
+      <wsdl:input wsaw:Action="TransferSelfEmploymentReceiptFileWithIntegrationCode" message="tns:IIntegrationService_TransferSelfEmploymentReceiptFileWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="TransferSelfEmploymentReceiptFileWithIntegrationCode" message="tns:IIntegrationService_TransferSelfEmploymentReceiptFileWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="TransferSelfEmploymentReceiptFileWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_TransferSelfEmploymentReceiptFileWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TransferOkcOldDocumentFile">
+      <wsdl:input wsaw:Action="TransferOkcOldDocumentFile" message="tns:IIntegrationService_TransferOkcOldDocumentFile_InputMessage" />
+      <wsdl:output wsaw:Action="TransferOkcOldDocumentFile" message="tns:IIntegrationService_TransferOkcOldDocumentFile_OutputMessage" />
+      <wsdl:fault wsaw:Action="TransferOkcOldDocumentFile" name="VeribanServiceFault" message="tns:IIntegrationService_TransferOkcOldDocumentFile_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TransferOkcOldDocumentFileWithIntegrationCode">
+      <wsdl:input wsaw:Action="TransferOkcOldDocumentFileWithIntegrationCode" message="tns:IIntegrationService_TransferOkcOldDocumentFileWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="TransferOkcOldDocumentFileWithIntegrationCode" message="tns:IIntegrationService_TransferOkcOldDocumentFileWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="TransferOkcOldDocumentFileWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_TransferOkcOldDocumentFileWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TransferOkcNewDocumentFile">
+      <wsdl:input wsaw:Action="TransferOkcNewDocumentFile" message="tns:IIntegrationService_TransferOkcNewDocumentFile_InputMessage" />
+      <wsdl:output wsaw:Action="TransferOkcNewDocumentFile" message="tns:IIntegrationService_TransferOkcNewDocumentFile_OutputMessage" />
+      <wsdl:fault wsaw:Action="TransferOkcNewDocumentFile" name="VeribanServiceFault" message="tns:IIntegrationService_TransferOkcNewDocumentFile_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TransferOkcNewDocumentFileWithIntegrationCode">
+      <wsdl:input wsaw:Action="TransferOkcNewDocumentFileWithIntegrationCode" message="tns:IIntegrationService_TransferOkcNewDocumentFileWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="TransferOkcNewDocumentFileWithIntegrationCode" message="tns:IIntegrationService_TransferOkcNewDocumentFileWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="TransferOkcNewDocumentFileWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_TransferOkcNewDocumentFileWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetSalesInvoiceUUIDListWithCustomerRegisterNumber">
+      <wsdl:input wsaw:Action="GetSalesInvoiceUUIDListWithCustomerRegisterNumber" message="tns:IIntegrationService_GetSalesInvoiceUUIDListWithCustomerRegisterNumber_InputMessage" />
+      <wsdl:output wsaw:Action="GetSalesInvoiceUUIDListWithCustomerRegisterNumber" message="tns:IIntegrationService_GetSalesInvoiceUUIDListWithCustomerRegisterNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetSalesInvoiceUUIDListWithCustomerRegisterNumber" name="VeribanServiceFault" message="tns:IIntegrationService_GetSalesInvoiceUUIDListWithCustomerRegisterNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcInvoiceUUIDListWithCustomerRegisterNumber">
+      <wsdl:input wsaw:Action="GetOkcInvoiceUUIDListWithCustomerRegisterNumber" message="tns:IIntegrationService_GetOkcInvoiceUUIDListWithCustomerRegisterNumber_InputMessage" />
+      <wsdl:output wsaw:Action="GetOkcInvoiceUUIDListWithCustomerRegisterNumber" message="tns:IIntegrationService_GetOkcInvoiceUUIDListWithCustomerRegisterNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetOkcInvoiceUUIDListWithCustomerRegisterNumber" name="VeribanServiceFault" message="tns:IIntegrationService_GetOkcInvoiceUUIDListWithCustomerRegisterNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferFileStatus">
+      <wsdl:input wsaw:Action="GetTransferFileStatus" message="tns:IIntegrationService_GetTransferFileStatus_InputMessage" />
+      <wsdl:output wsaw:Action="GetTransferFileStatus" message="tns:IIntegrationService_GetTransferFileStatus_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetTransferFileStatus" name="VeribanServiceFault" message="tns:IIntegrationService_GetTransferFileStatus_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferFileStatusWithIntegrationCode">
+      <wsdl:input wsaw:Action="GetTransferFileStatusWithIntegrationCode" message="tns:IIntegrationService_GetTransferFileStatusWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="GetTransferFileStatusWithIntegrationCode" message="tns:IIntegrationService_GetTransferFileStatusWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetTransferFileStatusWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_GetTransferFileStatusWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferOkcInvoiceFileStatus">
+      <wsdl:input wsaw:Action="GetTransferOkcInvoiceFileStatus" message="tns:IIntegrationService_GetTransferOkcInvoiceFileStatus_InputMessage" />
+      <wsdl:output wsaw:Action="GetTransferOkcInvoiceFileStatus" message="tns:IIntegrationService_GetTransferOkcInvoiceFileStatus_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetTransferOkcInvoiceFileStatus" name="VeribanServiceFault" message="tns:IIntegrationService_GetTransferOkcInvoiceFileStatus_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferOkcInvoiceFileStatusWithIntegrationCode">
+      <wsdl:input wsaw:Action="GetTransferOkcInvoiceFileStatusWithIntegrationCode" message="tns:IIntegrationService_GetTransferOkcInvoiceFileStatusWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="GetTransferOkcInvoiceFileStatusWithIntegrationCode" message="tns:IIntegrationService_GetTransferOkcInvoiceFileStatusWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetTransferOkcInvoiceFileStatusWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_GetTransferOkcInvoiceFileStatusWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferManufacturedFileStatus">
+      <wsdl:input wsaw:Action="GetTransferManufacturedFileStatus" message="tns:IIntegrationService_GetTransferManufacturedFileStatus_InputMessage" />
+      <wsdl:output wsaw:Action="GetTransferManufacturedFileStatus" message="tns:IIntegrationService_GetTransferManufacturedFileStatus_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetTransferManufacturedFileStatus" name="VeribanServiceFault" message="tns:IIntegrationService_GetTransferManufacturedFileStatus_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferManufacturedFileStatusWithIntegrationCode">
+      <wsdl:input wsaw:Action="GetTransferManufacturedFileStatusWithIntegrationCode" message="tns:IIntegrationService_GetTransferManufacturedFileStatusWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="GetTransferManufacturedFileStatusWithIntegrationCode" message="tns:IIntegrationService_GetTransferManufacturedFileStatusWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetTransferManufacturedFileStatusWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_GetTransferManufacturedFileStatusWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferSelfEmploymentFileStatus">
+      <wsdl:input wsaw:Action="GetTransferSelfEmploymentFileStatus" message="tns:IIntegrationService_GetTransferSelfEmploymentFileStatus_InputMessage" />
+      <wsdl:output wsaw:Action="GetTransferSelfEmploymentFileStatus" message="tns:IIntegrationService_GetTransferSelfEmploymentFileStatus_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetTransferSelfEmploymentFileStatus" name="VeribanServiceFault" message="tns:IIntegrationService_GetTransferSelfEmploymentFileStatus_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferSelfEmploymentFileStatusWithIntegrationCode">
+      <wsdl:input wsaw:Action="GetTransferSelfEmploymentFileStatusWithIntegrationCode" message="tns:IIntegrationService_GetTransferSelfEmploymentFileStatusWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="GetTransferSelfEmploymentFileStatusWithIntegrationCode" message="tns:IIntegrationService_GetTransferSelfEmploymentFileStatusWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetTransferFileStatusWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_GetTransferSelfEmploymentFileStatusWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferOkcDocumentFileStatus">
+      <wsdl:input wsaw:Action="GetTransferOkcDocumentFileStatus" message="tns:IIntegrationService_GetTransferOkcDocumentFileStatus_InputMessage" />
+      <wsdl:output wsaw:Action="GetTransferOkcDocumentFileStatus" message="tns:IIntegrationService_GetTransferOkcDocumentFileStatus_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetTransferOkcDocumentFileStatus" name="VeribanServiceFault" message="tns:IIntegrationService_GetTransferOkcDocumentFileStatus_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferOkcDocumentFileStatusWithIntegrationCode">
+      <wsdl:input wsaw:Action="GetTransferOkcDocumentFileStatusWithIntegrationCode" message="tns:IIntegrationService_GetTransferOkcDocumentFileStatusWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="GetTransferOkcDocumentFileStatusWithIntegrationCode" message="tns:IIntegrationService_GetTransferOkcDocumentFileStatusWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetTransferOkcDocumentFileStatusWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_GetTransferOkcDocumentFileStatusWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetSalesInvoiceStatusWithInvoiceUUID">
+      <wsdl:input wsaw:Action="GetSalesInvoiceStatusWithInvoiceUUID" message="tns:IIntegrationService_GetSalesInvoiceStatusWithInvoiceUUID_InputMessage" />
+      <wsdl:output wsaw:Action="GetSalesInvoiceStatusWithInvoiceUUID" message="tns:IIntegrationService_GetSalesInvoiceStatusWithInvoiceUUID_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetSalesInvoiceStatusWithInvoiceUUID" name="VeribanServiceFault" message="tns:IIntegrationService_GetSalesInvoiceStatusWithInvoiceUUID_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetSalesInvoiceStatusWithInvoiceNumber">
+      <wsdl:input wsaw:Action="GetSalesInvoiceStatusWithInvoiceNumber" message="tns:IIntegrationService_GetSalesInvoiceStatusWithInvoiceNumber_InputMessage" />
+      <wsdl:output wsaw:Action="GetSalesInvoiceStatusWithInvoiceNumber" message="tns:IIntegrationService_GetSalesInvoiceStatusWithInvoiceNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetSalesInvoiceStatusWithInvoiceNumber" name="VeribanServiceFault" message="tns:IIntegrationService_GetSalesInvoiceStatusWithInvoiceNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetSalesInvoiceStatusWithIntegrationCode">
+      <wsdl:input wsaw:Action="GetSalesInvoiceStatusWithIntegrationCode" message="tns:IIntegrationService_GetSalesInvoiceStatusWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="GetSalesInvoiceStatusWithIntegrationCode" message="tns:IIntegrationService_GetSalesInvoiceStatusWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetSalesInvoiceStatusWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_GetSalesInvoiceStatusWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcInvoiceStatusWithInvoiceUUID">
+      <wsdl:input wsaw:Action="GetOkcInvoiceStatusWithInvoiceUUID" message="tns:IIntegrationService_GetOkcInvoiceStatusWithInvoiceUUID_InputMessage" />
+      <wsdl:output wsaw:Action="GetOkcInvoiceStatusWithInvoiceUUID" message="tns:IIntegrationService_GetOkcInvoiceStatusWithInvoiceUUID_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetOkcInvoiceStatusWithInvoiceUUID" name="VeribanServiceFault" message="tns:IIntegrationService_GetOkcInvoiceStatusWithInvoiceUUID_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcInvoiceStatusWithInvoiceNumber">
+      <wsdl:input wsaw:Action="GetOkcInvoiceStatusWithInvoiceNumber" message="tns:IIntegrationService_GetOkcInvoiceStatusWithInvoiceNumber_InputMessage" />
+      <wsdl:output wsaw:Action="GetOkcInvoiceStatusWithInvoiceNumber" message="tns:IIntegrationService_GetOkcInvoiceStatusWithInvoiceNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetOkcInvoiceStatusWithInvoiceNumber" name="VeribanServiceFault" message="tns:IIntegrationService_GetOkcInvoiceStatusWithInvoiceNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcInvoiceStatusWithIntegrationCode">
+      <wsdl:input wsaw:Action="GetOkcInvoiceStatusWithIntegrationCode" message="tns:IIntegrationService_GetOkcInvoiceStatusWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="GetOkcInvoiceStatusWithIntegrationCode" message="tns:IIntegrationService_GetOkcInvoiceStatusWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetOkcInvoiceStatusWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_GetOkcInvoiceStatusWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetManufacturedReceiptStatusWithReceiptUUID">
+      <wsdl:input wsaw:Action="GetManufacturedReceiptStatusWithReceiptUUID" message="tns:IIntegrationService_GetManufacturedReceiptStatusWithReceiptUUID_InputMessage" />
+      <wsdl:output wsaw:Action="GetManufacturedReceiptStatusWithReceiptUUID" message="tns:IIntegrationService_GetManufacturedReceiptStatusWithReceiptUUID_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetManufacturedReceiptStatusWithReceiptUUID" name="VeribanServiceFault" message="tns:IIntegrationService_GetManufacturedReceiptStatusWithReceiptUUID_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetManufacturedReceiptStatusWithReceiptNumber">
+      <wsdl:input wsaw:Action="GetManufacturedReceiptStatusWithReceiptNumber" message="tns:IIntegrationService_GetManufacturedReceiptStatusWithReceiptNumber_InputMessage" />
+      <wsdl:output wsaw:Action="GetManufacturedReceiptStatusWithReceiptNumber" message="tns:IIntegrationService_GetManufacturedReceiptStatusWithReceiptNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetManufacturedReceiptStatusWithReceiptNumber" name="VeribanServiceFault" message="tns:IIntegrationService_GetManufacturedReceiptStatusWithReceiptNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetManufacturedReceiptStatusWithIntegrationCode">
+      <wsdl:input wsaw:Action="GetManufacturedReceiptStatusWithIntegrationCode" message="tns:IIntegrationService_GetManufacturedReceiptStatusWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="GetManufacturedReceiptStatusWithIntegrationCode" message="tns:IIntegrationService_GetManufacturedReceiptStatusWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetManufacturedReceiptStatusWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_GetManufacturedReceiptStatusWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetSelfEmploymentReceiptStatusWithReceiptUUID">
+      <wsdl:input wsaw:Action="GetSelfEmploymentReceiptStatusWithReceiptUUID" message="tns:IIntegrationService_GetSelfEmploymentReceiptStatusWithReceiptUUID_InputMessage" />
+      <wsdl:output wsaw:Action="GetSelfEmploymentReceiptStatusWithReceiptUUID" message="tns:IIntegrationService_GetSelfEmploymentReceiptStatusWithReceiptUUID_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetSelfEmploymentReceiptStatusWithReceiptUUID" name="VeribanServiceFault" message="tns:IIntegrationService_GetSelfEmploymentReceiptStatusWithReceiptUUID_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetSelfEmploymentReceiptStatusWithReceiptNumber">
+      <wsdl:input wsaw:Action="GetSelfEmploymentReceiptStatusWithReceiptNumber" message="tns:IIntegrationService_GetSelfEmploymentReceiptStatusWithReceiptNumber_InputMessage" />
+      <wsdl:output wsaw:Action="GetSelfEmploymentReceiptStatusWithReceiptNumber" message="tns:IIntegrationService_GetSelfEmploymentReceiptStatusWithReceiptNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetSelfEmploymentReceiptStatusWithReceiptNumber" name="VeribanServiceFault" message="tns:IIntegrationService_GetSelfEmploymentReceiptStatusWithReceiptNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetSelfEmploymentReceiptStatusWithIntegrationCode">
+      <wsdl:input wsaw:Action="GetSelfEmploymentReceiptStatusWithIntegrationCode" message="tns:IIntegrationService_GetSelfEmploymentReceiptStatusWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="GetSelfEmploymentReceiptStatusWithIntegrationCode" message="tns:IIntegrationService_GetSelfEmploymentReceiptStatusWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetSelfEmploymentReceiptStatusWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_GetSelfEmploymentReceiptStatusWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcOldDocumentStatusWithZReportDate">
+      <wsdl:input wsaw:Action="GetOkcOldDocumentStatusWithZReportDate" message="tns:IIntegrationService_GetOkcOldDocumentStatusWithZReportDate_InputMessage" />
+      <wsdl:output wsaw:Action="GetOkcOldDocumentStatusWithZReportDate" message="tns:IIntegrationService_GetOkcOldDocumentStatusWithZReportDate_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetOkcOldDocumentStatusWithZReportDate" name="VeribanServiceFault" message="tns:IIntegrationService_GetOkcOldDocumentStatusWithZReportDate_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcOldDocumentStatusWithZReportNo">
+      <wsdl:input wsaw:Action="GetOkcOldDocumentStatusWithZReportNo" message="tns:IIntegrationService_GetOkcOldDocumentStatusWithZReportNo_InputMessage" />
+      <wsdl:output wsaw:Action="GetOkcOldDocumentStatusWithZReportNo" message="tns:IIntegrationService_GetOkcOldDocumentStatusWithZReportNo_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetOkcOldDocumentStatusWithZReportNo" name="VeribanServiceFault" message="tns:IIntegrationService_GetOkcOldDocumentStatusWithZReportNo_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcOldDocumentStatusWithIntegrationCode">
+      <wsdl:input wsaw:Action="GetOkcOldDocumentStatusWithIntegrationCode" message="tns:IIntegrationService_GetOkcOldDocumentStatusWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="GetOkcOldDocumentStatusWithIntegrationCode" message="tns:IIntegrationService_GetOkcOldDocumentStatusWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetOkcOldDocumentStatusWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_GetOkcOldDocumentStatusWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcNewDocumentStatusWithYMReportNo">
+      <wsdl:input wsaw:Action="GetOkcNewDocumentStatusWithYMReportNo" message="tns:IIntegrationService_GetOkcNewDocumentStatusWithYMReportNo_InputMessage" />
+      <wsdl:output wsaw:Action="GetOkcNewDocumentStatusWithYMReportNo" message="tns:IIntegrationService_GetOkcNewDocumentStatusWithYMReportNo_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetOkcNewDocumentStatusWithYMReportNo" name="VeribanServiceFault" message="tns:IIntegrationService_GetOkcNewDocumentStatusWithYMReportNo_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcNewDocumentStatusWithIntegrationCode">
+      <wsdl:input wsaw:Action="GetOkcNewDocumentStatusWithIntegrationCode" message="tns:IIntegrationService_GetOkcNewDocumentStatusWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="GetOkcNewDocumentStatusWithIntegrationCode" message="tns:IIntegrationService_GetOkcNewDocumentStatusWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="GetOkcNewDocumentStatusWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_GetOkcNewDocumentStatusWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelSalesInvoiceWithInvoiceUUID">
+      <wsdl:input wsaw:Action="CancelSalesInvoiceWithInvoiceUUID" message="tns:IIntegrationService_CancelSalesInvoiceWithInvoiceUUID_InputMessage" />
+      <wsdl:output wsaw:Action="CancelSalesInvoiceWithInvoiceUUID" message="tns:IIntegrationService_CancelSalesInvoiceWithInvoiceUUID_OutputMessage" />
+      <wsdl:fault wsaw:Action="CancelSalesInvoiceWithInvoiceUUID" name="VeribanServiceFault" message="tns:IIntegrationService_CancelSalesInvoiceWithInvoiceUUID_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelSalesInvoiceWithInvoiceNumber">
+      <wsdl:input wsaw:Action="CancelSalesInvoiceWithInvoiceNumber" message="tns:IIntegrationService_CancelSalesInvoiceWithInvoiceNumber_InputMessage" />
+      <wsdl:output wsaw:Action="CancelSalesInvoiceWithInvoiceNumber" message="tns:IIntegrationService_CancelSalesInvoiceWithInvoiceNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="CancelSalesInvoiceWithInvoiceNumber" name="VeribanServiceFault" message="tns:IIntegrationService_CancelSalesInvoiceWithInvoiceNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelSalesInvoiceWithIntegrationCode">
+      <wsdl:input wsaw:Action="CancelSalesInvoiceWithIntegrationCode" message="tns:IIntegrationService_CancelSalesInvoiceWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="CancelSalesInvoiceWithIntegrationCode" message="tns:IIntegrationService_CancelSalesInvoiceWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="CancelSalesInvoiceWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_CancelSalesInvoiceWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelOkcInvoiceWithInvoiceUUID">
+      <wsdl:input wsaw:Action="CancelOkcInvoiceWithInvoiceUUID" message="tns:IIntegrationService_CancelOkcInvoiceWithInvoiceUUID_InputMessage" />
+      <wsdl:output wsaw:Action="CancelOkcInvoiceWithInvoiceUUID" message="tns:IIntegrationService_CancelOkcInvoiceWithInvoiceUUID_OutputMessage" />
+      <wsdl:fault wsaw:Action="CancelOkcInvoiceWithInvoiceUUID" name="VeribanServiceFault" message="tns:IIntegrationService_CancelOkcInvoiceWithInvoiceUUID_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelOkcInvoiceWithInvoiceNumber">
+      <wsdl:input wsaw:Action="CancelOkcInvoiceWithInvoiceNumber" message="tns:IIntegrationService_CancelOkcInvoiceWithInvoiceNumber_InputMessage" />
+      <wsdl:output wsaw:Action="CancelOkcInvoiceWithInvoiceNumber" message="tns:IIntegrationService_CancelOkcInvoiceWithInvoiceNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="CancelOkcInvoiceWithInvoiceNumber" name="VeribanServiceFault" message="tns:IIntegrationService_CancelOkcInvoiceWithInvoiceNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelOkcInvoiceWithIntegrationCode">
+      <wsdl:input wsaw:Action="CancelOkcInvoiceWithIntegrationCode" message="tns:IIntegrationService_CancelOkcInvoiceWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="CancelOkcInvoiceWithIntegrationCode" message="tns:IIntegrationService_CancelOkcInvoiceWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="CancelOkcInvoiceWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_CancelOkcInvoiceWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelManufacturedReceiptWithReceiptUUID">
+      <wsdl:input wsaw:Action="CancelManufacturedReceiptWithReceiptUUID" message="tns:IIntegrationService_CancelManufacturedReceiptWithReceiptUUID_InputMessage" />
+      <wsdl:output wsaw:Action="CancelManufacturedReceiptWithReceiptUUID" message="tns:IIntegrationService_CancelManufacturedReceiptWithReceiptUUID_OutputMessage" />
+      <wsdl:fault wsaw:Action="CancelManufacturedReceiptWithReceiptUUID" name="VeribanServiceFault" message="tns:IIntegrationService_CancelManufacturedReceiptWithReceiptUUID_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelManufacturedReceiptWithReceiptNumber">
+      <wsdl:input wsaw:Action="CancelManufacturedReceiptWithReceiptNumber" message="tns:IIntegrationService_CancelManufacturedReceiptWithReceiptNumber_InputMessage" />
+      <wsdl:output wsaw:Action="CancelManufacturedReceiptWithReceiptNumber" message="tns:IIntegrationService_CancelManufacturedReceiptWithReceiptNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="CancelManufacturedReceiptWithReceiptNumber" name="VeribanServiceFault" message="tns:IIntegrationService_CancelManufacturedReceiptWithReceiptNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelManufacturedReceiptWithIntegrationCode">
+      <wsdl:input wsaw:Action="CancelManufacturedReceiptWithIntegrationCode" message="tns:IIntegrationService_CancelManufacturedReceiptWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="CancelManufacturedReceiptWithIntegrationCode" message="tns:IIntegrationService_CancelManufacturedReceiptWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="CancelManufacturedReceiptWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_CancelManufacturedReceiptWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelSelfEmploymentReceiptWithReceiptUUID">
+      <wsdl:input wsaw:Action="CancelSelfEmploymentReceiptWithReceiptUUID" message="tns:IIntegrationService_CancelSelfEmploymentReceiptWithReceiptUUID_InputMessage" />
+      <wsdl:output wsaw:Action="CancelSelfEmploymentReceiptWithReceiptUUID" message="tns:IIntegrationService_CancelSelfEmploymentReceiptWithReceiptUUID_OutputMessage" />
+      <wsdl:fault wsaw:Action="CancelSelfEmploymentReceiptWithReceiptUUID" name="VeribanServiceFault" message="tns:IIntegrationService_CancelSelfEmploymentReceiptWithReceiptUUID_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelSelfEmploymentReceiptWithReceiptNumber">
+      <wsdl:input wsaw:Action="CancelSelfEmploymentReceiptWithReceiptNumber" message="tns:IIntegrationService_CancelSelfEmploymentReceiptWithReceiptNumber_InputMessage" />
+      <wsdl:output wsaw:Action="CancelSelfEmploymentReceiptWithReceiptNumber" message="tns:IIntegrationService_CancelSelfEmploymentReceiptWithReceiptNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="CancelSelfEmploymentReceiptWithReceiptNumber" name="VeribanServiceFault" message="tns:IIntegrationService_CancelSelfEmploymentReceiptWithReceiptNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelSelfEmploymentReceiptWithIntegrationCode">
+      <wsdl:input wsaw:Action="CancelSelfEmploymentReceiptWithIntegrationCode" message="tns:IIntegrationService_CancelSelfEmploymentReceiptWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="CancelSelfEmploymentReceiptWithIntegrationCode" message="tns:IIntegrationService_CancelSelfEmploymentReceiptWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="CancelSelfEmploymentReceiptWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_CancelSelfEmploymentReceiptWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSalesInvoiceWithInvoiceUUID">
+      <wsdl:input wsaw:Action="DownloadSalesInvoiceWithInvoiceUUID" message="tns:IIntegrationService_DownloadSalesInvoiceWithInvoiceUUID_InputMessage" />
+      <wsdl:output wsaw:Action="DownloadSalesInvoiceWithInvoiceUUID" message="tns:IIntegrationService_DownloadSalesInvoiceWithInvoiceUUID_OutputMessage" />
+      <wsdl:fault wsaw:Action="DownloadSalesInvoiceWithInvoiceUUID" name="VeribanServiceFault" message="tns:IIntegrationService_DownloadSalesInvoiceWithInvoiceUUID_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSalesInvoiceWithInvoiceNumber">
+      <wsdl:input wsaw:Action="DownloadSalesInvoiceWithInvoiceNumber" message="tns:IIntegrationService_DownloadSalesInvoiceWithInvoiceNumber_InputMessage" />
+      <wsdl:output wsaw:Action="DownloadSalesInvoiceWithInvoiceNumber" message="tns:IIntegrationService_DownloadSalesInvoiceWithInvoiceNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="DownloadSalesInvoiceWithInvoiceNumber" name="VeribanServiceFault" message="tns:IIntegrationService_DownloadSalesInvoiceWithInvoiceNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSalesInvoiceWithIntegrationCode">
+      <wsdl:input wsaw:Action="DownloadSalesInvoiceWithIntegrationCode" message="tns:IIntegrationService_DownloadSalesInvoiceWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="DownloadSalesInvoiceWithIntegrationCode" message="tns:IIntegrationService_DownloadSalesInvoiceWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="DownloadSalesInvoiceWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_DownloadSalesInvoiceWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadOkcInvoiceWithInvoiceUUID">
+      <wsdl:input wsaw:Action="DownloadOkcInvoiceWithInvoiceUUID" message="tns:IIntegrationService_DownloadOkcInvoiceWithInvoiceUUID_InputMessage" />
+      <wsdl:output wsaw:Action="DownloadOkcInvoiceWithInvoiceUUID" message="tns:IIntegrationService_DownloadOkcInvoiceWithInvoiceUUID_OutputMessage" />
+      <wsdl:fault wsaw:Action="DownloadOkcInvoiceWithInvoiceUUID" name="VeribanServiceFault" message="tns:IIntegrationService_DownloadOkcInvoiceWithInvoiceUUID_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadOkcInvoiceWithInvoiceNumber">
+      <wsdl:input wsaw:Action="DownloadOkcInvoiceWithInvoiceNumber" message="tns:IIntegrationService_DownloadOkcInvoiceWithInvoiceNumber_InputMessage" />
+      <wsdl:output wsaw:Action="DownloadOkcInvoiceWithInvoiceNumber" message="tns:IIntegrationService_DownloadOkcInvoiceWithInvoiceNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="DownloadOkcInvoiceWithInvoiceNumber" name="VeribanServiceFault" message="tns:IIntegrationService_DownloadOkcInvoiceWithInvoiceNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadOkcInvoiceWithIntegrationCode">
+      <wsdl:input wsaw:Action="DownloadOkcInvoiceWithIntegrationCode" message="tns:IIntegrationService_DownloadOkcInvoiceWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="DownloadOkcInvoiceWithIntegrationCode" message="tns:IIntegrationService_DownloadOkcInvoiceWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="DownloadOkcInvoiceWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_DownloadOkcInvoiceWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadManufacturedReceiptWithReceiptUUID">
+      <wsdl:input wsaw:Action="DownloadManufacturedReceiptWithReceiptUUID" message="tns:IIntegrationService_DownloadManufacturedReceiptWithReceiptUUID_InputMessage" />
+      <wsdl:output wsaw:Action="DownloadManufacturedReceiptWithReceiptUUID" message="tns:IIntegrationService_DownloadManufacturedReceiptWithReceiptUUID_OutputMessage" />
+      <wsdl:fault wsaw:Action="DownloadManufacturedReceiptWithReceiptUUID" name="VeribanServiceFault" message="tns:IIntegrationService_DownloadManufacturedReceiptWithReceiptUUID_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadManufacturedReceiptWithReceiptNumber">
+      <wsdl:input wsaw:Action="DownloadManufacturedReceiptWithReceiptNumber" message="tns:IIntegrationService_DownloadManufacturedReceiptWithReceiptNumber_InputMessage" />
+      <wsdl:output wsaw:Action="DownloadManufacturedReceiptWithReceiptNumber" message="tns:IIntegrationService_DownloadManufacturedReceiptWithReceiptNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="DownloadManufacturedReceiptWithReceiptNumber" name="VeribanServiceFault" message="tns:IIntegrationService_DownloadManufacturedReceiptWithReceiptNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadManufacturedReceiptWithIntegrationCode">
+      <wsdl:input wsaw:Action="DownloadManufacturedReceiptWithIntegrationCode" message="tns:IIntegrationService_DownloadManufacturedReceiptWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="DownloadManufacturedReceiptWithIntegrationCode" message="tns:IIntegrationService_DownloadManufacturedReceiptWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="DownloadManufacturedReceiptWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_DownloadManufacturedReceiptWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSelfEmploymentReceiptWithReceiptUUID">
+      <wsdl:input wsaw:Action="DownloadSelfEmploymentReceiptWithReceiptUUID" message="tns:IIntegrationService_DownloadSelfEmploymentReceiptWithReceiptUUID_InputMessage" />
+      <wsdl:output wsaw:Action="DownloadSelfEmploymentReceiptWithReceiptUUID" message="tns:IIntegrationService_DownloadSelfEmploymentReceiptWithReceiptUUID_OutputMessage" />
+      <wsdl:fault wsaw:Action="DownloadSelfEmploymentReceiptWithReceiptUUID" name="VeribanServiceFault" message="tns:IIntegrationService_DownloadSelfEmploymentReceiptWithReceiptUUID_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSelfEmploymentReceiptWithReceiptNumber">
+      <wsdl:input wsaw:Action="DownloadSelfEmploymentReceiptWithReceiptNumber" message="tns:IIntegrationService_DownloadSelfEmploymentReceiptWithReceiptNumber_InputMessage" />
+      <wsdl:output wsaw:Action="DownloadSelfEmploymentReceiptWithReceiptNumber" message="tns:IIntegrationService_DownloadSelfEmploymentReceiptWithReceiptNumber_OutputMessage" />
+      <wsdl:fault wsaw:Action="DownloadSelfEmploymentReceiptWithReceiptNumber" name="VeribanServiceFault" message="tns:IIntegrationService_DownloadSelfEmploymentReceiptWithReceiptNumber_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSelfEmploymentReceiptWithIntegrationCode">
+      <wsdl:input wsaw:Action="DownloadSelfEmploymentReceiptWithIntegrationCode" message="tns:IIntegrationService_DownloadSelfEmploymentReceiptWithIntegrationCode_InputMessage" />
+      <wsdl:output wsaw:Action="DownloadSelfEmploymentReceiptWithIntegrationCode" message="tns:IIntegrationService_DownloadSelfEmploymentReceiptWithIntegrationCode_OutputMessage" />
+      <wsdl:fault wsaw:Action="DownloadSelfEmploymentReceiptWithIntegrationCode" name="VeribanServiceFault" message="tns:IIntegrationService_DownloadSelfEmploymentReceiptWithIntegrationCode_VeribanServiceFault_FaultMessage" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="BasicHttpBinding_IIntegrationService" type="tns:IIntegrationService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="Login">
+      <soap:operation soapAction="Login" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="Logout">
+      <soap:operation soapAction="Logout" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CheckRegisterNumberIsEInvoiceCustomer">
+      <soap:operation soapAction="CheckRegisterNumberIsEInvoiceCustomer" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="TransferSalesInvoiceFile">
+      <soap:operation soapAction="TransferSalesInvoiceFile" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="TransferSalesInvoiceFileWithIntegrationCode">
+      <soap:operation soapAction="TransferSalesInvoiceFileWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="TransferOkcInvoiceFile">
+      <soap:operation soapAction="TransferOkcInvoiceFile" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="TransferOkcInvoiceFileWithIntegrationCode">
+      <soap:operation soapAction="TransferOkcInvoiceFileWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="TransferManufacturedReceiptFile">
+      <soap:operation soapAction="TransferManufacturedReceiptFile" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="TransferManufacturedReceiptFileWithIntegrationCode">
+      <soap:operation soapAction="TransferManufacturedReceiptFileWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="TransferSelfEmploymentReceiptFile">
+      <soap:operation soapAction="TransferSelfEmploymentReceiptFile" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="TransferSelfEmploymentReceiptFileWithIntegrationCode">
+      <soap:operation soapAction="TransferSelfEmploymentReceiptFileWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="TransferOkcOldDocumentFile">
+      <soap:operation soapAction="TransferOkcOldDocumentFile" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="TransferOkcOldDocumentFileWithIntegrationCode">
+      <soap:operation soapAction="TransferOkcOldDocumentFileWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="TransferOkcNewDocumentFile">
+      <soap:operation soapAction="TransferOkcNewDocumentFile" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="TransferOkcNewDocumentFileWithIntegrationCode">
+      <soap:operation soapAction="TransferOkcNewDocumentFileWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetSalesInvoiceUUIDListWithCustomerRegisterNumber">
+      <soap:operation soapAction="GetSalesInvoiceUUIDListWithCustomerRegisterNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcInvoiceUUIDListWithCustomerRegisterNumber">
+      <soap:operation soapAction="GetOkcInvoiceUUIDListWithCustomerRegisterNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferFileStatus">
+      <soap:operation soapAction="GetTransferFileStatus" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferFileStatusWithIntegrationCode">
+      <soap:operation soapAction="GetTransferFileStatusWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferOkcInvoiceFileStatus">
+      <soap:operation soapAction="GetTransferOkcInvoiceFileStatus" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferOkcInvoiceFileStatusWithIntegrationCode">
+      <soap:operation soapAction="GetTransferOkcInvoiceFileStatusWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferManufacturedFileStatus">
+      <soap:operation soapAction="GetTransferManufacturedFileStatus" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferManufacturedFileStatusWithIntegrationCode">
+      <soap:operation soapAction="GetTransferManufacturedFileStatusWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferSelfEmploymentFileStatus">
+      <soap:operation soapAction="GetTransferSelfEmploymentFileStatus" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferSelfEmploymentFileStatusWithIntegrationCode">
+      <soap:operation soapAction="GetTransferSelfEmploymentFileStatusWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferOkcDocumentFileStatus">
+      <soap:operation soapAction="GetTransferOkcDocumentFileStatus" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferOkcDocumentFileStatusWithIntegrationCode">
+      <soap:operation soapAction="GetTransferOkcDocumentFileStatusWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetSalesInvoiceStatusWithInvoiceUUID">
+      <soap:operation soapAction="GetSalesInvoiceStatusWithInvoiceUUID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetSalesInvoiceStatusWithInvoiceNumber">
+      <soap:operation soapAction="GetSalesInvoiceStatusWithInvoiceNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetSalesInvoiceStatusWithIntegrationCode">
+      <soap:operation soapAction="GetSalesInvoiceStatusWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcInvoiceStatusWithInvoiceUUID">
+      <soap:operation soapAction="GetOkcInvoiceStatusWithInvoiceUUID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcInvoiceStatusWithInvoiceNumber">
+      <soap:operation soapAction="GetOkcInvoiceStatusWithInvoiceNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcInvoiceStatusWithIntegrationCode">
+      <soap:operation soapAction="GetOkcInvoiceStatusWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetManufacturedReceiptStatusWithReceiptUUID">
+      <soap:operation soapAction="GetManufacturedReceiptStatusWithReceiptUUID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetManufacturedReceiptStatusWithReceiptNumber">
+      <soap:operation soapAction="GetManufacturedReceiptStatusWithReceiptNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetManufacturedReceiptStatusWithIntegrationCode">
+      <soap:operation soapAction="GetManufacturedReceiptStatusWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetSelfEmploymentReceiptStatusWithReceiptUUID">
+      <soap:operation soapAction="GetSelfEmploymentReceiptStatusWithReceiptUUID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetSelfEmploymentReceiptStatusWithReceiptNumber">
+      <soap:operation soapAction="GetSelfEmploymentReceiptStatusWithReceiptNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetSelfEmploymentReceiptStatusWithIntegrationCode">
+      <soap:operation soapAction="GetSelfEmploymentReceiptStatusWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcOldDocumentStatusWithZReportDate">
+      <soap:operation soapAction="GetOkcOldDocumentStatusWithZReportDate" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcOldDocumentStatusWithZReportNo">
+      <soap:operation soapAction="GetOkcOldDocumentStatusWithZReportNo" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcOldDocumentStatusWithIntegrationCode">
+      <soap:operation soapAction="GetOkcOldDocumentStatusWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcNewDocumentStatusWithYMReportNo">
+      <soap:operation soapAction="GetOkcNewDocumentStatusWithYMReportNo" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="GetOkcNewDocumentStatusWithIntegrationCode">
+      <soap:operation soapAction="GetOkcNewDocumentStatusWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CancelSalesInvoiceWithInvoiceUUID">
+      <soap:operation soapAction="CancelSalesInvoiceWithInvoiceUUID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CancelSalesInvoiceWithInvoiceNumber">
+      <soap:operation soapAction="CancelSalesInvoiceWithInvoiceNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CancelSalesInvoiceWithIntegrationCode">
+      <soap:operation soapAction="CancelSalesInvoiceWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CancelOkcInvoiceWithInvoiceUUID">
+      <soap:operation soapAction="CancelOkcInvoiceWithInvoiceUUID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CancelOkcInvoiceWithInvoiceNumber">
+      <soap:operation soapAction="CancelOkcInvoiceWithInvoiceNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CancelOkcInvoiceWithIntegrationCode">
+      <soap:operation soapAction="CancelOkcInvoiceWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CancelManufacturedReceiptWithReceiptUUID">
+      <soap:operation soapAction="CancelManufacturedReceiptWithReceiptUUID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CancelManufacturedReceiptWithReceiptNumber">
+      <soap:operation soapAction="CancelManufacturedReceiptWithReceiptNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CancelManufacturedReceiptWithIntegrationCode">
+      <soap:operation soapAction="CancelManufacturedReceiptWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CancelSelfEmploymentReceiptWithReceiptUUID">
+      <soap:operation soapAction="CancelSelfEmploymentReceiptWithReceiptUUID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CancelSelfEmploymentReceiptWithReceiptNumber">
+      <soap:operation soapAction="CancelSelfEmploymentReceiptWithReceiptNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="CancelSelfEmploymentReceiptWithIntegrationCode">
+      <soap:operation soapAction="CancelSelfEmploymentReceiptWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSalesInvoiceWithInvoiceUUID">
+      <soap:operation soapAction="DownloadSalesInvoiceWithInvoiceUUID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSalesInvoiceWithInvoiceNumber">
+      <soap:operation soapAction="DownloadSalesInvoiceWithInvoiceNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSalesInvoiceWithIntegrationCode">
+      <soap:operation soapAction="DownloadSalesInvoiceWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadOkcInvoiceWithInvoiceUUID">
+      <soap:operation soapAction="DownloadOkcInvoiceWithInvoiceUUID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadOkcInvoiceWithInvoiceNumber">
+      <soap:operation soapAction="DownloadOkcInvoiceWithInvoiceNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadOkcInvoiceWithIntegrationCode">
+      <soap:operation soapAction="DownloadOkcInvoiceWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadManufacturedReceiptWithReceiptUUID">
+      <soap:operation soapAction="DownloadManufacturedReceiptWithReceiptUUID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadManufacturedReceiptWithReceiptNumber">
+      <soap:operation soapAction="DownloadManufacturedReceiptWithReceiptNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadManufacturedReceiptWithIntegrationCode">
+      <soap:operation soapAction="DownloadManufacturedReceiptWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSelfEmploymentReceiptWithReceiptUUID">
+      <soap:operation soapAction="DownloadSelfEmploymentReceiptWithReceiptUUID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSelfEmploymentReceiptWithReceiptNumber">
+      <soap:operation soapAction="DownloadSelfEmploymentReceiptWithReceiptNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSelfEmploymentReceiptWithIntegrationCode">
+      <soap:operation soapAction="DownloadSelfEmploymentReceiptWithIntegrationCode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="VeribanServiceFault">
+        <soap:fault use="literal" name="VeribanServiceFault" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="IntegrationService">
+    <wsdl:port name="BasicHttpBinding_IIntegrationService" binding="tns:BasicHttpBinding_IIntegrationService">
+      <soap:address location="http://earsivtransfertest.veriban.com.tr/IntegrationService.svc" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

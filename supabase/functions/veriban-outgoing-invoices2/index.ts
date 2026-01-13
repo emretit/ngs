@@ -559,7 +559,7 @@ serve(async (req) => {
               document_type: 'EINVOICE',
               company_id: profile.company_id,
               status: mapVeribanStateToStatus(statusData?.stateCode || 2),
-              elogo_status: statusData?.stateCode || null,
+              elogo_status: (statusData?.stateCode !== null && statusData?.stateCode !== undefined) ? statusData.stateCode : null,
               elogo_code: statusData?.answerStateCode || null,
               elogo_description: statusData?.stateDescription || null,
               is_answered: (statusData?.answerStateCode || 0) > 0,

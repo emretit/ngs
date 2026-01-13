@@ -41,7 +41,7 @@ const getDefaultFormat = (formatKey: string): string => {
     'invoice_number_format': 'FAT{YYYY}{000000001}', // GİB formatı: FAT + YIL + 9 haneli sıra
     'einvoice_number_format': 'FAT', // E-fatura için Nilvera seri kodu (3 karakter)
     'veriban_invoice_number_format': 'FAT', // E-fatura için Veriban seri kodu (3 karakter)
-    'earchive_invoice_number_format': 'EAR', // E-arşiv için sadece 3 karakter seri (Nilvera gereksinimi)
+    'earchive_invoice_number_format': '', // E-arşiv için - system_parameters'dan alınmalı, varsayılan yok
     'service_number_format': 'SRV-{YYYY}-{0001}',
     'order_number_format': 'SIP-{YYYY}-{0001}',
     'customer_number_format': 'MUS-{0001}',
@@ -478,7 +478,7 @@ export const generateNumber = async (
       }
     }
     
-    // Bir sonraki numarayı dene
+    // Bir sonraki numarayı dene - Race condition'ı önlemek için retry mekanizması
     let nextNumber = maxNumber + 1;
     let attempts = 0;
     const maxAttempts = 100; // Sonsuz döngüyü önlemek için
@@ -491,21 +491,26 @@ export const generateNumber = async (
       
       if (!exists) {
         // Numara kullanılabilir, döndür
+        logger.debug('✅ [generateNumber] Numara üretildi:', generatedNumber, `(${attempts + 1}. deneme)`);
         return generatedNumber;
       }
       
       // Numara kullanılıyor, bir sonrakine geç
+      logger.debug(`⚠️ [generateNumber] Numara kullanılıyor: ${generatedNumber}, bir sonrakine geçiliyor...`);
       nextNumber++;
       attempts++;
+      
+      // Race condition'da çakışmayı azaltmak için küçük bir gecikme ekle
+      if (attempts > 0 && attempts % 5 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 50));
+      }
     }
 
-    // Eğer 100 denemede uygun numara bulunamazsa, fallback
-    logger.warn('⚠️ [generateNumber] Uygun numara bulunamadı, fallback kullanılıyor');
-    return formatNumber(format, nextNumber, customDate, formatKey);
+    // Eğer 100 denemede uygun numara bulunamazsa, hata fırlat
+    logger.error('❌ [generateNumber] 100 denemede uygun numara bulunamadı!');
+    throw new Error('Uygun fatura numarası üretilemedi. Lütfen tekrar deneyin.');
   } catch (error) {
     logger.error('❌ [generateNumber] Numara üretilirken hata:', error);
-    // E-Arşiv veya E-Fatura için sadece seri kodunu döndürme
-    // Bunun yerine hata fırlat
     throw error;
   }
 };

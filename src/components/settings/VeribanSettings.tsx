@@ -14,6 +14,7 @@ export const VeribanSettings = () => {
   const [password, setPassword] = useState("");
   const [testMode, setTestMode] = useState(true);
   const [webserviceUrl, setWebserviceUrl] = useState("");
+  const [earsivWebserviceUrl, setEarsivWebserviceUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -29,12 +30,14 @@ export const VeribanSettings = () => {
     checkVeribanStatus();
   }, []);
 
-  // Test mode değiştiğinde webservice URL'i otomatik güncelle
+  // Test mode değiştiğinde webservice URL'lerini otomatik güncelle
   useEffect(() => {
     if (testMode) {
       setWebserviceUrl("https://efaturatransfertest.veriban.com.tr/IntegrationService.svc");
+      setEarsivWebserviceUrl("https://earsivtransfertest.veriban.com.tr/IntegrationService.svc");
     } else {
       setWebserviceUrl("https://efaturatransfer.veriban.com.tr/IntegrationService.svc");
+      setEarsivWebserviceUrl("https://earsivtransfer.veriban.com.tr/IntegrationService.svc");
     }
   }, [testMode]);
 
@@ -152,7 +155,8 @@ export const VeribanSettings = () => {
             test_mode: testMode,
             is_active: false, // Kaydetme sırasında bağlı değil
             updated_at: new Date().toISOString()
-          });
+          })
+          .eq('id', existing.id);
 
         if (error) throw error;
       } else {
@@ -325,7 +329,8 @@ export const VeribanSettings = () => {
         // Update is_active to true
         const { error: updateError } = await supabase
           .from('veriban_auth')
-          .update({ is_active: true });
+          .update({ is_active: true })
+          .eq('company_id', profile.company_id);
 
         if (updateError) {
           logger.error('is_active güncelleme hatası:', updateError);
@@ -463,7 +468,8 @@ export const VeribanSettings = () => {
       // Sadece is_active'i false yap, kayıtları silme
       const { error } = await supabase
         .from('veriban_auth')
-        .update({ is_active: false });
+        .update({ is_active: false })
+        .eq('company_id', profile.company_id);
 
       if (error) throw error;
 
@@ -611,10 +617,10 @@ export const VeribanSettings = () => {
                 />
               </div>
 
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
                 <div className="space-y-1">
                   <Label className="text-xs font-medium text-blue-900">
-                    Webservice URL
+                    e-Fatura Webservice URL
                   </Label>
                   <p className="text-xs text-blue-800 font-mono break-all">
                     {webserviceUrl || (testMode
@@ -622,10 +628,23 @@ export const VeribanSettings = () => {
                       : "https://efaturatransfer.veriban.com.tr/IntegrationService.svc"
                     )}
                   </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Test modu değiştiğinde otomatik güncellenir
+                </div>
+                
+                <div className="space-y-1 pt-2 border-t border-blue-200">
+                  <Label className="text-xs font-medium text-blue-900">
+                    e-Arşiv Webservice URL
+                  </Label>
+                  <p className="text-xs text-blue-800 font-mono break-all">
+                    {earsivWebserviceUrl || (testMode
+                      ? "https://earsivtransfertest.veriban.com.tr/IntegrationService.svc"
+                      : "https://earsivtransfer.veriban.com.tr/IntegrationService.svc"
+                    )}
                   </p>
                 </div>
+
+                <p className="text-xs text-blue-600 pt-1">
+                  Test modu değiştiğinde otomatik güncellenir
+                </p>
               </div>
 
               {testMode && (

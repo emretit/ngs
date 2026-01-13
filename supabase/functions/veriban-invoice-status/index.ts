@@ -367,9 +367,14 @@ serve(async (req) => {
           ? (detailedErrorDescription || statusData.stateName || 'Hata oluştu')
           : null;
         
+        // StateCode kontrolü: null/undefined ise mevcut değeri koru
+        const validStateCode = (statusData.stateCode !== null && statusData.stateCode !== undefined) 
+          ? statusData.stateCode 
+          : (invoice.einvoice_invoice_state || invoice.elogo_status || 0);
+
         const updateData: any = {
-          einvoice_invoice_state: statusData.stateCode,
-          einvoice_transfer_state: statusData.answerStateCode || statusData.stateCode,
+          einvoice_invoice_state: validStateCode,
+          einvoice_transfer_state: statusData.answerStateCode || validStateCode,
           einvoice_error_message: errorMessageForDB,
           updated_at: new Date().toISOString(),
         };
@@ -422,22 +427,22 @@ serve(async (req) => {
         // ============================================
         
         // Always update elogo_status (Single Source of Truth)
-        updateData.elogo_status = statusData.stateCode;
-        console.log('✅ [veriban-invoice-status] elogo_status güncelleniyor:', statusData.stateCode);
+        updateData.elogo_status = validStateCode;
+        console.log('✅ [veriban-invoice-status] elogo_status güncelleniyor:', validStateCode, '(original stateCode:', statusData.stateCode, ')');
         
         // Update status based on Veriban state code
         // StateCode values: 1=TASLAK, 2=Gönderilmeyi bekliyor/İmza bekliyor, 3=Gönderim listesinde, 4=HATALI, 5=Başarıyla alıcıya iletildi
-        if (statusData.stateCode === 5) {
+        if (validStateCode === 5) {
           updateData.durum = 'onaylandi';
           updateData.einvoice_status = 'delivered';
           updateData.einvoice_delivered_at = new Date().toISOString();
-        } else if (statusData.stateCode === 4) {
+        } else if (validStateCode === 4) {
           updateData.durum = 'iptal';
           updateData.einvoice_status = 'error';
-        } else if (statusData.stateCode === 3 || statusData.stateCode === 2) {
+        } else if (validStateCode === 3 || validStateCode === 2) {
           updateData.durum = 'gonderildi';
           updateData.einvoice_status = 'sent';
-        } else if (statusData.stateCode === 1) {
+        } else if (validStateCode === 1) {
           updateData.durum = 'taslak';
           updateData.einvoice_status = 'draft';
         }

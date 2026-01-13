@@ -191,8 +191,20 @@ serve(async (req) => {
 
       // Update invoice status in database if invoiceId provided
       if (invoiceId) {
+        // Önce mevcut faturayı çek (elogo_status'u korumak için)
+        const { data: existingInvoice } = await supabase
+          .from('sales_invoices')
+          .select('elogo_status')
+          .eq('id', invoiceId)
+          .single();
+
+        // Status değeri varsa ve geçerliyse güncelle, yoksa mevcut değeri koru
+        const validStatus = (statusData.status !== null && statusData.status !== undefined)
+          ? statusData.status
+          : (existingInvoice?.elogo_status || 0);
+
         const updateData: any = {
-          elogo_status: statusData.status,
+          elogo_status: validStatus,
           elogo_code: statusData.code,
           elogo_description: statusData.description,
           updated_at: new Date().toISOString(),
@@ -209,14 +221,14 @@ serve(async (req) => {
         }
 
         // Update status based on e-Logo status
-        if (statusData.status === 2 && statusData.code === 1300) {
+        if (validStatus === 2 && statusData.code === 1300) {
           // Başarılı - Alıcıya ulaştı
           updateData.status = 'delivered';
           updateData.delivered_at = new Date().toISOString();
-        } else if (statusData.status === -1) {
+        } else if (validStatus === -1) {
           // Başarısız
           updateData.status = 'failed';
-        } else if (statusData.status === 1) {
+        } else if (validStatus === 1) {
           // İşlem devam ediyor
           updateData.status = 'sent';
         }

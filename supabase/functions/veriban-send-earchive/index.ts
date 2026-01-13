@@ -174,10 +174,48 @@ serve(async (req) => {
       .eq('company_id', profile.company_id)
       .maybeSingle();
     
-    let earchiveSerie = formatParam?.parameter_value || 'EAR';
+    // E-Arşiv seri kodu - system_parameters'dan alınır, varsayılan kullanılmaz
+    let earchiveSerie = formatParam?.parameter_value;
+    
+    if (!earchiveSerie) {
+      // Eğer system_parameters'da yoksa hata ver
+      await supabase
+        .from('sales_invoices')
+        .update({
+          einvoice_status: 'error',
+          einvoice_error_message: 'E-Arşiv seri kodu ayarlanmamış. Lütfen ayarlar sayfasından E-Arşiv seri kodunu girin.',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', invoiceId);
+      
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'E-Arşiv seri kodu ayarlanmamış. Lütfen ayarlar sayfasından E-Arşiv seri kodunu girin.'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     earchiveSerie = earchiveSerie.trim().toUpperCase().substring(0, 3);
-    if (!earchiveSerie || earchiveSerie.length !== 3) {
-      earchiveSerie = 'EAR';
+    
+    if (earchiveSerie.length !== 3) {
+      await supabase
+        .from('sales_invoices')
+        .update({
+          einvoice_status: 'error',
+          einvoice_error_message: 'E-Arşiv seri kodu 3 karakter olmalıdır.',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', invoiceId);
+      
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'E-Arşiv seri kodu 3 karakter olmalıdır.'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     
     // Generate new invoice number if needed

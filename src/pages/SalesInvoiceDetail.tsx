@@ -291,23 +291,55 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
         );
         
         logger.debug('✅ [SalesInvoiceDetail] Otomatik fatura numarası üretildi:', autoInvoiceNumber);
-        
-        // Fatura numarasını veritabanına kaydet
-        const { error: updateError } = await supabase
-          .from('sales_invoices')
-          .update({ fatura_no: autoInvoiceNumber })
-          .eq('id', id);
-        
-        if (updateError) {
+
+        // Fatura numarasını veritabanına kaydet - Duplicate key hatasını yakala ve retry yap
+        let saveAttempts = 0;
+        let savedSuccessfully = false;
+        let finalInvoiceNumber = autoInvoiceNumber;
+
+        while (saveAttempts < 3 && !savedSuccessfully) {
+          const { error: updateError } = await supabase
+            .from('sales_invoices')
+            .update({ fatura_no: finalInvoiceNumber })
+            .eq('id', id);
+
+          if (!updateError) {
+            savedSuccessfully = true;
+            break;
+          }
+
+          // Duplicate key hatası mı kontrol et
+          if (updateError.code === '23505' && saveAttempts < 2) {
+            logger.warn(`⚠️ [SalesInvoiceDetail] Duplicate key hatası (${saveAttempts + 1}. deneme), yeni numara üretiliyor...`);
+            saveAttempts++;
+            
+            // Yeni numara üret
+            finalInvoiceNumber = await generateNumber(
+              formatKey,
+              profile.company_id,
+              invoiceDate,
+              checkVeriban
+            );
+            
+            logger.debug(`🔄 [SalesInvoiceDetail] Yeni numara üretildi: ${finalInvoiceNumber}`);
+            continue;
+          }
+
+          // Başka bir hata veya retry limiti aşıldı
           logger.error('❌ [SalesInvoiceDetail] Fatura numarası kaydedilemedi:', updateError);
           toast.error('Fatura numarası oluşturulamadı');
           return;
         }
-        
+
+        if (!savedSuccessfully) {
+          toast.error('Fatura numarası oluşturulamadı. Lütfen tekrar deneyin.');
+          return;
+        }
+
         // Local state'i güncelle
-        setInvoice((prev: any) => ({ ...prev, fatura_no: autoInvoiceNumber }));
-        
-        toast.success(`Fatura numarası oluşturuldu: ${autoInvoiceNumber}`);
+        setInvoice((prev: any) => ({ ...prev, fatura_no: finalInvoiceNumber }));
+
+        toast.success(`Fatura numarası oluşturuldu: ${finalInvoiceNumber}`);
       }
       
       // E-fatura/E-arşiv gönderimini başlat

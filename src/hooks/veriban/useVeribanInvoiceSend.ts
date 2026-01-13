@@ -288,13 +288,13 @@ export const useVeribanInvoiceSend = () => {
                   });
                 }
                 
-                // Durumu güncelle (sadece geçerli stateCode varsa)
-                if (stateCode && stateCode > 0) {
+                // Durumu güncelle (StateCode 0-5 arası geçerli)
+                if (stateCode !== null && stateCode !== undefined && stateCode >= 0 && stateCode <= 5) {
                   const { error: updateErr } = await supabase
                     .from('sales_invoices')
                     .update({
                       elogo_status: stateCode,
-                      einvoice_status: stateCode === 5 ? 'delivered' : (stateCode === 4 ? 'error' : 'sent'),
+                      einvoice_status: stateCode === 5 ? 'delivered' : (stateCode === 4 ? 'error' : (stateCode === 0 ? 'sending' : 'sent')),
                       einvoice_error_message: stateCode === 4 ? stateDescription : null,
                       updated_at: new Date().toISOString(),
                     })
@@ -341,13 +341,13 @@ export const useVeribanInvoiceSend = () => {
                           });
                         }
                         
-                        // Sadece geçerli stateCode varsa güncelle
-                        if (retryStateCode && retryStateCode > 0) {
+                        // StateCode 0-5 arası geçerli, güncelle
+                        if (retryStateCode !== null && retryStateCode !== undefined && retryStateCode >= 0 && retryStateCode <= 5) {
                           await supabase
                             .from('sales_invoices')
                             .update({
                               elogo_status: retryStateCode,
-                              einvoice_status: retryStateCode === 5 ? 'delivered' : (retryStateCode === 4 ? 'error' : 'sent'),
+                              einvoice_status: retryStateCode === 5 ? 'delivered' : (retryStateCode === 4 ? 'error' : (retryStateCode === 0 ? 'sending' : 'sent')),
                               einvoice_error_message: retryStateCode === 4 ? retryStateDescription : null,
                               updated_at: new Date().toISOString(),
                             })

@@ -4,38 +4,40 @@ import { logger } from '@/utils/logger';
 
 interface GetEArchiveStatusParams {
   invoiceId: string;
+  invoiceNumber?: string; // Opsiyonel: invoiceNumber direkt verilebilir
 }
 
-interface TransferStatus {
+interface EArchiveStatus {
+  // Genel durum
   stateCode: number;
   stateName: string;
   stateDescription: string;
-  invoiceNumber?: string;
-}
-
-interface EArchiveInvoiceStatus {
-  stateCode: number;
-  stateName: string;
-  stateDescription: string;
-  answerStateCode?: number;
-  answerTypeCode?: number;
-  invoiceNumber?: string;
-  invoiceProfile?: string;
-  gibReportStateCode?: number | null;
-  gibReportStateName?: string;
-  mailStateCode?: number | null;
-  mailStateName?: string;
-  errorMessage?: string;
-  message?: string;
+  userFriendlyStatus: string;
+  
+  // E-Arşiv özel alanlar
+  invoiceProfile: string;
+  
+  // GİB rapor durumu
+  gibReportStateCode: number | null;
+  gibReportStateName: string | null;
+  gibReportStatus: string;
+  
+  // Mail gönderim durumu
+  mailStateCode: number | null;
+  mailStateName: string | null;
+  mailStatus: string;
+  
+  // Fatura numarası
+  invoiceNumber: string | null;
+  
+  // Hata mesajları
+  errorMessage: string | null;
+  message: string | null;
 }
 
 interface GetEArchiveStatusResponse {
   success: boolean;
-  data?: {
-    transferStatus?: TransferStatus | null;
-    invoiceStatus?: EArchiveInvoiceStatus | null;
-    updated?: any;
-  };
+  status?: EArchiveStatus;
   message?: string;
   error?: string;
 }
@@ -54,7 +56,7 @@ export function useVeribanEArchiveStatus() {
           throw new Error('Oturum bulunamadı');
         }
 
-        const { data, error } = await supabase.functions.invoke('veriban-get-earchive-status', {
+        const { data, error } = await supabase.functions.invoke('veriban-earchive-status', {
           body: params,
         });
 
@@ -69,7 +71,7 @@ export function useVeribanEArchiveStatus() {
           throw new Error(response.error || 'Durum sorgulanamadı');
         }
 
-        logger.info('✅ [useVeribanEArchiveStatus] E-Arşiv fatura durumu alındı:', response.data);
+        logger.info('✅ [useVeribanEArchiveStatus] E-Arşiv fatura durumu alındı:', response.status);
 
         return response;
       } catch (error) {

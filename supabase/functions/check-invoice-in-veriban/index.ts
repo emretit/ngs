@@ -200,7 +200,7 @@ serve(async (req) => {
               customer_name: invoiceData.customerName || 'Bilinmiyor',
               customer_tax_number: invoiceData.customerTaxNumber || '',
               status: mapStateCodeToStatus(invoiceData.stateCode),
-              elogo_status: invoiceData.stateCode || 0,
+              elogo_status: invoiceData.stateCode !== null && invoiceData.stateCode !== undefined ? invoiceData.stateCode : 0,
               elogo_code: invoiceData.answerStateCode || 0,
               elogo_description: invoiceData.stateDescription || '',
               payable_amount: 0,
@@ -221,13 +221,27 @@ serve(async (req) => {
 
         // sales_invoices ile ilişkilendir
         if (outgoingInvoiceId) {
+          // Önce mevcut faturayı çek (elogo_status'u korumak için)
+          const { data: existingInvoice } = await supabase
+            .from('sales_invoices')
+            .select('elogo_status, einvoice_invoice_state')
+            .eq('id', salesInvoiceId)
+            .eq('company_id', profile.company_id)
+            .single();
+
+          // stateCode değeri varsa ve geçerliyse güncelle, yoksa mevcut değeri koru
+          const newStateCode = (invoiceData.stateCode !== null && invoiceData.stateCode !== undefined && invoiceData.stateCode > 0)
+            ? invoiceData.stateCode
+            : (existingInvoice?.elogo_status || existingInvoice?.einvoice_invoice_state || 0);
+
           const { error: linkError } = await supabase
             .from('sales_invoices')
             .update({
               outgoing_invoice_id: outgoingInvoiceId,
               fatura_no: invoiceNumber,  // Fatura numarasını da güncelle
-              einvoice_status: mapStateCodeToStatus(invoiceData.stateCode || 0),
-              einvoice_invoice_state: invoiceData.stateCode || 0,
+              einvoice_status: mapStateCodeToStatus(newStateCode),
+              einvoice_invoice_state: newStateCode,
+              elogo_status: newStateCode, // elogo_status'u da güncelle
               updated_at: new Date().toISOString()
             })
             .eq('id', salesInvoiceId)
@@ -236,7 +250,7 @@ serve(async (req) => {
           if (linkError) {
             console.error('❌ İlişkilendirme hatası:', linkError.message);
           } else {
-            console.log('✅ sales_invoices ilişkilendirildi ve güncellendi');
+            console.log('✅ sales_invoices ilişkilendirildi ve güncellendi (stateCode:', newStateCode, ')');
           }
         }
       }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/utils/logger';
 import EInvoiceHeader from "@/components/einvoice/EInvoiceHeader";
 import EInvoiceFilterBar from "@/components/einvoice/EInvoiceFilterBar";

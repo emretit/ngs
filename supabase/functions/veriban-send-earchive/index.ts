@@ -510,7 +510,7 @@ serve(async (req) => {
       console.log('📦 [E-Arşiv] ZIP boyutu:', zipBlob.length, 'bytes');
       console.log('🔐 [E-Arşiv] MD5 Hash:', md5Hash);
       console.log('📄 [E-Arşiv] XML içeriği (ilk 500 karakter):', finalXmlContent.substring(0, 500));
-      console.log('📄 [E-Arşiv] XML içinde ProfileID:', finalXmlContent.match(/<cbc:ProfileID>(.*?)<\/cbc:ProfileID>/)?.[1] || 'BULUNAMADI');
+      console.log('📄 [E-Arşiv] ProfileID gönderilmiyor - Veriban otomatik belirleyecek');
       console.log('📄 [E-Arşiv] XML içinde UUID:', finalXmlContent.match(/<cbc:UUID>(.*?)<\/cbc:UUID>/)?.[1] || 'BULUNAMADI');
       console.log('📄 [E-Arşiv] XML içinde ID (fatura no):', finalXmlContent.match(/<cbc:ID>(.*?)<\/cbc:ID>/)?.[1] || 'BULUNAMADI');
 

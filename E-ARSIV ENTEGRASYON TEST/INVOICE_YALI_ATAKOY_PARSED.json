@@ -1,0 +1,91 @@
+{
+  "document_info": {
+    "type": "E-Arşiv Fatura",
+    "standard": "UBL 2.1",
+    "profile": "EARSIVFATURA",
+    "created_at": "2026-01-13T00:00:00Z"
+  },
+  "digital_signature": {
+    "signature_id": "Sign-Id-NGA2026000000008",
+    "algorithm": "http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha384",
+    "signing_time": "2026-01-07T13:04:42Z",
+    "certificate": {
+      "owner": "CN=VERİBAN ELEKTRONİK VERİ İŞLEME VE SAKLAMA HİZMETLERİ ANONİM ŞİRKETİ, SERIALNUMBER=9240481875",
+      "serial_number": null,
+      "issuer": "TÜBİTAK BİLGEM"
+    }
+  },
+  "header": {
+    "invoice_number": "NGA2026000000008",
+    "uuid": "2261CB57-CBFD-44CF-5D11-6FB5767BB396",
+    "issue_date": "2026-01-07",
+    "issue_time": "15:59:00",
+    "invoice_type": "SATIS",
+    "currency": "TRY",
+    "is_copy": false,
+    "note": "Yalnız ONBİRBİNALTIYÜZYİRMİBİR TÜRKLİRASI SEKSEN KURUŞ"
+  },
+  "supplier": {
+    "name": "NGS İLETİŞİM TEKNOLOJİLERİ VE GÜVENLİK SİSTEMLERİ LİMİTED ŞİRKETİ",
+    "tax_id": "6311835942",
+    "trade_registry": "446476-5",
+    "tax_office": "KADIKÖY",
+    "address": {
+      "street": "EĞİTİM MAHALLESİ MURAT PAŞA CAD. NO:1/1 NURTAŞ İŞ MERKEZİ D:29-30 KADIKÖY",
+      "city": "İSTANBUL",
+      "country": "Türkiye"
+    }
+  },
+  "customer": {
+    "name": "YALI ATAKÖY APART. ÜNİTE VE İŞYERİ TOPLU YAPI YÖNETİMİ",
+    "tax_id": "9330470007",
+    "tax_office": "Bakırköy",
+    "address": {
+      "street": "Ataköy 2/5/6. Kısım Rauf Orbey Cad. No: 4/1/2 Bakırköy",
+      "city": "İSTANBUL",
+      "country": "TÜRKİYE"
+    }
+  },
+  "invoice_lines": [
+    {
+      "line_id": "1",
+      "quantity": {
+        "value": 5.0,
+        "unit": "NIU"
+      },
+      "line_extension_amount": 9684.83,
+      "item": {
+        "name": "PİLLİ EMNİYET FOTOSELİ",
+        "seller_code": "PİLLİ EMNİYET FOTOSELİ"
+      },
+      "price": {
+        "amount": 1936.97,
+        "currency": "TRY"
+      },
+      "tax": {
+        "total_tax": 1936.97,
+        "tax_rate": null,
+        "tax_type": "KDV"
+      }
+    }
+  ],
+  "tax_summary": {
+    "total_tax": 1936.97,
+    "tax_details": [
+      {
+        "taxable_amount": 9684.83,
+        "tax_amount": 1936.97,
+        "tax_rate": null,
+        "tax_type": "KDV",
+        "tax_code": "0015"
+      }
+    ]
+  },
+  "monetary_totals": {
+    "line_extension_amount": 9684.83,
+    "tax_exclusive_amount": 9684.83,
+    "tax_inclusive_amount": 11621.8,
+    "allowance_total": 0.0,
+    "payable_amount": 11621.8
+  }
+}

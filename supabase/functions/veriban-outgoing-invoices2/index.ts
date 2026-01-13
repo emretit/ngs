@@ -755,9 +755,11 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('❌ Veriban outgoing invoices v2 hatası:', error);
+    console.error('❌ Error stack:', error.stack);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'Bilinmeyen hata oluştu'
+      error: error.message || 'Bilinmeyen hata oluştu',
+      details: error.stack || error.toString()
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

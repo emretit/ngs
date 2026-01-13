@@ -20,7 +20,8 @@ import {
   Eye,
   MoreHorizontal,
   Building2,
-  Printer
+  Printer,
+  RotateCcw
 } from "lucide-react";
 import { useSalesInvoices } from "@/hooks/useSalesInvoices";
 import { useEInvoice } from "@/hooks/useEInvoice";
@@ -73,6 +74,8 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
   const { 
     sendInvoice: sendVeribanInvoice, 
     isSending: isSendingVeriban,
+    checkEArchiveStatus,
+    isCheckingEArchiveStatus,
     confirmDialog,
     handleConfirmResend,
     handleCancelResend,
@@ -443,6 +446,25 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                   showActionButton={false}
                   isSending={isSending}
                 />
+                
+                {/* E-Arşiv Durum Kontrol Butonu - Sadece gönderilmiş faturalar için */}
+                {usingVeriban && 
+                 (invoice.invoice_profile === 'EARSIVFATURA' || invoice.fatura_tipi2 === 'e-arşiv') &&
+                 invoice.einvoice_status === 'sent' && 
+                 invoice.elogo_status && 
+                 invoice.elogo_status !== 5 && 
+                 invoice.elogo_status !== 4 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => checkEArchiveStatus({ invoiceId: invoice.id })}
+                    disabled={isCheckingEArchiveStatus}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <RotateCcw className={`h-3 w-3 mr-1 ${isCheckingEArchiveStatus ? 'animate-spin' : ''}`} />
+                    {isCheckingEArchiveStatus ? 'Kontrol Ediliyor...' : 'Durum Kontrol Et'}
+                  </Button>
+                )}
                 
                 <Badge variant="outline" className="px-3 py-1">
                   <Package className="h-3 w-3 mr-1" />

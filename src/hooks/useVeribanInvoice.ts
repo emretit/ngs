@@ -1,5 +1,5 @@
 import { useVeribanInvoiceSend } from './veriban/useVeribanInvoiceSend';
-import { useVeribanInvoiceStatus } from './veriban/useVeribanInvoiceStatus';
+import { useVeribanEArchiveStatus } from './veriban/useVeribanEArchiveStatus';
 import { useVeribanInvoiceBulk } from './veriban/useVeribanInvoiceBulk';
 
 /**
@@ -7,15 +7,15 @@ import { useVeribanInvoiceBulk } from './veriban/useVeribanInvoiceBulk';
  * 
  * Bu hook, Veriban işlemlerini tek bir interface'de toplar:
  * - useVeribanInvoiceSend: Fatura gönderimi ve onay dialogları
- * - useVeribanInvoiceStatus: Durum kontrol ve retry mekanizması
+ * - useVeribanEArchiveStatus: E-Arşiv durum kontrol
  * - useVeribanInvoiceBulk: Toplu durum sorgulaması
  * 
  * @example
- * const { sendInvoice, checkStatus, refreshAllInvoiceStatuses } = useVeribanInvoice();
+ * const { sendInvoice, checkEArchiveStatus, refreshAllInvoiceStatuses } = useVeribanInvoice();
  */
 export const useVeribanInvoice = () => {
   const send = useVeribanInvoiceSend();
-  const status = useVeribanInvoiceStatus();
+  const eArchiveStatus = useVeribanEArchiveStatus();
   const bulk = useVeribanInvoiceBulk();
 
   return {
@@ -26,10 +26,9 @@ export const useVeribanInvoice = () => {
     handleConfirmResend: send.handleConfirmResend,
     handleCancelResend: send.handleCancelResend,
 
-    // Status operations
-    checkStatus: status.checkStatus,
-    checkStatusWithRetry: status.checkStatusWithRetry,
-    isCheckingStatus: status.isCheckingStatus,
+    // E-Arşiv status operations
+    checkEArchiveStatus: eArchiveStatus.mutate,
+    isCheckingEArchiveStatus: eArchiveStatus.isPending,
 
     // Bulk operations
     refreshAllInvoiceStatuses: bulk.refreshAllInvoiceStatuses,

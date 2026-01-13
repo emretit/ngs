@@ -5,6 +5,7 @@ import EInvoiceFilterBar from "@/components/einvoice/EInvoiceFilterBar";
 import EInvoiceContent from "@/components/einvoice/EInvoiceContent";
 import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
 import { useOutgoingInvoices } from '@/hooks/useOutgoingInvoices';
+import { useVeribanEArchiveCustomerInvoices } from '@/hooks/veriban/useVeribanEArchiveCustomerInvoices';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -59,6 +60,9 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
     customerTaxNumber: customerTaxNumber || undefined
   }, invoiceType === 'outgoing');
   
+  // E-Arşiv müşteri fatura listesi hook'u
+  const getEArchiveCustomerInvoices = useVeribanEArchiveCustomerInvoices();
+  
   // Müşteri seçildiğinde otomatik olarak faturaları çek
   useEffect(() => {
     if (invoiceType === 'outgoing' && customerTaxNumber && customerTaxNumber.length >= 10 && startDate && endDate) {
@@ -66,7 +70,8 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
       // Sadece cache'den oku, otomatik API çağrısı yapma
       refetchOutgoing();
     }
-  }, [customerTaxNumber, invoiceType, startDate, endDate, refetchOutgoing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerTaxNumber, invoiceType, startDate, endDate]);
   
   // İşlenmiş e-fatura ID'lerini çek (sadece gelen faturalar için)
   const { data: processedEinvoiceIds = [], refetch: refetchProcessedIds } = useQuery({
@@ -99,7 +104,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   // Get current invoices based on type
   const currentInvoices = invoiceType === 'incoming' ? incomingInvoices : outgoingInvoices;
   const isLoading = invoiceType === 'incoming' ? isLoadingIncoming : isLoadingOutgoing;
-  const isSyncing = invoiceType === 'incoming' ? isSyncingIncoming : isSyncingOutgoing;
+  const isSyncing = invoiceType === 'incoming' ? isSyncingIncoming : isLoadingOutgoing || isSyncingOutgoing || getEArchiveCustomerInvoices.isPending;
   
   // Apply filters
   const filteredInvoices = currentInvoices.filter(invoice => {
@@ -148,11 +153,11 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
         return;
       }
 
-      // Giden faturalar için müşteri VKN kontrolü
-      if (invoiceType === 'outgoing') {
+      // E-Arşiv sekmesi için müşteri VKN kontrolü (sadece E-Arşiv API'si için zorunlu)
+      if (invoiceType === 'outgoing' && documentType === 'e-arsiv') {
         if (!customerTaxNumber || customerTaxNumber.length < 10) {
-          toast.error('Lütfen önce bir müşteri seçin (VKN)', {
-            description: 'Giden faturaları çekmek için müşteri seçimi zorunludur.',
+          toast.error('E-Arşiv faturaları için müşteri VKN gerekli', {
+            description: 'E-Arşiv faturalarını çekmek için müşteri seçimi zorunludur.',
             id: 'fetching-invoices'
           });
           return;
@@ -166,6 +171,50 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
         'veriban': 'Veriban'
       };
       const integratorName = integratorNames[integrator] || 'Entegratör';
+      
+      // E-Arşiv sekmesi seçiliyse ve giden faturalar için, yeni edge function'ı kullan
+      if (invoiceType === 'outgoing' && documentType === 'e-arsiv' && integrator === 'veriban') {
+        toast.loading(`Veriban'dan müşteri VKN ${customerTaxNumber} için E-Arşiv fatura listesi çekiliyor...`, { id: 'fetching-invoices' });
+        
+        try {
+          const result = await getEArchiveCustomerInvoices.mutateAsync({
+            customerRegisterNumber: customerTaxNumber,
+            startDate: startDateString!,
+            endDate: endDateString!,
+          });
+
+          if (result.success && result.data) {
+            const { uuids, count, matchedInvoices } = result.data;
+            
+            // UUID'leri kullanarak sistemdeki faturaları güncelle veya göster
+            if (uuids && uuids.length > 0) {
+              // UUID'leri kullanarak outgoing_invoices tablosundan faturaları çek
+              const { data: invoices, error: fetchError } = await supabase
+                .from('outgoing_invoices')
+                .select('*')
+                .in('ettn', uuids)
+                .order('invoice_date', { ascending: false });
+
+              if (fetchError) {
+                logger.error('E-Arşiv faturaları çekilirken hata:', fetchError);
+              }
+
+              // Cache'i yenile
+              await refetchOutgoing();
+              
+              toast.success(`${count} adet E-Arşiv fatura UUID'si bulundu${matchedInvoices ? ` (${matchedInvoices.length} tanesi sistemde mevcut)` : ''}`, { id: 'fetching-invoices' });
+            } else {
+              toast.success('Seçili tarih aralığında E-Arşiv fatura bulunamadı', { id: 'fetching-invoices' });
+            }
+          } else {
+            throw new Error(result.error || 'E-Arşiv fatura listesi alınamadı');
+          }
+        } catch (error: any) {
+          logger.error('E-Arşiv fatura listesi hatası:', error);
+          toast.error(error.message || 'E-Arşiv faturalar çekilirken hata oluştu', { id: 'fetching-invoices' });
+        }
+        return;
+      }
       
       const message = invoiceType === 'outgoing' 
         ? `${integratorName}'dan müşteri VKN ${customerTaxNumber} için giden faturalar çekiliyor...`

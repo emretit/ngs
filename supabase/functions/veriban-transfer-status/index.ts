@@ -169,6 +169,8 @@ serve(async (req) => {
         userStatus = 'İşlenmeyi bekliyor';
       } else if (statusData.stateCode === 1) {
         userStatus = 'Bilinmiyor';
+      } else if (statusData.stateCode === 0) {
+        userStatus = 'Henüz işleme alınmadı';
       }
 
       return new Response(JSON.stringify({

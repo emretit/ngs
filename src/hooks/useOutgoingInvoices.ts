@@ -107,11 +107,6 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
   // Sync from API - arka planda API'den yeni faturaları çek
   const syncFromApi = async (forceRefresh = false): Promise<OutgoingInvoice[]> => {
     try {
-      // Veriban API customerRegisterNumber parametresini zorunlu tutuyor
-      if (!dateFilters?.customerTaxNumber || dateFilters.customerTaxNumber.length < 10) {
-        throw new Error('Veriban API için müşteri VKN zorunludur. Lütfen dropdown\'dan bir müşteri seçin.');
-      }
-
       setIsSyncing(true);
       
       const now = new Date();
@@ -125,7 +120,12 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
         ? `${dateFilters.endDate}T23:59:59.999Z` 
         : `${endOfMonth.toISOString().split('T')[0]}T23:59:59.999Z`;
       
-      logger.debug('🔄 Giden faturalar API sync başlatılıyor:', { startDate, endDate, customerTaxNumber: dateFilters.customerTaxNumber, forceRefresh });
+      logger.debug('🔄 Giden faturalar API sync başlatılıyor:', { 
+        startDate, 
+        endDate, 
+        customerTaxNumber: dateFilters?.customerTaxNumber || '(tümü)', 
+        forceRefresh 
+      });
       
       const result = await IntegratorService.getOutgoingInvoices({
         startDate,
@@ -165,12 +165,6 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
     try {
       setIsLoading(true);
       
-      // VKN yoksa sadece cache'den oku
-      if (!dateFilters?.customerTaxNumber || dateFilters.customerTaxNumber.length < 10) {
-        logger.debug('⚠️ VKN yok - sadece cache görüntüleniyor');
-        return await fetchFromCache();
-      }
-      
       // 1. Önce cache'den hızlıca oku ve göster
       const cachedInvoices = await fetchFromCache();
       
@@ -199,7 +193,7 @@ export const useOutgoingInvoices = (dateFilters?: { startDate?: string; endDate?
   };
 
   const { data: outgoingInvoices = [], error, refetch, isLoading: queryLoading } = useQuery({
-    queryKey: ['outgoing-invoices', dateFilters?.startDate, dateFilters?.endDate],
+    queryKey: ['outgoing-invoices', dateFilters?.startDate, dateFilters?.endDate, dateFilters?.customerTaxNumber],
     queryFn: fetchOutgoingInvoices,
     enabled,
     retry: 1,

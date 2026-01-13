@@ -259,7 +259,7 @@ export const useVeribanInvoiceSend = () => {
           logger.info('🔄 [useVeribanInvoiceSend] E-Arşiv transfer status kontrolü başlatılıyor...');
           logger.info('📋 Transfer File Unique ID:', transferFileUniqueId);
           
-          // 5 saniye bekle - Veriban faturayı işlesin
+          // 15 saniye bekle - Veriban faturayı işlesin (StateCode=0 durumunu önlemek için)
           setTimeout(async () => {
             try {
               logger.info('🔍 [useVeribanInvoiceSend] Transfer status sorgulanıyor (1. deneme)...');
@@ -288,31 +288,35 @@ export const useVeribanInvoiceSend = () => {
                   });
                 }
                 
-                // Durumu güncelle
-                const { error: updateErr } = await supabase
-                  .from('sales_invoices')
-                  .update({
-                    elogo_status: stateCode,
-                    einvoice_status: stateCode === 5 ? 'delivered' : (stateCode === 4 ? 'error' : 'sent'),
-                    einvoice_error_message: stateCode === 4 ? stateDescription : null,
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq('id', salesInvoiceId);
-                
-                if (updateErr) {
-                  logger.error('❌ [useVeribanInvoiceSend] DB güncelleme hatası:', updateErr);
+                // Durumu güncelle (sadece geçerli stateCode varsa)
+                if (stateCode && stateCode > 0) {
+                  const { error: updateErr } = await supabase
+                    .from('sales_invoices')
+                    .update({
+                      elogo_status: stateCode,
+                      einvoice_status: stateCode === 5 ? 'delivered' : (stateCode === 4 ? 'error' : 'sent'),
+                      einvoice_error_message: stateCode === 4 ? stateDescription : null,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', salesInvoiceId);
+                  
+                  if (updateErr) {
+                    logger.error('❌ [useVeribanInvoiceSend] DB güncelleme hatası:', updateErr);
+                  } else {
+                    logger.info(`✅ [useVeribanInvoiceSend] elogo_status=${stateCode} olarak güncellendi`);
+                  }
                 } else {
-                  logger.info(`✅ [useVeribanInvoiceSend] elogo_status=${stateCode} olarak güncellendi`);
+                  logger.warn(`⚠️ [useVeribanInvoiceSend] Geçersiz stateCode=${stateCode}, güncelleme atlandı`);
                 }
                 
                 // UI'ı yenile
                 queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
                 queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
                 
-                // Hala işleniyor ise (stateCode 2 veya 3) tekrar dene
+                // Hala işleniyor ise (stateCode 0, 2 veya 3) tekrar dene
                 // StateCode=4 ise hata var, tekrar deneme yapma
-                if (stateCode === 2 || stateCode === 3) {
-                  logger.info('🔄 [useVeribanInvoiceSend] Hala işleniyor, 10 saniye sonra tekrar denenecek...');
+                if (stateCode === 0 || stateCode === 2 || stateCode === 3) {
+                  logger.info('🔄 [useVeribanInvoiceSend] Hala işleniyor, 20 saniye sonra tekrar denenecek...');
                   
                   setTimeout(async () => {
                     try {
@@ -337,25 +341,30 @@ export const useVeribanInvoiceSend = () => {
                           });
                         }
                         
-                        await supabase
-                          .from('sales_invoices')
-                          .update({
-                            elogo_status: retryStateCode,
-                            einvoice_status: retryStateCode === 5 ? 'delivered' : (retryStateCode === 4 ? 'error' : 'sent'),
-                            einvoice_error_message: retryStateCode === 4 ? retryStateDescription : null,
-                            updated_at: new Date().toISOString(),
-                          })
-                          .eq('id', salesInvoiceId);
-                        
-                        queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
-                        queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
-                        
-                        logger.info(`✅ [useVeribanInvoiceSend] 2. deneme: elogo_status=${retryStateCode} olarak güncellendi`);
+                        // Sadece geçerli stateCode varsa güncelle
+                        if (retryStateCode && retryStateCode > 0) {
+                          await supabase
+                            .from('sales_invoices')
+                            .update({
+                              elogo_status: retryStateCode,
+                              einvoice_status: retryStateCode === 5 ? 'delivered' : (retryStateCode === 4 ? 'error' : 'sent'),
+                              einvoice_error_message: retryStateCode === 4 ? retryStateDescription : null,
+                              updated_at: new Date().toISOString(),
+                            })
+                            .eq('id', salesInvoiceId);
+                          
+                          queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+                          queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
+                          
+                          logger.info(`✅ [useVeribanInvoiceSend] 2. deneme: elogo_status=${retryStateCode} olarak güncellendi`);
+                        } else {
+                          logger.warn(`⚠️ [useVeribanInvoiceSend] 2. deneme: Geçersiz retryStateCode=${retryStateCode}, güncelleme atlandı`);
+                        }
                       }
                     } catch (retryErr) {
                       logger.error('❌ [useVeribanInvoiceSend] 2. deneme hatası:', retryErr);
                     }
-                  }, 10000); // 10 saniye sonra tekrar
+                  }, 20000); // 20 saniye sonra tekrar (StateCode=0 önlemek için)
                 }
               } else {
                 logger.warn('⚠️ [useVeribanInvoiceSend] Transfer status başarısız:', statusResult?.error);
@@ -363,7 +372,7 @@ export const useVeribanInvoiceSend = () => {
             } catch (err) {
               logger.error('❌ [useVeribanInvoiceSend] Transfer status kontrolü hatası:', err);
             }
-          }, 5000); // 5 saniye bekle
+          }, 15000); // 15 saniye bekle (StateCode=0 önlemek için)
         }
         
         toast.success(isEArchive ? 'E-Arşiv fatura başarıyla gönderildi' : 'E-Fatura başarıyla gönderildi');

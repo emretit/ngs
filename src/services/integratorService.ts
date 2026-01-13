@@ -416,58 +416,76 @@ export class IntegratorService {
     filters: InvoiceFilters
   ): Promise<IntegratorServiceResponse> {
     try {
-      // Veriban API customerRegisterNumber parametresini zorunlu tutuyor
-      if (!filters.customerTaxNumber || filters.customerTaxNumber.length < 10) {
-        return {
-          success: false,
-          error: 'Veriban API için müşteri VKN zorunludur. Lütfen dropdown\'dan bir müşteri seçin.',
-          invoices: [],
-        };
-      }
-
       // Extract date strings from ISO format
       const startDate = filters.startDate ? filters.startDate.split('T')[0] : undefined;
       const endDate = filters.endDate ? filters.endDate.split('T')[0] : undefined;
 
+      // Tarih kontrolü - undefined ise hata ver
+      if (!startDate || !endDate) {
+        const errorMsg = 'Tarih aralığı zorunludur. startDate ve endDate parametreleri gereklidir.';
+        logger.error('❌ Tarih eksik:', { startDate, endDate, filters });
+        return {
+          success: false,
+          error: errorMsg,
+          invoices: [],
+        };
+      }
+
+      const requestBody = {
+        startDate,
+        endDate,
+        forceRefresh: filters.forceRefresh || false,
+        customerTaxNumber: filters.customerTaxNumber, // Opsiyonel - müşteri VKN filtresi
+        includeStatus: true, // Durum bilgilerini de çek
+        limit: 100,
+        offset: 0
+      };
+
       logger.debug('🔍 Veriban giden faturalar çağırılıyor:', { 
         startDate, 
         endDate, 
-        customerTaxNumber: filters.customerTaxNumber,
+        customerTaxNumber: filters.customerTaxNumber || '(tümü)',
         forceRefresh: filters.forceRefresh 
       });
+      logger.debug('📦 Request body:', JSON.stringify(requestBody, null, 2));
 
       const { data, error } = await supabase.functions.invoke('veriban-outgoing-invoices2', {
-        body: {
-          startDate,
-          endDate,
-          forceRefresh: filters.forceRefresh || false,
-          customerTaxNumber: filters.customerTaxNumber, // Opsiyonel - müşteri VKN filtresi
-          includeStatus: true, // Durum bilgilerini de çek
-          limit: 100,
-          offset: 0
-        }
+        body: requestBody
       });
 
       logger.debug('📦 Veriban API yanıtı DATA:', JSON.stringify(data, null, 2));
-      logger.debug('❌ Veriban API yanıtı ERROR:', JSON.stringify(error, null, 2));
+      logger.debug('❌ Veriban API yanıtı ERROR:', error ? JSON.stringify(error, null, 2) : 'yok');
 
       if (error) {
         logger.error('Veriban outgoing invoices error:', error);
 
+        // FunctionsHttpError için detaylı hata çıkarımı
+        let detailedError = error.message || 'Veriban giden faturalar alınamadı';
+        
         // Try to extract error message from response body
         if (error.context instanceof Response) {
           try {
             const responseText = await error.context.text();
-            const responseJson = JSON.parse(responseText);
-            if (responseJson.error) {
-              throw new Error(responseJson.error);
+            logger.error('Error response text:', responseText);
+            
+            try {
+              const responseJson = JSON.parse(responseText);
+              if (responseJson.error) {
+                detailedError = responseJson.error;
+              }
+              if (responseJson.details) {
+                logger.error('Error details:', responseJson.details);
+              }
+            } catch (parseError) {
+              logger.error('Response is not JSON:', responseText);
+              detailedError = `HTTP ${error.context.status}: ${responseText.substring(0, 200)}`;
             }
           } catch (e) {
             logger.error('Could not parse error response:', e);
           }
         }
 
-        throw error;
+        throw new Error(detailedError);
       }
 
       // Transform Veriban outgoing invoice format to standard format

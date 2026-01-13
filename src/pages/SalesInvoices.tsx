@@ -30,7 +30,7 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
   const { sendInvoice: sendNilveraInvoice } = useEInvoice();
   const { 
     sendInvoice: sendVeribanInvoice, 
-    checkStatus: checkVeribanStatus,
+    checkEArchiveStatus: checkVeribanStatus,
     confirmDialog,
     handleConfirmResend,
     handleCancelResend,
@@ -177,11 +177,10 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
                                   invoice.fatura_no.length <= 50;
           
           const statusCheckId = isValidFaturaNo ? invoice.fatura_no : invoice.id;
-          logger.debug(`🔄 [SalesInvoices] Durum kontrolü yapılıyor: ${statusCheckId} (fatura_no: ${invoice.fatura_no || 'yok'})`);
+          logger.debug(`🔄 [SalesInvoices] E-Arşiv durum kontrolü yapılıyor: ${statusCheckId} (fatura_no: ${invoice.fatura_no || 'yok'})`);
           checkedInvoicesRef.current.add(invoice.id);
           
-          checkVeribanStatus(invoice.id, {
-            silent: true, // Periyodik kontrollerde toast gösterme
+          checkVeribanStatus({ invoiceId: invoice.id }, {
             onSuccess: () => {
               // Başarılı kontrol sonrası 10 dakika sonra tekrar kontrol edilebilir
               setTimeout(() => {

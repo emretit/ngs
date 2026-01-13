@@ -165,17 +165,9 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
   const issueTime = formatTime(invoice.issue_time);
   const dueDate = invoice.vade_tarihi ? formatDate(invoice.vade_tarihi) : null;
   
-  // Log issue time for debugging
-  console.log('🕐 [UBL Generator] Issue time:', {
-    original: invoice.issue_time,
-    formatted: issueTime,
-    issueDate: issueDate
-  });
-  
   // Invoice type and profile
   const invoiceType = invoice.invoice_type || 'SATIS';
   const invoiceProfile = invoice.invoice_profile || 'TICARIFATURA';
-  console.log('📋 [UBL] Invoice Type:', invoiceType, 'Profile:', invoiceProfile);
   
   // Currency
   const currency = invoice.para_birimi || 'TRY';
@@ -235,93 +227,91 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
     vatGroups[vatRate].amount += vatAmount;
   });
 
-  // Validate and clean invoice number
-  // Filter out invalid values like DOKUMAN, TASLAK, MESSAGE, etc.
+  // Validate invoice number
   const invalidInvoiceNumbers = ['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR', 'STATE', 'ANSWER', 'NULL', 'UNDEFINED'];
   let invoiceNumber = invoice.fatura_no || '';
 
-  // Check if invoice number is invalid or empty
+  // Generate temporary invoice number if invalid
   if (!invoiceNumber || invalidInvoiceNumbers.includes(invoiceNumber.toUpperCase()) || invoiceNumber.trim() === '') {
-    // Log warning for missing invoice number
-    console.warn('⚠️ [UBL Generator] Fatura numarası bulunamadı veya geçersiz:', {
-      invoiceId: invoice.id,
-      fatura_no: invoice.fatura_no,
-      fatura_tarihi: invoice.fatura_tarihi
-    });
-    
-    // Generate a temporary invoice number based on date and invoice ID
-    // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
-    // NOT: Bu geçici bir çözümdür. Fatura oluşturulurken otomatik numara üretilmeli.
     const date = new Date(invoice.fatura_tarihi);
     const year = date.getFullYear().toString();
-    const serie = 'FAT'; // Varsayılan seri
-    // UUID'den 9 karakterlik sıra numarası oluştur (ilk 9 karakter, tire yok)
+    const serie = 'FAT';
     const sequence = invoice.id.substring(0, 9).replace(/-/g, '').padEnd(9, '0');
     invoiceNumber = `${serie}${year}${sequence}`;
     
-    // GİB formatı kontrolü: 16 karakter olmalı
     if (invoiceNumber.length !== 16) {
-      console.warn('⚠️ [UBL Generator] Geçici fatura numarası 16 karakter değil:', invoiceNumber, 'Uzunluk:', invoiceNumber.length);
-      // 16 karaktere tamamla veya kısalt
-      if (invoiceNumber.length > 16) {
-        invoiceNumber = invoiceNumber.substring(0, 16);
-      } else {
-        invoiceNumber = invoiceNumber.padEnd(16, '0');
-      }
-    }
-    
-    console.warn('⚠️ [UBL Generator] Geçici fatura numarası oluşturuldu (GİB formatı):', invoiceNumber);
-  } else {
-    // GİB formatı kontrolü: 16 karakter olmalı
-    if (invoiceNumber.length !== 16) {
-      console.warn('⚠️ [UBL Generator] Fatura numarası GİB formatına uygun değil (16 karakter değil):', invoiceNumber, 'Uzunluk:', invoiceNumber.length);
-    } else {
-      // Format kontrolü: SERI(3) + YIL(4) + SIRA(9)
-      const serie = invoiceNumber.substring(0, 3);
-      const year = invoiceNumber.substring(3, 7);
-      const sequence = invoiceNumber.substring(7);
-      
-      // Yıl kontrolü
-      const currentYear = new Date(invoice.fatura_tarihi).getFullYear().toString();
-      if (year !== currentYear) {
-        console.warn('⚠️ [UBL Generator] Fatura numarasındaki yıl fatura tarihi ile uyuşmuyor:', year, 'vs', currentYear);
-      }
-      
-      // Sıra numarası kontrolü (sayı olmalı)
-      if (!/^\d{9}$/.test(sequence)) {
-        console.warn('⚠️ [UBL Generator] Fatura numarasındaki sıra numarası 9 haneli sayı değil:', sequence);
-      }
-      
-      console.log('✅ [UBL Generator] Fatura numarası kullanılıyor (GİB formatı):', invoiceNumber, `[${serie}][${year}][${sequence}]`);
+      invoiceNumber = invoiceNumber.length > 16 
+        ? invoiceNumber.substring(0, 16) 
+        : invoiceNumber.padEnd(16, '0');
     }
   }
 
-  // Build XML
+  // Build XML with proper E-Archive structure
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
          xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
-         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+         xmlns:ccts="urn:un:unece:uncefact:documentation:2"
+         xmlns:qdt="urn:oasis:names:specification:ubl:schema:xsd:QualifiedDatatypes-2"
+         xmlns:udt="urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
   <cbc:CustomizationID>TR1.2</cbc:CustomizationID>
+  <cbc:ProfileID>${invoiceProfile}</cbc:ProfileID>`;
+  
+  xml += `
   <cbc:ID>${escapeXml(invoiceNumber)}</cbc:ID>
+  <cbc:CopyIndicator>false</cbc:CopyIndicator>
   <cbc:UUID>${invoiceETTN}</cbc:UUID>
   <cbc:IssueDate>${issueDate}</cbc:IssueDate>
   <cbc:IssueTime>${issueTime}</cbc:IssueTime>`;
   
+  xml += `
+  <cbc:InvoiceTypeCode>${escapeXml(invoiceType)}</cbc:InvoiceTypeCode>`;
+  
+  // Add Note if exists (yazıyla tutar)
+  if (invoice.notlar) {
+    xml += `\n  <cbc:Note>${escapeXml(invoice.notlar)}</cbc:Note>`;
+  }
+  
+  // Add DueDate if exists (after Note, before DocumentCurrencyCode)
   if (dueDate) {
     xml += `\n  <cbc:DueDate>${dueDate}</cbc:DueDate>`;
   }
   
-  // ⭐ E-Arşiv için ProfileID gönderilmemeli - Veriban otomatik belirler
-  // E-Arşiv dışındaki profiller için ProfileID ekle
-  const isEArchive = invoiceProfile === 'EARSIVFATURA';
-  if (!isEArchive) {
-    xml += `\n  <cbc:ProfileID>${escapeXml(invoiceProfile)}</cbc:ProfileID>`;
-  }
-  
   xml += `
-  <cbc:InvoiceTypeCode>${escapeXml(invoiceType)}</cbc:InvoiceTypeCode>
-  <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>
+  <cbc:DocumentCurrencyCode listAgencyName="United Nations Economic Commission for Europe" listID="ISO 4217 Alpha" listName="Currency" listVersionID="2001">${currency}</cbc:DocumentCurrencyCode>
   <cbc:LineCountNumeric>${items.length}</cbc:LineCountNumeric>`;
+  
+  // Signature element (VERİBAN mali mühür bilgisi - E-Arşiv için zorunlu)
+  // Not: Gerçek imza Veriban tarafından atılır, burada sadece imzalayan taraf bilgisi
+  xml += `
+  <cac:Signature>
+    <cbc:ID schemeID="VKN">9240481875</cbc:ID>
+    <cac:SignatoryParty>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">9240481875</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PostalAddress>
+        <cbc:CityName>İstanbul</cbc:CityName>
+        <cac:Country>
+          <cbc:Name>Türkiye</cbc:Name>
+        </cac:Country>
+      </cac:PostalAddress>
+    </cac:SignatoryParty>
+    <cac:DigitalSignatureAttachment>
+      <cac:ExternalReference>
+        <cbc:URI>#Signature</cbc:URI>
+      </cac:ExternalReference>
+    </cac:DigitalSignatureAttachment>
+  </cac:Signature>`;
+  
+  // AdditionalDocumentReference (İrsaliye yerine geçer notu - E-Arşiv için)
+  xml += `
+  <cac:AdditionalDocumentReference>
+    <cbc:ID schemeID="XSLTDISPATCH">İrsaliye yerine geçer.</cbc:ID>
+    <cbc:IssueDate>${issueDate}</cbc:IssueDate>
+  </cac:AdditionalDocumentReference>`;
   
   // AccountingSupplierParty (Satıcı)
   xml += `
@@ -364,9 +354,6 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
   // E-Arşiv için de VKN/TCKN eklenmeli (Veriban şart koşuyor)
   const isTCKN = customerTaxNumber && customerTaxNumber.length === 11;
   const isVKN = customerTaxNumber && customerTaxNumber.length === 10;
-
-  // E-Arşiv kontrolü (invoice_profile kullan, ProfileID XML'de gönderilmiyor)
-  const isEArchive = invoice.invoice_profile === 'EARSIVFATURA';
   
   if (isTCKN || isVKN) {
     xml += `
@@ -405,7 +392,8 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
   }
 
   // ⭐ Müşteri vergi dairesi - E-Arşiv için EKLEME (opsiyonel)
-  if (customerTaxOffice && !isEArchive) {
+  // E-Arşiv faturalarda müşteri vergi dairesi eklenmez
+  if (customerTaxOffice && invoiceProfile !== 'EARSIVFATURA') {
     xml += `
       <cac:PartyTaxScheme>
         <cac:TaxScheme>
@@ -535,6 +523,361 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
     xml += `
   </cac:Note>`;
   }
+  
+  xml += `
+</Invoice>`;
+  
+  return xml;
+}
+
+/**
+ * Generate E-Archive UBL-TR XML from sales invoice data
+ * E-Arşiv faturaları için özel XML üretici
+ * 
+ * FARKLAR (E-Fatura'dan):
+ * - ProfileID: EARSIVFATURA (zorunlu)
+ * - cac:Signature: VERİBAN mali mühür bilgisi
+ * - cac:AdditionalDocumentReference: İrsaliye notu
+ * - Müşteri PartyTaxScheme E-Arşiv için eklenmez
+ * - TCKN için cac:Person zorunlu
+ * 
+ * @param invoice - Sales invoice data
+ * @param ettn - Invoice UUID (ETTN)
+ * @returns E-Archive UBL-TR XML string
+ */
+export function generateEArchiveUBLTRXML(invoice: SalesInvoiceData, ettn?: string): string {
+  // Generate ETTN if not provided
+  const invoiceETTN = ettn || generateETTN();
+  
+  // VERİBAN sabit bilgileri (E-Arşiv için zorunlu)
+  const VERIBAN_VKN = '9240481875';
+  const VERIBAN_CITY = 'İstanbul';
+  const VERIBAN_COUNTRY = 'Türkiye';
+  
+  // Format dates
+  const issueDate = formatDate(invoice.fatura_tarihi);
+  const issueTime = formatTime(invoice.issue_time);
+  
+  // Invoice type
+  const invoiceType = invoice.invoice_type || 'SATIS';
+  
+  // Currency
+  const currency = invoice.para_birimi || 'TRY';
+  
+  // Company (Supplier) info
+  const company = invoice.companies || {};
+  const companyName = escapeXml(company.name || 'Şirket Adı');
+  const companyTaxNumber = escapeXml(company.tax_number || '');
+  const companyTaxOffice = escapeXml(company.tax_office || '');
+  const companyAddress = escapeXml(company.address || '');
+  const companyCity = escapeXml(company.city || 'İstanbul');
+  const companyDistrict = escapeXml(company.district || '');
+  const companyPostalCode = escapeXml(company.postal_code || '');
+  const companyCountry = escapeXml(company.country || 'Türkiye');
+  const companyPhone = escapeXml(company.phone || '');
+  const companyEmail = escapeXml(company.email || '');
+  const companyWebsite = escapeXml(company.website || '');
+  
+  // Customer (Buyer) info
+  const customer = invoice.customers || {};
+  const customerName = escapeXml(customer.name || customer.company || 'Müşteri Adı');
+  const customerTaxNumber = escapeXml(customer.tax_number || '');
+  const customerTaxOffice = escapeXml(customer.tax_office || '');
+  const customerAddress = escapeXml(customer.address || '');
+  const customerCity = escapeXml(customer.city || 'İstanbul');
+  const customerDistrict = escapeXml(customer.district || '');
+  const customerPostalCode = escapeXml(customer.postal_code || '');
+  const customerCountry = escapeXml(customer.country || 'Türkiye');
+  const customerPhone = escapeXml(customer.mobile_phone || customer.office_phone || '');
+  const customerEmail = escapeXml(customer.email || '');
+  
+  // Invoice items
+  const items = invoice.sales_invoice_items || [];
+  
+  // Calculate totals
+  const lineExtensionAmount = invoice.ara_toplam || 0;
+  const taxExclusiveAmount = invoice.ara_toplam || 0;
+  const taxInclusiveAmount = invoice.toplam_tutar || 0;
+  const payableAmount = invoice.toplam_tutar || 0;
+  const taxTotal = invoice.kdv_tutari || 0;
+  const allowanceTotalAmount = invoice.indirim_tutari || 0;
+  
+  // Group items by VAT rate for TaxTotal
+  const vatGroups: Record<number, { base: number; amount: number }> = {};
+  items.forEach(item => {
+    const vatRate = item.kdv_orani || 0;
+    const lineTotal = item.satir_toplami || 0;
+    const vatAmount = item.kdv_tutari || (lineTotal * vatRate / (100 + vatRate));
+    const baseAmount = lineTotal - vatAmount;
+
+    if (!vatGroups[vatRate]) {
+      vatGroups[vatRate] = { base: 0, amount: 0 };
+    }
+    vatGroups[vatRate].base += baseAmount;
+    vatGroups[vatRate].amount += vatAmount;
+  });
+
+  // Validate invoice number
+  const invalidInvoiceNumbers = ['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR', 'STATE', 'ANSWER', 'NULL', 'UNDEFINED'];
+  let invoiceNumber = invoice.fatura_no || '';
+
+  // Generate temporary invoice number if invalid
+  if (!invoiceNumber || invalidInvoiceNumbers.includes(invoiceNumber.toUpperCase()) || invoiceNumber.trim() === '') {
+    const date = new Date(invoice.fatura_tarihi);
+    const year = date.getFullYear().toString();
+    const serie = 'EAR';
+    const sequence = invoice.id.substring(0, 9).replace(/-/g, '').padEnd(9, '0');
+    invoiceNumber = `${serie}${year}${sequence}`;
+    
+    if (invoiceNumber.length !== 16) {
+      invoiceNumber = invoiceNumber.length > 16 
+        ? invoiceNumber.substring(0, 16) 
+        : invoiceNumber.padEnd(16, '0');
+    }
+  }
+
+  // Build XML with E-Archive specific structure
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+         xmlns:ccts="urn:un:unece:uncefact:documentation:2"
+         xmlns:qdt="urn:oasis:names:specification:ubl:schema:xsd:QualifiedDatatypes-2"
+         xmlns:udt="urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID>TR1.2</cbc:CustomizationID>
+  <cbc:ProfileID>EARSIVFATURA</cbc:ProfileID>
+  <cbc:ID>${escapeXml(invoiceNumber)}</cbc:ID>
+  <cbc:CopyIndicator>false</cbc:CopyIndicator>
+  <cbc:UUID>${invoiceETTN}</cbc:UUID>
+  <cbc:IssueDate>${issueDate}</cbc:IssueDate>
+  <cbc:IssueTime>${issueTime}</cbc:IssueTime>
+  <cbc:InvoiceTypeCode>${escapeXml(invoiceType)}</cbc:InvoiceTypeCode>`;
+  
+  // Add Note if exists (yazıyla tutar)
+  if (invoice.notlar) {
+    xml += `
+  <cbc:Note>${escapeXml(invoice.notlar)}</cbc:Note>`;
+  }
+  
+  xml += `
+  <cbc:DocumentCurrencyCode listAgencyName="United Nations Economic Commission for Europe" listID="ISO 4217 Alpha" listName="Currency" listVersionID="2001">${currency}</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>${items.length}</cbc:LineCountNumeric>`;
+  
+  // E-Arşiv özel: VERİBAN mali mühür Signature elementi
+  // ÖNEMLİ: schemeID="VKN_TCKN" olmalı (Veriban kuralı)
+  xml += `
+  <cac:Signature>
+    <cbc:ID schemeID="VKN_TCKN">${VERIBAN_VKN}</cbc:ID>
+    <cac:SignatoryParty>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">${VERIBAN_VKN}</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PostalAddress>
+        <cbc:CityName>${VERIBAN_CITY}</cbc:CityName>
+        <cac:Country>
+          <cbc:Name>${VERIBAN_COUNTRY}</cbc:Name>
+        </cac:Country>
+      </cac:PostalAddress>
+    </cac:SignatoryParty>
+    <cac:DigitalSignatureAttachment>
+      <cac:ExternalReference>
+        <cbc:URI>#Signature</cbc:URI>
+      </cac:ExternalReference>
+    </cac:DigitalSignatureAttachment>
+  </cac:Signature>`;
+  
+  // E-Arşiv özel: AdditionalDocumentReference (İrsaliye yerine geçer notu)
+  xml += `
+  <cac:AdditionalDocumentReference>
+    <cbc:ID schemeID="XSLTDISPATCH">İrsaliye yerine geçer.</cbc:ID>
+    <cbc:IssueDate>${issueDate}</cbc:IssueDate>
+  </cac:AdditionalDocumentReference>`;
+  
+  // AccountingSupplierParty (Satıcı)
+  xml += `
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cbc:WebsiteURI>${companyWebsite}</cbc:WebsiteURI>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">${companyTaxNumber}</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>${companyName}</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>${companyAddress}</cbc:StreetName>
+        <cbc:CityName>${companyCity}</cbc:CityName>
+        <cbc:CitySubdivisionName>${companyDistrict || companyCity}</cbc:CitySubdivisionName>
+        <cbc:PostalZone>${companyPostalCode}</cbc:PostalZone>
+        <cac:Country>
+          <cbc:Name>${companyCountry}</cbc:Name>
+        </cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme>
+          <cbc:Name>${companyTaxOffice}</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:Contact>
+        <cbc:Telephone>${companyPhone}</cbc:Telephone>
+        <cbc:ElectronicMail>${companyEmail}</cbc:ElectronicMail>
+      </cac:Contact>
+    </cac:Party>
+  </cac:AccountingSupplierParty>`;
+  
+  // AccountingCustomerParty (Alıcı) - E-Arşiv özel yapı
+  xml += `
+  <cac:AccountingCustomerParty>
+    <cac:Party>`;
+
+  // PartyIdentification: VKN or TCKN
+  const isTCKN = customerTaxNumber && customerTaxNumber.length === 11;
+  const isVKN = customerTaxNumber && customerTaxNumber.length === 10;
+  
+  if (isTCKN || isVKN) {
+    xml += `
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="${isTCKN ? 'TCKN' : 'VKN'}">${customerTaxNumber}</cbc:ID>
+      </cac:PartyIdentification>`;
+  }
+
+  xml += `
+      <cac:PartyName>
+        <cbc:Name>${customerName}</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>${customerAddress}</cbc:StreetName>
+        <cbc:CityName>${customerCity}</cbc:CityName>
+        <cbc:CitySubdivisionName>${customerDistrict || customerCity}</cbc:CitySubdivisionName>
+        <cbc:PostalZone>${customerPostalCode}</cbc:PostalZone>
+        <cac:Country>
+          <cbc:Name>${customerCountry}</cbc:Name>
+        </cac:Country>
+      </cac:PostalAddress>`;
+
+  // E-Arşiv özel: TCKN için Person elementi ZORUNLU
+  if (isTCKN) {
+    const nameParts = customerName.split(' ');
+    const firstName = nameParts.slice(0, -1).join(' ') || customerName;
+    const familyName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+
+    xml += `
+      <cac:Person>
+        <cbc:FirstName>${firstName}</cbc:FirstName>
+        <cbc:FamilyName>${familyName}</cbc:FamilyName>
+      </cac:Person>`;
+  }
+
+  // E-Arşiv için PartyTaxScheme EKLENMEMELİ (önemli fark!)
+  // Sadece iletişim bilgileri eklenir
+  if (customerPhone || customerEmail) {
+    xml += `
+      <cac:Contact>
+        <cbc:Telephone>${customerPhone}</cbc:Telephone>
+        <cbc:ElectronicMail>${customerEmail}</cbc:ElectronicMail>
+      </cac:Contact>`;
+  }
+
+  xml += `
+    </cac:Party>
+  </cac:AccountingCustomerParty>`;
+  
+  // TaxTotal
+  xml += `
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="${currency}">${taxTotal.toFixed(2)}</cbc:TaxAmount>`;
+  
+  Object.entries(vatGroups).forEach(([rate, group]) => {
+    const vatRate = parseFloat(rate);
+    xml += `
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="${currency}">${group.base.toFixed(2)}</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="${currency}">${group.amount.toFixed(2)}</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:Percent>${vatRate.toFixed(2)}</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:Name>KDV</cbc:Name>
+          <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>`;
+  });
+  
+  xml += `
+  </cac:TaxTotal>`;
+  
+  // Legal Monetary Total
+  xml += `
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="${currency}">${lineExtensionAmount.toFixed(2)}</cbc:LineExtensionAmount>`;
+  
+  if (allowanceTotalAmount > 0) {
+    xml += `
+    <cbc:AllowanceTotalAmount currencyID="${currency}">${allowanceTotalAmount.toFixed(2)}</cbc:AllowanceTotalAmount>`;
+  }
+  
+  xml += `
+    <cbc:TaxExclusiveAmount currencyID="${currency}">${taxExclusiveAmount.toFixed(2)}</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="${currency}">${taxInclusiveAmount.toFixed(2)}</cbc:TaxInclusiveAmount>
+    <cbc:PayableAmount currencyID="${currency}">${payableAmount.toFixed(2)}</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>`;
+  
+  // Invoice Lines
+  items.forEach((item, index) => {
+    const lineNumber = index + 1;
+    const quantity = item.miktar || 0;
+    const unitPrice = item.birim_fiyat || 0;
+    const vatRate = item.kdv_orani || 0;
+    const lineTotal = item.satir_toplami || 0;
+    const vatAmount = item.kdv_tutari || (lineTotal * vatRate / (100 + vatRate));
+    const baseAmount = lineTotal - vatAmount;
+    const unitCode = mapUnitToUBLTR(item.birim || 'C62');
+    const productName = escapeXml(item.urun_adi || 'Ürün');
+    
+    xml += `
+  <cac:InvoiceLine>
+    <cbc:ID>${lineNumber}</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="${unitCode}">${quantity.toFixed(2)}</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="${currency}">${baseAmount.toFixed(2)}</cbc:LineExtensionAmount>
+    <cac:Item>
+      <cbc:Name>${productName}</cbc:Name>`;
+    
+    if (item.gtip_kodu) {
+      xml += `
+      <cac:SellersItemIdentification>
+        <cbc:ID>${escapeXml(item.gtip_kodu)}</cbc:ID>
+      </cac:SellersItemIdentification>`;
+    }
+    
+    xml += `
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="${currency}">${unitPrice.toFixed(2)}</cbc:PriceAmount>
+    </cac:Price>`;
+    
+    if (vatRate > 0) {
+      xml += `
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="${currency}">${vatAmount.toFixed(2)}</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="${currency}">${baseAmount.toFixed(2)}</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="${currency}">${vatAmount.toFixed(2)}</cbc:TaxAmount>
+        <cbc:Percent>${vatRate.toFixed(2)}</cbc:Percent>
+        <cac:TaxCategory>
+          <cac:TaxScheme>
+            <cbc:Name>KDV</cbc:Name>
+            <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>`;
+    }
+    
+    xml += `
+  </cac:InvoiceLine>`;
+  });
   
   xml += `
 </Invoice>`;

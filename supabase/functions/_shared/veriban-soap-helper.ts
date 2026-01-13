@@ -23,19 +23,30 @@ export interface VeribanSoapResponse {
 }
 
 /**
- * E-Arşiv Transfer Parameters
- * E-Arşiv için MINIMUM parametreler - Veriban varsayılan değerleri kullansın
+ * E-Arşiv Transfer Parameters (XSD-Based)
+ * XSD şemasına göre tüm alanları içerir
  * 
- * NOT: CustomerAlias, IsDirectSend, IntegrationCode E-Arşiv için kullanılmıyor
- * InvoiceTransportationType, IsInvoiceCreatedAtDelivery, IsInternetSalesInvoice GÖNDERİLMİYOR
+ * EArchiveTransferFile extends TransferFile:
+ * - TransferFile base alanlar: fileName, fileDataType, binaryData, binaryDataHash
+ * - EArchiveTransferFile opsiyonel: receiverMailAddresses, receiverGsmNo
+ * - EArchiveTransferFile ZORUNLU (minOccurs="1"): invoiceTransportationType, isInvoiceCreatedAtDelivery, isInternetSalesInvoice
  */
 export interface EArchiveTransferParams {
+  // TransferFile base alanlar
   fileName: string;
-  fileDataType: string; // 'XML_INZIP', 'PDF_INZIP', 'HTML_INZIP' - helper içinde enum'a çevrilecek
+  fileDataType: string; // 'XML_INZIP', 'PDF_INZIP', 'HTML_INZIP', 'TXT_INZIP'
   binaryData: string; // base64 ZIP
   binaryDataHash: string; // MD5
-  // ❌ Tüm opsiyonel parametreler ÇIKARILDI - Veriban varsayılanları kullansın
-  receiverMailAddresses?: string[]; // Opsiyonel mail adresleri (sadece dolu ise gönder)
+  
+  // EArchiveTransferFile opsiyonel alanlar
+  receiverMailAddresses?: string[]; // Mail adresleri (opsiyonel)
+  receiverGsmNo?: string; // SMS numarası (opsiyonel) - format: +905551234567
+  
+  // EArchiveTransferFile ZORUNLU alanlar (XSD minOccurs="1")
+  // Default değerler Edge Function'da verilecek
+  invoiceTransportationType: string; // 'NONE' | 'ELEKTRONIK' | 'KAGIT'
+  isInvoiceCreatedAtDelivery: boolean;
+  isInternetSalesInvoice: boolean;
 }
 
 /**
@@ -148,9 +159,6 @@ export class VeribanSoapClient {
 </soapenv:Envelope>`;
 
     try {
-      console.log('🔄 SOAP Login Request URL:', url);
-      console.log('🔄 SOAP Login Request Body:', soapRequest);
-      
       const response = await this.fetchWithTimeout(url, {
         method: 'POST',
         headers: {
@@ -159,15 +167,12 @@ export class VeribanSoapClient {
         },
         body: soapRequest,
       });
-      
-      console.log('📥 SOAP Response Status:', response.status);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const xmlText = await response.text();
-      console.log('📥 SOAP Response Body:', xmlText);
       return this.parseLoginResponse(xmlText);
     } catch (error) {
       console.error('❌ Veriban login error:', error);
@@ -313,32 +318,16 @@ export class VeribanSoapClient {
       //   ? 'http://tempuri.org/IIntegrationService/TransferSalesInvoiceFileWithIntegrationCode'
       //   : 'http://tempuri.org/IIntegrationService/TransferSalesInvoiceFile';
 
-      console.log('📤 TransferSalesInvoiceFile SOAP Request:');
-      console.log('📄 SOAPAction:', soapAction);
-      console.log('📄 Request URL:', url);
-      console.log('📄 Request Body (FULL):');
-      console.log(soapRequest);
-      console.log('📄 Request Body Length:', soapRequest.length);
-      console.log('📄 BinaryData Length:', binaryData.length);
-      console.log('📄 BinaryData (first 100 chars):', binaryData.substring(0, 100));
-      console.log('📄 FileDataType:', fileDataType);
-      console.log('📄 IsDirectSend:', isDirectSendStr);
-      console.log('📄 FileName:', fileName);
-      console.log('📄 CustomerAlias:', customerAlias || '(boş)');
-      console.log('📄 IntegrationCode:', integrationCode || '(yok)');
-
       const response = await this.fetchWithTimeout(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/xml; charset=utf-8',
-          'SOAPAction': soapAction, // Diğer methodlarda tırnak yok, aynı formatı kullanıyoruz
+          'SOAPAction': soapAction,
         },
         body: soapRequest,
       });
 
-      console.log('📥 Response Status:', response.status);
       const xmlText = await response.text();
-      console.log('📥 Response Body (first 2000 chars):', xmlText.substring(0, 2000));
 
       return this.parseTransferResponse(xmlText);
     } catch (error) {
@@ -351,12 +340,14 @@ export class VeribanSoapClient {
 
   /**
    * Transfer E-Archive Invoice File (E-Arşiv Fatura Gönderimi)
-   * E-Arşiv faturaları için özel parametreler içerir
+   * XSD şemasına göre tüm ZORUNLU parametreleri içerir
    * 
-   * C# örnek kodundan: TRANSFER_EARSIV_FATURA_TEST()
+   * XSD: EArchiveTransferFile extends TransferFile
+   * - minOccurs="1": InvoiceTransportationType, IsInvoiceCreatedAtDelivery, IsInternetSalesInvoice
+   * - minOccurs="0": ReceiverMailTargetAddresses, ReceiverGsmNo
    * 
    * @param sessionCode - Oturum kodu
-   * @param params - E-Arşiv transfer parametreleri
+   * @param params - E-Arşiv transfer parametreleri (XSD-based)
    * @param url - Webservice URL
    */
   static async transferEArchiveInvoice(
@@ -369,22 +360,42 @@ export class VeribanSoapClient {
       fileDataType,
       binaryData,
       binaryDataHash,
-      // ❌ Tüm opsiyonel parametreler ÇIKARILDI - Veriban varsayılanları kullansın
-      receiverMailAddresses = [],
+      receiverMailAddresses,
+      receiverGsmNo,
+      invoiceTransportationType,
+      isInvoiceCreatedAtDelivery,
+      isInternetSalesInvoice,
     } = params;
 
-    // ⭐ KRİTİK FİX: XSD Schema'ya göre FileDataType STRING enum (XML_INZIP, PDF_INZIP, vb.)
-    // Sayısal değer DEĞİL! XSD satır 85-92'de xs:restriction base="xs:string"
     const fileDataTypeValue = fileDataType || 'XML_INZIP';
 
-    // Mail adresleri için XML oluştur (sadece dolu ise)
+    // Mail adresleri XML (opsiyonel - sadece dolu ise gönder)
     const mailAddressesXml = receiverMailAddresses && receiverMailAddresses.length > 0 
-      ? receiverMailAddresses.map(mail => `<tem:string>${this.escapeXml(mail)}</tem:string>`).join('')
+      ? `
+        <tem:ReceiverMailTargetAddresses>${receiverMailAddresses.map(mail => `
+          <tem:string>${this.escapeXml(mail)}</tem:string>`).join('')}
+        </tem:ReceiverMailTargetAddresses>`
       : '';
 
-    // E-Arşiv için SOAP request - MINIMUM parametrelerle
-    // ⚠️ InvoiceTransportationType, IsInvoiceCreatedAtDelivery, IsInternetSalesInvoice GÖNDERİLMİYOR
-    // Veriban varsayılan değerleri kullanacak
+    // GSM numarası XML (opsiyonel - sadece dolu ise gönder)
+    const gsmNoXml = receiverGsmNo 
+      ? `
+        <tem:ReceiverGsmNo>${this.escapeXml(receiverGsmNo)}</tem:ReceiverGsmNo>`
+      : '';
+
+    // XSD'de ZORUNLU parametreler (minOccurs="1")
+    // Boolean değerler lowercase string olarak gönderilmeli
+    const transportTypeXml = `
+        <tem:InvoiceTransportationType>${this.escapeXml(invoiceTransportationType)}</tem:InvoiceTransportationType>`;
+    
+    const createdAtDeliveryXml = `
+        <tem:IsInvoiceCreatedAtDelivery>${isInvoiceCreatedAtDelivery ? 'true' : 'false'}</tem:IsInvoiceCreatedAtDelivery>`;
+    
+    const internetSalesXml = `
+        <tem:IsInternetSalesInvoice>${isInternetSalesInvoice ? 'true' : 'false'}</tem:IsInternetSalesInvoice>`;
+
+    // XSD element sırasına uygun SOAP request
+    // ÖNEMLİ: TransferFile base alanları ÖNCE, sonra EArchiveTransferFile alanları
     const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
   <soapenv:Header/>
@@ -395,8 +406,7 @@ export class VeribanSoapClient {
         <tem:FileDataType>${fileDataTypeValue}</tem:FileDataType>
         <tem:FileNameWithExtension>${this.escapeXml(fileName)}</tem:FileNameWithExtension>
         <tem:BinaryData>${binaryData}</tem:BinaryData>
-        <tem:BinaryDataHash>${this.escapeXml(binaryDataHash)}</tem:BinaryDataHash>${mailAddressesXml ? `
-        <tem:ReceiverMailTargetAddresses>${mailAddressesXml}</tem:ReceiverMailTargetAddresses>` : ''}
+        <tem:BinaryDataHash>${this.escapeXml(binaryDataHash)}</tem:BinaryDataHash>${mailAddressesXml}${gsmNoXml}${transportTypeXml}${createdAtDeliveryXml}${internetSalesXml}
       </tem:transferFile>
     </tem:TransferSalesInvoiceFile>
   </soapenv:Body>
@@ -404,13 +414,6 @@ export class VeribanSoapClient {
 
     try {
       const soapAction = 'TransferSalesInvoiceFile';
-
-      console.log('📤 [E-Arşiv] TransferEArchiveInvoice SOAP Request:');
-      console.log('📄 SOAPAction:', soapAction);
-      console.log('📄 FileDataType:', fileDataTypeValue);
-      console.log('📄 ReceiverMailAddresses:', receiverMailAddresses && receiverMailAddresses.length > 0 ? receiverMailAddresses.join(', ') : '(yok)');
-      console.log('ℹ️  InvoiceTransportationType, IsInvoiceCreatedAtDelivery, IsInternetSalesInvoice GÖNDERİLMİYOR - Veriban varsayılanları kullanacak');
-      console.log('📄 SOAP Request (first 1500 chars):', soapRequest.substring(0, 1500));
 
       const response = await this.fetchWithTimeout(url, {
         method: 'POST',
@@ -421,9 +424,7 @@ export class VeribanSoapClient {
         body: soapRequest,
       });
 
-      console.log('📥 Response Status:', response.status);
       const xmlText = await response.text();
-      console.log('📥 Response Body (first 2000 chars):', xmlText.substring(0, 2000));
 
       return this.parseTransferResponse(xmlText);
     } catch (error) {
@@ -472,10 +473,6 @@ export class VeribanSoapClient {
 </soapenv:Envelope>`;
 
     try {
-      console.log('📤 [E-Arşiv] CancelEArchiveInvoice SOAP Request:');
-      console.log('📄 InvoiceNumber:', invoiceNumber);
-      console.log('📄 CancelDate:', cancelDateStr);
-
       const response = await this.fetchWithTimeout(url, {
         method: 'POST',
         headers: {
@@ -485,9 +482,7 @@ export class VeribanSoapClient {
         body: soapRequest,
       });
 
-      console.log('📥 Response Status:', response.status);
       const xmlText = await response.text();
-      console.log('📥 Response Body:', xmlText.substring(0, 1000));
 
       return this.parseCancelResponse(xmlText);
     } catch (error) {
@@ -948,6 +943,9 @@ export class VeribanSoapClient {
   /**
    * Get Sales Invoice UUID List
    * Doküman: Bölüm 18 - Giden Fatura UUID Listesi
+   * 
+   * Müşteri VKN/TCKN ile filtreleme yapılabilir.
+   * customerRegisterNumber parametresi ile belirli bir müşteriye ait faturaları getirir.
    */
   static async getSalesInvoiceUUIDList(
     sessionCode: string,
@@ -964,29 +962,9 @@ export class VeribanSoapClient {
       customerRegisterNumber,
     } = params;
 
-    console.log('🔍 GetSalesInvoiceUUIDList Parametreleri:', {
-      sessionCodeLength: sessionCode?.length,
-      startDate,
-      endDate,
-      customerRegisterNumber,
-      customerRegisterNumberType: typeof customerRegisterNumber,
-      customerRegisterNumberProvided: !!customerRegisterNumber,
-      url
-    });
-
-    // customerRegisterNumber sadece dolu ise gönder, boşsa hiç gönderme
-    console.log('🔍 customerRegisterNumber kontrolü:', {
-      value: customerRegisterNumber,
-      type: typeof customerRegisterNumber,
-      length: customerRegisterNumber?.length,
-      willIncludeTag: !!customerRegisterNumber
-    });
-    
     const customerRegNumberTag = customerRegisterNumber 
       ? `<tem:customerRegisterNumber>${this.escapeXml(customerRegisterNumber)}</tem:customerRegisterNumber>`
       : '';
-    
-    console.log('🏷️ Customer Register Number Tag:', customerRegNumberTag || '(boş - tag eklenmeyecek)');
     
     const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
@@ -1001,8 +979,6 @@ export class VeribanSoapClient {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-    console.log('📤 SOAP Request:', soapRequest);
-
     try {
       const response = await this.fetchWithTimeout(url, {
         method: 'POST',
@@ -1013,16 +989,8 @@ export class VeribanSoapClient {
         body: soapRequest,
       });
 
-      console.log('📥 Response Status:', response.status, response.statusText);
-      
       const xmlText = await response.text();
-      console.log('📥 Response XML (Full):', xmlText);
-      console.log('📥 Response XML Length:', xmlText.length);
-      
-      const result = this.parseUUIDListResponse(xmlText);
-      console.log('📊 Parsed Result:', JSON.stringify(result, null, 2));
-      
-      return result;
+      return this.parseUUIDListResponse(xmlText);
     } catch (error) {
       console.error('❌ GetSalesInvoiceUUIDList Error:', error);
       return {
@@ -1030,6 +998,27 @@ export class VeribanSoapClient {
         error: error instanceof Error ? error.message : 'GetSalesInvoiceUUIDList failed',
       };
     }
+  }
+
+  /**
+   * Get Sales Invoice UUID List With Customer Register Number (Alias)
+   * Müşteri VKN/TCKN bazında tarih aralıklı fatura ETTN listesi
+   * 
+   * Bu fonksiyon getSalesInvoiceUUIDList'in alias'ıdır ve aynı şekilde çalışır.
+   * Dokümandaki isimlendirmeye uyum için eklenmiştir.
+   */
+  static async getSalesInvoiceUUIDListWithCustomerRegisterNumber(
+    sessionCode: string,
+    customerRegisterNumber: string,
+    startDate: string,
+    endDate: string,
+    url: string
+  ): Promise<VeribanSoapResponse> {
+    return this.getSalesInvoiceUUIDList(
+      sessionCode,
+      { startDate, endDate, customerRegisterNumber },
+      url
+    );
   }
 
   /**
@@ -1602,8 +1591,6 @@ export class VeribanSoapClient {
    */
   private static parseLoginResponse(xmlText: string): VeribanLoginResponse {
     try {
-      console.log('🔍 Parsing login response...');
-      
       // Check for SOAP fault first
       const faultCodeMatch = xmlText.match(/<FaultCode[^>]*>(.*?)<\/FaultCode>/i);
       const faultDescMatch = xmlText.match(/<FaultDescription[^>]*>(.*?)<\/FaultDescription>/i);
@@ -1634,19 +1621,13 @@ export class VeribanSoapClient {
       
       const sessionCode = loginResultMatch ? loginResultMatch[1].trim() : '';
 
-      console.log('🔍 Session code found:', sessionCode ? 'Yes' : 'No');
-      console.log('🔍 Session code length:', sessionCode.length);
-
       if (!sessionCode || sessionCode.length === 0) {
-        console.error('❌ No session code in response');
-        console.error('❌ Response XML:', xmlText.substring(0, 500));
         return {
           success: false,
           error: 'Giriş başarısız - session code alınamadı. Lütfen kullanıcı adı ve şifrenizi kontrol edin.',
         };
       }
 
-      console.log('✅ Login successful, session code:', sessionCode.substring(0, 10) + '...');
       return {
         success: true,
         sessionCode,
@@ -1700,10 +1681,6 @@ export class VeribanSoapClient {
    */
   private static parseTransferResponse(xmlText: string): VeribanSoapResponse {
     try {
-      console.log('🔍 Parsing transfer response...');
-      console.log('📄 Response XML (first 2000 chars):', xmlText.substring(0, 2000));
-      console.log('📄 Response XML (full length):', xmlText.length, 'chars');
-
       // Check for SOAP fault first
       const faultCodeMatch = xmlText.match(/<FaultCode[^>]*>(.*?)<\/FaultCode>/i);
       const faultDescMatch = xmlText.match(/<FaultDescription[^>]*>(.*?)<\/FaultDescription>/i);
@@ -1806,33 +1783,6 @@ export class VeribanSoapClient {
 
       const descriptionMatch = xmlText.match(/<Description[^>]*>(.*?)<\/Description>/i);
       const description = descriptionMatch ? descriptionMatch[1].trim() : '';
-
-      console.log('📋 OperationCompleted:', operationCompleted);
-      console.log('📋 TransferFileUniqueId:', transferFileUniqueId);
-      console.log('📋 InvoiceNumber (parsed):', invoiceNumber);
-      console.log('📋 ErrorMessage:', errorMessage);
-      console.log('📋 Message:', message);
-      console.log('📋 Description:', description);
-      
-      // Debug: Log all possible InvoiceNumber patterns found in XML
-      if (!invoiceNumber) {
-        console.log('⚠️ InvoiceNumber bulunamadı. XML içinde arama yapılıyor...');
-        const allInvoiceNumberMatches = xmlText.matchAll(/InvoiceNumber[^>]*>([^<]*)<\/InvoiceNumber>/gi);
-        const matches = Array.from(allInvoiceNumberMatches);
-        if (matches.length > 0) {
-          console.log('📋 Tüm InvoiceNumber eşleşmeleri:', matches.map(m => m[1]));
-        } else {
-          console.log('📋 XML içinde InvoiceNumber bulunamadı');
-          console.log('ℹ️  NOT: E-Arşiv fatura response\'unda InvoiceNumber alanı OLMAZ. Bu normal bir durumdur.');
-          console.log('ℹ️  Veriban sadece TransferFileUniqueId döndürür, fatura numarası gönderdiğiniz XML\'dedir.');
-          // Log a sample of the XML around TransferFileUniqueId to see structure
-          const transferIdIndex = xmlText.indexOf('TransferFileUniqueId');
-          if (transferIdIndex > 0) {
-            const sample = xmlText.substring(Math.max(0, transferIdIndex - 200), Math.min(xmlText.length, transferIdIndex + 500));
-            console.log('📋 TransferFileUniqueId çevresindeki XML örneği:', sample);
-          }
-        }
-      }
 
       // If operation didn't complete, include error details
       if (!operationCompleted) {
@@ -2031,68 +1981,20 @@ export class VeribanSoapClient {
       const messageMatch = xmlText.match(/<Message[^>]*>(.*?)<\/Message>/i);
       const message = messageMatch ? messageMatch[1].trim() : '';
 
-      console.log('📋 [parseInvoiceStatusResponse] InvoiceNumber (parsed):', invoiceNumber);
-      console.log('📋 [parseInvoiceStatusResponse] InvoiceProfile (parsed):', invoiceProfile || '(bulunamadı)');
-      console.log('📋 [parseInvoiceStatusResponse] GIBReportStateCode:', gibReportStateCode);
-      console.log('📋 [parseInvoiceStatusResponse] MailStateCode:', mailStateCode);
-      console.log('📋 [parseInvoiceStatusResponse] ErrorMessage:', errorMessage);
-      console.log('📋 [parseInvoiceStatusResponse] Message:', message);
-      console.log('📋 [parseInvoiceStatusResponse] StateDescription:', stateDescription);
-      
-      // Hata durumunda (stateCode === 4) detaylı log
-      if (stateCode === 4) {
-        console.log('\n' + '='.repeat(80));
-        console.log('❌ [parseInvoiceStatusResponse] HATA DURUMU TESPİT EDİLDİ (StateCode: 4)');
-        console.log('='.repeat(80));
-        console.log('📋 StateName:', stateName);
-        console.log('📝 StateDescription:', stateDescription);
-        console.log('❌ ErrorMessage:', errorMessage || '(yok)');
-        console.log('📄 Message:', message || '(yok)');
-        console.log('📊 AnswerStateCode:', answerStateCode);
-        console.log('📊 AnswerTypeCode:', answerTypeCode);
-        console.log('📋 InvoiceNumber:', invoiceNumber || '(bulunamadı)');
-        console.log('📋 InvoiceProfile:', invoiceProfile || '(bulunamadı)');
-        console.log('\n📄 [parseInvoiceStatusResponse] Full XML Response:');
-        console.log(xmlText);
-        console.log('='.repeat(80) + '\n');
-      }
-      
-      // Debug: Log all possible InvoiceNumber patterns found in XML
+      // Try flexible invoice number parsing if not found
       if (!invoiceNumber) {
-        console.log('⚠️ [parseInvoiceStatusResponse] InvoiceNumber bulunamadı. XML içinde arama yapılıyor...');
-        console.log('📄 [parseInvoiceStatusResponse] Response XML (first 2000 chars):', xmlText.substring(0, 2000));
-        
-        // Try more flexible patterns
         const allInvoiceNumberMatches = xmlText.matchAll(/InvoiceNumber[^>]*>([^<]*)<\/InvoiceNumber>/gi);
         const matches = Array.from(allInvoiceNumberMatches);
-        if (matches.length > 0) {
-          console.log('📋 [parseInvoiceStatusResponse] Tüm InvoiceNumber eşleşmeleri:', matches.map(m => m[1]));
-          
-          // Try to find a valid invoice number from matches
-          for (const match of matches) {
-            const value = match[1].trim();
-            // Check if it looks like a valid invoice number (contains numbers and is reasonable length)
-            if (value && 
-                value.length >= 3 && 
-                value.length <= 50 &&
-                /\d/.test(value) && // Contains at least one digit
-                !['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR', 'STATE', 'ANSWER', 'NULL', 'UNDEFINED'].includes(value.toUpperCase())) {
-              invoiceNumber = value;
-              console.log('✅ [parseInvoiceStatusResponse] InvoiceNumber esnek pattern ile bulundu:', invoiceNumber);
-              break;
-            }
-          }
-        }
         
-        // If still not found, try case-insensitive search with any tag name containing "Invoice" and "Number"
-        if (!invoiceNumber) {
-          const flexibleMatch = xmlText.match(/<[^>]*[Ii]nvoice[^>]*[Nn]umber[^>]*>([^<]+)<\/[^>]*>/i);
-          if (flexibleMatch) {
-            const value = flexibleMatch[1].trim();
-            if (value && value.length >= 3 && value.length <= 50 && /\d/.test(value)) {
-              invoiceNumber = value;
-              console.log('✅ [parseInvoiceStatusResponse] InvoiceNumber esnek arama ile bulundu:', invoiceNumber);
-            }
+        for (const match of matches) {
+          const value = match[1].trim();
+          if (value && 
+              value.length >= 3 && 
+              value.length <= 50 &&
+              /\d/.test(value) &&
+              !['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR', 'STATE', 'ANSWER', 'NULL', 'UNDEFINED'].includes(value.toUpperCase())) {
+            invoiceNumber = value;
+            break;
           }
         }
       }
@@ -2271,7 +2173,6 @@ export class VeribanSoapClient {
         }
       }
 
-      console.log(`✅ parseUUIDListResponse: ${uuids.length} geçerli UUID bulundu`);
       return {
         success: true,
         data: uuids,
@@ -2579,9 +2480,6 @@ export async function getValidSessionCode(
     const sessionExpiresAt = new Date();
     sessionExpiresAt.setHours(sessionExpiresAt.getHours() + 6);
 
-    console.log('💾 Updating session code in database...');
-    console.log('⏰ New session expires at:', sessionExpiresAt.toISOString());
-
     // Update session in database
     const { error: updateError } = await supabase
       .from('veriban_auth')
@@ -2594,11 +2492,7 @@ export async function getValidSessionCode(
       .eq('company_id', veribanAuth.company_id);
 
     if (updateError) {
-      console.error('❌ Failed to update session in database:', updateError);
-      // Still return the session code even if database update fails
-      // The session is valid, just not persisted
-    } else {
-      console.log('✅ Session code updated in database');
+      console.warn('⚠️ Session güncellenemedi:', updateError.message);
     }
 
     return {

@@ -59,6 +59,15 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
     customerTaxNumber: customerTaxNumber || undefined
   }, invoiceType === 'outgoing');
   
+  // Müşteri seçildiğinde otomatik olarak faturaları çek
+  useEffect(() => {
+    if (invoiceType === 'outgoing' && customerTaxNumber && customerTaxNumber.length >= 10 && startDate && endDate) {
+      logger.debug('🔄 Müşteri seçildi, faturaları otomatik çekiliyor:', customerTaxNumber);
+      // Sadece cache'den oku, otomatik API çağrısı yapma
+      refetchOutgoing();
+    }
+  }, [customerTaxNumber, invoiceType, startDate, endDate, refetchOutgoing]);
+  
   // İşlenmiş e-fatura ID'lerini çek (sadece gelen faturalar için)
   const { data: processedEinvoiceIds = [], refetch: refetchProcessedIds } = useQuery({
     queryKey: ['processed-einvoice-ids'],

@@ -107,10 +107,12 @@ export const CustomerSelect: React.FC<CustomerSelectProps> = ({
 
   const getDisplayName = () => {
     if (!value) {
-      return "Tüm Müşteriler (Cache)";
+      return placeholder;
     }
     if (selectedCustomer) {
-      return selectedCustomer.company || selectedCustomer.name || "Müşteri seçin...";
+      const name = selectedCustomer.company || selectedCustomer.name || "İsimsiz Müşteri";
+      const vkn = selectedCustomer.tax_number ? ` (${selectedCustomer.tax_number})` : '';
+      return `${name}${vkn}`;
     }
     return placeholder;
   };
@@ -177,29 +179,6 @@ export const CustomerSelect: React.FC<CustomerSelectProps> = ({
           ) : filteredCustomers && filteredCustomers.length > 0 ? (
             <>
               <div className="grid gap-0.5 p-1">
-                {/* Tüm Müşteriler Seçeneği - İlk Sırada */}
-                <div
-                  className={cn(
-                    "flex items-start py-1 px-1.5 cursor-pointer rounded-md hover:bg-muted/50 min-w-0 border-b border-muted",
-                    !value && "bg-muted"
-                  )}
-                  onClick={() => handleSelectCustomer('')}
-                >
-                  <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 mr-1.5 mt-0.5 text-[10px] font-medium shrink-0">
-                    <Building2 className="h-3 w-3" />
-                  </div>
-                  <div className="flex-1 min-w-0 overflow-hidden">
-                    <div className="flex justify-between items-center gap-2 min-w-0">
-                      <p className="font-medium truncate text-xs min-w-0 flex-1">
-                        Tüm Müşteriler
-                      </p>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground truncate">
-                      Sadece cache'den göster (VKN filtresiz)
-                    </p>
-                  </div>
-                </div>
-
                 {/* Müşteri Listesi */}
                 {filteredCustomers.map((customer) => {
                   const isSelected = customer.tax_number === value;

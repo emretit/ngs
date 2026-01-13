@@ -172,13 +172,9 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
     issueDate: issueDate
   });
   
-  // Invoice type and profile
+  // Invoice type (ProfileID göndermiyoruz - Veriban otomatik belirliyor)
   const invoiceType = invoice.invoice_type || 'SATIS';
-  // ✅ E-Arşiv için ProfileID = "EARSIVFATURA" (doğru değer)
-  // TEMELFATURA'ya dönüştürme YAPMA - Veriban EARSIVFATURA bekliyor!
-  const invoiceProfile = invoice.invoice_profile || 'TEMELFATURA';
-  
-  console.log('📋 [UBL] Invoice Profile:', invoiceProfile);
+  console.log('📋 [UBL] Invoice Type:', invoiceType);
   
   // Currency
   const currency = invoice.para_birimi || 'TRY';
@@ -305,7 +301,6 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
          xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
          xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
   <cbc:CustomizationID>TR1.2</cbc:CustomizationID>
-  <cbc:ProfileID>${escapeXml(invoiceProfile)}</cbc:ProfileID>
   <cbc:ID>${escapeXml(invoiceNumber)}</cbc:ID>
   <cbc:UUID>${invoiceETTN}</cbc:UUID>
   <cbc:IssueDate>${issueDate}</cbc:IssueDate>

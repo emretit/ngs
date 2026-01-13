@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { IntegratorService } from '@/services/integratorService';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, FileText, Archive } from 'lucide-react';
 
 interface EInvoicesProps {
   isCollapsed?: boolean;
@@ -18,10 +18,14 @@ interface EInvoicesProps {
 }
 
 type InvoiceType = 'incoming' | 'outgoing';
+type DocumentType = 'all' | 'e-fatura' | 'e-arsiv';
 
 const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   // Toggle state - gelen/giden faturalar
   const [invoiceType, setInvoiceType] = useState<InvoiceType>('incoming');
+  
+  // E-Arşiv/E-Fatura toggle state (sadece giden faturalar için)
+  const [documentType, setDocumentType] = useState<DocumentType>('all');
   
   // Date range filter states - Default to last 7 days (test için)
   const getDefaultDateRange = () => {
@@ -98,6 +102,17 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
       }
     }
     
+    // E-Arşiv/E-Fatura toggle filtresi (sadece giden faturalar için)
+    if (invoiceType === 'outgoing' && documentType !== 'all') {
+      const isEArchive = invoice.invoiceProfile === 'EARSIVFATURA';
+      if (documentType === 'e-arsiv' && !isEArchive) {
+        return false;
+      }
+      if (documentType === 'e-fatura' && isEArchive) {
+        return false;
+      }
+    }
+    
     // Search filter
     const matchesSearch = !searchTerm || 
       invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -108,7 +123,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
           (invoice as any).customerTaxNumber?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     
-    // Type filter
+    // Type filter (invoice profile filter - TEMELFATURA, TICARIFATURA, etc.)
     const matchesType = typeFilter === 'all' || invoice.invoiceProfile === typeFilter;
     return matchesSearch && matchesType;
   });
@@ -159,33 +174,79 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
             totalCount={filteredInvoices.length}
             totalAmount={totalAmount}
           />
-          {/* Toggle - Gelen/Giden Faturalar */}
-          <div className="flex items-center gap-2 px-3">
-            <ToggleGroup 
-              type="single" 
-              value={invoiceType} 
-              onValueChange={(value) => {
-                if (value) setInvoiceType(value as InvoiceType);
-              }}
-              className="bg-white border border-gray-200 rounded-lg p-1"
-            >
-              <ToggleGroupItem 
-                value="incoming" 
-                aria-label="Gelen Faturalar"
-                className="data-[state=on]:bg-orange-500 data-[state=on]:text-white"
+          <div className="flex items-center gap-3">
+            {/* Toggle - Gelen/Giden Faturalar */}
+            <div className="flex items-center gap-2 px-3">
+              <ToggleGroup 
+                type="single" 
+                value={invoiceType} 
+                onValueChange={(value) => {
+                  if (value) {
+                    setInvoiceType(value as InvoiceType);
+                    // Gelen faturalara geçildiğinde documentType'ı sıfırla
+                    if (value === 'incoming') {
+                      setDocumentType('all');
+                    }
+                  }
+                }}
+                className="bg-white border border-gray-200 rounded-lg p-1"
               >
-                <ArrowDownCircle className="h-4 w-4 mr-2" />
-                Gelen
-              </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="outgoing" 
-                aria-label="Giden Faturalar"
-                className="data-[state=on]:bg-orange-500 data-[state=on]:text-white"
-              >
-                <ArrowUpCircle className="h-4 w-4 mr-2" />
-                Giden
-              </ToggleGroupItem>
-            </ToggleGroup>
+                <ToggleGroupItem 
+                  value="incoming" 
+                  aria-label="Gelen Faturalar"
+                  className="data-[state=on]:bg-orange-500 data-[state=on]:text-white"
+                >
+                  <ArrowDownCircle className="h-4 w-4 mr-2" />
+                  Gelen
+                </ToggleGroupItem>
+                <ToggleGroupItem 
+                  value="outgoing" 
+                  aria-label="Giden Faturalar"
+                  className="data-[state=on]:bg-orange-500 data-[state=on]:text-white"
+                >
+                  <ArrowUpCircle className="h-4 w-4 mr-2" />
+                  Giden
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+            
+            {/* E-Arşiv/E-Fatura Toggle - Sadece Giden Faturalar için */}
+            {invoiceType === 'outgoing' && (
+              <div className="flex items-center gap-2 px-3">
+                <ToggleGroup 
+                  type="single" 
+                  value={documentType} 
+                  onValueChange={(value) => {
+                    if (value) setDocumentType(value as DocumentType);
+                  }}
+                  className="bg-white border border-gray-200 rounded-lg p-1"
+                >
+                  <ToggleGroupItem 
+                    value="all" 
+                    aria-label="Tümü"
+                    className="data-[state=on]:bg-blue-500 data-[state=on]:text-white"
+                  >
+                    Tümü
+                  </ToggleGroupItem>
+                  <ToggleGroupItem 
+                    value="e-fatura" 
+                    aria-label="E-Fatura"
+                    className="data-[state=on]:bg-green-500 data-[state=on]:text-white"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    E-Fatura
+                  </ToggleGroupItem>
+                  <ToggleGroupItem 
+                    value="e-arsiv" 
+                    aria-label="E-Arşiv"
+                    className="data-[state=on]:bg-purple-500 data-[state=on]:text-white"
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    E-Arşiv
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+            )}
           </div>
         </div>
         <EInvoiceFilterBar 

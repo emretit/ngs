@@ -130,6 +130,15 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   
   const handleRefresh = async () => {
     try {
+      // Tarih kontrolü
+      if (!startDate || !endDate) {
+        toast.error('Lütfen tarih aralığı seçin', {
+          description: 'Faturaları çekmek için başlangıç ve bitiş tarihleri zorunludur.',
+          id: 'fetching-invoices'
+        });
+        return;
+      }
+
       // Giden faturalar için müşteri VKN kontrolü
       if (invoiceType === 'outgoing') {
         if (!customerTaxNumber || customerTaxNumber.length < 10) {
@@ -272,7 +281,10 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
           invoiceType={invoiceType}
           customerTaxNumber={customerTaxNumber}
           setCustomerTaxNumber={setCustomerTaxNumber}
-          isRefreshDisabled={invoiceType === 'outgoing' && (!customerTaxNumber || customerTaxNumber.length < 10)}
+          isRefreshDisabled={
+            !startDate || !endDate || 
+            (invoiceType === 'outgoing' && (!customerTaxNumber || customerTaxNumber.length < 10))
+          }
         />
         <EInvoiceContent
           invoices={filteredInvoices}

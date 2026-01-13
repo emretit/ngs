@@ -118,7 +118,9 @@ const EInvoiceFilterBar = ({
           disabled={isRefreshing || isRefreshDisabled}
           title={
             isRefreshDisabled 
-              ? 'Lütfen önce bir müşteri seçin (VKN)' 
+              ? (!startDate || !endDate 
+                  ? 'Lütfen tarih aralığı seçin' 
+                  : 'Lütfen önce bir müşteri seçin (VKN)') 
               : dateRangeText 
                 ? `Tarih aralığı: ${dateRangeText}` 
                 : 'E-Fatura çek'

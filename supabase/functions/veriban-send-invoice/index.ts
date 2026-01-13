@@ -675,11 +675,11 @@ serve(async (req) => {
       console.log('📦 ZIP boyutu:', zipBlob.length, 'bytes');
       console.log('🔐 MD5 Hash:', md5Hash);
 
-      // ZIP dosya adı: Veriban dokümanına göre FileNameWithExtension
-      // Format: ETTN.xml.zip (ZIP içindeki XML dosya adı + .zip uzantısı)
-      // Alternatif olarak sadece ETTN.zip de kullanılabilir ama dokümanlarda açık değil
-      // Mevcut format: ETTN.xml.zip (örn: 976b9ccc-c5c0-4b2b-9a06-a467fb499877.xml.zip)
-      const zipFileName = `${xmlFileName}.zip`;
+      // ⭐ KRİTİK: ZIP dosya adı = ETTN.zip (içindeki XML adı ETTN.xml olmalı)
+      // Veriban kuralı: ZIP dosya adı ile içindeki XML dosya adı aynı olmalı (sadece uzantı farklı)
+      // YANLIŞ: ETTN.xml.zip ❌
+      // DOĞRU: ETTN.zip ✅ (içinde ETTN.xml var)
+      const zipFileName = `${ettn}.zip`;
 
       // Transfer Sales Invoice File
       console.log('📨 TransferSalesInvoiceFile çağrılıyor...');

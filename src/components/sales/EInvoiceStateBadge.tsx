@@ -100,11 +100,12 @@ const EInvoiceStateBadge: React.FC<EInvoiceStateBadgeProps> = ({
     );
   }
   
-  // StateCode 2 (İmza bekliyor)
+  // StateCode 2 (İşleniyor / GİB'e gönderilmeyi bekliyor)
+  // NOT: "İmza bekliyor" E-Fatura için geçerli, E-Arşiv otomatik işlenir
   if (stateCode === 2) {
     return (
       <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 text-xs">
-        ⏱ İmza Bekliyor
+        ⏱ İşleniyor
       </Badge>
     );
   }

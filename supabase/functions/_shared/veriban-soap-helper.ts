@@ -24,21 +24,18 @@ export interface VeribanSoapResponse {
 
 /**
  * E-Arşiv Transfer Parameters
- * E-Arşiv için özel parametreler
+ * E-Arşiv için MINIMUM parametreler - Veriban varsayılan değerleri kullansın
+ * 
+ * NOT: CustomerAlias, IsDirectSend, IntegrationCode E-Arşiv için kullanılmıyor
+ * InvoiceTransportationType, IsInvoiceCreatedAtDelivery, IsInternetSalesInvoice GÖNDERİLMİYOR
  */
 export interface EArchiveTransferParams {
   fileName: string;
-  fileDataType: string;
+  fileDataType: string; // 'XML_INZIP', 'PDF_INZIP', 'HTML_INZIP' - helper içinde enum'a çevrilecek
   binaryData: string; // base64 ZIP
   binaryDataHash: string; // MD5
-  customerAlias?: string;
-  isDirectSend: boolean;
-  integrationCode?: string;
-  // E-Arşiv özel parametreleri
-  invoiceTransportationType: 'ELEKTRONIK' | 'KAGIT';
-  isInvoiceCreatedAtDelivery?: boolean;
-  isInternetSalesInvoice?: boolean;
-  receiverMailAddresses?: string[];
+  // ❌ Tüm opsiyonel parametreler ÇIKARILDI - Veriban varsayılanları kullansın
+  receiverMailAddresses?: string[]; // Opsiyonel mail adresleri (sadece dolu ise gönder)
 }
 
 /**
@@ -71,6 +68,17 @@ export const VERIBAN_STATE_CODES: Record<number, string> = {
   3: 'İşleniyor',
   4: 'Hatalı',
   5: 'Başarılı',
+};
+
+/**
+ * Veriban FileDataType Enum Values
+ * C# TransferDocumentDataTypes enum değerleri
+ * E-Arşiv için sayısal değerler kullanılmalı
+ */
+export const VERIBAN_FILE_DATA_TYPES: Record<string, number> = {
+  'XML_INZIP': 1,
+  'PDF_INZIP': 2,
+  'HTML_INZIP': 3,
 };
 
 /**
@@ -361,84 +369,48 @@ export class VeribanSoapClient {
       fileDataType,
       binaryData,
       binaryDataHash,
-      customerAlias = '',
-      isDirectSend,
-      integrationCode = '',
-      // E-Arşiv özel parametreleri
-      invoiceTransportationType = 'ELEKTRONIK',
-      isInvoiceCreatedAtDelivery = false,
-      isInternetSalesInvoice = false,
+      // ❌ Tüm opsiyonel parametreler ÇIKARILDI - Veriban varsayılanları kullansın
       receiverMailAddresses = [],
     } = params;
 
-    const fileDataTypeNum = fileDataType.toString();
-    const isDirectSendStr = isDirectSend ? 'true' : 'false';
-    const isCreatedAtDeliveryStr = isInvoiceCreatedAtDelivery ? 'true' : 'false';
-    const isInternetSalesStr = isInternetSalesInvoice ? 'true' : 'false';
+    // ⭐ KRİTİK FİX: XSD Schema'ya göre FileDataType STRING enum (XML_INZIP, PDF_INZIP, vb.)
+    // Sayısal değer DEĞİL! XSD satır 85-92'de xs:restriction base="xs:string"
+    const fileDataTypeValue = fileDataType || 'XML_INZIP';
 
-    // Mail adresleri için XML oluştur
-    const mailAddressesXml = receiverMailAddresses.length > 0 
+    // Mail adresleri için XML oluştur (sadece dolu ise)
+    const mailAddressesXml = receiverMailAddresses && receiverMailAddresses.length > 0 
       ? receiverMailAddresses.map(mail => `<tem:string>${this.escapeXml(mail)}</tem:string>`).join('')
       : '';
 
-    // E-Arşiv için genişletilmiş SOAP request
-    // NOT: Bu metod normal TransferSalesInvoiceFile ile aynı endpoint'i kullanır
-    // Fark UBL XML içindeki InvoiceProfile'da ve ek parametrelerde
-    const useIntegrationCodeMethod = !!integrationCode;
-    
-    const soapRequest = useIntegrationCodeMethod ?
-    `<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
-  <soapenv:Header/>
-  <soapenv:Body>
-    <tem:TransferSalesInvoiceFileWithIntegrationCode>
-      <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
-      <tem:transferFile>
-        <tem:FileNameWithExtension>${this.escapeXml(fileName)}</tem:FileNameWithExtension>
-        <tem:FileDataType>${fileDataTypeNum}</tem:FileDataType>
-        <tem:BinaryData>${binaryData}</tem:BinaryData>
-        <tem:BinaryDataHash>${this.escapeXml(binaryDataHash)}</tem:BinaryDataHash>
-        <tem:CustomerAlias>${this.escapeXml(customerAlias || '')}</tem:CustomerAlias>
-        <tem:IsDirectSend>${isDirectSendStr}</tem:IsDirectSend>
-        <tem:InvoiceTransportationType>${invoiceTransportationType}</tem:InvoiceTransportationType>
-        <tem:IsInvoiceCreatedAtDelivery>${isCreatedAtDeliveryStr}</tem:IsInvoiceCreatedAtDelivery>
-        <tem:IsInternetSalesInvoice>${isInternetSalesStr}</tem:IsInternetSalesInvoice>
-        ${mailAddressesXml ? `<tem:ReceiverMailTargetAddresses>${mailAddressesXml}</tem:ReceiverMailTargetAddresses>` : ''}
-      </tem:transferFile>
-      <tem:uniqueIntegrationCode>${this.escapeXml(integrationCode)}</tem:uniqueIntegrationCode>
-    </tem:TransferSalesInvoiceFileWithIntegrationCode>
-  </soapenv:Body>
-</soapenv:Envelope>` :
-    `<?xml version="1.0" encoding="utf-8"?>
+    // E-Arşiv için SOAP request - MINIMUM parametrelerle
+    // ⚠️ InvoiceTransportationType, IsInvoiceCreatedAtDelivery, IsInternetSalesInvoice GÖNDERİLMİYOR
+    // Veriban varsayılan değerleri kullanacak
+    const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
   <soapenv:Header/>
   <soapenv:Body>
     <tem:TransferSalesInvoiceFile>
       <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
       <tem:transferFile>
+        <tem:FileDataType>${fileDataTypeValue}</tem:FileDataType>
         <tem:FileNameWithExtension>${this.escapeXml(fileName)}</tem:FileNameWithExtension>
-        <tem:FileDataType>${fileDataTypeNum}</tem:FileDataType>
         <tem:BinaryData>${binaryData}</tem:BinaryData>
-        <tem:BinaryDataHash>${this.escapeXml(binaryDataHash)}</tem:BinaryDataHash>
-        <tem:CustomerAlias>${this.escapeXml(customerAlias || '')}</tem:CustomerAlias>
-        <tem:IsDirectSend>${isDirectSendStr}</tem:IsDirectSend>
-        <tem:InvoiceTransportationType>${invoiceTransportationType}</tem:InvoiceTransportationType>
-        <tem:IsInvoiceCreatedAtDelivery>${isCreatedAtDeliveryStr}</tem:IsInvoiceCreatedAtDelivery>
-        <tem:IsInternetSalesInvoice>${isInternetSalesStr}</tem:IsInternetSalesInvoice>
-        ${mailAddressesXml ? `<tem:ReceiverMailTargetAddresses>${mailAddressesXml}</tem:ReceiverMailTargetAddresses>` : ''}
+        <tem:BinaryDataHash>${this.escapeXml(binaryDataHash)}</tem:BinaryDataHash>${mailAddressesXml ? `
+        <tem:ReceiverMailTargetAddresses>${mailAddressesXml}</tem:ReceiverMailTargetAddresses>` : ''}
       </tem:transferFile>
     </tem:TransferSalesInvoiceFile>
   </soapenv:Body>
 </soapenv:Envelope>`;
 
     try {
-      const soapAction = useIntegrationCodeMethod ? 'TransferSalesInvoiceFileWithIntegrationCode' : 'TransferSalesInvoiceFile';
+      const soapAction = 'TransferSalesInvoiceFile';
 
       console.log('📤 [E-Arşiv] TransferEArchiveInvoice SOAP Request:');
       console.log('📄 SOAPAction:', soapAction);
-      console.log('📄 InvoiceTransportationType:', invoiceTransportationType);
-      console.log('📄 IsInternetSalesInvoice:', isInternetSalesStr);
-      console.log('📄 ReceiverMailAddresses:', receiverMailAddresses.join(', ') || '(yok)');
+      console.log('📄 FileDataType:', fileDataTypeValue);
+      console.log('📄 ReceiverMailAddresses:', receiverMailAddresses && receiverMailAddresses.length > 0 ? receiverMailAddresses.join(', ') : '(yok)');
+      console.log('ℹ️  InvoiceTransportationType, IsInvoiceCreatedAtDelivery, IsInternetSalesInvoice GÖNDERİLMİYOR - Veriban varsayılanları kullanacak');
+      console.log('📄 SOAP Request (first 1500 chars):', soapRequest.substring(0, 1500));
 
       const response = await this.fetchWithTimeout(url, {
         method: 'POST',
@@ -1851,6 +1823,8 @@ export class VeribanSoapClient {
           console.log('📋 Tüm InvoiceNumber eşleşmeleri:', matches.map(m => m[1]));
         } else {
           console.log('📋 XML içinde InvoiceNumber bulunamadı');
+          console.log('ℹ️  NOT: E-Arşiv fatura response\'unda InvoiceNumber alanı OLMAZ. Bu normal bir durumdur.');
+          console.log('ℹ️  Veriban sadece TransferFileUniqueId döndürür, fatura numarası gönderdiğiniz XML\'dedir.');
           // Log a sample of the XML around TransferFileUniqueId to see structure
           const transferIdIndex = xmlText.indexOf('TransferFileUniqueId');
           if (transferIdIndex > 0) {
@@ -1913,12 +1887,20 @@ export class VeribanSoapClient {
       const stateDescriptionMatch = xmlText.match(/<StateDescription[^>]*>(.*?)<\/StateDescription>/);
       const stateDescription = stateDescriptionMatch ? stateDescriptionMatch[1].trim() : '';
 
+      // Veriban'ın döndürdüğü fatura numarasını parse et (E-Arşiv için önemli)
+      let invoiceNumber = '';
+      const invoiceNumberMatch = xmlText.match(/<InvoiceNumber[^>]*>(.*?)<\/InvoiceNumber>/i);
+      if (invoiceNumberMatch) {
+        invoiceNumber = invoiceNumberMatch[1].trim();
+      }
+
       return {
         success: true,
         data: {
           stateCode,
           stateName,
           stateDescription,
+          invoiceNumber: invoiceNumber || undefined,
         },
       };
     } catch (error) {

@@ -174,7 +174,11 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
   
   // Invoice type and profile
   const invoiceType = invoice.invoice_type || 'SATIS';
+  // ✅ E-Arşiv için ProfileID = "EARSIVFATURA" (doğru değer)
+  // TEMELFATURA'ya dönüştürme YAPMA - Veriban EARSIVFATURA bekliyor!
   const invoiceProfile = invoice.invoice_profile || 'TEMELFATURA';
+  
+  console.log('📋 [UBL] Invoice Profile:', invoiceProfile);
   
   // Currency
   const currency = invoice.para_birimi || 'TRY';
@@ -354,10 +358,13 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
     <cac:Party>`;
 
   // PartyIdentification: VKN or TCKN
-  // Note: For individuals (TCKN), we need to add cac:Person element as well
+  // E-Arşiv için de VKN/TCKN eklenmeli (Veriban şart koşuyor)
   const isTCKN = customerTaxNumber && customerTaxNumber.length === 11;
   const isVKN = customerTaxNumber && customerTaxNumber.length === 10;
 
+  // E-Arşiv kontrolü
+  const isEArchive = invoiceProfile === 'EARSIVFATURA';
+  
   if (isTCKN || isVKN) {
     xml += `
       <cac:PartyIdentification>
@@ -379,16 +386,8 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
         </cac:Country>
       </cac:PostalAddress>`;
 
-  if (customerTaxOffice) {
-    xml += `
-      <cac:PartyTaxScheme>
-        <cac:TaxScheme>
-          <cbc:Name>${customerTaxOffice}</cbc:Name>
-        </cac:TaxScheme>
-      </cac:PartyTaxScheme>`;
-  }
-
-  // For TCKN (individuals), add Person element as required by Veriban
+  // ⭐ TCKN için Person elementi ZORUNLU (E-Arşiv için de gerekli!)
+  // Veriban kuralı: schemeID=TCKN ise cac:Person bulunmalıdır
   if (isTCKN) {
     // Split customer name into first and last name
     const nameParts = customerName.split(' ');
@@ -397,9 +396,19 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
 
     xml += `
       <cac:Person>
-        <cbc:FirstName>${firstName}</cbc:FirstName>
-        <cbc:FamilyName>${familyName}</cbc:FamilyName>
+        <cbc:FirstName>${escapeXml(firstName)}</cbc:FirstName>
+        <cbc:FamilyName>${escapeXml(familyName)}</cbc:FamilyName>
       </cac:Person>`;
+  }
+
+  // ⭐ Müşteri vergi dairesi - E-Arşiv için EKLEME (opsiyonel)
+  if (customerTaxOffice && !isEArchive) {
+    xml += `
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme>
+          <cbc:Name>${customerTaxOffice}</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>`;
   }
 
   if (customerPhone || customerEmail) {

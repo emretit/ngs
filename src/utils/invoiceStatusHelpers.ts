@@ -131,7 +131,7 @@ export function getStateCodeLabel(stateCode: InvoiceStateCode): string {
   
   switch (stateCode) {
     case 1: return 'Taslak';
-    case 2: return 'İmza Bekliyor';
+    case 2: return 'İşleniyor'; // Değişti: "İmza Bekliyor" → "İşleniyor"
     case 3: return 'Gönderim Listesinde';
     case 4: return 'Hatalı';
     case 5: return 'Başarıyla İletildi';
@@ -283,7 +283,7 @@ export function getStateCodeColorClasses(stateCode: InvoiceStateCode, answerType
         bg: 'bg-gray-50'
       };
       
-    case 2: // İmza bekliyor
+    case 2: // İşleniyor (E-Arşiv otomatik, E-Fatura imza gerekebilir)
       return {
         border: 'border-yellow-400',
         text: 'text-yellow-600',

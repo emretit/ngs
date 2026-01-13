@@ -291,7 +291,7 @@ serve(async (req) => {
         if (!queryInvoiceUUID) {
           return new Response(JSON.stringify({
             success: false,
-            error: 'Invoice UUID (ETTN), Invoice Number veya Integration Code bilgisi bulunamadı. Fatura henüz gönderilmemiş olabilir.'
+            error: 'Fatura bilgileri eksik. ETTN, fatura numarası veya entegrasyon kodu bulunamadı. Lütfen faturayı önce gönderin.'
           }), {
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -309,9 +309,16 @@ serve(async (req) => {
       if (!statusResult.success) {
         console.error('❌ GetSalesInvoiceStatus başarısız:', statusResult.error);
         console.error('❌ StatusResult tam objesi:', JSON.stringify(statusResult, null, 2));
+        
+        // Kullanıcı dostu hata mesajları
+        let userFriendlyError = statusResult.error || 'Durum sorgulanamadı';
+        if (statusResult.error?.includes('bulunamadı') || statusResult.error?.includes('QUERY DOCUMENT ERROR')) {
+          userFriendlyError = 'Fatura Veriban sisteminde bulunamadı. Fatura henüz işlenmemiş veya ETTN/numara hatalı olabilir. Lütfen birkaç dakika bekleyip tekrar deneyin.';
+        }
+        
         return new Response(JSON.stringify({
           success: false,
-          error: statusResult.error || 'Durum sorgulanamadı'
+          error: userFriendlyError
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

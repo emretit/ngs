@@ -90,11 +90,11 @@ serve(async (req) => {
       isDirectSend = true,
       integrationCode,
       forceResend = false,
-      // E-Arşiv özel parametreleri
-      invoiceTransportationType = 'ELEKTRONIK', // ELEKTRONIK veya KAGIT
-      isInvoiceCreatedAtDelivery = false,
-      isInternetSalesInvoice = false,
-      receiverMailAddresses = [], // Alıcı mail adresleri
+      // E-Arşiv özel parametreleri - Veriban'ın varsayılan değerlerini kullanalım
+      // invoiceTransportationType parametresini GÖNDERMİYORUZ (Veriban otomatik belirlesin)
+      // isInvoiceCreatedAtDelivery = false,
+      // isInternetSalesInvoice = false,
+      receiverMailAddresses = [], // Alıcı mail adresleri (opsiyonel)
     } = await req.json();
 
     if (!invoiceId) {
@@ -109,7 +109,6 @@ serve(async (req) => {
 
     console.log('🚀 [E-Arşiv] Veriban E-Arşiv fatura gönderimi başlatılıyor...');
     console.log('📄 Invoice ID:', invoiceId);
-    console.log('📋 Gönderim Türü:', invoiceTransportationType);
     console.log('📧 Mail Adresleri:', receiverMailAddresses.join(', ') || '(yok)');
 
     // Get Veriban auth settings
@@ -162,20 +161,9 @@ serve(async (req) => {
       });
     }
 
-    // E-Arşiv profili zorunlu olarak ayarla
-    const invoiceProfile = 'EARSIVFATURA';
-    invoice.invoice_profile = invoiceProfile;
-    
-    // Veritabanını güncelle
-    await supabase
-      .from('sales_invoices')
-      .update({
-        invoice_profile: invoiceProfile,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', invoiceId);
-    
-    console.log('✅ [E-Arşiv] Invoice profile: EARSIVFATURA olarak ayarlandı');
+    // E-Arşiv için invoice_profile kontrolü (zaten müşteri seçiminde otomatik belirlenir)
+    // Edge function'da profile ayarlamaya gerek yok - sadece kontrol edelim
+    console.log('📋 [E-Arşiv] Mevcut invoice_profile:', invoice.invoice_profile || 'belirtilmemiş');
 
     // Fatura numarası üretimi (E-Arşiv için EAR seri kodu)
     let invoiceNumber = invoice.fatura_no;
@@ -343,10 +331,39 @@ serve(async (req) => {
       }
     }
 
-    // Durum kontrolü (tekrar gönderim engeli)
+    // ✅ Çift gönderim önleme mekanizması
     if (!forceResend) {
-      console.log('🔍 [E-Arşiv] Mevcut fatura durumu kontrol ediliyor...');
+      console.log('🔍 [E-Arşiv] Çift gönderim kontrolü yapılıyor...');
       
+      // 1) Transfer File Unique ID ile kontrol
+      if (invoice.transfer_file_unique_id) {
+        console.log('⚠️ [E-Arşiv] Bu fatura daha önce gönderilmiş!');
+        console.log('📋 Transfer File ID:', invoice.transfer_file_unique_id);
+        console.log('📋 Transfer Status:', invoice.transfer_status);
+        
+        // Sadece failed veya cancelled durumlarında tekrar gönderime izin ver
+        if (!['failed', 'cancelled'].includes(invoice.transfer_status || '')) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: `Bu E-Arşiv fatura zaten ${invoice.transfer_status || 'gönderilmiş'} durumunda.`,
+            needsConfirmation: true,
+            currentStatus: {
+              transfer_file_unique_id: invoice.transfer_file_unique_id,
+              transfer_status: invoice.transfer_status,
+              gib_status: invoice.gib_status,
+              last_check: invoice.last_status_check_at,
+            },
+            hint: 'Tekrar göndermek için forceResend: true parametresini kullanın.'
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } else {
+          console.log('✅ [E-Arşiv] Fatura failed/cancelled durumunda, yeniden gönderiliyor...');
+        }
+      }
+      
+      // 2) Veriban API'sinden durum kontrolü
       try {
         const statusResponse = await fetch(
           `${supabaseUrl}/functions/v1/veriban-invoice-status`,
@@ -370,11 +387,11 @@ serve(async (req) => {
           const stateCode = statusData.status.einvoice_invoice_state;
           
           if (stateCode === 5) {
-            console.log('⛔ [E-Arşiv] Fatura zaten başarıyla gönderilmiş');
+            console.log('⛔ [E-Arşiv] Fatura zaten GİB\'de başarılı durumda');
             
             return new Response(JSON.stringify({
               success: false,
-              error: 'Bu E-Arşiv fatura zaten başarıyla gönderilmiş.',
+              error: 'Bu E-Arşiv fatura zaten GİB\'e başarıyla gönderilmiş.',
               needsConfirmation: false,
               currentStatus: statusData.status
             }), {
@@ -384,26 +401,30 @@ serve(async (req) => {
           }
         }
       } catch (statusError) {
-        console.warn('⚠️ [E-Arşiv] Durum kontrolü hatası:', statusError);
+        console.warn('⚠️ [E-Arşiv] API durum kontrolü hatası:', statusError);
       }
+    } else {
+      console.log('🔄 [E-Arşiv] forceResend=true, kontroller atlanıyor...');
     }
 
     // UBL XML oluştur
     let finalXmlContent = xmlContent;
+    
+    // ⭐ KRİTİK FİX: ETTN'i ÖNCE oluştur, SONRA XML'e yaz
     let ettn = invoice.xml_data?.ettn || '';
+    if (!ettn) {
+      ettn = crypto.randomUUID();
+      console.log('🆔 [E-Arşiv] Yeni ETTN oluşturuldu:', ettn);
+    } else {
+      console.log('🆔 [E-Arşiv] Mevcut ETTN kullanılıyor:', ettn);
+    }
     
     if (!finalXmlContent) {
       console.log('📝 [E-Arşiv] UBL XML oluşturuluyor...');
       
       try {
-        // Invoice objesi içinde companies, customers, sales_invoice_items zaten var
-        // generateUBLTRXML tek invoice objesi ve opsiyonel ettn alıyor
+        // ⭐ ETTN'i XML'e yaz (artık boş değil!)
         finalXmlContent = generateUBLTRXML(invoice, ettn);
-        
-        // ETTN yoksa UUID oluştur
-        if (!ettn) {
-          ettn = crypto.randomUUID();
-        }
         
         console.log('✅ [E-Arşiv] UBL XML oluşturuldu, ETTN:', ettn);
       } catch (ublError) {
@@ -415,6 +436,13 @@ serve(async (req) => {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      }
+    } else {
+      // XML içeriği sağlanmışsa, ETTN'i XML'den çıkar
+      const ettnMatch = finalXmlContent.match(/<cbc:UUID[^>]*>(.*?)<\/cbc:UUID>/i);
+      if (ettnMatch) {
+        ettn = ettnMatch[1].trim();
+        console.log('🆔 [E-Arşiv] XML\'den ETTN çıkarıldı:', ettn);
       }
     }
 
@@ -478,34 +506,36 @@ serve(async (req) => {
       const md5Hash = await VeribanSoapClient.calculateMD5Async(zipBlob);
 
       console.log('📦 [E-Arşiv] ZIP dosyası oluşturuldu');
+      console.log('📄 [E-Arşiv] ZIP içindeki XML dosya adı:', xmlFileName);
       console.log('📦 [E-Arşiv] ZIP boyutu:', zipBlob.length, 'bytes');
       console.log('🔐 [E-Arşiv] MD5 Hash:', md5Hash);
+      console.log('📄 [E-Arşiv] XML içeriği (ilk 500 karakter):', finalXmlContent.substring(0, 500));
+      console.log('📄 [E-Arşiv] XML içinde ProfileID:', finalXmlContent.match(/<cbc:ProfileID>(.*?)<\/cbc:ProfileID>/)?.[1] || 'BULUNAMADI');
+      console.log('📄 [E-Arşiv] XML içinde UUID:', finalXmlContent.match(/<cbc:UUID>(.*?)<\/cbc:UUID>/)?.[1] || 'BULUNAMADI');
+      console.log('📄 [E-Arşiv] XML içinde ID (fatura no):', finalXmlContent.match(/<cbc:ID>(.*?)<\/cbc:ID>/)?.[1] || 'BULUNAMADI');
 
-      const zipFileName = `${xmlFileName}.zip`;
-      const finalIntegrationCode = integrationCode || invoice.id;
+      // ⭐ KRİTİK: ZIP dosya adı = ETTN.zip (içindeki XML adı ETTN.xml olmalı)
+      // Veriban kuralı: ZIP dosya adı ile içindeki XML dosya adı aynı olmalı (sadece uzantı farklı)
+      const zipFileName = `${ettn}.zip`;
 
       // E-Arşiv Transfer parametreleri
+      // NOT: Minimum parametrelerle gönderiyoruz, Veriban varsayılan değerleri kullansın
+      // CustomerAlias, IsDirectSend, IntegrationCode E-Arşiv için kullanılmıyor
+      // InvoiceTransportationType, IsInvoiceCreatedAtDelivery, IsInternetSalesInvoice GÖNDERİLMİYOR
       const eArchiveParams: EArchiveTransferParams = {
         fileName: zipFileName,
-        fileDataType: 'XML_INZIP',
+        fileDataType: 'XML_INZIP',  // ✅ String olarak gönder, helper içinde enum'a çevrilecek
         binaryData: base64Zip,
         binaryDataHash: md5Hash,
-        customerAlias: finalCustomerAlias,
-        isDirectSend: isDirectSend,
-        integrationCode: finalIntegrationCode,
-        // E-Arşiv özel parametreleri
-        invoiceTransportationType: invoiceTransportationType,
-        isInvoiceCreatedAtDelivery: isInvoiceCreatedAtDelivery,
-        isInternetSalesInvoice: isInternetSalesInvoice,
-        receiverMailAddresses: receiverMailAddresses,
+        // ❌ Tüm opsiyonel parametreler ÇIKARILDI - Veriban varsayılan değerleri kullansın
+        receiverMailAddresses: receiverMailAddresses && receiverMailAddresses.length > 0 ? receiverMailAddresses : undefined,
       };
 
       console.log('📨 [E-Arşiv] TransferEArchiveInvoice çağrılıyor...');
       console.log('📋 [E-Arşiv] Parametreler:', {
-        invoiceTransportationType,
-        isInvoiceCreatedAtDelivery,
-        isInternetSalesInvoice,
-        receiverMailAddresses: receiverMailAddresses.join(', ') || '(yok)'
+        fileDataType: 'XML_INZIP',
+        receiverMailAddresses: receiverMailAddresses && receiverMailAddresses.length > 0 ? receiverMailAddresses.join(', ') : '(yok)',
+        note: 'Diğer parametreler gönderilmiyor - Veriban varsayılanları kullanacak'
       });
 
       // E-Arşiv transfer fonksiyonunu çağır
@@ -527,19 +557,66 @@ serve(async (req) => {
           errorMessage = transferResult.data.errorMessage;
         }
 
+        const retryCount = (invoice.transfer_retry_count || 0) + 1;
+        const maxRetries = 3;
+
+        // ✅ Retry mekanizması: Belirli hatalarda otomatik yeniden deneme
+        const retryableErrors = [
+          'timeout',
+          'network',
+          'connection',
+          'ECONNREFUSED',
+          'ETIMEDOUT',
+          '5000', // Sistem hatası
+          '5103', // Kuyruk ekleme hatası
+        ];
+
+        const shouldRetry = retryCount < maxRetries && 
+                           retryableErrors.some(err => 
+                             errorMessage.toLowerCase().includes(err.toLowerCase())
+                           );
+
+        const updateData: any = {
+          einvoice_status: 'error',
+          einvoice_error_message: errorMessage,
+          updated_at: new Date().toISOString(),
+          transfer_retry_count: retryCount,
+          transfer_error_details: {
+            error: errorMessage,
+            timestamp: new Date().toISOString(),
+            transferResult: transferResult.data,
+            retryCount,
+            shouldRetry,
+          },
+        };
+
+        if (shouldRetry) {
+          // Geçici hata - retry edilebilir
+          updateData.transfer_status = 'pending'; // Tekrar denenebilir
+          updateData.durum = 'taslak'; // Taslak olarak kalsın
+          console.log(`⚠️ [E-Arşiv] Geçici hata, retry edilebilir (${retryCount}/${maxRetries})`);
+          
+          // 5 dakika sonra otomatik retry için işaretle
+          const retryAfter = new Date(Date.now() + 5 * 60 * 1000);
+          updateData.transfer_error_details.retryAfter = retryAfter.toISOString();
+        } else {
+          // Kalıcı hata veya max retry aşıldı
+          updateData.transfer_status = 'failed';
+          updateData.durum = 'iptal';
+          console.log(`❌ [E-Arşiv] Kalıcı hata veya max retry aşıldı (${retryCount}/${maxRetries})`);
+        }
+
         await supabase
           .from('sales_invoices')
-          .update({
-            durum: 'iptal',
-            einvoice_status: 'error',
-            einvoice_error_message: errorMessage,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq('id', invoiceId);
 
         return new Response(JSON.stringify({
           success: false,
-          error: errorMessage
+          error: errorMessage,
+          canRetry: shouldRetry,
+          retryCount,
+          maxRetries,
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -547,26 +624,40 @@ serve(async (req) => {
       }
 
       const transferFileUniqueId = transferResult.data?.transferFileUniqueId;
-      let veribanInvoiceNumber = transferResult.data?.invoiceNumber || '';
       
-      // Geçersiz değerleri filtrele
-      const invalidValues = ['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR', 'STATE', 'ANSWER'];
-      if (veribanInvoiceNumber && invalidValues.includes(veribanInvoiceNumber.toUpperCase())) {
-        veribanInvoiceNumber = '';
+      // ⭐ KRİTİK FİX: E-Arşiv için fatura numarasını doğru yerden al
+      // Veriban E-Arşiv response'unda InvoiceNumber alanı YOK!
+      // Fatura numarası bizim gönderdiğimiz XML'de var
+      
+      // 1) Önce XML'den parse et (en güvenilir kaynak)
+      let finalInvoiceNumber = '';
+      const invoiceNumberMatch = finalXmlContent.match(/<cbc:ID[^>]*>(.*?)<\/cbc:ID>/i);
+      if (invoiceNumberMatch && invoiceNumberMatch[1]) {
+        finalInvoiceNumber = invoiceNumberMatch[1].trim();
+        console.log('✅ [E-Arşiv] Fatura numarası XML\'den alındı:', finalInvoiceNumber);
+      }
+      
+      // 2) XML'de bulunamadıysa, veritabanındaki numarayı kullan
+      if (!finalInvoiceNumber) {
+        finalInvoiceNumber = invoice.fatura_no || invoiceNumber;
+        console.log('⚠️ [E-Arşiv] Fatura numarası XML\'de bulunamadı, veritabanından alındı:', finalInvoiceNumber);
       }
       
       console.log('✅ [E-Arşiv] Belge başarıyla gönderildi');
       console.log('🆔 [E-Arşiv] Transfer File Unique ID:', transferFileUniqueId);
-      console.log('📄 [E-Arşiv] Fatura Numarası:', veribanInvoiceNumber || invoice.fatura_no || '(henüz atanmadı)');
+      console.log('📄 [E-Arşiv] Fatura Numarası:', finalInvoiceNumber);
+      console.log('📄 [E-Arşiv] ETTN:', ettn);
 
       // Update invoice in database
+      // ⚠️ E-Arşiv için integrationCode genelde kullanılmaz, ama kaydedelim
+      const finalIntegrationCode = integrationCode || '';
+      
       const xmlDataUpdate: any = { 
         ...(invoice.xml_data || {}), 
         ettn, 
         integrationCode: finalIntegrationCode,
-        invoiceTransportationType,
-        isInternetSalesInvoice,
-        receiverMailAddresses,
+        // invoiceTransportationType, isInternetSalesInvoice parametreleri GÖNDERİLMEDİ
+        receiverMailAddresses: receiverMailAddresses && receiverMailAddresses.length > 0 ? receiverMailAddresses : undefined,
       };
 
       const updateData: any = {
@@ -578,17 +669,26 @@ serve(async (req) => {
         einvoice_xml_content: finalXmlContent,
         xml_data: xmlDataUpdate,
         updated_at: new Date().toISOString(),
+        // ✅ Yeni tracking alanları
+        transfer_file_unique_id: transferFileUniqueId,
+        transfer_status: 'queued', // Kuyruğa eklendi
+        last_status_check_at: new Date().toISOString(),
+        transfer_error_details: null, // Hata yok
       };
 
       // Fatura numarası yönetimi
-      if (invoice.fatura_no) {
-        xmlDataUpdate.veribanInvoiceNumber = invoice.fatura_no;
-        if (veribanInvoiceNumber && veribanInvoiceNumber !== invoice.fatura_no) {
+      // ⭐ E-Arşiv için: finalInvoiceNumber bizim ürettiğimiz numara
+      if (finalInvoiceNumber) {
+        // Veritabanında henüz fatura_no yoksa, finalInvoiceNumber'ı kaydet
+        if (!invoice.fatura_no) {
+          updateData.fatura_no = finalInvoiceNumber;
+        }
+        xmlDataUpdate.veribanInvoiceNumber = finalInvoiceNumber;
+        
+        // Eğer Veriban gerçekten bir numara döndürdüyse (nadiren olur), onu da kaydet
+        if (veribanInvoiceNumber && veribanInvoiceNumber !== finalInvoiceNumber) {
           xmlDataUpdate.veribanReturnedNumber = veribanInvoiceNumber;
         }
-      } else if (veribanInvoiceNumber) {
-        updateData.fatura_no = veribanInvoiceNumber;
-        xmlDataUpdate.veribanInvoiceNumber = veribanInvoiceNumber;
       }
 
       await supabase
@@ -615,7 +715,7 @@ serve(async (req) => {
             .from('outgoing_invoices')
             .insert({
               company_id: profile.company_id,
-              invoice_number: invoice.fatura_no || veribanInvoiceNumber,
+              invoice_number: finalInvoiceNumber, // ⭐ finalInvoiceNumber kullan
               invoice_date: invoice.fatura_tarihi,
               due_date: invoice.vade_tarihi,
               customer_name: invoice.customers?.name,
@@ -652,9 +752,9 @@ serve(async (req) => {
         transferFileUniqueId,
         ettn,
         integrationCode: finalIntegrationCode,
-        invoiceNumber: invoice.fatura_no || veribanInvoiceNumber,
+        invoiceNumber: finalInvoiceNumber, // ⭐ finalInvoiceNumber kullan
         invoiceProfile: 'EARSIVFATURA',
-        message: `E-Arşiv fatura başarıyla gönderildi. Fatura No: ${invoice.fatura_no || veribanInvoiceNumber || '(henüz atanmadı)'}`
+        message: `E-Arşiv fatura başarıyla gönderildi. Fatura No: ${finalInvoiceNumber}`
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

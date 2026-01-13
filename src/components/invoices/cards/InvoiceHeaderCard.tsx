@@ -343,43 +343,64 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
                 </Select>
               </div>
 
-              <div>
-                <Label className="text-xs">Fatura Profili</Label>
-                <Select
-                  value={formData.invoice_profile}
-                  onValueChange={(value) => onFieldChange("invoice_profile", value)}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="TEMELFATURA">Temel Fatura</SelectItem>
-                    <SelectItem value="TICARIFATURA">Ticari Fatura</SelectItem>
-                    <SelectItem value="YOLCUBERABERFATURA">Yolcu Beraber Fatura</SelectItem>
-                    <SelectItem value="EARSIVFATURA">E-Arşiv Fatura</SelectItem>
-                    <SelectItem value="EARSIVIRSLIYE">E-Arşiv İrsaliye</SelectItem>
-                    <SelectItem value="IHRACAT">İhracat</SelectItem>
-                    <SelectItem value="KAMU">Kamu</SelectItem>
-                    <SelectItem value="HKS">HKS</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Fatura Profili: Sadece E-Fatura için göster (E-Arşiv için otomatik belirlenir) */}
+              {formData.invoice_profile !== 'EARSIVFATURA' && (
+                <div>
+                  <Label className="text-xs">Fatura Profili (E-Fatura)</Label>
+                  <Select
+                    value={formData.invoice_profile}
+                    onValueChange={(value) => onFieldChange("invoice_profile", value)}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="TEMELFATURA">Temel Fatura</SelectItem>
+                      <SelectItem value="TICARIFATURA">Ticari Fatura</SelectItem>
+                      <SelectItem value="YOLCUBERABERFATURA">Yolcu Beraber Fatura</SelectItem>
+                      <SelectItem value="IHRACAT">İhracat</SelectItem>
+                      <SelectItem value="KAMU">Kamu</SelectItem>
+                      <SelectItem value="HKS">HKS</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
+              {/* E-Arşiv için bilgi badge'i göster */}
+              {formData.invoice_profile === 'EARSIVFATURA' && (
+                <div>
+                  <Label className="text-xs">Fatura Profili</Label>
+                  <div className="h-8 flex items-center px-3 bg-indigo-50 border border-indigo-200 rounded-md">
+                    <span className="text-xs text-indigo-700 font-medium">E-Arşiv Fatura</span>
+                  </div>
+                </div>
+              )}
 
-              <div>
-                <Label className="text-xs">Gönderim Tipi</Label>
-                <Select
-                  value={formData.send_type}
-                  onValueChange={(value) => onFieldChange("send_type", value)}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ELEKTRONIK">Elektronik</SelectItem>
-                    <SelectItem value="KAGIT">Kağıt</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Gönderim Tipi - E-Arşiv için badge, diğerleri için dropdown */}
+              {formData.invoice_profile === 'EARSIVFATURA' ? (
+                <div>
+                  <Label className="text-xs">Gönderim Tipi</Label>
+                  <div className="h-8 flex items-center px-3 bg-green-50 border border-green-200 rounded-md">
+                    <span className="text-xs text-green-700 font-medium">Elektronik</span>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <Label className="text-xs">Gönderim Tipi</Label>
+                  <Select
+                    value={formData.send_type}
+                    onValueChange={(value) => onFieldChange("send_type", value)}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ELEKTRONIK">Elektronik</SelectItem>
+                      <SelectItem value="KAGIT">Kağıt</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div>
                 <Label className="text-xs">Satış Platformu</Label>

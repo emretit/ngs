@@ -66,7 +66,7 @@ const ProposalDetailsSection = () => {
             onSelect={(date) => setValue("expirationDate", date)}
             placeholder="Tarih seçin"
             className="w-full mt-1"
-            disabled={(date) => date < new Date()}
+            disabled={(date) => proposalDate ? date < proposalDate : date < new Date()}
           />
         </div>
         

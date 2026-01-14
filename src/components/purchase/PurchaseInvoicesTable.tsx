@@ -67,7 +67,8 @@ const PurchaseInvoicesTable = ({
     { id: 'fatura_no', label: 'Fatura No', visible: true, sortable: true },
     { id: 'tedarikci', label: 'Tedarikçi', visible: true, sortable: true },
     { id: 'tarih', label: 'Tarih', visible: true, sortable: true },
-    { id: 'tutar', label: 'Tutar', visible: true, sortable: true },
+    { id: 'tutar_doviz', label: 'Döviz Tutar', visible: true, sortable: true },
+    { id: 'tutar_try', label: 'TRY Tutar', visible: true, sortable: true },
     { id: 'durum', label: 'Durum', visible: true, sortable: false },
     { id: 'tip', label: 'Tip', visible: true, sortable: false },
     { id: 'actions', label: 'İşlemler', visible: true, sortable: false }
@@ -186,6 +187,11 @@ const PurchaseInvoicesTable = ({
   // Tüm faturaları birleştir ve filtrele
   const allInvoices = [
     ...filterInvoices(invoices, 'purchase').map(invoice => {
+      const currency = invoice.currency || 'TRY';
+      const exchangeRate = invoice.exchange_rate || null;
+      const isForeignCurrency = currency !== 'TRY' && currency !== 'TL';
+      const amountTRY = isForeignCurrency && exchangeRate ? invoice.total_amount * exchangeRate : invoice.total_amount;
+      
       return {
         ...invoice,
         sourceType: 'purchase',
@@ -194,35 +200,58 @@ const PurchaseInvoicesTable = ({
         displayNumber: invoice.invoice_number,
         displaySupplier: invoice.supplier?.name || invoice.supplier?.company || invoice.customer?.name || invoice.customer?.company || 'Bilinmeyen',
         displayAmount: invoice.total_amount,
+        displayAmountTRY: amountTRY,
+        displayCurrency: currency,
+        displayExchangeRate: exchangeRate,
         displayStatus: invoice.status
       };
     }),
     ...filterInvoices(incomingInvoices, 'incoming').filter(invoice =>
       invoice.status?.toLowerCase().includes('alındı') ||
       invoice.responseStatus?.toLowerCase().includes('received')
-    ).map(invoice => ({
-      ...invoice,
-      sourceType: 'incoming',
-      invoiceDate: invoice.invoiceDate,
-      sortDate: new Date(invoice.invoiceDate).getTime(),
-      displayNumber: invoice.invoiceNumber,
-      displaySupplier: invoice.supplierName,
-      displayAmount: invoice.totalAmount,
-      displayStatus: 'received'
-    })),
+    ).map(invoice => {
+      const currency = invoice.currency || invoice.currencyCode || 'TRY';
+      const exchangeRate = invoice.exchangeRate || invoice.exchange_rate || null;
+      const isForeignCurrency = currency !== 'TRY' && currency !== 'TL';
+      const amountTRY = isForeignCurrency && exchangeRate ? invoice.totalAmount * exchangeRate : invoice.totalAmount;
+      
+      return {
+        ...invoice,
+        sourceType: 'incoming',
+        invoiceDate: invoice.invoiceDate,
+        sortDate: new Date(invoice.invoiceDate).getTime(),
+        displayNumber: invoice.invoiceNumber,
+        displaySupplier: invoice.supplierName,
+        displayAmount: invoice.totalAmount,
+        displayAmountTRY: amountTRY,
+        displayCurrency: currency,
+        displayExchangeRate: exchangeRate,
+        displayStatus: 'received'
+      };
+    }),
     ...filterInvoices(earchiveInvoices, 'earchive_received').filter(invoice =>
       invoice.status?.toLowerCase().includes('succeed') ||
       invoice.statusCode?.toLowerCase().includes('succeed')
-    ).map(invoice => ({
-      ...invoice,
-      sourceType: 'earchive_received',
-      invoiceDate: invoice.invoiceDate,
-      sortDate: new Date(invoice.invoiceDate).getTime(),
-      displayNumber: invoice.invoiceNumber,
-      displaySupplier: invoice.customerName,
-      displayAmount: invoice.totalAmount,
-      displayStatus: 'received'
-    }))
+    ).map(invoice => {
+      const currency = invoice.currency || invoice.currencyCode || 'TRY';
+      const exchangeRate = invoice.exchangeRate || invoice.exchange_rate || null;
+      const isForeignCurrency = currency !== 'TRY' && currency !== 'TL';
+      const amountTRY = isForeignCurrency && exchangeRate ? invoice.totalAmount * exchangeRate : invoice.totalAmount;
+      
+      return {
+        ...invoice,
+        sourceType: 'earchive_received',
+        invoiceDate: invoice.invoiceDate,
+        sortDate: new Date(invoice.invoiceDate).getTime(),
+        displayNumber: invoice.invoiceNumber,
+        displaySupplier: invoice.customerName,
+        displayAmount: invoice.totalAmount,
+        displayAmountTRY: amountTRY,
+        displayCurrency: currency,
+        displayExchangeRate: exchangeRate,
+        displayStatus: 'received'
+      };
+    })
   ].sort((a, b) => {
     let aValue: any;
     let bValue: any;
@@ -240,9 +269,13 @@ const PurchaseInvoicesTable = ({
         aValue = a.sortDate || 0;
         bValue = b.sortDate || 0;
         break;
-      case 'tutar':
+      case 'tutar_doviz':
         aValue = a.displayAmount || 0;
         bValue = b.displayAmount || 0;
+        break;
+      case 'tutar_try':
+        aValue = a.displayAmountTRY || 0;
+        bValue = b.displayAmountTRY || 0;
         break;
       default:
         return b.sortDate - a.sortDate; // Default to date descending
@@ -283,6 +316,7 @@ const PurchaseInvoicesTable = ({
               <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
               <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
               <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
               <TableCell className="py-2 px-3"><Skeleton className="h-6 w-6" /></TableCell>
             </TableRow>
           ))}
@@ -306,7 +340,7 @@ const PurchaseInvoicesTable = ({
       <TableBody>
         {allInvoices.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+            <TableCell colSpan={9} className="text-center py-8 text-gray-500">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Henüz fatura bulunmuyor</p>
             </TableCell>
@@ -354,7 +388,23 @@ const PurchaseInvoicesTable = ({
                 })()}
               </TableCell>
               <TableCell className="text-center py-2 px-3 text-xs font-medium" onClick={() => onSelectInvoice(invoice)}>
-                {formatCurrency(invoice.displayAmount)}
+                {(() => {
+                  const currency = invoice.displayCurrency || 'TRY';
+                  const isForeignCurrency = currency !== 'TRY' && currency !== 'TL';
+                  
+                  if (isForeignCurrency) {
+                    return (
+                      <div className="flex flex-col">
+                        <span>{invoice.displayAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}</span>
+                      </div>
+                    );
+                  } else {
+                    return <span className="text-gray-400">-</span>;
+                  }
+                })()}
+              </TableCell>
+              <TableCell className="text-center py-2 px-3 text-xs font-medium" onClick={() => onSelectInvoice(invoice)}>
+                {formatCurrency(invoice.displayAmountTRY || invoice.displayAmount)}
               </TableCell>
               <TableCell className="text-center py-2 px-3" onClick={() => onSelectInvoice(invoice)}>
                 {getStatusBadge(invoice.displayStatus)}

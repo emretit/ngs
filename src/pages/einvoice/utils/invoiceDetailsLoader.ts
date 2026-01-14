@@ -10,9 +10,10 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
   logger.debug('🔄 Loading invoice details from', integrator, 'API for:', invoiceId);
   
   // ========================================
-  // 📊 VERİTABANINDAN TEDARİKÇİ BİLGİLERİNİ ÇEK
+  // 📊 VERİTABANINDAN TEDARİKÇİ BİLGİLERİNİ VE DÖVİZ KURU BİLGİSİNİ ÇEK
   // ========================================
   let dbSupplierInfo: any = null;
+  let dbExchangeRate: number | null = null;
   try {
     const { data: dbInvoice, error: dbError } = await supabase
       .from('einvoices_received')
@@ -26,7 +27,8 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
         supplier_address_postal_code,
         supplier_address_country,
         supplier_contact_email,
-        supplier_contact_phone
+        supplier_contact_phone,
+        exchange_rate
       `)
       .eq('invoice_uuid', invoiceId)
       .single();
@@ -48,6 +50,11 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
           phone: dbInvoice.supplier_contact_phone,
         }
       };
+      // Döviz kuru bilgisini de veritabanından çek
+      if (dbInvoice.exchange_rate) {
+        dbExchangeRate = parseFloat(String(dbInvoice.exchange_rate));
+        logger.debug('✅ Döviz kuru veritabanından çekildi:', dbExchangeRate);
+      }
       logger.debug('✅ Tedarikçi bilgileri veritabanından çekildi:', dbSupplierInfo);
     } else {
       logger.debug('ℹ️ Veritabanında tedarikçi bilgisi bulunamadı, API\'den çekilecek');
@@ -131,34 +138,6 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
   } else {
     logger.warn('No items found in API response');
   }
-
-  // ========================================
-  // 🔄 MAPPING ITEMS
-  // ========================================
-  const items = apiInvoiceDetails?.items?.map((item: any, index: number) => {
-    logger.debug(`Mapping item ${index + 1}/${apiInvoiceDetails.items.length}`, { rawItem: item });
-    
-    return {
-      id: item.id || `item-${index}`,
-      line_number: item.lineNumber || item.line_number || index + 1,
-      product_name: item.description || item.product_name || 'Açıklama yok',
-      product_code: item.productCode || item.product_code,
-      quantity: item.quantity || 1,
-      unit: item.unit || 'adet',
-      unit_price: item.unitPrice || item.unit_price || 0,
-      tax_rate: item.vatRate || item.taxRate || item.tax_rate || 18,
-      discount_rate: item.discountRate || item.discount_rate || 0,
-      line_total: item.totalAmount || item.line_total || 0,
-      tax_amount: item.vatAmount || item.taxAmount || item.tax_amount || 0,
-      gtip_code: item.gtipCode || item.gtip_code,
-      description: item.description
-    };
-  }) || [];
-  
-  logger.debug('Items mapping completed', {
-    totalItems: items.length,
-    items: items
-  });
 
   // Detaylı tedarikçi bilgilerini çıkar
   const supplierInfo = apiInvoiceDetails?.supplierInfo || {};
@@ -299,23 +278,35 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
     logger.debug('ℹ️ No due date found in API response');
   }
 
-  // Döviz kuru bilgisini çek
-  // UBL formatında: PricingExchangeRate/CalculationRate
-  // Veriban formatında: exchangeRate, exchange_rate veya PricingExchangeRate
+  // Döviz kuru bilgisini çek (items mapping'den ÖNCE yapılmalı)
+  // Öncelik sırası: 1) Veritabanı, 2) API/XML
   let exchangeRate: number | null = null;
   
-  // Önce XML'den direkt çekmeyi dene
-  const rateFromXML = 
-    apiInvoiceDetails?.exchangeRate ||
-    apiInvoiceDetails?.exchange_rate ||
-    apiInvoiceDetails?.ExchangeRate ||
-    apiInvoiceDetails?.PricingExchangeRate?.CalculationRate ||
-    apiInvoiceDetails?.pricingExchangeRate?.calculationRate ||
-    null;
-  
-  if (rateFromXML) {
-    exchangeRate = parseFloat(rateFromXML);
-    logger.debug('💱 Exchange rate extracted from XML:', exchangeRate);
+  // Önce veritabanından çekilen döviz kuru bilgisini kullan
+  if (dbExchangeRate && !isNaN(dbExchangeRate) && dbExchangeRate > 0) {
+    exchangeRate = dbExchangeRate;
+    logger.debug('💱 Döviz kuru veritabanından alındı:', exchangeRate);
+  } else {
+    // Veritabanında yoksa API/XML'den çek
+    // UBL formatında: PricingExchangeRate/CalculationRate
+    // Veriban formatında: exchangeRate, exchange_rate veya PricingExchangeRate
+    const rateFromXML = 
+      apiInvoiceDetails?.exchangeRate ||
+      apiInvoiceDetails?.exchange_rate ||
+      apiInvoiceDetails?.ExchangeRate ||
+      apiInvoiceDetails?.PricingExchangeRate?.CalculationRate ||
+      apiInvoiceDetails?.pricingExchangeRate?.calculationRate ||
+      null;
+    
+    if (rateFromXML !== null && rateFromXML !== undefined) {
+      // Eğer zaten number ise direkt kullan, değilse parse et
+      exchangeRate = typeof rateFromXML === 'number' ? rateFromXML : parseFloat(String(rateFromXML));
+      if (!isNaN(exchangeRate) && exchangeRate > 0) {
+        logger.debug('💱 Exchange rate extracted from XML/API:', exchangeRate);
+      } else {
+        exchangeRate = null;
+      }
+    }
   }
   
   // Eğer XML'de kur yoksa ama hem döviz hem TL tutarları varsa, kuru hesapla
@@ -338,6 +329,53 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
       });
     }
   }
+
+  // ========================================
+  // 🔄 MAPPING ITEMS (exchangeRate artık tanımlı)
+  // ========================================
+  const items = apiInvoiceDetails?.items?.map((item: any, index: number) => {
+    logger.debug(`Mapping item ${index + 1}/${apiInvoiceDetails.items.length}`, { rawItem: item });
+    
+    const unitPrice = item.unitPrice || item.unit_price || 0;
+    const lineTotal = item.totalAmount || item.line_total || 0;
+    const taxAmount = item.vatAmount || item.taxAmount || item.tax_amount || 0;
+    
+    // TRY karşılıklarını hesapla (döviz kuru varsa)
+    let unitPriceTry: number | undefined = undefined;
+    let lineTotalTry: number | undefined = undefined;
+    let taxAmountTry: number | undefined = undefined;
+    
+    if (exchangeRate && exchangeRate > 0) {
+      unitPriceTry = unitPrice * exchangeRate;
+      lineTotalTry = lineTotal * exchangeRate;
+      taxAmountTry = taxAmount * exchangeRate;
+    }
+    
+    return {
+      id: item.id || `item-${index}`,
+      line_number: item.lineNumber || item.line_number || index + 1,
+      product_name: item.description || item.product_name || 'Açıklama yok',
+      product_code: item.productCode || item.product_code,
+      quantity: item.quantity || 1,
+      unit: item.unit || 'adet',
+      unit_price: unitPrice,
+      tax_rate: item.vatRate || item.taxRate || item.tax_rate || 18,
+      discount_rate: item.discountRate || item.discount_rate || 0,
+      line_total: lineTotal,
+      tax_amount: taxAmount,
+      gtip_code: item.gtipCode || item.gtip_code,
+      description: item.description,
+      // TRY karşılıkları
+      unit_price_try: unitPriceTry,
+      line_total_try: lineTotalTry,
+      tax_amount_try: taxAmountTry,
+    };
+  }) || [];
+  
+  logger.debug('Items mapping completed', {
+    totalItems: items.length,
+    items: items
+  });
 
   // TL karşılıklarını çek (dövizli faturalar için)
   // Farklı formatları destekle
@@ -459,7 +497,7 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
     invoice_date: normalizedInvoiceDate,
     due_date: normalizedDueDate,
     currency: apiInvoiceDetails?.CurrencyCode || apiInvoiceDetails?.currency || 'TRY',
-    exchange_rate: exchangeRate ? parseFloat(exchangeRate) : undefined,
+    exchange_rate: exchangeRate && !isNaN(exchangeRate) ? exchangeRate : undefined,
     subtotal: subtotal,
     tax_total: taxTotal,
     total_amount: totalAmount,

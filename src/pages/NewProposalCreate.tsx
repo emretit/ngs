@@ -639,8 +639,11 @@ const NewProposalCreate = () => {
     // Tarih validasyonu
     if (!formData.validity_date) {
       errors.push("Geçerlilik tarihi gereklidir");
-    } else if (formData.validity_date < new Date()) {
-      errors.push("Geçerlilik tarihi bugünden sonra olmalıdır");
+    } else {
+      const minDate = formData.offer_date || new Date();
+      if (formData.validity_date < minDate) {
+        errors.push("Geçerlilik tarihi teklif tarihinden sonra olmalıdır");
+      }
     }
     
     // Teklif konusu validasyonu

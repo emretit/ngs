@@ -2,12 +2,12 @@
   "invoice_basic": {
     "id": {
       "xpath": ".//cbc:ID",
-      "value": "ESG2026000000115",
+      "value": "SKR2026000000187",
       "description": "Fatura ID (Fatura Numarası)"
     },
     "uuid": {
       "xpath": ".//cbc:UUID",
-      "value": "c88947f9-ce01-4542-a088-1f230bd1c61d",
+      "value": "33449D41-7D1B-4665-94BE-32A90114ED01",
       "description": "Fatura UUID (ETTN)"
     },
     "invoice_number": {
@@ -17,12 +17,12 @@
     },
     "issue_date": {
       "xpath": ".//cbc:IssueDate",
-      "value": "2026-01-12",
+      "value": "2026-01-13",
       "description": "Fatura Tarihi"
     },
     "issue_time": {
       "xpath": ".//cbc:IssueTime",
-      "value": "15:14:00",
+      "value": "09:20:49",
       "description": "Fatura Saati"
     },
     "invoice_type_code": {
@@ -32,12 +32,12 @@
     },
     "profile_id": {
       "xpath": ".//cbc:ProfileID",
-      "value": "TEMELFATURA",
+      "value": "TICARIFATURA",
       "description": "Fatura Profili (TEMELFATURA, TICARIFATURA, vb.)"
     },
     "document_currency_code": {
       "xpath": ".//cbc:DocumentCurrencyCode",
-      "value": "TRY",
+      "value": "USD",
       "description": "Para Birimi"
     },
     "ubl_version": {
@@ -55,26 +55,32 @@
     "identifications": [
       {
         "xpath": ".//cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID",
-        "value": "50347758874",
-        "scheme_id": "TCKN",
-        "description": "Tedarikçi Kimlik No (TCKN)"
+        "value": "8150407196",
+        "scheme_id": "VKN",
+        "description": "Tedarikçi Kimlik No (VKN)"
       },
       {
         "xpath": ".//cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID",
-        "value": "5034775887400001",
+        "value": "0815040719600012",
         "scheme_id": "MERSISNO",
         "description": "Tedarikçi Kimlik No (MERSISNO)"
+      },
+      {
+        "xpath": ".//cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID",
+        "value": "572955",
+        "scheme_id": "TICARETSICILNO",
+        "description": "Tedarikçi Kimlik No (TICARETSICILNO)"
       }
     ],
     "party_name": {
       "xpath": ".//cac:AccountingSupplierParty/cac:Party/cac:PartyName/cbc:Name",
-      "value": "",
+      "value": "ÅÃKÃR ELEKTRONÄ°K BÄ°LÄ°ÅÄ°M GÃV.  DIÅ TÄ°C. LTD. ÅTÄ°.",
       "description": "Tedarikçi Şirket Adı"
     },
     "address": {
       "street_name": {
         "xpath": ".//cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:StreetName",
-        "value": "HALÄ°L RIFAT PAÅA MAHALLESÄ° YÃZER HAVUZ SOKAK PERPA TÄ°CARET MERKEZÄ° B BLOK KAT:11 NO:1747",
+        "value": "PERPA TÄ°C. MER. A BLOK K:8 N:812",
         "description": "Sokak Adı"
       },
       "building_number": {
@@ -84,7 +90,7 @@
       },
       "city_subdivision": {
         "xpath": ".//cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:CitySubdivisionName",
-        "value": "ÅÄ°ÅLÄ°/",
+        "value": "ÅÄ°ÅLÄ°",
         "description": "İlçe"
       },
       "city_name": {
@@ -123,12 +129,12 @@
     "contact": {
       "telephone": {
         "xpath": ".//cac:AccountingSupplierParty/cac:Party/cac:Contact/cbc:Telephone",
-        "value": "5426644692",
+        "value": "4449928",
         "description": "Telefon"
       },
       "email": {
         "xpath": ".//cac:AccountingSupplierParty/cac:Party/cac:Contact/cbc:ElectronicMail",
-        "value": "umiterdogan@outlook.com.tr",
+        "value": "merkezmuhasebe@sukurelektronik.com.tr",
         "description": "E-posta"
       },
       "fax": {
@@ -137,23 +143,7 @@
         "description": "Faks"
       }
     },
-    "person": {
-      "first_name": {
-        "xpath": ".//cac:AccountingSupplierParty/cac:Party/cac:Person/cbc:FirstName",
-        "value": "ESA SÄ°STEM GÃVENLÄ°K TEKNOLOJÄ°LERÄ° -",
-        "description": "Ad"
-      },
-      "family_name": {
-        "xpath": ".//cac:AccountingSupplierParty/cac:Party/cac:Person/cbc:FamilyName",
-        "value": "ÃMÄ°T ERDOÄAN",
-        "description": "Soyad"
-      },
-      "title": {
-        "xpath": ".//cac:AccountingSupplierParty/cac:Party/cac:Person/cbc:Title",
-        "value": "",
-        "description": "Ünvan"
-      }
-    }
+    "person": {}
   },
   "customer": {
     "identifications": [
@@ -162,34 +152,40 @@
         "value": "6311835942",
         "scheme_id": "VKN",
         "description": "Müşteri Kimlik No (VKN)"
+      },
+      {
+        "xpath": ".//cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID",
+        "value": "120.01.08424",
+        "scheme_id": "MUSTERINO",
+        "description": "Müşteri Kimlik No (MUSTERINO)"
       }
     ],
     "party_name": {
       "xpath": ".//cac:AccountingCustomerParty/cac:Party/cac:PartyName/cbc:Name",
-      "value": "NGS Ä°LETÄ°ÅÄ°M TEKNOLOJÄ°LERÄ° VE GÃVENLÄ°K SÄ°STEMLERÄ° LTD.ÅTÄ°.",
+      "value": "NGS Ä°LETÄ°ÅÄ°M TEKNOLOJÄ°LERÄ° VE GÃVENLÄ°K SÄ°STEMLERÄ° LÄ°MÄ°TED ÅÄ°RKETÄ°",
       "description": "Müşteri Şirket Adı"
     },
     "address": {
       "street_name": {
         "xpath": ".//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName",
-        "value": "EÄÄ°TÄ°M MAH. MURATPAÅA CAD. NURTAÅ IÅ MERKEZI  NO: 1/1 Ä°Ã KAPI NO: 29 KADIKÃY/ Ä°STANBUL",
+        "value": "HASANPAÅA MAH. MANDIRA CAD. KONAK Ä°Å MERKEZ B BLOK NO: 4/39",
         "description": "Sokak Adı"
       },
       "city_name": {
         "xpath": ".//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName",
-        "value": "",
+        "value": "Ä°STANBUL",
         "description": "Şehir"
       },
       "country_name": {
         "xpath": ".//cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:Name",
-        "value": ".",
+        "value": "TÃRKÄ°YE",
         "description": "Ülke"
       }
     },
     "tax_scheme": {
       "tax_scheme_name": {
         "xpath": ".//cac:AccountingCustomerParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name",
-        "value": "KADIKÃY",
+        "value": "KADIKÃY VERGÄ° DAÄ°RESÄ° MÃD.",
         "description": "Vergi Dairesi Adı"
       }
     },
@@ -204,26 +200,26 @@
   "financial": {
     "line_extension_amount": {
       "xpath": ".//cac:LegalMonetaryTotal/cbc:LineExtensionAmount",
-      "value": "5382.19",
-      "currency": "TRY",
+      "value": "28.50",
+      "currency": "USD",
       "description": "KDV Hariç Toplam"
     },
     "tax_exclusive_amount": {
       "xpath": ".//cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount",
-      "value": "5382.19",
-      "currency": "TRY",
+      "value": "28.50",
+      "currency": "USD",
       "description": "KDV Hariç Tutar"
     },
     "tax_inclusive_amount": {
       "xpath": ".//cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount",
-      "value": "6458.63",
-      "currency": "TRY",
+      "value": "34.20",
+      "currency": "USD",
       "description": "KDV Dahil Tutar"
     },
     "payable_amount": {
       "xpath": ".//cac:LegalMonetaryTotal/cbc:PayableAmount",
-      "value": "6458.63",
-      "currency": "TRY",
+      "value": "34.20",
+      "currency": "USD",
       "description": "Ödenecek Tutar"
     }
   },
@@ -233,7 +229,7 @@
       "item": {
         "name": {
           "xpath": ".//cac:InvoiceLine[1]/cac:Item/cbc:Name",
-          "value": "IPC2122LB-AF28-E IPC2122LB-AF28-E 2MP 2,8mm LENS IP BULLET KAMERA DAHÄ°LÄ° SES, ECO SERÄ°",
+          "value": "SFP MM1GB",
           "description": "Ürün/Hizmet Adı"
         },
         "description": {
@@ -244,31 +240,31 @@
       },
       "quantity": {
         "xpath": ".//cac:InvoiceLine[1]/cbc:InvoicedQuantity",
-        "value": "2",
+        "value": "1",
         "unit_code": "C62",
         "description": "Miktar"
       },
       "price": {
         "xpath": ".//cac:InvoiceLine[1]/cac:Price/cbc:PriceAmount",
-        "value": "775.070000",
-        "currency": "TRY",
+        "value": "13.000",
+        "currency": "USD",
         "description": "Birim Fiyat"
       },
       "line_extension_amount": {
         "xpath": ".//cac:InvoiceLine[1]/cbc:LineExtensionAmount",
-        "value": "1550.14",
-        "currency": "TRY",
+        "value": "13.000",
+        "currency": "USD",
         "description": "Kalem Tutarı"
       },
       "tax": {
         "taxable_amount": {
           "xpath": ".//cac:InvoiceLine[1]/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount",
-          "value": "1550.14",
+          "value": "13.000",
           "description": "KDV Matrahı"
         },
         "tax_amount": {
           "xpath": ".//cac:InvoiceLine[1]/cac:TaxTotal/cbc:TaxAmount",
-          "value": "310.0280",
+          "value": "2.600",
           "description": "KDV Tutarı"
         },
         "percent": {
@@ -288,7 +284,7 @@
       "item": {
         "name": {
           "xpath": ".//cac:InvoiceLine[2]/cac:Item/cbc:Name",
-          "value": "IPC-HFW1230S-S-0360B-S4 IPC-HFW1230S-S-0360B-S4 2MP IP BULLET KAMERA H.265, STARLIGHT",
+          "value": "TP-LÄ°NK LS1005G 5 PORT 10/100/1000",
           "description": "Ürün/Hizmet Adı"
         },
         "description": {
@@ -299,31 +295,31 @@
       },
       "quantity": {
         "xpath": ".//cac:InvoiceLine[2]/cbc:InvoicedQuantity",
-        "value": "3",
+        "value": "1",
         "unit_code": "C62",
         "description": "Miktar"
       },
       "price": {
         "xpath": ".//cac:InvoiceLine[2]/cac:Price/cbc:PriceAmount",
-        "value": "1277.350000",
-        "currency": "TRY",
+        "value": "11.500",
+        "currency": "USD",
         "description": "Birim Fiyat"
       },
       "line_extension_amount": {
         "xpath": ".//cac:InvoiceLine[2]/cbc:LineExtensionAmount",
-        "value": "3832.05",
-        "currency": "TRY",
+        "value": "11.500",
+        "currency": "USD",
         "description": "Kalem Tutarı"
       },
       "tax": {
         "taxable_amount": {
           "xpath": ".//cac:InvoiceLine[2]/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount",
-          "value": "3832.05",
+          "value": "11.500",
           "description": "KDV Matrahı"
         },
         "tax_amount": {
           "xpath": ".//cac:InvoiceLine[2]/cac:TaxTotal/cbc:TaxAmount",
-          "value": "766.4100",
+          "value": "2.300",
           "description": "KDV Tutarı"
         },
         "percent": {
@@ -333,6 +329,61 @@
         },
         "tax_scheme_id": {
           "xpath": ".//cac:InvoiceLine[2]/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cac:TaxScheme/cbc:TaxSchemeID",
+          "value": "",
+          "description": "KDV Kategorisi"
+        }
+      }
+    },
+    {
+      "line_id": "3",
+      "item": {
+        "name": {
+          "xpath": ".//cac:InvoiceLine[3]/cac:Item/cbc:Name",
+          "value": "PATCH CORD LC-LC-MM DX OM3 50/125-1 MT",
+          "description": "Ürün/Hizmet Adı"
+        },
+        "description": {
+          "xpath": ".//cac:InvoiceLine[3]/cac:Item/cbc:Description",
+          "value": "",
+          "description": "Açıklama"
+        }
+      },
+      "quantity": {
+        "xpath": ".//cac:InvoiceLine[3]/cbc:InvoicedQuantity",
+        "value": "1",
+        "unit_code": "C62",
+        "description": "Miktar"
+      },
+      "price": {
+        "xpath": ".//cac:InvoiceLine[3]/cac:Price/cbc:PriceAmount",
+        "value": "4.000",
+        "currency": "USD",
+        "description": "Birim Fiyat"
+      },
+      "line_extension_amount": {
+        "xpath": ".//cac:InvoiceLine[3]/cbc:LineExtensionAmount",
+        "value": "4.000",
+        "currency": "USD",
+        "description": "Kalem Tutarı"
+      },
+      "tax": {
+        "taxable_amount": {
+          "xpath": ".//cac:InvoiceLine[3]/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount",
+          "value": "4.000",
+          "description": "KDV Matrahı"
+        },
+        "tax_amount": {
+          "xpath": ".//cac:InvoiceLine[3]/cac:TaxTotal/cbc:TaxAmount",
+          "value": "0.800",
+          "description": "KDV Tutarı"
+        },
+        "percent": {
+          "xpath": ".//cac:InvoiceLine[3]/cac:TaxTotal/cac:TaxSubtotal/cbc:Percent",
+          "value": "20.00",
+          "description": "KDV Oranı (%)"
+        },
+        "tax_scheme_id": {
+          "xpath": ".//cac:InvoiceLine[3]/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cac:TaxScheme/cbc:TaxSchemeID",
           "value": "",
           "description": "KDV Kategorisi"
         }

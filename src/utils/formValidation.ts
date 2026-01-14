@@ -12,11 +12,10 @@ import { toast } from 'sonner';
 export const proposalFormSchema = z.object({
   customer_id: z.string().min(1, "Müşteri bilgisi seçilmelidir"),
   subject: z.string().min(1, "Teklif konusu gereklidir"),
+  offer_date: z.date().optional(),
   validity_date: z.date({
     required_error: "Geçerlilik tarihi gereklidir",
     invalid_type_error: "Geçerli bir tarih seçiniz",
-  }).refine((date) => date >= new Date(), {
-    message: "Geçerlilik tarihi bugünden sonra olmalıdır",
   }),
   items: z.array(z.object({
     name: z.string().optional(),
@@ -45,6 +44,12 @@ export const proposalFormSchema = z.object({
     }, {
       message: "Tüm kalemlerde ürün/hizmet adı gereklidir",
     }),
+}).refine((data) => {
+  const minDate = data.offer_date || new Date();
+  return data.validity_date >= minDate;
+}, {
+  message: "Geçerlilik tarihi teklif tarihinden sonra olmalıdır",
+  path: ["validity_date"]
 });
 
 /**
@@ -93,6 +98,7 @@ export const orderFormSchema = z.object({
 export const validateProposalForm = (data: {
   customer_id?: string;
   subject?: string;
+  offer_date?: Date;
   validity_date?: Date;
   items?: Array<{ name?: string; description?: string; quantity?: number; unit_price?: number }>;
 }): { isValid: boolean; errors: string[] } => {

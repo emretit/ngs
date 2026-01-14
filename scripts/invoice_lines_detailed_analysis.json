@@ -1,0 +1,333 @@
+[
+  {
+    "line_number": 1,
+    "fields": {
+      "ID": [
+        {
+          "value": "1",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}ID"
+        }
+      ],
+      "InvoicedQuantity": [
+        {
+          "value": "1",
+          "attributes": {
+            "unitCode": "C62"
+          },
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}InvoicedQuantity"
+        }
+      ],
+      "LineExtensionAmount": [
+        {
+          "value": "13.000",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}LineExtensionAmount"
+        }
+      ],
+      "TaxTotal.TaxAmount": [
+        {
+          "value": "2.600",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxAmount"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.TaxableAmount": [
+        {
+          "value": "13.000",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxableAmount"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.TaxAmount": [
+        {
+          "value": "2.600",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxAmount"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.CalculationSequenceNumeric": [
+        {
+          "value": "1",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}CalculationSequenceNumeric"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.Percent": [
+        {
+          "value": "20.00",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Percent"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.TaxCategory.TaxScheme.Name": [
+        {
+          "value": "KDV",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Name"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.TaxCategory.TaxScheme.TaxTypeCode": [
+        {
+          "value": "0015",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxTypeCode"
+        }
+      ],
+      "Item.Name": [
+        {
+          "value": "SFP MM1GB",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Name"
+        }
+      ],
+      "Item.Keyword": [
+        {
+          "value": "11LCU1GBMMDX0.55KMCSA",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Keyword"
+        }
+      ],
+      "Item.SellersItemIdentification.ID": [
+        {
+          "value": "GBÄ°G",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}ID"
+        }
+      ],
+      "Price.PriceAmount": [
+        {
+          "value": "13.000",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[1]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}PriceAmount"
+        }
+      ]
+    }
+  },
+  {
+    "line_number": 2,
+    "fields": {
+      "ID": [
+        {
+          "value": "2",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}ID"
+        }
+      ],
+      "InvoicedQuantity": [
+        {
+          "value": "1",
+          "attributes": {
+            "unitCode": "C62"
+          },
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}InvoicedQuantity"
+        }
+      ],
+      "LineExtensionAmount": [
+        {
+          "value": "11.500",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}LineExtensionAmount"
+        }
+      ],
+      "TaxTotal.TaxAmount": [
+        {
+          "value": "2.300",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxAmount"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.TaxableAmount": [
+        {
+          "value": "11.500",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxableAmount"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.TaxAmount": [
+        {
+          "value": "2.300",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxAmount"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.CalculationSequenceNumeric": [
+        {
+          "value": "1",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}CalculationSequenceNumeric"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.Percent": [
+        {
+          "value": "20.00",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Percent"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.TaxCategory.TaxScheme.Name": [
+        {
+          "value": "KDV",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Name"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.TaxCategory.TaxScheme.TaxTypeCode": [
+        {
+          "value": "0015",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxTypeCode"
+        }
+      ],
+      "Item.Name": [
+        {
+          "value": "TP-LÄ°NK LS1005G 5 PORT 10/100/1000",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Name"
+        }
+      ],
+      "Item.SellersItemIdentification.ID": [
+        {
+          "value": "LS1005G",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}ID"
+        }
+      ],
+      "Price.PriceAmount": [
+        {
+          "value": "11.500",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[2]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}PriceAmount"
+        }
+      ]
+    }
+  },
+  {
+    "line_number": 3,
+    "fields": {
+      "ID": [
+        {
+          "value": "3",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}ID"
+        }
+      ],
+      "InvoicedQuantity": [
+        {
+          "value": "1",
+          "attributes": {
+            "unitCode": "C62"
+          },
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}InvoicedQuantity"
+        }
+      ],
+      "LineExtensionAmount": [
+        {
+          "value": "4.000",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}LineExtensionAmount"
+        }
+      ],
+      "TaxTotal.TaxAmount": [
+        {
+          "value": "0.800",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxAmount"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.TaxableAmount": [
+        {
+          "value": "4.000",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxableAmount"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.TaxAmount": [
+        {
+          "value": "0.800",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxAmount"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.CalculationSequenceNumeric": [
+        {
+          "value": "1",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}CalculationSequenceNumeric"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.Percent": [
+        {
+          "value": "20.00",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Percent"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.TaxCategory.TaxScheme.Name": [
+        {
+          "value": "KDV",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Name"
+        }
+      ],
+      "TaxTotal.TaxSubtotal.TaxCategory.TaxScheme.TaxTypeCode": [
+        {
+          "value": "0015",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxTypeCode"
+        }
+      ],
+      "Item.Name": [
+        {
+          "value": "PATCH CORD LC-LC-MM DX OM3 50/125-1 MT",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Name"
+        }
+      ],
+      "Item.SellersItemIdentification.ID": [
+        {
+          "value": "LCLCMM1MT",
+          "attributes": {},
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}ID"
+        }
+      ],
+      "Price.PriceAmount": [
+        {
+          "value": "4.000",
+          "attributes": {
+            "currencyID": "USD"
+          },
+          "xpath": ".//cac:InvoiceLine[3]/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}PriceAmount"
+        }
+      ]
+    }
+  }
+]

@@ -83,6 +83,9 @@ export interface ParsedInvoice {
   payeeIBAN?: string;
   payeeBankName?: string;
   paymentTermsNote?: string;
+  exchangeRate?: number; // Döviz kuru (PricingExchangeRate/CalculationRate)
+  exchangeRateSourceCurrency?: string; // Kaynak para birimi (USD, EUR, vb.)
+  exchangeRateTargetCurrency?: string; // Hedef para birimi (TRY)
 }
 
 /**
@@ -234,6 +237,39 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
                           invoice?.['cbc:ProfileID'] || 
                           invoice?.['ProfileID'] || 
                           'TEMELFATURA';
+
+    // Extract exchange rate (PricingExchangeRate)
+    const pricingExchangeRate = invoice?.['cac:PricingExchangeRate'] || 
+                                invoice?.['PricingExchangeRate'] || 
+                                null;
+    
+    let exchangeRate: number | undefined = undefined;
+    let exchangeRateSourceCurrency: string | undefined = undefined;
+    let exchangeRateTargetCurrency: string | undefined = undefined;
+    
+    if (pricingExchangeRate) {
+      const calculationRate = pricingExchangeRate?.['cbc:CalculationRate']?.['#text'] || 
+                              pricingExchangeRate?.['cbc:CalculationRate'] || 
+                              pricingExchangeRate?.['CalculationRate'] || 
+                              null;
+      
+      const sourceCurrency = pricingExchangeRate?.['cbc:SourceCurrencyCode']?.['#text'] || 
+                            pricingExchangeRate?.['cbc:SourceCurrencyCode'] || 
+                            pricingExchangeRate?.['SourceCurrencyCode'] || 
+                            null;
+      
+      const targetCurrency = pricingExchangeRate?.['cbc:TargetCurrencyCode']?.['#text'] || 
+                            pricingExchangeRate?.['cbc:TargetCurrencyCode'] || 
+                            pricingExchangeRate?.['TargetCurrencyCode'] || 
+                            null;
+      
+      if (calculationRate) {
+        exchangeRate = parseFloat(calculationRate);
+        exchangeRateSourceCurrency = sourceCurrency || undefined;
+        exchangeRateTargetCurrency = targetCurrency || undefined;
+        console.log(`💱 Döviz kuru bulundu: 1 ${exchangeRateSourceCurrency} = ${exchangeRate} ${exchangeRateTargetCurrency}`);
+      }
+    }
 
     // Extract supplier information
     const accountingSupplierParty = invoice?.['cac:AccountingSupplierParty'] || 
@@ -632,6 +668,9 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
       payeeIBAN: payeeIBAN || undefined,
       payeeBankName: payeeBankName || undefined,
       paymentTermsNote: paymentTermsNote || undefined,
+      exchangeRate: exchangeRate || undefined,
+      exchangeRateSourceCurrency: exchangeRateSourceCurrency || undefined,
+      exchangeRateTargetCurrency: exchangeRateTargetCurrency || undefined,
     };
   } catch (error) {
     console.error('❌ Error parsing UBL-TR XML:', error);

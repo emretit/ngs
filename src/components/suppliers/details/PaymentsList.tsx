@@ -35,8 +35,9 @@ interface UnifiedTransaction {
   description: string;
   reference?: string;
   currency: string;
+  exchange_rate?: number | null; // Döviz kuru bilgisi (dövizli faturalar için)
   status?: string;
-  payment?: Payment & { account_name?: string };
+  payment?: Payment & { account_name?: string; exchange_rate?: number | null };
   paymentType?: string;
   dueDate?: string;
   branch?: string;
@@ -429,6 +430,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         description: invoice.notes || `Alış Faturası: ${invoice.invoice_number || invoice.id}`,
         reference: invoice.invoice_number,
         currency: invoice.currency || 'TRY',
+        exchange_rate: invoice.exchange_rate || null, // Döviz kuru bilgisi
         status: invoice.status,
         dueDate: invoice.due_date,
         branch: invoice.warehouse_id ? 'PERPA' : undefined,
@@ -463,6 +465,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         description: invoice.aciklama || invoice.notlar || `Satış Faturası: ${invoice.fatura_no || invoice.id}`,
         reference: invoice.fatura_no,
         currency: invoice.para_birimi || 'TRY',
+        exchange_rate: invoice.exchange_rate || null, // Döviz kuru bilgisi
         status: invoice.odeme_durumu || invoice.durum,
         dueDate: invoice.vade_tarihi,
         branch: invoice.warehouse_id ? 'PERPA' : undefined,
@@ -510,53 +513,85 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     return filtered;
   }, [allTransactions, typeFilter, startDate, endDate]);
 
-  // USD dönüşümü
-  const getUsdAmount = useCallback((amount: number, currency: string) => {
-    if (currency === 'USD') return amount;
-    if (currency === 'TRY') return amount / usdRate;
-    return convertCurrency(amount, currency, 'USD');
+  // Döviz kuru ile tutar dönüştürme fonksiyonu
+  const convertToTRY = useCallback((amount: number, currency: string, exchangeRate?: number | null): number => {
+    if (currency === 'TRY' || currency === 'TL') return amount;
+    if (exchangeRate && exchangeRate > 0) return amount * exchangeRate;
+    // Exchange rate yoksa, mevcut kurdan hesapla
+    if (currency === 'USD') return amount * usdRate;
+    // Diğer para birimleri için convertCurrency kullan
+    return convertCurrency(amount, currency, 'TRY');
   }, [usdRate, convertCurrency]);
 
-  // Alacak/Borç hesaplama
+  const convertToUSD = useCallback((amount: number, currency: string, exchangeRate?: number | null): number => {
+    if (currency === 'USD') return amount;
+    // Exchange rate varsa direkt kullan
+    if (exchangeRate && exchangeRate > 0) {
+      // Önce TRY'ye çevir, sonra USD'ye
+      const tryAmount = amount * exchangeRate;
+      return tryAmount / usdRate;
+    }
+    // Exchange rate yoksa, mevcut kurdan hesapla
+    if (currency === 'TRY' || currency === 'TL') return amount / usdRate;
+    // Diğer para birimleri için önce TRY'ye, sonra USD'ye
+    const tryAmount = convertCurrency(amount, currency, 'TRY');
+    return tryAmount / usdRate;
+  }, [usdRate, convertCurrency]);
+
+  // Alacak/Borç hesaplama - Hem TRY hem USD tutarları
   const getCreditDebit = useCallback((transaction: UnifiedTransaction & { balanceAfter?: number }) => {
+    const exchangeRate = transaction.exchange_rate || transaction.payment?.exchange_rate || null;
+    const currency = transaction.currency || 'TRY';
+    const isTRY = currency === 'TRY' || currency === 'TL';
+    
     // Alış faturası: Tedarikçiden mal aldık → Ona borçluyuz → BORÇ
     if (transaction.type === 'purchase_invoice') {
+      const tryDebit = convertToTRY(transaction.amount, currency, exchangeRate);
+      // TRY faturalar USD'ye çevrilmez - USD bakiyesi etkilenmez
+      const usdDebit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
       return {
         credit: 0,
-        debit: transaction.amount,
+        debit: tryDebit, // TRY kolonu için
         usdCredit: 0,
-        usdDebit: getUsdAmount(transaction.amount, transaction.currency),
+        usdDebit: usdDebit, // USD kolonu için (TRY ise 0)
       };
     }
 
     // Satış faturası: Ona mal sattık (tedarikçi aynı zamanda müşteri) → Bize borçlu → ALACAK
     if (transaction.type === 'sales_invoice') {
+      const tryCredit = convertToTRY(transaction.amount, currency, exchangeRate);
+      // TRY faturalar USD'ye çevrilmez - USD bakiyesi etkilenmez
+      const usdCredit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
       return {
-        credit: transaction.amount,
+        credit: tryCredit, // TRY kolonu için
         debit: 0,
-        usdCredit: getUsdAmount(transaction.amount, transaction.currency),
+        usdCredit: usdCredit, // USD kolonu için (TRY ise 0)
         usdDebit: 0,
       };
     }
 
     // Fiş işlemleri için özel mantık
     if (transaction.type === 'payment' && transaction.paymentType === 'fis') {
-      // Tedarikçi için: Borç fişi (outgoing) = tedarikçiye borç yazıyoruz → Borç kolonunda
-      // Tedarikçi için: Alacak fişi (incoming) = tedarikçiye alacak yazıyoruz → Alacak kolonunda
       if (transaction.direction === 'outgoing') {
         // Borç fişi → Borç kolonunda
+        const tryDebit = convertToTRY(transaction.amount, currency, exchangeRate);
+        // TRY işlemler USD'ye çevrilmez - USD bakiyesi etkilenmez
+        const usdDebit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
         return {
           credit: 0,
-          debit: transaction.amount,
+          debit: tryDebit,
           usdCredit: 0,
-          usdDebit: getUsdAmount(transaction.amount, transaction.currency),
+          usdDebit: usdDebit,
         };
       } else {
         // Alacak fişi → Alacak kolonunda
+        const tryCredit = convertToTRY(transaction.amount, currency, exchangeRate);
+        // TRY işlemler USD'ye çevrilmez - USD bakiyesi etkilenmez
+        const usdCredit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
         return {
-          credit: transaction.amount,
+          credit: tryCredit,
           debit: 0,
-          usdCredit: getUsdAmount(transaction.amount, transaction.currency),
+          usdCredit: usdCredit,
           usdDebit: 0,
         };
       }
@@ -565,22 +600,28 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     // Diğer ödemeler için
     if (transaction.direction === 'incoming') {
       // Gelen ödemeler (tedarikçi bize ödedi, iade gibi) → Borç artar → BORÇ
+      const tryDebit = convertToTRY(transaction.amount, currency, exchangeRate);
+      // TRY işlemler USD'ye çevrilmez - USD bakiyesi etkilenmez
+      const usdDebit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
       return {
         credit: 0,
-        debit: transaction.amount,
+        debit: tryDebit,
         usdCredit: 0,
-        usdDebit: getUsdAmount(transaction.amount, transaction.currency),
+        usdDebit: usdDebit,
       };
     } else {
       // Giden ödemeler (biz tedarikçiye ödedik) → Borç azalır → ALACAK
+      const tryCredit = convertToTRY(transaction.amount, currency, exchangeRate);
+      // TRY işlemler USD'ye çevrilmez - USD bakiyesi etkilenmez
+      const usdCredit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
       return {
-        credit: transaction.amount,
+        credit: tryCredit,
         debit: 0,
-        usdCredit: getUsdAmount(transaction.amount, transaction.currency),
+        usdCredit: usdCredit,
         usdDebit: 0,
       };
     }
-  }, [getUsdAmount]);
+  }, [convertToTRY, convertToUSD]);
 
   // Kümülatif bakiye hesapla - Gerçek bakiye her zaman tüm işlemlere göre hesaplanır (filtreden bağımsız)
   const allTransactionsWithBalance = useMemo(() => {
@@ -596,27 +637,26 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
     });
 
     // ADIM 2: Her işlem için bakiye hesapla (en eskiden başlayarak)
-    let runningBalance = 0;
-    let runningUsdBalance = 0;
-    const balanceMap = new Map<string, { balance: number; usdBalance: number }>();
+    // Hem TRY hem USD bakiyeleri hesaplanacak
+    let runningBalanceTRY = 0;
+    let runningBalanceUSD = 0;
+    const balanceMap = new Map<string, { balanceTRY: number; balanceUSD: number }>();
 
     allSortedTransactions.forEach((transaction) => {
-      // Borç ve alacak tutarlarını al
+      // Borç ve alacak tutarlarını al (hem TRY hem USD)
       const { credit, debit, usdCredit, usdDebit } = getCreditDebit(transaction);
 
       // TRY Bakiye formülü: Yeni Bakiye = Eski Bakiye + Borç - Alacak
       // Tedarikçi için:
       // - Borç (debit): Ona borçluyuz → bakiye artırır (+)
       // - Alacak (credit): Bize borçlu (veya biz ödedik) → bakiye azaltır (-)
-      runningBalance = runningBalance + debit - credit;
-
-      // USD Bakiye formülü: Aynı mantık ama USD tutarlarıyla
-      runningUsdBalance = runningUsdBalance + usdDebit - usdCredit;
+      runningBalanceTRY = runningBalanceTRY + debit - credit;
+      runningBalanceUSD = runningBalanceUSD + usdDebit - usdCredit;
 
       // Her işlem için bakiyeleri map'e kaydet
       balanceMap.set(transaction.id, {
-        balance: runningBalance,
-        usdBalance: runningUsdBalance
+        balanceTRY: runningBalanceTRY,
+        balanceUSD: runningBalanceUSD
       });
     });
 
@@ -632,12 +672,12 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
 
     const transactionsWithBalances = filteredSorted.map((transaction) => {
       // Gerçek bakiyeleri map'ten al
-      const balances = balanceMap.get(transaction.id) ?? { balance: 0, usdBalance: 0 };
+      const balances = balanceMap.get(transaction.id) ?? { balanceTRY: 0, balanceUSD: 0 };
 
       return {
         ...transaction,
-        balanceAfter: balances.balance, // Bu işlemden sonraki TRY bakiye
-        usdBalanceAfter: balances.usdBalance, // Bu işlemden sonraki USD bakiye
+        balanceAfter: balances.balanceTRY, // Bu işlemden sonraki TRY bakiye
+        usdBalanceAfter: balances.balanceUSD, // Bu işlemden sonraki USD bakiye
       };
     });
 
@@ -659,7 +699,7 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
       // Eğer filtre öncesi işlemler varsa, devir bakiye ekle
       if (beforeFilterTransactions.length > 0) {
         const lastBeforeFilter = beforeFilterTransactions[beforeFilterTransactions.length - 1];
-        const openingBalances = balanceMap.get(lastBeforeFilter.id) ?? { balance: 0, usdBalance: 0 };
+        const openingBalances = balanceMap.get(lastBeforeFilter.id) ?? { balanceTRY: 0, balanceUSD: 0 };
 
         // Devir bakiye satırı oluştur
         const openingBalanceTransaction = {
@@ -670,8 +710,8 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
           direction: 'incoming' as const,
           description: 'Devir Bakiye',
           currency: 'TRY',
-          balanceAfter: openingBalances.balance,
-          usdBalanceAfter: openingBalances.usdBalance,
+          balanceAfter: openingBalances.balanceTRY,
+          usdBalanceAfter: openingBalances.balanceUSD,
         };
 
         // Devir bakiyeyi en başa ekle
@@ -1021,20 +1061,20 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
                 <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide whitespace-nowrap">Belge No</TableHead>
                 <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide whitespace-nowrap">Belge Tipi</TableHead>
                 <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide whitespace-nowrap">Açıklama</TableHead>
-                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">Alacak</TableHead>
-                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">Borç</TableHead>
-                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">$ Borç</TableHead>
-                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">$ Alacak</TableHead>
-                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">$ Bakiye</TableHead>
-                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">Bakiye</TableHead>
-                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">$ Kur</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">Alacak (TRY)</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">Borç (TRY)</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">Alacak (USD)</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">Borç (USD)</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">Bakiye (TRY)</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right whitespace-nowrap">Bakiye (USD)</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center whitespace-nowrap">Kur</TableHead>
                 <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center whitespace-nowrap">İşlemler</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {transactionsWithBalance.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="text-center py-8 text-gray-500 text-xs">
+                  <TableCell colSpan={11} className="text-center py-8 text-gray-500 text-xs">
                     Henüz işlem bulunmuyor
                   </TableCell>
                 </TableRow>
@@ -1043,10 +1083,17 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
                   // Devir bakiye kontrolü
                   const isOpeningBalance = transaction.id === 'opening-balance';
                   const { credit, debit, usdCredit, usdDebit } = getCreditDebit(transaction);
-                  const usdBalance = transaction.usdBalanceAfter ?? 0;
-                  const balanceIndicator = (transaction.balanceAfter || 0) >= 0 ? 'A' : 'B';
-                  const usdBalanceIndicator = usdBalance >= 0 ? 'A' : 'B';
-                  const exchangeRate = transaction.currency === 'USD' ? 1 : usdRate;
+                  const balanceTRY = transaction.balanceAfter || 0;
+                  const balanceUSD = transaction.usdBalanceAfter || 0;
+                  const balanceIndicator = balanceTRY >= 0 ? 'A' : 'B';
+                  const usdBalanceIndicator = balanceUSD >= 0 ? 'A' : 'B';
+                  
+                  // Kur bilgisi
+                  const exchangeRate = transaction.exchange_rate || transaction.payment?.exchange_rate || null;
+                  const currency = transaction.currency || 'TRY';
+                  const displayExchangeRate = exchangeRate && (currency !== 'TRY' && currency !== 'TL') 
+                    ? exchangeRate.toLocaleString("tr-TR", { minimumFractionDigits: 4, maximumFractionDigits: 4 })
+                    : '-';
 
                   // Devir bakiye satırı için özel gösterim
                   if (isOpeningBalance) {
@@ -1060,13 +1107,13 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
                         <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
                         <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
                         <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
-                        <TableCell className={`py-2 px-3 text-right text-xs font-bold whitespace-nowrap ${usdBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {usdBalance.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {usdBalanceIndicator}
+                        <TableCell className={`py-2 px-3 text-right text-xs font-bold whitespace-nowrap ${balanceTRY >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {balanceTRY.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {balanceIndicator}
                         </TableCell>
-                        <TableCell className={`py-2 px-3 text-right text-xs font-bold whitespace-nowrap ${(transaction.balanceAfter || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {(transaction.balanceAfter || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {balanceIndicator}
+                        <TableCell className={`py-2 px-3 text-right text-xs font-bold whitespace-nowrap ${balanceUSD >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {balanceUSD.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {usdBalanceIndicator}
                         </TableCell>
-                        <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
+                        <TableCell className="py-2 px-3 text-center text-xs whitespace-nowrap">-</TableCell>
                         <TableCell className="py-2 px-3 text-center">-</TableCell>
                       </TableRow>
                     );
@@ -1139,20 +1186,25 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
                       <TableCell className="py-2 px-3 text-right text-xs font-medium text-red-600 whitespace-nowrap">
                         {debit > 0 ? debit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
                       </TableCell>
-                      <TableCell className="py-2 px-3 text-right text-xs font-medium text-red-600 whitespace-nowrap">
-                        {usdDebit > 0 ? usdDebit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
-                      </TableCell>
                       <TableCell className="py-2 px-3 text-right text-xs font-medium text-green-600 whitespace-nowrap">
                         {usdCredit > 0 ? usdCredit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
                       </TableCell>
-                      <TableCell className={`py-2 px-3 text-right text-xs font-medium whitespace-nowrap ${usdBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {usdBalance.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {usdBalanceIndicator}
+                      <TableCell className="py-2 px-3 text-right text-xs font-medium text-red-600 whitespace-nowrap">
+                        {usdDebit > 0 ? usdDebit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
                       </TableCell>
-                      <TableCell className={`py-2 px-3 text-right text-xs font-medium whitespace-nowrap ${(transaction.balanceAfter || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {(transaction.balanceAfter || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {balanceIndicator}
+                      <TableCell className={`py-2 px-3 text-right text-xs font-medium whitespace-nowrap ${balanceTRY >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {balanceTRY.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {balanceIndicator}
                       </TableCell>
-                      <TableCell className="py-2 px-3 text-right text-xs text-muted-foreground whitespace-nowrap">
-                        {exchangeRate.toFixed(6)}
+                      <TableCell className={`py-2 px-3 text-right text-xs font-medium whitespace-nowrap ${balanceUSD >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {balanceUSD.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {usdBalanceIndicator}
+                      </TableCell>
+                      <TableCell className="py-2 px-3 text-center text-xs whitespace-nowrap">
+                        {displayExchangeRate !== '-' ? (
+                          <div>
+                            <div className="font-medium">{displayExchangeRate}</div>
+                            <div className="text-[10px] text-gray-500 mt-0.5">{currency} → TRY</div>
+                          </div>
+                        ) : '-'}
                       </TableCell>
                       <TableCell className="py-2 px-3 text-center">
                         {transaction.type === 'payment' && transaction.payment && (

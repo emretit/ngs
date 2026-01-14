@@ -24,6 +24,7 @@ const paymentSchema = z.object({
   account_id: z.string().uuid().optional(),
   description: z.string().optional(),
   payment_date: z.date(),
+  currency: z.enum(["TRY", "USD", "EUR", "GBP"]).default("TRY"),
 });
 
 type PaymentFormData = z.infer<typeof paymentSchema>;
@@ -45,6 +46,7 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
       payment_direction: "outgoing",
       payment_type: defaultPaymentType || "hesap",
       account_type: "bank",
+      currency: "TRY",
     },
   });
 
@@ -64,6 +66,7 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
         payment_direction: "outgoing",
         payment_type: defaultPaymentType || "hesap",
         account_type: "bank",
+        currency: "TRY",
         amount: undefined,
         account_id: undefined,
         description: undefined,
@@ -71,7 +74,7 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
     }
   }, [open, form, defaultPaymentType]);
 
-  // Tüm hesap türlerini fetch et
+  // Tüm hesap türlerini fetch et (currency bilgisiyle birlikte)
   const { data: accounts } = useQuery({
     queryKey: ["payment-accounts"],
     queryFn: async () => {
@@ -88,17 +91,25 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
       if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
 
       const [cashRes, bankRes, cardRes, partnerRes] = await Promise.all([
-        supabase.from('cash_accounts').select('id, name'),
-        supabase.from('bank_accounts').select('id, account_name, bank_name').eq("is_active", true),
-        supabase.from('credit_cards').select('id, card_name'),
-        supabase.from('partner_accounts').select('id, partner_name')
+        supabase.from('cash_accounts').select('id, name, currency').eq("is_active", true),
+        supabase.from('bank_accounts').select('id, account_name, bank_name, currency').eq("is_active", true),
+        supabase.from('credit_cards').select('id, card_name, currency').eq("status", "active"),
+        supabase.from('partner_accounts').select('id, partner_name, currency').eq("is_active", true)
       ]);
 
+      // Debug: Sorgu sonuçlarını logla
+      if (bankRes.error) {
+        logger.error('Banka hesapları sorgu hatası:', bankRes.error);
+      }
+      if (bankRes.data) {
+        logger.debug('Banka hesapları:', bankRes.data.map(a => ({ id: a.id, name: a.account_name, currency: a.currency })));
+      }
+
       return {
-        cash: cashRes.data?.map(a => ({ id: a.id, label: a.name })) || [],
-        bank: bankRes.data?.map(a => ({ id: a.id, label: `${a.account_name} - ${a.bank_name}` })) || [],
-        credit_card: cardRes.data?.map(a => ({ id: a.id, label: a.card_name })) || [],
-        partner: partnerRes.data?.map(a => ({ id: a.id, label: a.partner_name })) || []
+        cash: cashRes.data?.map(a => ({ id: a.id, label: a.name, currency: (a.currency || 'TRY').toUpperCase() })) || [],
+        bank: bankRes.data?.map(a => ({ id: a.id, label: `${a.account_name} - ${a.bank_name}`, currency: (a.currency || 'TRY').toUpperCase() })) || [],
+        credit_card: cardRes.data?.map(a => ({ id: a.id, label: a.card_name, currency: (a.currency || 'TRY').toUpperCase() })) || [],
+        partner: partnerRes.data?.map(a => ({ id: a.id, label: a.partner_name, currency: (a.currency || 'TRY').toUpperCase() })) || []
       };
     },
   });
@@ -109,13 +120,22 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
         payment_date: new Date(),
         payment_direction: "outgoing",
         account_type: "bank",
+        currency: "TRY",
       });
     }
   }, [open, form]);
 
-  // Watch account type changes to reset account selection
+  // Watch account type and currency changes to reset account selection
   const accountType = form.watch("account_type");
+  const selectedCurrency = form.watch("currency");
   const selectedPaymentType = defaultPaymentType || "hesap";
+
+  // Para birimi değiştiğinde hesap seçimini sıfırla
+  useEffect(() => {
+    if (selectedCurrency) {
+      form.setValue("account_id", "");
+    }
+  }, [selectedCurrency, form]);
 
   async function onSubmit(data: PaymentFormData) {
     try {
@@ -147,7 +167,7 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
         payment_date: data.payment_date.toISOString(),
         supplier_id: supplier.id,
         payment_direction: data.payment_direction,
-        currency: "TRY",
+        currency: data.currency || "TRY",
         company_id: profile.company_id, // RLS için gerekli
       };
 
@@ -338,6 +358,34 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
 
               <FormField
                 control={form.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Para Birimi <span className="text-red-500">*</span></FormLabel>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      // Para birimi değiştiğinde hesap seçimini sıfırla
+                      form.setValue("account_id", "");
+                    }} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Para birimi seçin" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="TRY">TRY</SelectItem>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="GBP">GBP</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="payment_direction"
                 render={({ field }) => (
                   <FormItem>
@@ -414,42 +462,99 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
               <FormField
                 control={form.control}
                 name="account_id"
-                render={({ field }) => (
-                  <FormItem>
+                render={({ field }) => {
+                  // Seçilen para birimine göre hesapları filtrele
+                  // NULL veya undefined currency değerleri TRY olarak kabul edilir
+                  // Currency değerlerini uppercase yaparak karşılaştır (TRY vs try gibi durumlar için)
+                  const normalizedCurrency = (selectedCurrency || 'TRY').toUpperCase();
+                  
+                  const filteredCash = accountType === 'cash' && selectedCurrency
+                    ? accounts?.cash?.filter(acc => {
+                        const accCurrency = (acc.currency || 'TRY').toUpperCase();
+                        return accCurrency === normalizedCurrency;
+                      }) || []
+                    : [];
+                  const filteredBank = accountType === 'bank' && selectedCurrency
+                    ? accounts?.bank?.filter(acc => {
+                        const accCurrency = (acc.currency || 'TRY').toUpperCase();
+                        return accCurrency === normalizedCurrency;
+                      }) || []
+                    : [];
+                  const filteredCreditCard = accountType === 'credit_card' && selectedCurrency
+                    ? accounts?.credit_card?.filter(acc => {
+                        const accCurrency = (acc.currency || 'TRY').toUpperCase();
+                        return accCurrency === normalizedCurrency;
+                      }) || []
+                    : [];
+                  const filteredPartner = accountType === 'partner' && selectedCurrency
+                    ? accounts?.partner?.filter(acc => {
+                        const accCurrency = (acc.currency || 'TRY').toUpperCase();
+                        return accCurrency === normalizedCurrency;
+                      }) || []
+                    : [];
+
+                  // Debug: Filtreleme sonuçlarını logla
+                  if (accountType === 'bank' && selectedCurrency) {
+                    logger.debug('Banka hesap filtreleme:', {
+                      selectedCurrency: normalizedCurrency,
+                      totalBanks: accounts?.bank?.length || 0,
+                      filteredBanks: filteredBank.length,
+                      bankCurrencies: accounts?.bank?.map(a => a.currency)
+                    });
+                  }
+
+                  return (
+                    <FormItem>
                       <FormLabel>Hesap <span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
                           <SelectTrigger className="h-9 w-full">
-                          <SelectValue placeholder="Hesap seçin" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {accountType === 'cash' && accounts?.cash?.map((account) => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.label}
-                          </SelectItem>
-                        ))}
-                        {accountType === 'bank' && accounts?.bank?.map((account) => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.label}
-                          </SelectItem>
-                        ))}
-                        {accountType === 'credit_card' && accounts?.credit_card?.map((account) => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.label}
-                          </SelectItem>
-                        ))}
-                        {accountType === 'partner' && accounts?.partner?.map((account) => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-                />
+                            <SelectValue placeholder={
+                              ((accountType === 'cash' && filteredCash.length === 0) ||
+                               (accountType === 'bank' && filteredBank.length === 0) ||
+                               (accountType === 'credit_card' && filteredCreditCard.length === 0) ||
+                               (accountType === 'partner' && filteredPartner.length === 0))
+                                ? `${selectedCurrency} para biriminde hesap bulunamadı`
+                                : "Hesap seçin"
+                            } />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {accountType === 'cash' && filteredCash.length > 0 && filteredCash.map((account) => (
+                            <SelectItem key={account.id} value={account.id}>
+                              {account.label}
+                            </SelectItem>
+                          ))}
+                          {accountType === 'bank' && filteredBank.length > 0 && filteredBank.map((account) => (
+                            <SelectItem key={account.id} value={account.id}>
+                              {account.label}
+                            </SelectItem>
+                          ))}
+                          {accountType === 'credit_card' && filteredCreditCard.length > 0 && filteredCreditCard.map((account) => (
+                            <SelectItem key={account.id} value={account.id}>
+                              {account.label}
+                            </SelectItem>
+                          ))}
+                          {accountType === 'partner' && filteredPartner.length > 0 && filteredPartner.map((account) => (
+                            <SelectItem key={account.id} value={account.id}>
+                              {account.label}
+                            </SelectItem>
+                          ))}
+                          {((accountType === 'cash' && filteredCash.length === 0) ||
+                            (accountType === 'bank' && filteredBank.length === 0) ||
+                            (accountType === 'credit_card' && filteredCreditCard.length === 0) ||
+                            (accountType === 'partner' && filteredPartner.length === 0)) && (
+                            <div className="px-2 py-1.5 text-sm text-muted-foreground text-center">
+                              {selectedCurrency} para biriminde hesap bulunamadı
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
               </div>
             </div>
           )}

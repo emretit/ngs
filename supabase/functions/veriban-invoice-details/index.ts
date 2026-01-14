@@ -441,6 +441,80 @@ function parseVeribanInvoiceXML(xmlContent: string): any {
     const currency = currencyMatch ? currencyMatch[1].trim() : 'TRY';
     console.log('💱 Currency:', currency);
     
+    // Exchange Rate (Döviz Kuru) - PricingExchangeRate
+    console.log('\n💱 EXTRACTING EXCHANGE RATE...\n');
+    
+    // Farklı namespace formatlarını dene
+    const pricingExchangeMatch = 
+      xmlContent.match(/<cac:PricingExchangeRate[\s\S]*?<\/cac:PricingExchangeRate>/) ||
+      xmlContent.match(/<[^:]*:PricingExchangeRate[\s\S]*?<\/[^:]*:PricingExchangeRate>/) ||
+      xmlContent.match(/PricingExchangeRate[\s\S]*?CalculationRate/);
+    
+    const pricingExchangeXml = pricingExchangeMatch ? pricingExchangeMatch[0] : '';
+    
+    let exchangeRate: number | undefined = undefined;
+    let exchangeRateSourceCurrency: string | undefined = undefined;
+    let exchangeRateTargetCurrency: string | undefined = undefined;
+    
+    if (pricingExchangeXml) {
+      console.log('📄 PricingExchangeRate XML found (first 500 chars):', pricingExchangeXml.substring(0, 500));
+      
+      // CalculationRate (Döviz Kuru) - Farklı formatları dene
+      const calculationRateMatch = 
+        pricingExchangeXml.match(/<cbc:CalculationRate[^>]*>(.*?)<\/cbc:CalculationRate>/) ||
+        pricingExchangeXml.match(/<[^:]*:CalculationRate[^>]*>(.*?)<\/[^:]*:CalculationRate>/) ||
+        pricingExchangeXml.match(/CalculationRate[^>]*>([^<]+)</) ||
+        xmlContent.match(/<cbc:CalculationRate[^>]*>(.*?)<\/cbc:CalculationRate>/);
+      
+      const calculationRate = calculationRateMatch ? calculationRateMatch[1].trim() : '';
+      console.log('  💱 CalculationRate:', calculationRate || '(yok)', calculationRateMatch ? '✅' : '❌');
+      
+      // SourceCurrencyCode (Kaynak Para Birimi) - Farklı formatları dene
+      const sourceCurrencyMatch = 
+        pricingExchangeXml.match(/<cbc:SourceCurrencyCode[^>]*>(.*?)<\/cbc:SourceCurrencyCode>/) ||
+        pricingExchangeXml.match(/<[^:]*:SourceCurrencyCode[^>]*>(.*?)<\/[^:]*:SourceCurrencyCode>/) ||
+        pricingExchangeXml.match(/SourceCurrencyCode[^>]*>([^<]+)</) ||
+        xmlContent.match(/<cbc:SourceCurrencyCode[^>]*>(.*?)<\/cbc:SourceCurrencyCode>/);
+      
+      const sourceCurrency = sourceCurrencyMatch ? sourceCurrencyMatch[1].trim() : '';
+      console.log('  💱 SourceCurrencyCode:', sourceCurrency || '(yok)', sourceCurrencyMatch ? '✅' : '❌');
+      
+      // TargetCurrencyCode (Hedef Para Birimi) - Farklı formatları dene
+      const targetCurrencyMatch = 
+        pricingExchangeXml.match(/<cbc:TargetCurrencyCode[^>]*>(.*?)<\/cbc:TargetCurrencyCode>/) ||
+        pricingExchangeXml.match(/<[^:]*:TargetCurrencyCode[^>]*>(.*?)<\/[^:]*:TargetCurrencyCode>/) ||
+        pricingExchangeXml.match(/TargetCurrencyCode[^>]*>([^<]+)</) ||
+        xmlContent.match(/<cbc:TargetCurrencyCode[^>]*>(.*?)<\/cbc:TargetCurrencyCode>/);
+      
+      const targetCurrency = targetCurrencyMatch ? targetCurrencyMatch[1].trim() : '';
+      console.log('  💱 TargetCurrencyCode:', targetCurrency || '(yok)', targetCurrencyMatch ? '✅' : '❌');
+      
+      if (calculationRate) {
+        exchangeRate = parseFloat(calculationRate);
+        if (!isNaN(exchangeRate) && exchangeRate > 0) {
+          exchangeRateSourceCurrency = sourceCurrency || undefined;
+          exchangeRateTargetCurrency = targetCurrency || undefined;
+          console.log(`✅ Döviz kuru bulundu: 1 ${exchangeRateSourceCurrency || '?'} = ${exchangeRate} ${exchangeRateTargetCurrency || 'TRY'}`);
+        } else {
+          console.log('⚠️ CalculationRate geçersiz:', calculationRate);
+          exchangeRate = undefined;
+        }
+      } else {
+        console.log('⚠️ CalculationRate bulunamadı');
+      }
+    } else {
+      console.log('⚠️ PricingExchangeRate XML bulunamadı');
+      // Alternatif: Direkt XML içinde CalculationRate ara
+      const directCalculationRateMatch = xmlContent.match(/<cbc:CalculationRate[^>]*>(.*?)<\/cbc:CalculationRate>/);
+      if (directCalculationRateMatch) {
+        const directRate = parseFloat(directCalculationRateMatch[1].trim());
+        if (!isNaN(directRate) && directRate > 0) {
+          exchangeRate = directRate;
+          console.log(`✅ Döviz kuru direkt bulundu: ${exchangeRate}`);
+        }
+      }
+    }
+    
     // ========================================
     // 3️⃣ SUPPLIER INFO (TEDARİKÇİ BİLGİLERİ)
     // ========================================
@@ -554,6 +628,11 @@ function parseVeribanInvoiceXML(xmlContent: string): any {
       supplierName,
       supplierTaxNumber,
       currency,
+      // Döviz kuru bilgisi
+      exchangeRate: exchangeRate,
+      exchange_rate: exchangeRate, // Alternatif field name
+      exchangeRateSourceCurrency: exchangeRateSourceCurrency,
+      exchangeRateTargetCurrency: exchangeRateTargetCurrency,
       // Toplam tutarlar
       lineExtensionTotal: taxExclusiveAmount || lineExtensionTotal,
       taxTotalAmount: taxTotalAmount,

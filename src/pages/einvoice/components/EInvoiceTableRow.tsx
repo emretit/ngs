@@ -57,7 +57,24 @@ export const EInvoiceTableRow = React.memo(({
         </div>
       </TableCell>
       <TableCell className="text-right text-xs font-medium px-2 py-2">
-        {formatCurrency(item.invoice_item.unit_price, invoice.currency)}
+        <div>
+          <div>{formatCurrency(item.invoice_item.unit_price, invoice.currency)}</div>
+          {item.invoice_item.unit_price_try && invoice.currency !== 'TRY' && invoice.currency !== 'TL' && (
+            <div className="text-[9px] text-gray-400 mt-0.5">
+              {formatCurrency(item.invoice_item.unit_price_try, 'TRY')}
+            </div>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="text-right text-xs font-medium px-2 py-2">
+        <div>
+          <div>{formatCurrency(item.invoice_item.line_total, invoice.currency)}</div>
+          {item.invoice_item.line_total_try && invoice.currency !== 'TRY' && invoice.currency !== 'TL' && (
+            <div className="text-[9px] text-gray-400 mt-0.5">
+              {formatCurrency(item.invoice_item.line_total_try, 'TRY')}
+            </div>
+          )}
+        </div>
       </TableCell>
       <TableCell className="px-3 py-2">
         <div className="space-y-1">

@@ -487,7 +487,7 @@ def print_mapping_guide(data):
     print("="*80)
 
 def main():
-    xml_file = 'scripts/invoice_esg2026000000115.xml'
+    xml_file = 'scripts/invoice_skr2026000000187.xml'
     data = extract_complete_data(xml_file)
     print_mapping_guide(data)
 

@@ -345,8 +345,8 @@ def print_analysis(analysis: Dict[str, Any]):
 def main():
     """Ana fonksiyon"""
     # XML dosyasını oku
-    xml_file = 'scripts/invoice_esg2026000000115.xml'
-    invoice_id = 'ESG2026000000115'
+    xml_file = 'scripts/invoice_skr2026000000187.xml'
+    invoice_id = 'SKR2026000000187'
     
     print(f"🔍 Fatura XML'i okunuyor: {invoice_id}...")
     

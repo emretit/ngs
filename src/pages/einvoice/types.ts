@@ -12,6 +12,10 @@ export interface EInvoiceItem {
   tax_amount?: number;
   gtip_code?: string;
   description?: string;
+  // TRY karşılıkları (dövizli faturalar için)
+  unit_price_try?: number;
+  line_total_try?: number;
+  tax_amount_try?: number;
 }
 
 export interface EInvoiceDetails {

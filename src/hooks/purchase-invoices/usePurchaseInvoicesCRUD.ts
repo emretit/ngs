@@ -10,12 +10,23 @@ export const usePurchaseInvoicesCRUD = () => {
   const fetchInvoiceById = async (id: string): Promise<PurchaseInvoice> => {
     const { data, error } = await supabase
       .from("purchase_invoices")
-      .select("*")
+      .select(`
+        *,
+        supplier:suppliers (id, name, company, tax_number)
+      `)
       .eq("id", id)
-      .single();
+      .maybeSingle();
 
     if (error) {
-      toast.error("Fatura yüklenirken hata oluştu");
+      logger.error("Error fetching invoice by id:", error);
+      toast.error(`Fatura yüklenirken hata oluştu: ${error.message || 'Bilinmeyen hata'}`);
+      throw error;
+    }
+
+    if (!data) {
+      const error = new Error("Fatura bulunamadı");
+      logger.error("Invoice not found:", id);
+      toast.error("Fatura bulunamadı");
       throw error;
     }
 

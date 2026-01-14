@@ -295,6 +295,7 @@ serve(async (req) => {
               tax_amount: parsedInvoice.taxTotalAmount || 0,
               total_amount: parsedInvoice.payableAmount || 0,
               currency: parsedInvoice.currency || 'TRY',
+              exchange_rate: parsedInvoice.exchangeRate || null, // Döviz kuru bilgisi
               invoice_type: parsedInvoice.invoiceType || 'TEMEL',
               invoice_profile: parsedInvoice.invoiceProfile || 'TEMELFATURA',
               xml_content: xmlContent, // Ham XML içeriğini kaydet

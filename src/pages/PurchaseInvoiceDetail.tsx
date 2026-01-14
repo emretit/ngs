@@ -116,19 +116,15 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
     try {
       setLoading(true);
       const invoiceData = await fetchInvoiceById(id!);
-      // Supplier bilgisini al
-      if (invoiceData.supplier_id) {
-        const { data: supplier } = await supabase
-          .from("suppliers")
-          .select("id, name, company, tax_number")
-          .eq("id", invoiceData.supplier_id)
-          .single();
-        setInvoice({ ...invoiceData, supplier });
-      } else {
-        setInvoice(invoiceData);
-      }
-    } catch (error) {
+      // Supplier bilgisi artık fetchInvoiceById içinde dahil ediliyor
+      setInvoice(invoiceData);
+    } catch (error: any) {
       logger.error("Error loading invoice:", error);
+      // Hata mesajı zaten toast ile gösterildi, burada sadece logluyoruz
+      if (error?.message?.includes("bulunamadı")) {
+        // Fatura bulunamadı durumunda invoice'u null yap ki "Fatura Bulunamadı" mesajı gösterilsin
+        setInvoice(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -306,6 +302,13 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
     return sum + (afterDiscount * (item.tax_rate / 100));
   }, 0);
   const currency = invoice.currency || 'TRY';
+  const exchangeRate = invoice.exchange_rate || null;
+  const isForeignCurrency = currency !== 'TRY' && currency !== 'TL' && exchangeRate && exchangeRate > 0;
+  
+  // TRY karşılıklarını hesapla
+  const totalAmountTRY = isForeignCurrency ? totalAmount * exchangeRate : totalAmount;
+  const subtotalTRY = isForeignCurrency ? subtotal * exchangeRate : subtotal;
+  const taxTotalTRY = isForeignCurrency ? taxTotal * exchangeRate : taxTotal;
 
   return (
     <div className="space-y-2">
@@ -344,7 +347,14 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
               </Badge>
               <Badge variant="outline" className="px-3 py-1">
                 <DollarSign className="h-3 w-3 mr-1" />
-                {formatCurrency(totalAmount, currency)}
+                {isForeignCurrency ? (
+                  <div className="flex flex-col items-end">
+                    <span>{formatCurrency(totalAmount, currency)}</span>
+                    <span className="text-[10px] text-gray-500">{formatCurrency(totalAmountTRY, 'TRY')}</span>
+                  </div>
+                ) : (
+                  formatCurrency(totalAmount, currency)
+                )}
               </Badge>
               {getStatusBadge(invoice.status)}
             </div>
@@ -437,20 +447,54 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                   <span className="text-gray-500">Para Birimi:</span>
                   <span className="text-xs font-medium">{currency === 'TL' ? 'TRY' : currency}</span>
                 </div>
+                
+                {/* Döviz Kuru - Sadece TRY değilse göster */}
+                {currency && currency !== 'TRY' && currency !== 'TL' && (
+                  <div className="mt-2 p-1.5 bg-gradient-to-r from-amber-50 to-orange-50 rounded border border-amber-200">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-amber-900">Döviz Kuru:</span>
+                        {exchangeRate ? (
+                          <span className="text-amber-700 font-semibold">
+                            1 {currency} = {exchangeRate.toFixed(4)} TRY
+                          </span>
+                        ) : (
+                          <span className="text-amber-600 text-[10px] italic">XML'de bulunamadı</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <Separator className="my-2" />
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 text-xs">Ara Toplam:</span>
-                  <span className="font-medium text-xs">{formatCurrency(subtotal, currency)}</span>
+                  <div className="text-right">
+                    <div className="font-medium text-xs">{formatCurrency(subtotal, currency)}</div>
+                    {isForeignCurrency && (
+                      <div className="text-[10px] text-gray-500">{formatCurrency(subtotalTRY, 'TRY')}</div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 text-xs">KDV:</span>
-                  <span className="font-medium text-xs">{formatCurrency(taxTotal, currency)}</span>
+                  <div className="text-right">
+                    <div className="font-medium text-xs">{formatCurrency(taxTotal, currency)}</div>
+                    {isForeignCurrency && (
+                      <div className="text-[10px] text-gray-500">{formatCurrency(taxTotalTRY, 'TRY')}</div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between items-center pt-1 border-t">
                   <span className="text-gray-700 font-medium text-xs">Toplam:</span>
-                  <span className="text-base font-bold text-primary">
-                    {formatCurrency(totalAmount, currency)}
-                  </span>
+                  <div className="text-right">
+                    <span className="text-base font-bold text-primary">
+                      {formatCurrency(totalAmount, currency)}
+                    </span>
+                    {isForeignCurrency && (
+                      <div className="text-sm font-semibold text-gray-600">{formatCurrency(totalAmountTRY, 'TRY')}</div>
+                    )}
+                  </div>
                 </div>
                 <Separator className="my-2" />
                 <div className="flex justify-between items-center">
@@ -582,7 +626,17 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                               </div>
                             </TableCell>
                             <TableCell className="text-right text-xs font-medium px-2 py-2">
-                              {formatCurrency(item.unit_price, currency)}
+                              {(() => {
+                                const itemUnitPriceTRY = isForeignCurrency && exchangeRate ? item.unit_price * exchangeRate : null;
+                                return (
+                                  <div className="flex flex-col items-end">
+                                    <span>{formatCurrency(item.unit_price, currency)}</span>
+                                    {itemUnitPriceTRY && (
+                                      <span className="text-[10px] text-gray-500">{formatCurrency(itemUnitPriceTRY, 'TRY')}</span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </TableCell>
                             <TableCell className="text-right px-2 py-2">
                               {item.discount_rate > 0 ? (
@@ -598,7 +652,15 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                                 const itemSubtotal = item.unit_price * item.quantity;
                                 const discountAmount = itemSubtotal * (item.discount_rate / 100);
                                 const kdvsizTutar = itemSubtotal - discountAmount;
-                                return formatCurrency(kdvsizTutar, currency);
+                                const kdvsizTutarTRY = isForeignCurrency && exchangeRate ? kdvsizTutar * exchangeRate : null;
+                                return (
+                                  <div className="flex flex-col items-end">
+                                    <span>{formatCurrency(kdvsizTutar, currency)}</span>
+                                    {kdvsizTutarTRY && (
+                                      <span className="text-[10px] text-gray-500">{formatCurrency(kdvsizTutarTRY, 'TRY')}</span>
+                                    )}
+                                  </div>
+                                );
                               })()}
                             </TableCell>
                           </TableRow>
@@ -621,6 +683,9 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                           }, 0);
                           
                           const kdvDahilToplam = kdvsizToplam + kdvToplami;
+                          const kdvsizToplamTRY = isForeignCurrency && exchangeRate ? kdvsizToplam * exchangeRate : null;
+                          const kdvToplamiTRY = isForeignCurrency && exchangeRate ? kdvToplami * exchangeRate : null;
+                          const kdvDahilToplamTRY = isForeignCurrency && exchangeRate ? kdvDahilToplam * exchangeRate : null;
                           
                           return (
                             <>
@@ -629,7 +694,12 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                                   Ara Toplam
                                 </TableCell>
                                 <TableCell className="text-right text-xs px-2 leading-none">
-                                  {formatCurrency(kdvsizToplam, currency)}
+                                  <div className="flex flex-col items-end">
+                                    <span>{formatCurrency(kdvsizToplam, currency)}</span>
+                                    {kdvsizToplamTRY && (
+                                      <span className="text-[10px] text-gray-500">{formatCurrency(kdvsizToplamTRY, 'TRY')}</span>
+                                    )}
+                                  </div>
                                 </TableCell>
                               </TableRow>
                               <TableRow className="bg-gray-50 font-semibold [&>td]:py-0.5">
@@ -637,7 +707,12 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                                   KDV
                                 </TableCell>
                                 <TableCell className="text-right text-xs px-2 leading-none">
-                                  {formatCurrency(kdvToplami, currency)}
+                                  <div className="flex flex-col items-end">
+                                    <span>{formatCurrency(kdvToplami, currency)}</span>
+                                    {kdvToplamiTRY && (
+                                      <span className="text-[10px] text-gray-500">{formatCurrency(kdvToplamiTRY, 'TRY')}</span>
+                                    )}
+                                  </div>
                                 </TableCell>
                               </TableRow>
                               <TableRow className="bg-gray-50 font-bold border-b-2 border-gray-300 [&>td]:py-0.5">
@@ -645,7 +720,12 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                                   Genel Toplam (KDV Dahil)
                                 </TableCell>
                                 <TableCell className="text-right text-sm px-2 leading-none">
-                                  {formatCurrency(kdvDahilToplam, currency)}
+                                  <div className="flex flex-col items-end">
+                                    <span>{formatCurrency(kdvDahilToplam, currency)}</span>
+                                    {kdvDahilToplamTRY && (
+                                      <span className="text-xs font-semibold text-gray-600">{formatCurrency(kdvDahilToplamTRY, 'TRY')}</span>
+                                    )}
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             </>

@@ -502,6 +502,7 @@ export default function EInvoiceProcess() {
           supplier_id: selectedSupplierId,
           status: 'pending',
           currency: invoice.currency,
+          exchange_rate: invoice.exchange_rate || null, // Döviz kuru bilgisi (sadece dövizli faturalar için)
           subtotal,
           tax_amount: taxTotal,
           total_amount: total,
@@ -1167,6 +1168,7 @@ export default function EInvoiceProcess() {
                           <TableHead className="text-right font-semibold text-[10px] px-2 w-20">Miktar</TableHead>
                           <TableHead className="text-center font-semibold text-[10px] px-2 w-16">Birim</TableHead>
                           <TableHead className="text-right font-semibold text-[10px] px-2 w-24">Birim Fiyat</TableHead>
+                          <TableHead className="text-right font-semibold text-[10px] px-2 w-24">Toplam</TableHead>
                           <TableHead className="min-w-56 font-semibold text-[10px] px-3">Eşleşen Ürün</TableHead>
                           <TableHead className="w-24 text-center font-semibold text-[10px] px-2">İşlemler</TableHead>
                         </TableRow>

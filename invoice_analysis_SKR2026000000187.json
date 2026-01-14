@@ -1,0 +1,141 @@
+{
+  "invoice_basic": {
+    "id": "SKR2026000000187",
+    "uuid": "33449D41-7D1B-4665-94BE-32A90114ED01",
+    "invoice_number": "",
+    "issue_date": "2026-01-13",
+    "issue_time": "09:20:49",
+    "invoice_type_code": "SATIS",
+    "document_currency_code": "USD",
+    "line_count_numeric": "3",
+    "profile_id": "TICARIFATURA"
+  },
+  "supplier": {
+    "name": "ÅÃKÃR ELEKTRONÄ°K BÄ°LÄ°ÅÄ°M GÃV.  DIÅ TÄ°C. LTD. ÅTÄ°.",
+    "address": {
+      "street": "PERPA TÄ°C. MER. A BLOK K:8 N:812",
+      "building": "",
+      "city": "Ä°STANBUL",
+      "postal_code": "",
+      "country": "TÃ¼rkiye"
+    },
+    "contact": {
+      "phone": "4449928",
+      "email": "merkezmuhasebe@sukurelektronik.com.tr",
+      "fax": ""
+    }
+  },
+  "customer": {
+    "name": "NGS Ä°LETÄ°ÅÄ°M TEKNOLOJÄ°LERÄ° VE GÃVENLÄ°K SÄ°STEMLERÄ° LÄ°MÄ°TED ÅÄ°RKETÄ°",
+    "address": {
+      "street": "HASANPAÅA MAH. MANDIRA CAD. KONAK Ä°Å MERKEZ B BLOK NO: 4/39",
+      "building": "",
+      "city": "Ä°STANBUL",
+      "postal_code": "34758",
+      "country": "TÃRKÄ°YE"
+    },
+    "contact": {
+      "phone": "212",
+      "email": "info@ngsteknoloji.com",
+      "fax": ""
+    }
+  },
+  "financial": {
+    "tax_exclusive_amount": "28.50",
+    "tax_inclusive_amount": "34.20",
+    "payable_amount": "34.20",
+    "allowance_total_amount": "0.00",
+    "charge_total_amount": "",
+    "prepaid_amount": "",
+    "payable_rounding_amount": ""
+  },
+  "lines": [
+    {
+      "line_number": 1,
+      "id": "1",
+      "description": "1",
+      "quantity": {
+        "value": "1",
+        "unit": "C62"
+      },
+      "price": {
+        "amount": "13.000",
+        "currency": "USD"
+      },
+      "line_extension_amount": "13.000",
+      "taxes": [
+        {
+          "category": "",
+          "name": "",
+          "percent": "20.00",
+          "taxable_amount": "13.000",
+          "tax_amount": "2.600"
+        }
+      ]
+    },
+    {
+      "line_number": 2,
+      "id": "2",
+      "description": "1",
+      "quantity": {
+        "value": "1",
+        "unit": "C62"
+      },
+      "price": {
+        "amount": "11.500",
+        "currency": "USD"
+      },
+      "line_extension_amount": "11.500",
+      "taxes": [
+        {
+          "category": "",
+          "name": "",
+          "percent": "20.00",
+          "taxable_amount": "11.500",
+          "tax_amount": "2.300"
+        }
+      ]
+    },
+    {
+      "line_number": 3,
+      "id": "3",
+      "description": "1",
+      "quantity": {
+        "value": "1",
+        "unit": "C62"
+      },
+      "price": {
+        "amount": "4.000",
+        "currency": "USD"
+      },
+      "line_extension_amount": "4.000",
+      "taxes": [
+        {
+          "category": "",
+          "name": "",
+          "percent": "20.00",
+          "taxable_amount": "4.000",
+          "tax_amount": "0.800"
+        }
+      ]
+    }
+  ],
+  "taxes": [
+    {
+      "category": "",
+      "name": "",
+      "percent": "20.00",
+      "taxable_amount": "28.50",
+      "tax_amount": "5.70"
+    }
+  ],
+  "payment": {
+    "payment_means_code": "1",
+    "payment_due_date": "",
+    "instruction_note": ""
+  },
+  "signature": {
+    "signing_time": "2026-01-13T09:21:28.519+03:00",
+    "signed": true
+  }
+}

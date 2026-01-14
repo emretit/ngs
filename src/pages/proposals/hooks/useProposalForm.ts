@@ -122,7 +122,7 @@ export const useProposalForm = (proposal: any) => {
       setFormData({
         contact_name: initialContactName,
         contact_title: "",
-        offer_date: proposal.offer_date ? new Date(proposal.offer_date) : undefined,
+        offer_date: proposal.offer_date ? new Date(proposal.offer_date) : (proposal.created_at ? new Date(proposal.created_at) : new Date()),
         offer_number: proposal.number || "",
         revision_number: proposal.revision_number ?? 0,
         validity_date: proposal.valid_until ? new Date(proposal.valid_until) : undefined,

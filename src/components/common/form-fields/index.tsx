@@ -32,10 +32,10 @@ export function FormField<T extends FieldValues>({ form, config }: FormFieldProp
       control={control}
       name={config.name}
       render={({ field }) => (
-        <div className="space-y-2">
-          <Label htmlFor={config.name} className="text-sm font-medium">
+        <div className="space-y-0.5">
+          <Label htmlFor={config.name} className="text-xs font-medium text-gray-700">
             {config.label}
-            {config.required && <span className="text-red-500 ml-1">*</span>}
+            {config.required && <span className="text-red-500 ml-0.5">*</span>}
           </Label>
 
           {/* Text Input */}
@@ -47,6 +47,7 @@ export function FormField<T extends FieldValues>({ form, config }: FormFieldProp
               disabled={config.disabled}
               {...field}
               value={field.value || ''}
+              className="h-8 text-xs"
             />
           )}
 
@@ -59,6 +60,7 @@ export function FormField<T extends FieldValues>({ form, config }: FormFieldProp
               disabled={config.disabled}
               {...field}
               value={field.value || ''}
+              className="h-8 text-xs"
             />
           )}
 
@@ -71,6 +73,7 @@ export function FormField<T extends FieldValues>({ form, config }: FormFieldProp
               disabled={config.disabled}
               {...field}
               value={field.value || ''}
+              className="h-8 text-xs"
             />
           )}
 
@@ -87,6 +90,7 @@ export function FormField<T extends FieldValues>({ form, config }: FormFieldProp
                 const value = e.target.value === '' ? '' : Number(e.target.value);
                 field.onChange(value);
               }}
+              className="h-8 text-xs"
             />
           )}
 
@@ -98,8 +102,8 @@ export function FormField<T extends FieldValues>({ form, config }: FormFieldProp
               disabled={config.disabled}
               {...field}
               value={field.value || ''}
-              rows={4}
-              className="resize-none"
+              rows={3}
+              className="resize-none text-xs py-1.5"
             />
           )}
 
@@ -110,12 +114,12 @@ export function FormField<T extends FieldValues>({ form, config }: FormFieldProp
               onValueChange={field.onChange}
               disabled={config.disabled}
             >
-              <SelectTrigger id={config.name}>
+              <SelectTrigger id={config.name} className="h-8 text-xs">
                 <SelectValue placeholder={config.placeholder || 'Seçiniz...'} />
               </SelectTrigger>
               <SelectContent>
                 {config.options?.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <SelectItem key={option.value} value={option.value} className="text-xs">
                     {option.label}
                   </SelectItem>
                 ))}
@@ -131,7 +135,7 @@ export function FormField<T extends FieldValues>({ form, config }: FormFieldProp
                   id={config.name}
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-left font-normal h-10 text-sm",
                     !field.value && "text-muted-foreground"
                   )}
                   disabled={config.disabled}

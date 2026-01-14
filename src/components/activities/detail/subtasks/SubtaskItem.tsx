@@ -91,26 +91,18 @@ const SubtaskItem = ({
             >
               <ArrowDown className="h-4 w-4 text-gray-500" />
             </Button>
-            {/* Edit button */}
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              onClick={onEdit}
-              disabled={isUpdating}
-              className="h-8 w-8 p-0"
-            >
-              <Edit className="h-4 w-4 text-blue-500" />
-            </Button>
-            {/* Delete button */}
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              onClick={onDelete}
-              disabled={isUpdating}
-              className="h-8 w-8 p-0"
-            >
-              <Trash2 className="h-4 w-4 text-red-500" />
-            </Button>
+            {/* Edit button - only show for incomplete tasks */}
+            {!subtask.completed && (
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={onEdit}
+                disabled={isUpdating}
+                className="h-8 w-8 p-0"
+              >
+                <Edit className="h-4 w-4 text-blue-500" />
+              </Button>
+            )}
           </div>
         </>
       )}

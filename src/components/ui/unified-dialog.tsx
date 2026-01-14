@@ -68,8 +68,17 @@ const UnifiedDialogOverlay = React.forwardRef<
   if (!isOpen) return null;
 
   const handleClick = (e: React.MouseEvent) => {
+    console.log('[UnifiedDialogOverlay] Click event:', {
+      target: e.target,
+      currentTarget: e.currentTarget,
+      isDirectClick: e.target === e.currentTarget,
+      canClose,
+      hasCallback: !!onOverlayClick
+    });
+    
     // Sadece doğrudan overlay'e tıklandığında ve canClose true ise kapat
     if (e.target === e.currentTarget && canClose && onOverlayClick) {
+      console.log('[UnifiedDialogOverlay] Closing dialog via overlay click');
       onOverlayClick();
     }
   };
@@ -109,6 +118,7 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
   }, [isOpen, onClosed]);
 
   const handleOpenChange = (open: boolean) => {
+    console.log('[UnifiedDialog] handleOpenChange called', { open, zIndex });
     if (onClose.length === 0) {
       // Eski kullanım: () => void
       (onClose as () => void)();
@@ -127,7 +137,6 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
           style={{ zIndex: zIndex - 10 }}
         />
         <DialogPrimitive.Content
-          aria-describedby={undefined}
           className={cn(
             "fixed left-[50%] top-[50%] w-full translate-x-[-50%] translate-y-[-50%] bg-white rounded-xl shadow-2xl max-h-[95vh] flex flex-col overflow-hidden p-0 pointer-events-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
             maxWidthClasses[maxWidth],
@@ -137,11 +146,19 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
           onOpenAutoFocus={(e) => e.preventDefault()}
           onEscapeKeyDown={() => handleOpenChange(false)}
           onPointerDownOutside={(e) => {
+            console.log('[UnifiedDialog] onPointerDownOutside triggered', {
+              target: e.target,
+              zIndex
+            });
             // modal={false} olduğu için dış tıklamaları tamamen engelle
             // Overlay zaten kapatma işlemini yönetiyor
             e.preventDefault();
           }}
           onInteractOutside={(e) => {
+            console.log('[UnifiedDialog] onInteractOutside triggered', {
+              target: e.target,
+              zIndex
+            });
             // modal={false} olduğu için dış etkileşimleri tamamen engelle
             e.preventDefault();
           }}
@@ -154,6 +171,9 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
           <div className="flex items-center space-x-2 flex-1 min-w-0">
             <div className={cn("w-2 h-2 rounded-full flex-shrink-0", dotColorClasses[headerColor])}></div>
             <DialogPrimitive.Title className="text-lg font-semibold text-gray-900 truncate">{title}</DialogPrimitive.Title>
+            <DialogPrimitive.Description className="sr-only">
+              Dialog içeriği
+            </DialogPrimitive.Description>
           </div>
           {showCloseButton && (
               <DialogPrimitive.Close

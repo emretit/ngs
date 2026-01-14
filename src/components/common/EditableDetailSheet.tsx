@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Save } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, Save, X } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { FormField } from "./form-fields";
 
@@ -22,6 +23,7 @@ export interface FieldConfig<T extends FieldValues> {
   type: 'text' | 'textarea' | 'select' | 'date' | 'number' | 'email' | 'tel' | 'custom';
   placeholder?: string;
   description?: string;
+  icon?: LucideIcon;
 
   // Select options
   options?: Array<{ label: string; value: any }>;
@@ -85,11 +87,11 @@ export interface EditableDetailSheetProps<T extends FieldValues> {
 }
 
 const sizeClasses = {
-  sm: 'sm:max-w-sm',
-  md: 'sm:max-w-md',
-  lg: 'sm:max-w-lg',
-  xl: 'sm:max-w-xl',
-  '2xl': 'sm:max-w-2xl',
+  sm: 'sm:max-w-[320px]',
+  md: 'sm:max-w-[420px]',
+  lg: 'sm:max-w-[520px]',
+  xl: 'sm:max-w-[620px]',
+  '2xl': 'sm:max-w-[720px]',
 };
 
 export function EditableDetailSheet<T extends FieldValues>({
@@ -138,7 +140,7 @@ export function EditableDetailSheet<T extends FieldValues>({
 
   const renderFields = (fieldsToRender: FieldConfig<T>[], currentData: T | null) => {
     return (
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-1.5">
         {fieldsToRender.map((fieldConfig) => {
           // Handle hidden fields
           if (fieldConfig.hidden) {
@@ -165,41 +167,70 @@ export function EditableDetailSheet<T extends FieldValues>({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className={`${sizeClasses[size]} overflow-hidden p-0 flex flex-col ${className || ''}`}>
-        {/* Header */}
-        <SheetHeader className="text-left border-b pb-3 mb-0 px-4 pt-4 flex-shrink-0">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 rounded-full bg-primary"></div>
-            <SheetTitle className="text-lg font-semibold">{title}</SheetTitle>
+      <SheetContent className={`${sizeClasses[size]} overflow-hidden p-0 flex flex-col my-4 h-[calc(100vh-2rem)] max-h-[900px] ${className || ''}`}>
+        {/* Ultra Compact Header */}
+        <div className="flex-shrink-0 sticky top-0 z-10 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+          <div className="flex items-center justify-between px-4 py-4">
+            <div className="flex items-center space-x-2 flex-1 min-w-0">
+              <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></div>
+              {renderHeader ? (
+                <div className="flex-1 min-w-0">
+                  {renderHeader(data)}
+                </div>
+              ) : (
+                <div className="flex-1 min-w-0">
+                  <SheetTitle className="text-lg font-semibold text-gray-900 truncate">
+                    {title}
+                  </SheetTitle>
+                  {subtitle && (
+                    <SheetDescription className="text-xs text-gray-500 mt-0.5 truncate">
+                      {subtitle}
+                    </SheetDescription>
+                  )}
+                </div>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 ml-2 h-auto w-auto"
+            >
+              <X className="h-5 w-5 text-gray-500" />
+            </Button>
           </div>
-          {subtitle && <SheetDescription>{subtitle}</SheetDescription>}
-          {renderHeader && renderHeader(data)}
-        </SheetHeader>
+        </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide p-4">
+        {/* Ultra Compact Content */}
+        <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center space-y-4">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
-                <p className="text-muted-foreground">Yükleniyor...</p>
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center space-y-1.5">
+                <Loader2 className="w-5 h-5 animate-spin mx-auto text-primary" />
+                <p className="text-xs text-gray-500">Yükleniyor...</p>
               </div>
             </div>
           ) : (
             <FormProvider {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(handleSubmit)}>
                 {tabs && tabs.length > 0 ? (
                   <Tabs defaultValue={tabs[0].id} className="w-full">
-                    <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
-                      {tabs.map((tab) => (
-                        <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
-                          {tab.icon && <tab.icon className="h-4 w-4" />}
-                          {tab.label}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
+                    <div className="sticky top-0 bg-white border-b px-3 py-1.5">
+                      <TabsList className="inline-flex h-7 items-center justify-start rounded-md bg-gray-100 p-0.5 text-gray-500 w-auto">
+                        {tabs.map((tab) => (
+                          <TabsTrigger 
+                            key={tab.id} 
+                            value={tab.id} 
+                            className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 py-0.5 text-[10px] font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm gap-1"
+                          >
+                            {tab.icon && <tab.icon className="h-3 w-3" />}
+                            {tab.label}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </div>
                     {tabs.map((tab) => (
-                      <TabsContent key={tab.id} value={tab.id} className="space-y-4 mt-4">
+                      <TabsContent key={tab.id} value={tab.id} className="mt-0 px-3 py-2">
                         {tab.renderContent
                           ? tab.renderContent(data, form)
                           : tab.fields && renderFields(tab.fields, data)
@@ -208,16 +239,19 @@ export function EditableDetailSheet<T extends FieldValues>({
                     ))}
                   </Tabs>
                 ) : (
-                  <div className="space-y-4">
-                    {renderFields(fields, data)}
+                  <div className="px-3 pt-2 pb-2">
+                    {fields.length > 0 && renderFields(fields, data)}
                   </div>
                 )}
 
                 {/* Custom Actions */}
                 {renderActions && (
-                  <div className="pt-4 border-t">
-                    {renderActions(data, form)}
-                  </div>
+                  <>
+                    <Separator className="my-0" />
+                    <div className="px-3 py-2">
+                      {renderActions(data, form)}
+                    </div>
+                  </>
                 )}
 
                 {/* Custom Footer */}
@@ -227,37 +261,42 @@ export function EditableDetailSheet<T extends FieldValues>({
           )}
         </div>
 
-        {/* Footer Buttons */}
-        <SheetFooter className="flex justify-end gap-2 pt-4 px-4 pb-4 mt-auto border-t flex-shrink-0">
-          {!hideCancelButton && (
+        {/* Ultra Compact Footer */}
+        <div className="flex-shrink-0 sticky bottom-0 border-t bg-white px-3 py-2">
+          <div className="flex items-center justify-end gap-2">
+            {!hideCancelButton && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                disabled={isSaving}
+                className="h-9 px-4 text-base"
+              >
+                {cancelButtonText}
+              </Button>
+            )}
             <Button
               type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isSaving}
+              onClick={form.handleSubmit(handleSubmit)}
+              disabled={isSaving || isLoading}
+              size="sm"
+              className="h-9 px-4 text-base gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
             >
-              {cancelButtonText}
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Kaydediliyor...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  {saveButtonText}
+                </>
+              )}
             </Button>
-          )}
-          <Button
-            type="button"
-            onClick={form.handleSubmit(handleSubmit)}
-            disabled={isSaving || isLoading}
-            className="gap-2"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Kaydediliyor...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                {saveButtonText}
-              </>
-            )}
-          </Button>
-        </SheetFooter>
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );

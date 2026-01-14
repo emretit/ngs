@@ -51,6 +51,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("todo");
+  const [taskType, setTaskType] = useState("general");
   const [isImportant, setIsImportant] = useState(false);
   const [dueDate, setDueDate] = useState("");
   // Recurring task states
@@ -171,7 +172,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           status,
           priority: isImportant ? 'high' : 'medium',
           is_important: isImportant,
-          type: 'general',
+          type: taskType,
           due_date: dueDate ? new Date(dueDate).toISOString() : null,
           assignee_id: selectedAssigneeId || null,
           company_id: user?.company_id || null,
@@ -239,6 +240,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
     setTitle("");
     setDescription("");
     setStatus("todo");
+    setTaskType("general");
     setIsImportant(false);
     setDueDate("");
     setSelectedOpportunityId("");
@@ -262,6 +264,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
   };
 
   const handleClose = () => {
+    console.log('[NewActivityDialog] handleClose called');
     resetForm();
     onClose();
   };
@@ -305,6 +308,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
       title="Yeni Aktivite"
       maxWidth="md"
       headerColor="blue"
+      zIndex={60}
     >
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
         <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 -mr-1">
@@ -389,8 +393,28 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
             />
           </div>
 
-          {/* Durum ve Önem */}
+          {/* Aktivite Tipi ve Durum */}
           <div className="grid grid-cols-2 gap-1.5">
+            <div className="space-y-0.5">
+              <Label className="text-xs font-medium text-gray-700">Aktivite Tipi</Label>
+              <Select value={taskType} onValueChange={setTaskType}>
+                <SelectTrigger className="h-10 bg-white border-gray-200 hover:border-primary/50 transition-colors w-full text-xs">
+                  <SelectValue placeholder="Tip seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">Genel</SelectItem>
+                  <SelectItem value="opportunity">Fırsat</SelectItem>
+                  <SelectItem value="proposal">Teklif</SelectItem>
+                  <SelectItem value="service">Servis</SelectItem>
+                  <SelectItem value="call">Arama</SelectItem>
+                  <SelectItem value="meeting">Toplantı</SelectItem>
+                  <SelectItem value="follow_up">Takip</SelectItem>
+                  <SelectItem value="reminder">Hatırlatıcı</SelectItem>
+                  <SelectItem value="email">E-posta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-0.5">
               <Label className="text-xs font-medium text-gray-700">Durum</Label>
               <Select value={status} onValueChange={setStatus}>
@@ -425,29 +449,30 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            <div className="space-y-0.5">
-              <Label className="text-xs font-medium text-gray-700">Önem</Label>
-              <div className={cn(
-                "flex items-center gap-2 px-2.5 py-2 rounded-lg border transition-colors cursor-pointer h-10",
-                isImportant
-                  ? "bg-yellow-50 border-yellow-200"
-                  : "bg-white border-gray-200 hover:border-yellow-300"
-              )}>
-                <Label htmlFor="is_important" className="flex items-center gap-1.5 cursor-pointer text-xs font-medium flex-1">
-                  <Star className={cn(
-                    "h-3.5 w-3.5 transition-all duration-200",
-                    isImportant ? "text-yellow-500 fill-yellow-500 scale-110" : "text-gray-400"
-                  )} />
-                  <span className={isImportant ? "text-yellow-700" : "text-gray-600"}>Önemli</span>
-                </Label>
-                <Switch
-                  id="is_important"
-                  checked={isImportant}
-                  onCheckedChange={setIsImportant}
-                  className="scale-75"
-                />
-              </div>
+          {/* Önem */}
+          <div className="space-y-0.5">
+            <Label className="text-xs font-medium text-gray-700">Önem</Label>
+            <div className={cn(
+              "flex items-center gap-2 px-2.5 py-2 rounded-lg border transition-colors cursor-pointer h-10",
+              isImportant
+                ? "bg-yellow-50 border-yellow-200"
+                : "bg-white border-gray-200 hover:border-yellow-300"
+            )}>
+              <Label htmlFor="is_important" className="flex items-center gap-1.5 cursor-pointer text-xs font-medium flex-1">
+                <Star className={cn(
+                  "h-3.5 w-3.5 transition-all duration-200",
+                  isImportant ? "text-yellow-500 fill-yellow-500 scale-110" : "text-gray-400"
+                )} />
+                <span className={isImportant ? "text-yellow-700" : "text-gray-600"}>Önemli</span>
+              </Label>
+              <Switch
+                id="is_important"
+                checked={isImportant}
+                onCheckedChange={setIsImportant}
+                className="scale-75"
+              />
             </div>
           </div>
 

@@ -95,7 +95,7 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
   const fields: FieldConfig<ReturnFormData>[] = [
     {
       name: 'status',
-      label: 'Durumu Güncelle',
+      label: 'Durum',
       type: 'select',
       options: statusOptions,
       gridColumn: 'col-span-full',
@@ -107,18 +107,18 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
     if (!returnData) return null;
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Header Info */}
-        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+        <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
           <div>
-            <h3 className="text-lg font-semibold text-orange-600">
+            <h3 className="text-sm font-semibold text-orange-600">
               {returnData.return_number}
             </h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {format(new Date(returnData.request_date), "dd MMMM yyyy, HH:mm", { locale: tr })}
             </p>
           </div>
-          <Badge className={getStatusColor(returnData.status)}>
+          <Badge className={getStatusColor(returnData.status) + " text-xs px-2 py-0.5"}>
             {returnStatusLabels[returnData.status]}
           </Badge>
         </div>
@@ -126,20 +126,20 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
         <Separator />
 
         {/* Customer Info */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <User className="h-4 w-4" />
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
+            <User className="h-3.5 w-3.5" />
             Müşteri Bilgileri
           </div>
-          <div className="bg-gray-50 rounded-lg p-3 space-y-1">
-            <p className="font-medium">
+          <div className="bg-gray-50 rounded-md p-2.5 space-y-0.5">
+            <p className="font-medium text-sm">
               {returnData.customer?.company || returnData.customer?.name}
             </p>
             {returnData.customer?.email && (
-              <p className="text-sm text-muted-foreground">{returnData.customer.email}</p>
+              <p className="text-xs text-muted-foreground">{returnData.customer.email}</p>
             )}
             {(returnData.customer?.mobile_phone || returnData.customer?.office_phone) && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {returnData.customer.mobile_phone || returnData.customer.office_phone}
               </p>
             )}
@@ -147,31 +147,31 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
         </div>
 
         {/* Return Type & Reason */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Package className="h-4 w-4" />
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
+              <Package className="h-3.5 w-3.5" />
               İade Türü
             </div>
-            <Badge variant="outline" className="text-sm">
+            <Badge variant="outline" className="text-xs">
               {returnTypeLabels[returnData.return_type]}
             </Badge>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <AlertTriangle className="h-4 w-4" />
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
+              <AlertTriangle className="h-3.5 w-3.5" />
               İade Nedeni
             </div>
-            <Badge variant="outline" className="text-sm">
+            <Badge variant="outline" className="text-xs">
               {returnReasonLabels[returnData.return_reason]}
             </Badge>
           </div>
         </div>
 
         {returnData.reason_description && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Neden Açıklaması</p>
-            <p className="text-sm text-muted-foreground bg-gray-50 rounded-lg p-3">
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-gray-700">Neden Açıklaması</p>
+            <p className="text-xs text-muted-foreground bg-gray-50 rounded-md p-2.5">
               {returnData.reason_description}
             </p>
           </div>
@@ -179,24 +179,24 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
 
         {/* Related Records */}
         {(returnData.order || returnData.delivery) && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <FileText className="h-4 w-4" />
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
+              <FileText className="h-3.5 w-3.5" />
               İlişkili Kayıtlar
             </div>
-            <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+            <div className="bg-gray-50 rounded-md p-2.5 space-y-1.5">
               {returnData.order && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Sipariş:</span>
-                  <span className="text-sm font-medium text-blue-600">
+                  <span className="text-xs text-muted-foreground">Sipariş:</span>
+                  <span className="text-xs font-medium text-blue-600">
                     {returnData.order.order_number}
                   </span>
                 </div>
               )}
               {returnData.delivery && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Teslimat:</span>
-                  <span className="text-sm font-medium text-purple-600">
+                  <span className="text-xs text-muted-foreground">Teslimat:</span>
+                  <span className="text-xs font-medium text-purple-600">
                     {returnData.delivery.delivery_number}
                   </span>
                 </div>
@@ -207,17 +207,17 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
 
         {/* Refund Amount */}
         {returnData.refund_amount > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <CreditCard className="h-4 w-4" />
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
+              <CreditCard className="h-3.5 w-3.5" />
               İade Tutarı
             </div>
-            <div className="bg-green-50 rounded-lg p-3">
-              <p className="text-lg font-semibold text-green-700">
+            <div className="bg-green-50 rounded-md p-2.5">
+              <p className="text-base font-semibold text-green-700">
                 {formatCurrency(returnData.refund_amount, returnData.currency)}
               </p>
               {returnData.refund_method && (
-                <p className="text-sm text-green-600 mt-1">
+                <p className="text-xs text-green-600 mt-0.5">
                   Ödeme Yöntemi: {returnData.refund_method}
                 </p>
               )}
@@ -227,32 +227,32 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
 
         {/* Return Items */}
         {returnData.items && returnData.items.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Package className="h-4 w-4" />
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
+              <Package className="h-3.5 w-3.5" />
               İade Edilen Ürünler ({returnData.items.length})
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {returnData.items.map((item) => (
-                <div key={item.id} className="bg-gray-50 rounded-lg p-3 space-y-2">
+                <div key={item.id} className="bg-gray-50 rounded-md p-2.5 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">{item.product_name}</span>
-                    <Badge variant="outline" className="text-xs">
+                    <span className="font-medium text-xs">{item.product_name}</span>
+                    <Badge variant="outline" className="text-[10px] h-5 px-1.5">
                       {item.return_quantity} {item.unit}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant="secondary" className="text-xs">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
                       {itemStatusLabels[item.item_status as keyof typeof itemStatusLabels] || item.item_status}
                     </Badge>
                     {item.condition && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-[10px] h-5 px-1.5">
                         {itemConditionLabels[item.condition as keyof typeof itemConditionLabels] || item.condition}
                       </Badge>
                     )}
                   </div>
                   {item.notes && (
-                    <p className="text-xs text-muted-foreground">{item.notes}</p>
+                    <p className="text-[10px] text-muted-foreground">{item.notes}</p>
                   )}
                 </div>
               ))}
@@ -262,24 +262,24 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
 
         {/* Notes */}
         {returnData.notes && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <FileText className="h-4 w-4" />
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
+              <FileText className="h-3.5 w-3.5" />
               Notlar
             </div>
-            <p className="text-sm text-muted-foreground bg-gray-50 rounded-lg p-3">
+            <p className="text-xs text-muted-foreground bg-gray-50 rounded-md p-2.5">
               {returnData.notes}
             </p>
           </div>
         )}
 
         {/* Dates */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <Calendar className="h-4 w-4" />
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
+            <Calendar className="h-3.5 w-3.5" />
             Tarihler
           </div>
-          <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
+          <div className="bg-gray-50 rounded-md p-2.5 space-y-1.5 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Talep Tarihi:</span>
               <span>{format(new Date(returnData.request_date), "dd MMM yyyy", { locale: tr })}</span>
@@ -299,16 +299,18 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
           </div>
         </div>
 
-        <Separator />
+        <Separator className="my-0" />
 
         {/* Delete Button */}
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-2">
           <Button
             variant="destructive"
+            size="sm"
             onClick={handleDeleteClick}
             disabled={deleteReturn.isPending}
+            className="h-8 px-3 text-xs"
           >
-            {deleteReturn.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {deleteReturn.isPending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
             İadeyi Sil
           </Button>
         </div>
@@ -322,7 +324,7 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
         isOpen={open}
         onClose={onClose}
         title="İade Detayı"
-        subtitle={returnData ? `${returnData.return_number}` : undefined}
+        subtitle={returnData?.return_number}
         data={returnData as ReturnFormData}
         isLoading={isLoading}
         fields={fields}
@@ -330,9 +332,9 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
         onSave={handleSave}
         isSaving={updateStatus.isPending}
         renderActions={renderDetails}
-        saveButtonText="Güncelle"
+        saveButtonText="Kaydet"
         cancelButtonText="Kapat"
-        size="xl"
+        size="lg"
       />
 
       {/* Confirmation Dialog */}

@@ -67,6 +67,7 @@ const TaskDetailSheet = ({ task, isOpen, onClose }: TaskDetailSheetProps) => {
       isOpen={isOpen}
       onClose={onClose}
       title={t("activities.title")}
+      subtitle={task?.subject}
       data={task as TaskFormData}
       fields={fields}
       schema={taskSchema}
@@ -74,7 +75,7 @@ const TaskDetailSheet = ({ task, isOpen, onClose }: TaskDetailSheetProps) => {
       isSaving={updateTaskMutation.isPending}
       saveButtonText={t("common.save")}
       cancelButtonText={t("common.cancel")}
-      size="xl"
+      size="md"
     />
   );
 };

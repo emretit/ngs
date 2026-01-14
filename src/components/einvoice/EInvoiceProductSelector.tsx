@@ -58,7 +58,7 @@ const EInvoiceProductSelector = ({
 
   const companyId = userProfile?.company_id;
 
-  const { data: products, isLoading } = useQuery({
+  const { data: products, isLoading, refetch } = useQuery({
     queryKey: ["products-for-einvoice-selector", companyId],
     queryFn: async () => {
       if (!companyId) {
@@ -137,7 +137,10 @@ const EInvoiceProductSelector = ({
         total_stock: totalStockMap.get(product.id) || 0
       })) as ProductWithWarehouses[];
     },
-    enabled: !!companyId,
+    enabled: !!companyId && open,
+    staleTime: 0, // Her popover açılışında yeni veri çek
+    gcTime: 1000 * 60 * 5, // Cache'i 5 dakika tut
+    refetchOnMount: true, // Mount'ta her zaman yeniden çek
   });
 
   // Filter products based on search query
@@ -160,6 +163,13 @@ const EInvoiceProductSelector = ({
     }
     setOpen(false);
   };
+
+  // Popover açıldığında query'yi yenile
+  React.useEffect(() => {
+    if (open && companyId) {
+      refetch();
+    }
+  }, [open, companyId, refetch]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

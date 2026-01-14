@@ -55,6 +55,7 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
     isFetchingNextPage,
     isLoading,
     isError,
+    refetch,
   } = useInfiniteQuery({
     queryKey: ["products-infinite", companyId, debouncedSearch],
     queryFn: async ({ pageParam = 0 }) => {
@@ -127,8 +128,9 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 0,
     enabled: !!companyId && open,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 10,
+    staleTime: 0, // Her popover açılışında yeni veri çek
+    gcTime: 1000 * 60 * 5, // Cache'i 5 dakika tut
+    refetchOnMount: true, // Mount'ta her zaman yeniden çek
   });
 
   // Tüm sayfalardan ürünleri birleştir
@@ -181,12 +183,15 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
     return text.substring(0, maxLength) + '...';
   };
 
-  // Popover açıldığında arama alanını temizle
+  // Popover açıldığında arama alanını temizle ve query'yi yenile
   useEffect(() => {
     if (!open) {
       setSearchQuery("");
+    } else {
+      // Popover açıldığında query'yi yenile
+      refetch();
     }
-  }, [open]);
+  }, [open, refetch]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

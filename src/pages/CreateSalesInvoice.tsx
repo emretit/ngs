@@ -819,6 +819,16 @@ const CreateSalesInvoice = () => {
     setSelectedProduct(null);
   };
 
+  // Handle new product creation
+  const handleNewProduct = useCallback((searchTerm?: string) => {
+    logger.debug('🆕 [CreateSalesInvoice] Opening new product modal', { searchTerm });
+    // Yeni ürün oluşturma modalını aç
+    // ProductDetailsModal zaten yeni ürün oluşturma desteği var
+    setSelectedProduct(null);
+    setEditingItemData(searchTerm ? { name: searchTerm } : null);
+    setProductModalOpen(true);
+  }, []);
+
   // Form handler for InvoiceHeaderCard
   const handleFormDataChange = useCallback((field: string, value: any) => {
     // Map InvoiceHeaderCard fields to our state
@@ -1165,6 +1175,7 @@ const CreateSalesInvoice = () => {
               handleProductModalSelect(product, itemIndex);
             }
           }}
+          onNewProduct={handleNewProduct}
           showMoveButtons={true}
           inputHeight="h-10"
         />

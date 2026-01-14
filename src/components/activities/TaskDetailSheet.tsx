@@ -67,7 +67,7 @@ const TaskDetailSheet = ({ task, isOpen, onClose }: TaskDetailSheetProps) => {
       isOpen={isOpen}
       onClose={onClose}
       title={t("activities.title")}
-      subtitle={task?.subject}
+      subtitle={task?.title}
       data={task as TaskFormData}
       fields={fields}
       schema={taskSchema}

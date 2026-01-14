@@ -308,7 +308,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
       title="Yeni Aktivite"
       maxWidth="md"
       headerColor="blue"
-      zIndex={60}
+      zIndex={70}
     >
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
         <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 -mr-1">

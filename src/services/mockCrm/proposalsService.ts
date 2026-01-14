@@ -39,14 +39,19 @@ export const mockCrmProposalsService = {
           employee:employee_id (*)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      
+
+      // If no data found, return null without error
+      if (!data) {
+        return { data: null, error: null };
+      }
+
       // Use the proper data parser to handle JSON parsing
       const { parseProposalData } = await import('../proposal/helpers/dataParser');
       const proposal = parseProposalData(data);
-      
+
       return { data: proposal, error: null };
     } catch (error) {
       return { data: null, error };

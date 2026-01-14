@@ -54,13 +54,18 @@ export async function getProposalById(id: string) {
         employee:employee_id(*)
       `)
       .eq('id', id)
-      .single();
-    
+      .maybeSingle();
+
     if (error) throw error;
-    
+
+    // If no data found, return null without error
+    if (!data) {
+      return { data: null, error: null };
+    }
+
     // Parse the JSON strings to convert back to proper types
     const parsedData = parseProposalData(data);
-    
+
     return { data: parsedData, error: null };
   } catch (error) {
     logger.error('Error fetching proposal:', error);

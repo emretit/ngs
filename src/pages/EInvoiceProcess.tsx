@@ -939,24 +939,36 @@ export default function EInvoiceProcess() {
                         VKN: {invoice.supplier_tax_number || invoice?.supplier_details?.tax_number || 'Belirtilmemiş'}
                       </div>
                     )}
-                    {(invoice.supplier_details?.email || invoice.supplier_details?.phone || invoice.supplier_details?.address) && (
+                    {invoice?.supplier_details?.tax_office && (
+                      <div className="text-gray-500 text-xs mt-0.5">
+                        Vergi Dairesi: {invoice.supplier_details.tax_office}
+                      </div>
+                    )}
+                    {(invoice.supplier_details?.email || invoice.supplier_details?.phone || invoice.supplier_details?.address || invoice.supplier_details?.tax_office) && (
                       <details className="mt-1">
-                        <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">Detaylar</summary>
+                        <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">▾ Detaylar</summary>
                         <div className="mt-1 space-y-0.5 pl-2">
-                          {invoice.supplier_details?.email && (
-                            <div className="text-gray-500 text-xs">📧 {invoice.supplier_details.email}</div>
+                          {invoice.supplier_details?.tax_office && (
+                            <div className="text-gray-500 text-xs">🏛️ Vergi Dairesi: {invoice.supplier_details.tax_office}</div>
                           )}
-                          {invoice.supplier_details?.phone && (
-                            <div className="text-gray-500 text-xs">📞 {invoice.supplier_details.phone}</div>
-                          )}
-                          {invoice.supplier_details?.address && (
+                          {invoice.supplier_details?.address?.street && (
                             <div className="text-gray-500 text-xs">
                               📍 {[
                                 invoice.supplier_details.address.street,
                                 invoice.supplier_details.address.district,
-                                invoice.supplier_details.address.city
+                                invoice.supplier_details.address.city,
+                                invoice.supplier_details.address.postal_code
                               ].filter(Boolean).join(', ')}
                             </div>
+                          )}
+                          {invoice.supplier_details?.address?.country && (
+                            <div className="text-gray-500 text-xs">🌍 {invoice.supplier_details.address.country}</div>
+                          )}
+                          {invoice.supplier_details?.phone && (
+                            <div className="text-gray-500 text-xs">📞 {invoice.supplier_details.phone}</div>
+                          )}
+                          {invoice.supplier_details?.email && (
+                            <div className="text-gray-500 text-xs">📧 {invoice.supplier_details.email}</div>
                           )}
                         </div>
                       </details>

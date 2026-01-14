@@ -280,6 +280,15 @@ serve(async (req) => {
               invoice_id: parsedInvoice.invoiceNumber || '',
               supplier_vkn: parsedInvoice.supplierInfo?.taxNumber || '',
               supplier_name: parsedInvoice.supplierInfo?.name || '',
+              // Tedarikçi ek bilgileri
+              supplier_tax_office: parsedInvoice.supplierInfo?.taxOffice || null,
+              supplier_address_street: parsedInvoice.supplierInfo?.address?.street || null,
+              supplier_address_district: parsedInvoice.supplierInfo?.address?.district || null,
+              supplier_address_city: parsedInvoice.supplierInfo?.address?.city || null,
+              supplier_address_postal_code: parsedInvoice.supplierInfo?.address?.postalCode || null,
+              supplier_address_country: parsedInvoice.supplierInfo?.address?.country || null,
+              supplier_contact_email: parsedInvoice.supplierInfo?.contact?.email || null,
+              supplier_contact_phone: parsedInvoice.supplierInfo?.contact?.phone || null,
               invoice_date: parsedInvoice.invoiceDate?.split('T')[0] || new Date().toISOString().split('T')[0],
               due_date: parsedInvoice.dueDate?.split('T')[0] || null,
               subtotal: parsedInvoice.taxExclusiveAmount || 0,
@@ -288,6 +297,7 @@ serve(async (req) => {
               currency: parsedInvoice.currency || 'TRY',
               invoice_type: parsedInvoice.invoiceType || 'TEMEL',
               invoice_profile: parsedInvoice.invoiceProfile || 'TEMELFATURA',
+              xml_content: xmlContent, // Ham XML içeriğini kaydet
               company_id: profile.company_id,
               fetched_at: new Date().toISOString(),
             };

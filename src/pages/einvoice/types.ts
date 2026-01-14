@@ -35,6 +35,7 @@ export interface EInvoiceDetails {
   supplier_details?: {
     company_name?: string;
     tax_number?: string;
+    tax_office?: string; // Vergi dairesi
     trade_registry_number?: string;
     mersis_number?: string;
     email?: string;

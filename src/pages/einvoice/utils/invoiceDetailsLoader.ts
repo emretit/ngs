@@ -8,6 +8,53 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
   // Önce integrator'ü kontrol et
   const integrator = await IntegratorService.getSelectedIntegrator();
   logger.debug('🔄 Loading invoice details from', integrator, 'API for:', invoiceId);
+  
+  // ========================================
+  // 📊 VERİTABANINDAN TEDARİKÇİ BİLGİLERİNİ ÇEK
+  // ========================================
+  let dbSupplierInfo: any = null;
+  try {
+    const { data: dbInvoice, error: dbError } = await supabase
+      .from('einvoices_received')
+      .select(`
+        supplier_name,
+        supplier_vkn,
+        supplier_tax_office,
+        supplier_address_street,
+        supplier_address_district,
+        supplier_address_city,
+        supplier_address_postal_code,
+        supplier_address_country,
+        supplier_contact_email,
+        supplier_contact_phone
+      `)
+      .eq('invoice_uuid', invoiceId)
+      .single();
+    
+    if (!dbError && dbInvoice) {
+      dbSupplierInfo = {
+        name: dbInvoice.supplier_name,
+        taxNumber: dbInvoice.supplier_vkn,
+        taxOffice: dbInvoice.supplier_tax_office,
+        address: {
+          street: dbInvoice.supplier_address_street,
+          district: dbInvoice.supplier_address_district,
+          city: dbInvoice.supplier_address_city,
+          postalCode: dbInvoice.supplier_address_postal_code,
+          country: dbInvoice.supplier_address_country,
+        },
+        contact: {
+          email: dbInvoice.supplier_contact_email,
+          phone: dbInvoice.supplier_contact_phone,
+        }
+      };
+      logger.debug('✅ Tedarikçi bilgileri veritabanından çekildi:', dbSupplierInfo);
+    } else {
+      logger.debug('ℹ️ Veritabanında tedarikçi bilgisi bulunamadı, API\'den çekilecek');
+    }
+  } catch (error) {
+    logger.warn('⚠️ Veritabanından tedarikçi bilgisi çekilirken hata:', error);
+  }
 
   let apiInvoiceDetails: any;
 
@@ -123,8 +170,9 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
     availableKeys: apiInvoiceDetails ? Object.keys(apiInvoiceDetails) : []
   });
 
-  // Tedarikçi adı için önce supplierInfo'dan, sonra fallback'ler
+  // Tedarikçi adı için önce VERİTABANINDAN, sonra API'den, sonra fallback'ler
   const supplierName =
+    dbSupplierInfo?.name ||
     supplierInfo?.companyName ||
     apiInvoiceDetails?.supplierName ||
     apiInvoiceDetails?.SenderName ||
@@ -132,8 +180,9 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
     accountingSupplierParty?.PartyName?.Name ||
     'Tedarikçi';
 
-  // Tedarikçi VKN için önce supplierInfo'dan, sonra fallback'ler
+  // Tedarikçi VKN için önce VERİTABANINDAN, sonra API'den, sonra fallback'ler
   const supplierTaxNumber =
+    dbSupplierInfo?.taxNumber ||
     supplierInfo?.taxNumber ||
     apiInvoiceDetails?.supplierTaxNumber ||
     apiInvoiceDetails?.SenderTaxNumber ||
@@ -424,17 +473,21 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
       tax_number: supplierTaxNumber,
       trade_registry_number: supplierInfo?.tradeRegistryNumber || null,
       mersis_number: supplierInfo?.mersisNumber || null,
-      email: supplierInfo?.email || null,
-      phone: supplierInfo?.phone || null,
+      // İletişim bilgileri: Önce veritabanından, sonra API'den
+      email: dbSupplierInfo?.contact?.email || supplierInfo?.email || null,
+      phone: dbSupplierInfo?.contact?.phone || supplierInfo?.phone || null,
       website: supplierInfo?.website || null,
       fax: supplierInfo?.fax || null,
+      // Adres bilgileri: Önce veritabanından, sonra API'den
       address: {
-        street: supplierInfo?.address?.street || null,
-        district: supplierInfo?.address?.district || null,
-        city: supplierInfo?.address?.city || null,
-        postal_code: supplierInfo?.address?.postalCode || supplierInfo?.address?.postal_code || null,
-        country: supplierInfo?.address?.country || 'Türkiye'
+        street: dbSupplierInfo?.address?.street || supplierInfo?.address?.street || null,
+        district: dbSupplierInfo?.address?.district || supplierInfo?.address?.district || null,
+        city: dbSupplierInfo?.address?.city || supplierInfo?.address?.city || null,
+        postal_code: dbSupplierInfo?.address?.postalCode || supplierInfo?.address?.postalCode || supplierInfo?.address?.postal_code || null,
+        country: dbSupplierInfo?.address?.country || supplierInfo?.address?.country || 'Türkiye'
       },
+      // Vergi dairesi: Önce veritabanından, sonra API'den
+      tax_office: dbSupplierInfo?.taxOffice || supplierInfo?.taxOffice || null,
       bank_info: {
         bank_name: supplierInfo?.bankInfo?.bankName || null,
         iban: supplierInfo?.bankInfo?.iban || null,

@@ -117,7 +117,7 @@ export const usePurchaseInvoicesCRUD = () => {
     const { error: itemsError } = await supabase
       .from("purchase_invoice_items")
       .delete()
-      .eq("invoice_id", id);
+      .eq("purchase_invoice_id", id);
 
     if (itemsError) {
       logger.error("Items delete error:", itemsError);

@@ -249,10 +249,64 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
                      supplierParty?.['PartyName'] || 
                      {};
     
-    const supplierName = partyName?.['cbc:Name']?.['#text'] || 
-                        partyName?.['cbc:Name'] || 
-                        partyName?.['Name'] || 
+    // Önce PartyName'i dene
+    let supplierName = partyName?.['cbc:Name']?.['#text'] || 
+                      partyName?.['cbc:Name'] || 
+                      partyName?.['Name'] || 
+                      '';
+    
+    // Eğer PartyName boşsa, Person bilgilerini kullan (Gerçek kişi faturaları için)
+    if (!supplierName || supplierName.trim() === '') {
+      const person = supplierParty?.['cac:Person'] || 
+                     supplierParty?.['Person'] || 
+                     {};
+      
+      const firstName = person?.['cbc:FirstName']?.['#text'] || 
+                       person?.['cbc:FirstName'] || 
+                       person?.['FirstName'] || 
+                       '';
+      
+      const familyName = person?.['cbc:FamilyName']?.['#text'] || 
+                        person?.['cbc:FamilyName'] || 
+                        person?.['FamilyName'] || 
                         '';
+      
+      // Person bilgilerini birleştir
+      if (firstName || familyName) {
+        const personName = `${firstName} ${familyName}`.trim();
+        if (personName) {
+          supplierName = personName;
+        }
+      }
+    }
+    
+    // PartyIdentification'dan VKN/TCKN bilgisini çek (öncelikli)
+    const partyIdentification = supplierParty?.['cac:PartyIdentification'] || 
+                               supplierParty?.['PartyIdentification'] || 
+                               {};
+    
+    // PartyIdentification array veya single object olabilir
+    const partyIdArray = Array.isArray(partyIdentification) ? partyIdentification : 
+                        (partyIdentification && Object.keys(partyIdentification).length > 0 ? [partyIdentification] : []);
+    
+    let supplierTaxNumber = '';
+    
+    // Önce PartyIdentification'dan VKN/TCKN çek
+    for (const partyIdItem of partyIdArray) {
+      const idElement = partyIdItem?.['cbc:ID'] || partyIdItem?.['ID'] || {};
+      const idValue = typeof idElement === 'string' ? idElement : 
+                     (idElement?.['#text'] || idElement || '');
+      const schemeId = typeof idElement === 'object' && idElement !== null ? 
+                      (idElement['@_schemeID'] || idElement['@schemeID'] || 
+                       (partyIdItem?.['cbc:ID'] && typeof partyIdItem['cbc:ID'] === 'object' ? 
+                        (partyIdItem['cbc:ID']['@_schemeID'] || partyIdItem['cbc:ID']['@schemeID'] || '') : '') || '') : '';
+      
+      // VKN veya TCKN varsa kullan
+      if (idValue && (schemeId === 'VKN' || schemeId === 'TCKN')) {
+        supplierTaxNumber = idValue;
+        break; // İlk VKN/TCKN'i bulduğumuzda dur
+      }
+    }
     
     const partyTaxScheme = supplierParty?.['cac:PartyTaxScheme'] || 
                           supplierParty?.['PartyTaxScheme'] || 
@@ -260,21 +314,26 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
     
     // PartyTaxScheme can be array or single object
     const taxSchemeArray = Array.isArray(partyTaxScheme) ? partyTaxScheme : [partyTaxScheme];
-    let supplierTaxNumber = '';
     let supplierTaxOffice = '';
     
-    for (const taxSchemeItem of taxSchemeArray) {
-      const companyId = taxSchemeItem?.['cac:CompanyID']?.['#text'] || 
-                       taxSchemeItem?.['cac:CompanyID'] || 
-                       taxSchemeItem?.['CompanyID'] || 
-                       taxSchemeItem?.['cbc:CompanyID']?.['#text'] || 
-                       taxSchemeItem?.['cbc:CompanyID'] || 
-                       '';
-      
-      if (companyId) {
-        supplierTaxNumber = companyId;
+    // Eğer PartyIdentification'dan VKN/TCKN bulamadıysak, PartyTaxScheme'den dene
+    if (!supplierTaxNumber) {
+      for (const taxSchemeItem of taxSchemeArray) {
+        const companyId = taxSchemeItem?.['cac:CompanyID']?.['#text'] || 
+                         taxSchemeItem?.['cac:CompanyID'] || 
+                         taxSchemeItem?.['CompanyID'] || 
+                         taxSchemeItem?.['cbc:CompanyID']?.['#text'] || 
+                         taxSchemeItem?.['cbc:CompanyID'] || 
+                         '';
+        
+        if (companyId) {
+          supplierTaxNumber = companyId;
+        }
       }
-      
+    }
+    
+    // Vergi dairesi bilgisini çek
+    for (const taxSchemeItem of taxSchemeArray) {
       const taxSchemeName = taxSchemeItem?.['cac:TaxScheme']?.['cbc:Name']?.['#text'] ||
                            taxSchemeItem?.['cac:TaxScheme']?.['cbc:Name'] ||
                            taxSchemeItem?.['TaxScheme']?.['Name'] || 
@@ -282,9 +341,6 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
       
       if (taxSchemeName) {
         supplierTaxOffice = taxSchemeName;
-      }
-      
-      if (companyId && taxSchemeName) {
         break;
       }
     }

@@ -1,0 +1,119 @@
+{
+  "invoice_basic": {
+    "id": "ESG2026000000115",
+    "uuid": "c88947f9-ce01-4542-a088-1f230bd1c61d",
+    "invoice_number": "",
+    "issue_date": "2026-01-12",
+    "issue_time": "15:14:00",
+    "invoice_type_code": "SATIS",
+    "document_currency_code": "TRY",
+    "line_count_numeric": "2",
+    "profile_id": "TEMELFATURA"
+  },
+  "supplier": {
+    "address": {
+      "street": "HALÄ°L RIFAT PAÅA MAHALLESÄ° YÃZER HAVUZ SOKAK PERPA TÄ°CARET MERKEZÄ° B BLOK KAT:11 NO:1747",
+      "building": "",
+      "city": "Ä°STANBUL",
+      "postal_code": "",
+      "country": "TÃ¼rkiye"
+    },
+    "contact": {
+      "phone": "5426644692",
+      "email": "umiterdogan@outlook.com.tr",
+      "fax": ""
+    }
+  },
+  "customer": {
+    "name": "NGS Ä°LETÄ°ÅÄ°M TEKNOLOJÄ°LERÄ° VE GÃVENLÄ°K SÄ°STEMLERÄ° LTD.ÅTÄ°.",
+    "address": {
+      "street": "EÄÄ°TÄ°M MAH. MURATPAÅA CAD. NURTAÅ IÅ MERKEZI  NO: 1/1 Ä°Ã KAPI NO: 29 KADIKÃY/ Ä°STANBUL",
+      "building": "",
+      "city": "",
+      "postal_code": "",
+      "country": "."
+    },
+    "contact": {
+      "phone": "",
+      "email": "info@ngsteknoloji.com",
+      "fax": ""
+    }
+  },
+  "financial": {
+    "tax_exclusive_amount": "5382.19",
+    "tax_inclusive_amount": "6458.63",
+    "payable_amount": "6458.63",
+    "allowance_total_amount": "0.00",
+    "charge_total_amount": "",
+    "prepaid_amount": "",
+    "payable_rounding_amount": "0"
+  },
+  "lines": [
+    {
+      "line_number": 1,
+      "id": "1",
+      "description": "2",
+      "note": null,
+      "quantity": {
+        "value": "2",
+        "unit": "C62"
+      },
+      "price": {
+        "amount": "775.070000",
+        "currency": "TRY"
+      },
+      "line_extension_amount": "1550.14",
+      "taxes": [
+        {
+          "category": "",
+          "name": "",
+          "percent": "20.00",
+          "taxable_amount": "1550.14",
+          "tax_amount": "310.0280"
+        }
+      ]
+    },
+    {
+      "line_number": 2,
+      "id": "2",
+      "description": "3",
+      "note": null,
+      "quantity": {
+        "value": "3",
+        "unit": "C62"
+      },
+      "price": {
+        "amount": "1277.350000",
+        "currency": "TRY"
+      },
+      "line_extension_amount": "3832.05",
+      "taxes": [
+        {
+          "category": "",
+          "name": "",
+          "percent": "20.00",
+          "taxable_amount": "3832.05",
+          "tax_amount": "766.4100"
+        }
+      ]
+    }
+  ],
+  "taxes": [
+    {
+      "category": "",
+      "name": "",
+      "percent": "20.00",
+      "taxable_amount": "5382.19",
+      "tax_amount": "1076.44"
+    }
+  ],
+  "payment": {
+    "payment_means_code": "97",
+    "payment_due_date": "2026-01-12",
+    "instruction_note": ""
+  },
+  "signature": {
+    "signing_time": "2026-01-13T12:35:30.544+03:00",
+    "signed": true
+  }
+}

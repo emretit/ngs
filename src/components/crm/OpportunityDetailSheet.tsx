@@ -1,22 +1,17 @@
-import { useState, useEffect } from "react";
-import { logger } from '@/utils/logger';
+import { useState } from "react";
+import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, FormProvider } from "react-hook-form";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { Save, Plus, Phone, Mail, MessageSquare, Calendar, User, Edit2, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { Opportunity, OpportunityStatus, opportunityStatusLabels, ContactHistoryItem } from "@/types/crm";
+import { toast } from "sonner";
+import { Plus, Phone, Mail, Calendar, MessageSquare, CheckCircle2, Edit2, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Opportunity, opportunityStatusLabels } from "@/types/crm";
 import { crmService } from "@/services/crmService";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 import NewActivityDialog from "@/components/activities/NewActivityDialog";
-import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
+import { EditableDetailSheet, FieldConfig } from "@/components/common/EditableDetailSheet";
 
 interface OpportunityDetailSheetProps {
   opportunity: Opportunity | null;
@@ -24,124 +19,288 @@ interface OpportunityDetailSheetProps {
   onClose: () => void;
 }
 
-export const OpportunityDetailSheet = ({ 
-  opportunity, 
-  isOpen, 
-  onClose 
-}: OpportunityDetailSheetProps) => {
-  const [currentStatus, setCurrentStatus] = useState<OpportunityStatus | null>(null);
-  const [editingValues, setEditingValues] = useState<Partial<Opportunity>>({});
-  const [contactHistory, setContactHistory] = useState<ContactHistoryItem[]>([]);
-  const [isNewActivityDialogOpen, setIsNewActivityDialogOpen] = useState(false);
+// Validation schema
+const opportunitySchema = z.object({
+  title: z.string().min(1, 'Başlık gerekli'),
+  description: z.string().optional(),
+  status: z.string(),
+  priority: z.string(),
+  value: z.number().optional(),
+  currency: z.string().optional(),
+  expected_close_date: z.string().optional(),
+  employee_id: z.string().optional(),
+});
 
+type OpportunityFormData = z.infer<typeof opportunitySchema>;
+
+// Status options
+const statusOptions = Object.entries(opportunityStatusLabels).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+// Priority options
+const priorityOptions = [
+  { value: 'low', label: 'Düşük' },
+  { value: 'medium', label: 'Orta' },
+  { value: 'high', label: 'Yüksek' },
+];
+
+// Currency options
+const currencyOptions = [
+  { value: 'TRY', label: 'TRY (₺)' },
+  { value: 'USD', label: 'USD ($)' },
+  { value: 'EUR', label: 'EUR (€)' },
+  { value: 'GBP', label: 'GBP (£)' },
+];
+
+export const OpportunityDetailSheet = ({
+  opportunity,
+  isOpen,
+  onClose
+}: OpportunityDetailSheetProps) => {
+  const [isNewActivityDialogOpen, setIsNewActivityDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Form for ProposalPartnerSelect
-  const partnerForm = useForm({
-    defaultValues: {
-      customer_id: opportunity?.customer_id || "",
-      supplier_id: null
-    }
-  });
-
-  // Set the current status when the opportunity changes
-  useEffect(() => {
-    if (opportunity && opportunity.status !== currentStatus) {
-      setCurrentStatus(opportunity.status as OpportunityStatus);
-      setEditingValues(opportunity);
-
-      // Update partner form with customer_id
-      if (opportunity.customer_id) {
-        partnerForm.setValue("customer_id", opportunity.customer_id);
-      }
-
-      // Load contact history
-      if (opportunity.contact_history) {
-        setContactHistory(Array.isArray(opportunity.contact_history) ? opportunity.contact_history : []);
-      }
-    }
-  }, [opportunity, currentStatus, partnerForm]);
-
+  // Update mutation
   const updateOpportunityMutation = useMutation({
-    mutationFn: async ({
-      id,
-      status,
-      data = {}
-    }: {
-      id: string;
-      status?: OpportunityStatus;
-      data?: Partial<Opportunity>;
-    }) => {
-      const updateData = { ...data };
+    mutationFn: async (values: OpportunityFormData) => {
+      if (!opportunity?.id) throw new Error('Opportunity ID is required');
 
-      if (status) {
-        updateData.status = status;
-      }
-
-      const { error } = await crmService.updateOpportunity(id, updateData);
-
+      const { error } = await crmService.updateOpportunity(opportunity.id, values);
       if (error) throw error;
 
-      return { id, status, previousStatus: opportunity?.status };
+      return { id: opportunity.id };
     },
-    onSuccess: async (data) => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['opportunities'] });
-      if (data.status) {
-        toast.success('Durum güncellendi', {
-          description: `Fırsat durumu başarıyla güncellendi.`,
-          className: "bg-green-50 border-green-200",
-        });
-      } else {
-        toast.success('Fırsat güncellendi', {
-          description: `Fırsat başarıyla güncellendi.`,
-          className: "bg-green-50 border-green-200",
-        });
-      }
+      toast.success('Fırsat güncellendi', {
+        description: 'Fırsat başarıyla güncellendi.',
+        className: "bg-green-50 border-green-200",
+      });
     },
     onError: (error) => {
       toast.error('Hata', {
         description: 'Fırsat güncellenirken bir hata oluştu',
         className: "bg-gray-50 border-gray-200",
       });
-      logger.error('Error updating opportunity:', error);
+      console.error('Error updating opportunity:', error);
     }
   });
-
-  const handleStatusChange = (newStatus: string) => {
-    setCurrentStatus(newStatus as OpportunityStatus);
-    // Update in editingValues so it will be saved with other changes
-    setEditingValues(prev => ({ ...prev, status: newStatus as OpportunityStatus }));
-  };
-
-  const handleInputChange = (field: keyof Opportunity, value: any) => {
-    setEditingValues(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleEmployeeChange = (value: string) => {
-    setEditingValues(prev => ({ ...prev, employee_id: value }));
-  };
-
-  const handleSaveChanges = async () => {
-    if (!opportunity) return;
-
-    await updateOpportunityMutation.mutateAsync({
-      id: opportunity.id,
-      status: currentStatus !== opportunity.status ? currentStatus : undefined,
-      data: editingValues
-    });
-  };
-
 
   const handleActivitySuccess = () => {
     setIsNewActivityDialogOpen(false);
     queryClient.invalidateQueries({ queryKey: ['activities'] });
   };
 
-  if (!opportunity) return null;
+  const handleSave = async (values: OpportunityFormData) => {
+    await updateOpportunityMutation.mutateAsync(values);
+  };
+
+  // Form fields configuration
+  const fields: FieldConfig<OpportunityFormData>[] = [
+    {
+      name: 'title',
+      label: 'Başlık',
+      type: 'text',
+      placeholder: 'Fırsat başlığını girin',
+      required: true,
+      gridColumn: 'col-span-full',
+    },
+    {
+      name: 'description',
+      label: 'Açıklama',
+      type: 'textarea',
+      placeholder: 'Fırsat detaylarını girin',
+      gridColumn: 'col-span-full',
+    },
+    {
+      name: 'status',
+      label: 'Durum',
+      type: 'select',
+      options: statusOptions,
+      gridColumn: 'col-span-1',
+    },
+    {
+      name: 'priority',
+      label: 'Öncelik',
+      type: 'select',
+      options: priorityOptions,
+      gridColumn: 'col-span-1',
+    },
+    {
+      name: 'value',
+      label: 'Tahmini Değer',
+      type: 'number',
+      placeholder: '0',
+      gridColumn: 'col-span-1',
+    },
+    {
+      name: 'currency',
+      label: 'Para Birimi',
+      type: 'select',
+      options: currencyOptions,
+      gridColumn: 'col-span-1',
+    },
+    {
+      name: 'expected_close_date',
+      label: 'Beklenen Kapanış Tarihi',
+      type: 'date',
+      gridColumn: 'col-span-full',
+    },
+    {
+      name: 'employee_id',
+      label: 'Sorumlu Kişi',
+      type: 'custom',
+      gridColumn: 'col-span-full',
+      render: (field) => (
+        <EmployeeSelector
+          value={field.value || ''}
+          onChange={field.onChange}
+          label="Sorumlu Kişi"
+          placeholder="Sorumlu kişi seçin..."
+          searchPlaceholder="Çalışan ara..."
+          noResultsText="Çalışan bulunamadı"
+          showLabel={false}
+          triggerClassName="h-10"
+        />
+      ),
+    },
+  ];
+
+  // Render custom actions
+  const renderActions = () => (
+    <div className="space-y-4">
+      {/* Add Activity Button */}
+      <div className="flex justify-between items-center">
+        <h3 className="text-sm font-medium">Aktiviteler</h3>
+        <Button
+          onClick={() => setIsNewActivityDialogOpen(true)}
+          size="sm"
+          className="bg-blue-600 hover:bg-blue-700 text-white h-10"
+        >
+          <Plus className="h-3 w-3 mr-1" />
+          Yeni
+        </Button>
+      </div>
+
+      {/* Contact History */}
+      {opportunity?.contact_history && Array.isArray(opportunity.contact_history) && opportunity.contact_history.length > 0 && (
+        <div className="space-y-2">
+          {opportunity.contact_history.map((activity: any) => (
+            <div key={activity.id} className="flex items-start space-x-2 p-2 bg-gray-50 rounded-lg">
+              <div className="p-1 rounded-full bg-blue-100">
+                {activity.contact_type === 'call' && <Phone className="h-3 w-3 text-blue-600" />}
+                {activity.contact_type === 'email' && <Mail className="h-3 w-3 text-blue-600" />}
+                {activity.contact_type === 'meeting' && <Calendar className="h-3 w-3 text-blue-600" />}
+                {activity.contact_type === 'other' && <MessageSquare className="h-3 w-3 text-blue-600" />}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-900">
+                    {activity.contact_type === 'call' && 'Telefon'}
+                    {activity.contact_type === 'email' && 'E-posta'}
+                    {activity.contact_type === 'meeting' && 'Toplantı'}
+                    {activity.contact_type === 'other' && 'Diğer'}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {format(new Date(activity.date), 'dd MMM yyyy', { locale: tr })}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 mt-0.5">{activity.notes}</p>
+                {activity.employee_name && (
+                  <p className="text-xs text-gray-500 mt-0.5">{activity.employee_name}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Separator />
+
+      {/* Opportunity History */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium">Fırsat Geçmişi</h3>
+
+        {/* Created */}
+        {opportunity?.created_at && (
+          <div className="flex items-start space-x-2 p-2 bg-gray-50 rounded-lg">
+            <div className="p-1 rounded-full bg-green-100">
+              <CheckCircle2 className="h-3 w-3 text-green-600" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-900">Fırsat Oluşturuldu</span>
+                <span className="text-xs text-gray-500">
+                  {format(new Date(opportunity.created_at), 'dd MMM yyyy HH:mm', { locale: tr })}
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 mt-0.5">
+                {opportunity.title} başlıklı fırsat oluşturuldu
+              </p>
+              {opportunity.employee?.first_name && (
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Oluşturan: {opportunity.employee.first_name} {opportunity.employee.last_name}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Updated */}
+        {opportunity?.updated_at && opportunity.updated_at !== opportunity.created_at && (
+          <div className="flex items-start space-x-2 p-2 bg-gray-50 rounded-lg">
+            <div className="p-1 rounded-full bg-blue-100">
+              <Edit2 className="h-3 w-3 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-900">Son Güncelleme</span>
+                <span className="text-xs text-gray-500">
+                  {format(new Date(opportunity.updated_at), 'dd MMM yyyy HH:mm', { locale: tr })}
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 mt-0.5">
+                Mevcut durum: {opportunityStatusLabels[opportunity.status]}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Customer Info */}
+        {opportunity?.customer && (
+          <div className="flex items-start space-x-2 p-2 bg-gray-50 rounded-lg">
+            <div className="p-1 rounded-full bg-gray-100">
+              <User className="h-3 w-3 text-gray-600" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-900">Müşteri Bilgileri</span>
+              </div>
+              <p className="text-xs text-gray-600 mt-0.5">
+                {opportunity.customer.name}
+              </p>
+              {opportunity.customer.email && (
+                <p className="text-xs text-gray-500 mt-0.5">
+                  E-posta: {opportunity.customer.email}
+                </p>
+              )}
+              {opportunity.customer.phone && (
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Telefon: {opportunity.customer.phone}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <>
-      {/* Custom Overlay for modal={false} */}
+      {/* Custom Overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-in fade-in-0"
@@ -150,320 +309,29 @@ export const OpportunityDetailSheet = ({
         />
       )}
 
-      <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()} modal={false}>
-        <SheetContent className="sm:max-w-xl md:max-w-2xl overflow-hidden p-0 flex flex-col border-l border-gray-200 bg-white">
-        <SheetHeader className="text-left border-b pb-1.5 mb-0 px-1.5 pt-1.5 flex-shrink-0">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-            <SheetTitle className="text-lg font-semibold text-gray-900">Fırsat Detayları</SheetTitle>
-          </div>
-        </SheetHeader>
+      <EditableDetailSheet
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Fırsat Detayları"
+        data={opportunity as OpportunityFormData}
+        fields={fields}
+        schema={opportunitySchema}
+        onSave={handleSave}
+        isSaving={updateOpportunityMutation.isPending}
+        renderActions={renderActions}
+        saveButtonText="Değişiklikleri Kaydet"
+        cancelButtonText="İptal"
+        size="2xl"
+      />
 
-        {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide p-1.5">
-          <div className="flex flex-col h-full">
-            <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 -mr-1">
-              <div className="space-y-1.5">
-                {/* Başlık ve Açıklama */}
-                <div className="space-y-1">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="title" className="text-xs font-medium text-gray-700">Başlık *</Label>
-                    <Input
-                      id="title"
-                      value={editingValues.title || ""}
-                      onChange={(e) => handleInputChange("title", e.target.value)}
-                      placeholder="Fırsat başlığını girin"
-                      className="h-10 text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <Label htmlFor="description" className="text-xs font-medium text-gray-700">Açıklama</Label>
-                    <Textarea
-                      id="description"
-                      value={editingValues.description || ""}
-                      onChange={(e) => handleInputChange("description", e.target.value)}
-                      placeholder="Fırsat detaylarını girin"
-                      rows={2}
-                      className="resize-none min-h-[2.5rem] text-xs"
-                    />
-                  </div>
-                </div>
-
-                {/* Müşteri ve Sorumlu */}
-                <div className="grid grid-cols-2 gap-1.5">
-                  <div className="space-y-1">
-                    <FormProvider {...partnerForm}>
-                      <ProposalPartnerSelect
-                        partnerType="customer"
-                        placeholder="Müşteri seçin..."
-                        label="Müşteri"
-                        hideLabel={false}
-                        disabled={true}
-                      />
-                    </FormProvider>
-                  </div>
-                  <div className="space-y-1">
-                    <EmployeeSelector
-                      value={editingValues.employee_id || opportunity.employee_id || ""}
-                      onChange={handleEmployeeChange}
-                      label="Sorumlu Kişi"
-                      placeholder="Sorumlu kişi seçin..."
-                      searchPlaceholder="Çalışan ara..."
-                      noResultsText="Çalışan bulunamadı"
-                      showLabel={true}
-                      triggerClassName="h-10"
-                    />
-                  </div>
-                </div>
-
-                {/* Durum ve Öncelik */}
-                <div className="p-1 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-100">
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <div className="space-y-1">
-                      <Label className="text-xs font-medium text-gray-600">Durum</Label>
-                      <Select
-                        value={currentStatus || opportunity.status}
-                        onValueChange={handleStatusChange}
-                        disabled={updateOpportunityMutation.isPending}
-                      >
-                        <SelectTrigger className="h-10 bg-white border-gray-200 hover:border-primary/50 transition-colors w-full text-xs">
-                          <SelectValue placeholder="Durum seçin" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(opportunityStatusLabels).map(([status, label]) => (
-                            <SelectItem key={status} value={status}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label className="text-xs font-medium text-gray-600">Öncelik</Label>
-                      <Select
-                        value={editingValues.priority || opportunity.priority}
-                        onValueChange={(val) => handleInputChange("priority", val)}
-                      >
-                        <SelectTrigger className="h-10 bg-white border-gray-200 hover:border-primary/50 transition-colors w-full text-xs">
-                          <SelectValue placeholder="Öncelik seçin" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Düşük</SelectItem>
-                          <SelectItem value="medium">Orta</SelectItem>
-                          <SelectItem value="high">Yüksek</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Değer ve Para Birimi */}
-                <div className="grid grid-cols-2 gap-1.5">
-                  <div className="space-y-0.5">
-                    <Label className="text-xs font-medium text-gray-700">Tahmini Değer</Label>
-                    <Input
-                      type="number"
-                      value={editingValues.value ?? opportunity.value}
-                      onChange={(e) => handleInputChange("value", parseFloat(e.target.value))}
-                      className="h-10 text-xs"
-                    />
-                  </div>
-                  <div className="space-y-0.5">
-                    <Label className="text-xs font-medium text-gray-700">Para Birimi</Label>
-                    <Select
-                      value={editingValues.currency || opportunity.currency || "TRY"}
-                      onValueChange={(val) => handleInputChange("currency", val)}
-                    >
-                      <SelectTrigger className="h-10 border-gray-200 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="TRY">TRY (₺)</SelectItem>
-                        <SelectItem value="USD">USD ($)</SelectItem>
-                        <SelectItem value="EUR">EUR (€)</SelectItem>
-                        <SelectItem value="GBP">GBP (£)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Kapanış Tarihi */}
-                <div className="space-y-0.5">
-                  <Label className="text-xs font-medium text-gray-700">Beklenen Kapanış Tarihi</Label>
-                  <Input
-                    type="date"
-                    value={editingValues.expected_close_date?.split('T')[0] || ""}
-                    onChange={(e) => handleInputChange("expected_close_date", e.target.value)}
-                    className="h-10 text-xs"
-                  />
-                </div>
-
-                {/* Aktiviteler */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-xs font-medium text-gray-700">Aktiviteler</Label>
-                    <Button
-                      onClick={() => setIsNewActivityDialogOpen(true)}
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 text-white h-10"
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Yeni
-                    </Button>
-                  </div>
-                  <div className="space-y-1">
-                    {contactHistory.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8 text-sm">Henüz aktivite yok</p>
-                    ) : (
-                      contactHistory.map((activity) => (
-                        <div key={activity.id} className="flex items-start space-x-2 p-1 bg-gray-50 rounded-lg">
-                          <div className="p-1 rounded-full bg-blue-100">
-                            {activity.contact_type === 'call' && <Phone className="h-3 w-3 text-blue-600" />}
-                            {activity.contact_type === 'email' && <Mail className="h-3 w-3 text-blue-600" />}
-                            {activity.contact_type === 'meeting' && <Calendar className="h-3 w-3 text-blue-600" />}
-                            {activity.contact_type === 'other' && <MessageSquare className="h-3 w-3 text-blue-600" />}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-medium text-gray-900">
-                                {activity.contact_type === 'call' && 'Telefon'}
-                                {activity.contact_type === 'email' && 'E-posta'}
-                                {activity.contact_type === 'meeting' && 'Toplantı'}
-                                {activity.contact_type === 'other' && 'Diğer'}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {format(new Date(activity.date), 'dd MMM yyyy', { locale: tr })}
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-600 mt-0.5">{activity.notes}</p>
-                            {activity.employee_name && (
-                              <p className="text-xs text-gray-500 mt-0.5">{activity.employee_name}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* Fırsat Geçmişi */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-gray-700">Fırsat Geçmişi</Label>
-                  <div className="space-y-1">
-                    <div className="flex items-start space-x-2 p-1 bg-gray-50 rounded-lg">
-                      <div className="p-1 rounded-full bg-green-100">
-                        <CheckCircle2 className="h-3 w-3 text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-gray-900">Fırsat Oluşturuldu</span>
-                          <span className="text-xs text-gray-500">
-                            {opportunity.created_at && format(new Date(opportunity.created_at), 'dd MMM yyyy HH:mm', { locale: tr })}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-600 mt-0.5">
-                          {opportunity.title} başlıklı fırsat oluşturuldu
-                        </p>
-                        {opportunity.employee?.first_name && (
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            Oluşturan: {opportunity.employee.first_name} {opportunity.employee.last_name}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {opportunity.updated_at && opportunity.updated_at !== opportunity.created_at && (
-                      <div className="flex items-start space-x-2 p-1 bg-gray-50 rounded-lg">
-                        <div className="p-1 rounded-full bg-blue-100">
-                          <Edit2 className="h-3 w-3 text-blue-600" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-gray-900">Son Güncelleme</span>
-                            <span className="text-xs text-gray-500">
-                              {format(new Date(opportunity.updated_at), 'dd MMM yyyy HH:mm', { locale: tr })}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-600 mt-0.5">
-                            Mevcut durum: {opportunityStatusLabels[opportunity.status]}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {opportunity.customer && (
-                      <div className="flex items-start space-x-2 p-1 bg-gray-50 rounded-lg">
-                        <div className="p-1 rounded-full bg-gray-100">
-                          <User className="h-3 w-3 text-gray-600" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-gray-900">Müşteri Bilgileri</span>
-                          </div>
-                          <p className="text-xs text-gray-600 mt-0.5">
-                            {opportunity.customer.name}
-                          </p>
-                          {opportunity.customer.email && (
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              E-posta: {opportunity.customer.email}
-                            </p>
-                          )}
-                          {opportunity.customer.phone && (
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              Telefon: {opportunity.customer.phone}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <SheetFooter className="flex justify-end gap-1.5 pt-1.5 px-1.5 pb-1.5 mt-auto border-t flex-shrink-0">
-          <Button
-            onClick={onClose}
-            variant="outline"
-            disabled={updateOpportunityMutation.isPending}
-            className="border-gray-200 text-gray-700 hover:bg-gray-50"
-          >
-            İptal
-          </Button>
-          <Button
-            onClick={handleSaveChanges}
-            disabled={updateOpportunityMutation.isPending}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            {updateOpportunityMutation.isPending ? (
-              <>
-                <span className="animate-spin mr-2">⏳</span>
-                Kaydediliyor...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Değişiklikleri Kaydet
-              </>
-            )}
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
-
-    {/* New Activity Dialog */}
-    <NewActivityDialog
-      isOpen={isNewActivityDialogOpen}
-      onClose={() => setIsNewActivityDialogOpen(false)}
-      onSuccess={handleActivitySuccess}
-      opportunityId={opportunity?.id}
-      disabledOpportunity={true}
-    />
+      {/* New Activity Dialog */}
+      <NewActivityDialog
+        isOpen={isNewActivityDialogOpen}
+        onClose={() => setIsNewActivityDialogOpen(false)}
+        onSuccess={handleActivitySuccess}
+        opportunityId={opportunity?.id}
+        disabledOpportunity={true}
+      />
     </>
   );
 };

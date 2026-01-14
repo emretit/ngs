@@ -1,32 +1,10 @@
-
-import { useState, useEffect } from "react";
-import { logger } from '@/utils/logger';
-import { CalendarIcon, Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import type { Task } from "@/types/task";
+import { EditableDetailSheet, FieldConfig } from "@/components/common/EditableDetailSheet";
 
 interface TaskDetailSheetProps {
   task: Task | null;
@@ -34,24 +12,25 @@ interface TaskDetailSheetProps {
   onClose: () => void;
 }
 
+// Validation schema
+const taskSchema = z.object({
+  description: z.string().optional(),
+});
+
+type TaskFormData = z.infer<typeof taskSchema>;
+
 const TaskDetailSheet = ({ task, isOpen, onClose }: TaskDetailSheetProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState<Task | null>(null);
 
-  useEffect(() => {
-    if (task) {
-      setFormData(task);
-    }
-  }, [task]);
-
+  // Update mutation
   const updateTaskMutation = useMutation({
-    mutationFn: async (updatedTask: Partial<Task>) => {
+    mutationFn: async (values: TaskFormData) => {
       if (!task?.id) throw new Error('Task ID is required');
 
       const { data, error } = await supabase
         .from('activities')
-        .update(updatedTask as any)
+        .update(values)
         .eq('id', task.id)
         .select();
 
@@ -61,56 +40,42 @@ const TaskDetailSheet = ({ task, isOpen, onClose }: TaskDetailSheetProps) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities'] });
       toast.success(t('toast.activityUpdated'));
-      onClose();
     },
     onError: (error) => {
       toast.error(t('toast.activityUpdateError'));
-      logger.error('Update error:', error);
+      console.error('Update error:', error);
     }
   });
 
-  const handleSave = () => {
-    if (!formData) return;
-    updateTaskMutation.mutate(formData);
-  };
+  // Form fields configuration
+  const fields: FieldConfig<TaskFormData>[] = [
+    {
+      name: 'description',
+      label: t("forms.addDescription"),
+      type: 'textarea',
+      placeholder: t("forms.addDescription"),
+      gridColumn: 'col-span-full',
+    },
+  ];
 
-  const handleInputChange = (key: keyof Task, value: any) => {
-    if (!formData) return;
-    setFormData({ ...formData, [key]: value });
+  const handleSave = async (values: TaskFormData) => {
+    await updateTaskMutation.mutateAsync(values);
   };
-
-  if (!formData) return null;
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="sm:max-w-xl overflow-y-auto">
-        <SheetHeader>
-          <h2 className="text-lg font-semibold text-foreground">{t("activities.title")}</h2>
-        </SheetHeader>
-        
-        <div className="py-4 space-y-6">
-          <Textarea
-            placeholder={t("forms.addDescription")}
-            value={formData.description || ""}
-            onChange={(e) => handleInputChange('description', e.target.value)}
-            className="min-h-[100px]"
-          />
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
-            <Button onClick={handleSave} disabled={updateTaskMutation.isPending}>
-              {updateTaskMutation.isPending ? (
-                t("common.saving")
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  {t("common.save")}
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+    <EditableDetailSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t("activities.title")}
+      data={task as TaskFormData}
+      fields={fields}
+      schema={taskSchema}
+      onSave={handleSave}
+      isSaving={updateTaskMutation.isPending}
+      saveButtonText={t("common.save")}
+      cancelButtonText={t("common.cancel")}
+      size="xl"
+    />
   );
 };
 

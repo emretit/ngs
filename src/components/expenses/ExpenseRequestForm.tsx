@@ -22,16 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon, Upload, X } from "lucide-react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
+import { Upload, X } from "lucide-react";
 import { useExpenseRequests } from "@/hooks/useExpenseRequests";
 import { useAuth } from "@/auth/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -156,34 +148,14 @@ export const ExpenseRequestForm: React.FC<ExpenseRequestFormProps> = ({
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Harcama Tarihi</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP", { locale: tr })
-                      ) : (
-                        <span>Tarih seçin</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <FormControl>
+                <EnhancedDatePicker
+                  date={field.value}
+                  onSelect={field.onChange}
+                  placeholder="Tarih seçin"
+                  className="w-full"
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

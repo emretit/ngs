@@ -433,6 +433,18 @@ export default function EInvoiceProcessModal({
                 </div>
               </div>
             </div>
+            
+            {/* Döviz Kuru Bilgisi - Sadece TRY değilse göster */}
+            {invoice?.currency && invoice.currency !== 'TRY' && invoice?.exchange_rate && (
+              <div className="mt-4 p-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-amber-900">Döviz Kuru:</span>
+                  <span className="text-amber-700">
+                    1 {invoice.currency} = {invoice.exchange_rate.toFixed(4)} TRY
+                  </span>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

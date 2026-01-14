@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Star } from "lucide-react";
@@ -80,28 +80,12 @@ const TaskMetadata = ({
 
           <div className="space-y-1">
             <label className="text-sm font-medium text-gray-700">Bitiş Tarihi</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal h-8",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  {date ? format(date, "dd MMM yyyy") : <span>Tarih seçin</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={handleDateChange}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            <EnhancedDatePicker
+              date={date}
+              onSelect={handleDateChange}
+              placeholder="Tarih seçin"
+              className="w-full"
+            />
           </div>
         </div>
 

@@ -851,20 +851,59 @@ export default function EInvoiceProcess() {
                     <span className="text-gray-500">Para Birimi:</span>
                     <span className="text-xs font-medium">{invoice.currency === 'TL' ? 'TRY' : (invoice.currency || 'TRY')}</span>
                   </div>
+                  
+                  {/* Döviz Kuru - Sadece TRY değilse göster */}
+                  {invoice.currency && invoice.currency !== 'TRY' && invoice.currency !== 'TL' && (
+                    <div className="mt-2 p-1.5 bg-gradient-to-r from-amber-50 to-orange-50 rounded border border-amber-200">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-medium text-amber-900">Döviz Kuru:</span>
+                          {invoice.exchange_rate ? (
+                            <span className="text-amber-700 font-semibold">
+                              1 {invoice.currency} = {invoice.exchange_rate.toFixed(4)} TRY
+                            </span>
+                          ) : (
+                            <span className="text-amber-600 text-[10px] italic">XML'de bulunamadı</span>
+                          )}
+                        </div>
+                        {/* Debug: API'den gelen değeri logla */}
+                        {(() => {
+                          logger.debug('💱 Invoice exchange_rate:', invoice.exchange_rate, 'Currency:', invoice.currency);
+                          return null;
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                  
                   <Separator className="my-2" />
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-xs">Ara Toplam:</span>
-                    <span className="font-medium text-xs">{formatCurrency(invoice.subtotal, invoice.currency)}</span>
+                    <div className="text-right">
+                      <div className="font-medium text-xs">{formatCurrency(invoice.subtotal, invoice.currency)}</div>
+                      {invoice.subtotal_try && invoice.currency !== 'TRY' && (
+                        <div className="text-[9px] text-gray-400">{formatCurrency(invoice.subtotal_try, 'TRY')}</div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-xs">KDV:</span>
-                    <span className="font-medium text-xs">{formatCurrency(invoice.tax_total, invoice.currency)}</span>
+                    <div className="text-right">
+                      <div className="font-medium text-xs">{formatCurrency(invoice.tax_total, invoice.currency)}</div>
+                      {invoice.tax_total_try && invoice.currency !== 'TRY' && (
+                        <div className="text-[9px] text-gray-400">{formatCurrency(invoice.tax_total_try, 'TRY')}</div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-between items-center pt-1 border-t">
                     <span className="text-gray-700 font-medium text-xs">Toplam:</span>
-                    <span className="text-base font-bold text-primary">
-                      {formatCurrency(invoice.total_amount, invoice.currency)}
-                    </span>
+                    <div className="text-right">
+                      <div className="text-base font-bold text-primary">
+                        {formatCurrency(invoice.total_amount, invoice.currency)}
+                      </div>
+                      {invoice.total_amount_try && invoice.currency !== 'TRY' && (
+                        <div className="text-[10px] text-gray-500 font-medium">{formatCurrency(invoice.total_amount_try, 'TRY')}</div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -1198,6 +1237,7 @@ export default function EInvoiceProcess() {
             invoiceQuantity={matchingItems[pendingProductIndex]?.invoice_item.quantity}
             invoicePrice={matchingItems[pendingProductIndex]?.invoice_item.unit_price}
             invoiceUnit={matchingItems[pendingProductIndex]?.invoice_item.unit}
+            invoiceCurrency={invoice?.currency}
             onConfirm={handleProductDetailsConfirm}
           />
         )}
@@ -1212,11 +1252,11 @@ export default function EInvoiceProcess() {
           }}
           onProductCreated={handleProductCreated}
           initialData={
-            currentItemIndex >= 0 ? {
-              name: matchingItems[currentItemIndex]?.invoice_item.product_name || "",
-              unit: matchingItems[currentItemIndex]?.invoice_item.unit || "adet",
-              price: matchingItems[currentItemIndex]?.invoice_item.unit_price || 0,
-              tax_rate: matchingItems[currentItemIndex]?.invoice_item.tax_rate || 18,
+            currentItemIndex >= 0 && matchingItems[currentItemIndex] ? {
+              name: matchingItems[currentItemIndex].invoice_item.product_name || "",
+              unit: matchingItems[currentItemIndex].invoice_item.unit || "adet",
+              price: matchingItems[currentItemIndex].invoice_item.unit_price || 0,
+              tax_rate: matchingItems[currentItemIndex].invoice_item.tax_rate || 18,
               code: matchingItems[currentItemIndex]?.invoice_item.product_code || "",
             } : undefined
           }

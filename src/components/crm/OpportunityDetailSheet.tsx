@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
-import { Plus, Phone, Mail, Calendar, MessageSquare, CheckCircle2, Edit2, User, Activity } from "lucide-react";
+import { Plus, Phone, Mail, Calendar, MessageSquare, CheckCircle2, Edit2, User, Activity, Target, Clock, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -13,8 +13,10 @@ import { cn } from "@/lib/utils";
 import { Opportunity, opportunityStatusLabels } from "@/types/crm";
 import { crmService } from "@/services/crmService";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
-import NewActivityDialog from "@/components/activities/NewActivityDialog";
+import QuickActivityForm from "@/components/activities/QuickActivityForm";
+import EditActivityForm from "@/components/activities/EditActivityForm";
 import { EditableDetailSheet, FieldConfig } from "@/components/common/EditableDetailSheet";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OpportunityDetailSheetProps {
   opportunity: Opportunity | null;
@@ -62,11 +64,39 @@ export const OpportunityDetailSheet = ({
   isOpen,
   onClose
 }: OpportunityDetailSheetProps) => {
-  const [isNewActivityDialogOpen, setIsNewActivityDialogOpen] = useState(false);
+  const [showQuickActivityForm, setShowQuickActivityForm] = useState(false);
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  // Fırsata ait aktiviteleri çek
+  const { data: activities = [] } = useQuery({
+    queryKey: ['opportunity-activities', opportunity?.id],
+    queryFn: async () => {
+      if (!opportunity?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('activities')
+        .select(`
+          *,
+          assignee:assignee_id(
+            id,
+            first_name,
+            last_name
+          )
+        `)
+        .eq('opportunity_id', opportunity.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!opportunity?.id && isOpen,
+  });
 
   const handleClose = () => {
     console.log('[OpportunityDetailSheet] handleClose called');
+    setShowQuickActivityForm(false);
+    setEditingActivityId(null);
     onClose();
   };
 
@@ -81,7 +111,8 @@ export const OpportunityDetailSheet = ({
       return { id: opportunity.id };
     },
     onSuccess: async () => {
-      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      queryClient.invalidateQueries({ queryKey: ['opportunities'], exact: false });
+      await queryClient.refetchQueries({ queryKey: ['opportunities'], exact: false });
       toast.success('Fırsat güncellendi', {
         description: 'Fırsat başarıyla güncellendi.',
         className: "bg-green-50 border-green-200",
@@ -97,8 +128,17 @@ export const OpportunityDetailSheet = ({
   });
 
   const handleActivitySuccess = () => {
-    setIsNewActivityDialogOpen(false);
+    setShowQuickActivityForm(false);
+    setEditingActivityId(null);
     queryClient.invalidateQueries({ queryKey: ['activities'] });
+    queryClient.invalidateQueries({ queryKey: ['opportunity-activities', opportunity?.id] });
+  };
+
+  const handleEditClick = (activityId: string) => {
+    // Yeni form ekleme modunu kapat
+    setShowQuickActivityForm(false);
+    // Düzenleme modunu aç/kapat
+    setEditingActivityId(editingActivityId === activityId ? null : activityId);
   };
 
   const handleSave = async (values: OpportunityFormData) => {
@@ -212,9 +252,21 @@ export const OpportunityDetailSheet = ({
     },
   ];
 
+  // Get status badge for activities
+  const getActivityStatusBadge = (status: string) => {
+    const badges = {
+      todo: { label: 'Yapılacak', className: 'bg-red-100 text-red-700' },
+      in_progress: { label: 'Devam Ediyor', className: 'bg-yellow-100 text-yellow-700' },
+      completed: { label: 'Tamamlandı', className: 'bg-green-100 text-green-700' },
+      cancelled: { label: 'İptal', className: 'bg-gray-100 text-gray-700' },
+    };
+    return badges[status as keyof typeof badges] || badges.todo;
+  };
+
   // Render custom actions
   const renderActions = () => {
-    const activityCount = opportunity?.contact_history?.length || 0;
+    const activityCount = activities.length;
+    const contactHistoryCount = opportunity?.contact_history?.length || 0;
     
     return (
       <div className="space-y-2">
@@ -226,60 +278,153 @@ export const OpportunityDetailSheet = ({
                 <Activity className="h-3.5 w-3.5 text-blue-600" />
               </div>
               <h4 className="text-sm font-semibold text-gray-900">Aktiviteler</h4>
+              {activityCount > 0 && (
+                <span className="text-xs font-medium text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded-full">
+                  {activityCount}
+                </span>
+              )}
             </div>
             <Button
-              onClick={() => setIsNewActivityDialogOpen(true)}
+              onClick={() => {
+                setShowQuickActivityForm(!showQuickActivityForm);
+                setEditingActivityId(null); // Edit modunu kapat
+              }}
               size="sm"
               variant="outline"
               className="text-xs h-7 px-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
             >
               <Plus className="h-3 w-3 mr-1" />
-              Yeni
+              {showQuickActivityForm ? 'İptal' : 'Yeni'}
             </Button>
           </div>
 
-          {/* Contact History Accordion */}
-          {activityCount > 0 && (
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="activities" className="border-none">
-                <AccordionTrigger className="py-2 px-0 hover:no-underline">
-                  <span className="text-xs font-medium text-gray-700">
-                    İletişim Geçmişi ({activityCount})
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="pb-2">
-                  <div className="space-y-1.5">
-                    {opportunity?.contact_history?.map((activity: any) => (
-                      <div key={activity.id} className="flex items-start space-x-2 p-2 bg-white rounded-md">
-                        <div className="p-1 rounded-full bg-blue-100 flex-shrink-0">
-                          {activity.contact_type === 'call' && <Phone className="h-3.5 w-3.5 text-blue-600" />}
-                          {activity.contact_type === 'email' && <Mail className="h-3.5 w-3.5 text-blue-600" />}
-                          {activity.contact_type === 'meeting' && <Calendar className="h-3.5 w-3.5 text-blue-600" />}
-                          {activity.contact_type === 'other' && <MessageSquare className="h-3.5 w-3.5 text-blue-600" />}
-                        </div>
+          {/* Quick Activity Form */}
+          {showQuickActivityForm && (
+            <div className="mb-3">
+              <QuickActivityForm
+                opportunityId={opportunity?.id || ''}
+                customerId={opportunity?.customer_id || undefined}
+                customerName={opportunity?.customer?.name || undefined}
+                onSuccess={handleActivitySuccess}
+                onCancel={() => setShowQuickActivityForm(false)}
+              />
+            </div>
+          )}
+
+          {/* Aktiviteler Listesi */}
+          {activityCount > 0 ? (
+            <div className="space-y-1.5">
+              {activities.map((activity: any) => {
+                const statusBadge = getActivityStatusBadge(activity.status);
+                const isEditing = editingActivityId === activity.id;
+                
+                return (
+                  <div key={activity.id} className="bg-white rounded-md border border-gray-100">
+                    <div className="p-2 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-gray-900">
-                              {activity.contact_type === 'call' && 'Telefon'}
-                              {activity.contact_type === 'email' && 'E-posta'}
-                              {activity.contact_type === 'meeting' && 'Toplantı'}
-                              {activity.contact_type === 'other' && 'Diğer'}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {format(new Date(activity.date), 'dd MMM yyyy', { locale: tr })}
-                            </span>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h5 className="text-xs font-medium text-gray-900 truncate">
+                              {activity.title}
+                            </h5>
+                            {activity.is_important && (
+                              <span className="text-yellow-500 flex-shrink-0">
+                                <Target className="h-3 w-3" />
+                              </span>
+                            )}
                           </div>
-                          <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{activity.notes}</p>
-                          {activity.employee_name && (
-                            <p className="text-xs text-gray-500 mt-0.5">{activity.employee_name}</p>
-                          )}
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <Clock className="h-3 w-3" />
+                            <span>{format(new Date(activity.created_at), 'dd MMM yyyy', { locale: tr })}</span>
+                            {activity.assignee && (
+                              <>
+                                <span>•</span>
+                                <span>{activity.assignee.first_name} {activity.assignee.last_name}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Badge className={cn("text-xs px-2 py-0.5", statusBadge.className)}>
+                            {statusBadge.label}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditClick(activity.id)}
+                            className="h-7 w-7 p-0 hover:bg-blue-100"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-blue-600" />
+                          </Button>
                         </div>
                       </div>
-                    ))}
+                    </div>
+                    
+                    {/* Edit Form - Accordion tarzı */}
+                    {isEditing && (
+                      <div className="border-t border-gray-100">
+                        <EditActivityForm
+                          activity={activity}
+                          onSuccess={handleActivitySuccess}
+                          onCancel={() => setEditingActivityId(null)}
+                        />
+                      </div>
+                    )}
                   </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                );
+              })}
+            </div>
+          ) : !showQuickActivityForm && (
+            <div className="text-center py-4 text-gray-500">
+              <Activity className="h-8 w-8 mx-auto opacity-20 mb-2" />
+              <p className="text-xs">Henüz aktivite bulunmuyor</p>
+            </div>
+          )}
+
+          {/* Contact History Accordion */}
+          {contactHistoryCount > 0 && (
+            <div className="mt-3 pt-3 border-t border-blue-200">
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="activities" className="border-none">
+                  <AccordionTrigger className="py-2 px-0 hover:no-underline">
+                    <span className="text-xs font-medium text-gray-700">
+                      İletişim Geçmişi ({contactHistoryCount})
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-2">
+                    <div className="space-y-1.5">
+                      {opportunity?.contact_history?.map((activity: any) => (
+                        <div key={activity.id} className="flex items-start space-x-2 p-2 bg-white rounded-md">
+                          <div className="p-1 rounded-full bg-blue-100 flex-shrink-0">
+                            {activity.contact_type === 'call' && <Phone className="h-3.5 w-3.5 text-blue-600" />}
+                            {activity.contact_type === 'email' && <Mail className="h-3.5 w-3.5 text-blue-600" />}
+                            {activity.contact_type === 'meeting' && <Calendar className="h-3.5 w-3.5 text-blue-600" />}
+                            {activity.contact_type === 'other' && <MessageSquare className="h-3.5 w-3.5 text-blue-600" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-gray-900">
+                                {activity.contact_type === 'call' && 'Telefon'}
+                                {activity.contact_type === 'email' && 'E-posta'}
+                                {activity.contact_type === 'meeting' && 'Toplantı'}
+                                {activity.contact_type === 'other' && 'Diğer'}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {format(new Date(activity.date), 'dd MMM yyyy', { locale: tr })}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{activity.notes}</p>
+                            {activity.employee_name && (
+                              <p className="text-xs text-gray-500 mt-0.5">{activity.employee_name}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
           )}
         </div>
 
@@ -396,7 +541,8 @@ export const OpportunityDetailSheet = ({
       <EditableDetailSheet
         isOpen={isOpen}
         onClose={handleClose}
-        title=""
+        title="Fırsat Detayı"
+        subtitle={opportunity?.title}
         data={opportunity as OpportunityFormData}
         fields={fields}
         schema={opportunitySchema}
@@ -407,15 +553,6 @@ export const OpportunityDetailSheet = ({
         saveButtonText="Değişiklikleri Kaydet"
         cancelButtonText="İptal"
         size="md"
-      />
-
-      {/* New Activity Dialog */}
-      <NewActivityDialog
-        isOpen={isNewActivityDialogOpen}
-        onClose={() => setIsNewActivityDialogOpen(false)}
-        onSuccess={handleActivitySuccess}
-        opportunityId={opportunity?.id}
-        disabledOpportunity={true}
       />
     </>
   );

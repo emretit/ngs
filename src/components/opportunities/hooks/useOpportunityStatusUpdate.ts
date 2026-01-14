@@ -25,8 +25,9 @@ export const useOpportunityStatusUpdate = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+    onSuccess: async (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["opportunities"], exact: false });
+      await queryClient.refetchQueries({ queryKey: ["opportunities"], exact: false });
       toast.success("Durum güncellendi", {
         description: `Fırsat durumu "${opportunityStatusLabels[variables.newStatus]}" olarak güncellendi.`,
         className: "bg-green-50 border-green-200",

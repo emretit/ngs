@@ -8,11 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Upload, X } from "lucide-react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
+import { Upload, X } from "lucide-react";
 import { useCashflowTransactions, CreateTransactionData } from "@/hooks/useCashflowTransactions";
 import { useCashflowCategories } from "@/hooks/useCashflowCategories";
 import { useFileUpload } from "@/hooks/useFileUpload";
@@ -172,23 +169,12 @@ const AddTransaction = () => {
             {/* Date */}
             <div className="space-y-2">
               <Label>Tarih</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP", { locale: tr }) : "Tarih seçin"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => date && setValue('date', date)}
-                    initialFocus
-                    locale={tr}
-                  />
-                </PopoverContent>
-              </Popover>
+              <EnhancedDatePicker
+                date={selectedDate}
+                onSelect={(date) => date && setValue('date', date)}
+                placeholder="Tarih seçin"
+                className="w-full"
+              />
             </div>
 
             {/* Description */}

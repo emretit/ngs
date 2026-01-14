@@ -187,8 +187,9 @@ const Opportunities = memo(() => {
       // Toast mesajını göster
       toast.success("Fırsat başarıyla silindi", { duration: 2000 });
       
-      // Query'leri invalidate et
-      await queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      // Query'leri invalidate et ve refetch yap
+      queryClient.invalidateQueries({ queryKey: ['opportunities'], exact: false });
+      await queryClient.refetchQueries({ queryKey: ['opportunities'], exact: false });
       
       // Seçili fırsatı temizle
       if (selectedOpportunity?.id === opportunityToDelete.id) {

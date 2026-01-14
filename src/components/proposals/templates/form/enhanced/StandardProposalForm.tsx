@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar } from "@/components/ui/calendar";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   FileText, 
@@ -290,31 +290,13 @@ const StandardProposalForm: React.FC<StandardProposalFormProps> = ({
 
                 <div>
                   <Label htmlFor="valid_until">Geçerlilik Tarihi *</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between text-left font-normal"
-                      >
-                        {validUntil ? (
-                          format(validUntil, "dd.MM.yyyy", { locale: tr })
-                        ) : (
-                          <span className="text-gray-500">Tarih seçin</span>
-                        )}
-                        <CalendarIcon className="h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={validUntil}
-                        onSelect={(date) => setValidUntil(date)}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                        locale={tr}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <EnhancedDatePicker
+                    date={validUntil}
+                    onSelect={setValidUntil}
+                    placeholder="Tarih seçin"
+                    disabled={(date) => date < new Date()}
+                    className="w-full"
+                  />
                 </div>
               </CardContent>
             </Card>

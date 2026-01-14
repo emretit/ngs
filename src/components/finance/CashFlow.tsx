@@ -3,7 +3,7 @@ import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Filter } from "lucide-react";
 import { format } from "date-fns";
@@ -50,22 +50,12 @@ const CashFlow = () => {
             </SelectContent>
           </Select>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                {date ? format(date, "PP", { locale: tr }) : "Tarih Seç"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                locale={tr}
-              />
-            </PopoverContent>
-          </Popover>
+          <EnhancedDatePicker
+            date={date}
+            onSelect={setDate}
+            placeholder="Tarih Seç"
+            className="w-auto"
+          />
 
           <Button variant="outline" size="icon">
             <Filter className="h-4 w-4" />

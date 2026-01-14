@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import {
   Popover,
   PopoverContent,
@@ -210,57 +210,21 @@ export default function ReportsFilters({ searchParams, setSearchParams }: Report
 
         {/* Custom Date Range */}
         <div className="flex items-center gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "h-8 text-xs gap-1.5 min-w-[120px] justify-start",
-                  !startDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="h-3.5 w-3.5" />
-                {startDate ? format(startDate, "dd MMM yyyy", { locale: tr }) : "Başlangıç"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={startDate}
-                onSelect={(date) => handleCustomDateChange('start', date)}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
+          <EnhancedDatePicker
+            date={startDate}
+            onSelect={(date) => handleCustomDateChange('start', date)}
+            placeholder="Başlangıç"
+            className="h-8 text-xs min-w-[120px]"
+          />
 
           <span className="text-muted-foreground text-xs">—</span>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "h-8 text-xs gap-1.5 min-w-[120px] justify-start",
-                  !endDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="h-3.5 w-3.5" />
-                {endDate ? format(endDate, "dd MMM yyyy", { locale: tr }) : "Bitiş"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={endDate}
-                onSelect={(date) => handleCustomDateChange('end', date)}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
+          <EnhancedDatePicker
+            date={endDate}
+            onSelect={(date) => handleCustomDateChange('end', date)}
+            placeholder="Bitiş"
+            className="h-8 text-xs min-w-[120px]"
+          />
         </div>
 
         {/* Separator */}

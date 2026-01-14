@@ -10,6 +10,7 @@ import {
   SheetDescription,
   SheetFooter,
 } from "@/components/ui/sheet";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -168,6 +169,18 @@ export function EditableDetailSheet<T extends FieldValues>({
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className={`${sizeClasses[size]} overflow-hidden p-0 flex flex-col my-4 h-[calc(100vh-2rem)] max-h-[900px] ${className || ''}`}>
+        {/* Accessibility için SheetTitle ve SheetDescription */}
+        {!renderHeader && !title ? (
+          <>
+            <VisuallyHidden>
+              <SheetTitle>Detay</SheetTitle>
+            </VisuallyHidden>
+            <VisuallyHidden>
+              <SheetDescription>Detay görünümü</SheetDescription>
+            </VisuallyHidden>
+          </>
+        ) : null}
+        
         {/* Ultra Compact Header */}
         <div className="flex-shrink-0 sticky top-0 z-10 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
           <div className="flex items-center justify-between px-4 py-4">
@@ -175,6 +188,9 @@ export function EditableDetailSheet<T extends FieldValues>({
               <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></div>
               {renderHeader ? (
                 <div className="flex-1 min-w-0">
+                  <VisuallyHidden>
+                    <SheetTitle>{title || 'Detay'}</SheetTitle>
+                  </VisuallyHidden>
                   {renderHeader(data)}
                 </div>
               ) : (

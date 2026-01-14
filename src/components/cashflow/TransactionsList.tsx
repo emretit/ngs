@@ -6,10 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { 
   Table, 
   TableBody, 
@@ -167,39 +164,19 @@ const TransactionsList = () => {
             </Select>
 
             {/* Date Filters */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <CalendarIcon className="h-4 w-4" />
-                  {dateFrom ? format(dateFrom, "PP", { locale: tr }) : "Başlangıç"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={dateFrom}
-                  onSelect={setDateFrom}
-                  locale={tr}
-                />
-              </PopoverContent>
-            </Popover>
+            <EnhancedDatePicker
+              date={dateFrom}
+              onSelect={setDateFrom}
+              placeholder="Başlangıç"
+              className="w-auto"
+            />
 
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <CalendarIcon className="h-4 w-4" />
-                  {dateTo ? format(dateTo, "PP", { locale: tr }) : "Bitiş"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={dateTo}
-                  onSelect={setDateTo}
-                  locale={tr}
-                />
-              </PopoverContent>
-            </Popover>
+            <EnhancedDatePicker
+              date={dateTo}
+              onSelect={setDateTo}
+              placeholder="Bitiş"
+              className="w-auto"
+            />
 
             {/* Export Buttons */}
             <div className="flex gap-2">

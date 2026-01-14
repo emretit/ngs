@@ -52,6 +52,17 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
     itemsCount: apiInvoiceDetails?.items?.length || 0
   });
   
+  // Para birimi ve tutar bilgilerini detaylı logla
+  logger.debug('💰 Currency and amounts check:', {
+    currency: apiInvoiceDetails?.CurrencyCode || apiInvoiceDetails?.currency,
+    exchangeRate: apiInvoiceDetails?.exchangeRate || apiInvoiceDetails?.exchange_rate,
+    payableAmount: apiInvoiceDetails?.payableAmount,
+    PayableAmount: apiInvoiceDetails?.PayableAmount,
+    payableAmountTRY: apiInvoiceDetails?.payableAmountTRY,
+    PayableAmountTRY: apiInvoiceDetails?.PayableAmountTRY,
+    isPayableAmountArray: Array.isArray(apiInvoiceDetails?.PayableAmount),
+  });
+  
   // ========================================
   // 📄 RAW XML (İLK 2000 KARAKTER)
   // ========================================
@@ -239,6 +250,158 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
     logger.debug('ℹ️ No due date found in API response');
   }
 
+  // Döviz kuru bilgisini çek
+  // UBL formatında: PricingExchangeRate/CalculationRate
+  // Veriban formatında: exchangeRate, exchange_rate veya PricingExchangeRate
+  let exchangeRate: number | null = null;
+  
+  // Önce XML'den direkt çekmeyi dene
+  const rateFromXML = 
+    apiInvoiceDetails?.exchangeRate ||
+    apiInvoiceDetails?.exchange_rate ||
+    apiInvoiceDetails?.ExchangeRate ||
+    apiInvoiceDetails?.PricingExchangeRate?.CalculationRate ||
+    apiInvoiceDetails?.pricingExchangeRate?.calculationRate ||
+    null;
+  
+  if (rateFromXML) {
+    exchangeRate = parseFloat(rateFromXML);
+    logger.debug('💱 Exchange rate extracted from XML:', exchangeRate);
+  }
+  
+  // Eğer XML'de kur yoksa ama hem döviz hem TL tutarları varsa, kuru hesapla
+  if (!exchangeRate && totalAmount > 0) {
+    // TL tutarlarını çekmeyi dene (daha sonra parse edeceğiz)
+    const tryTotal = parseFloat(
+      apiInvoiceDetails?.payableAmountTRY ||
+      apiInvoiceDetails?.PayableAmountTRY ||
+      apiInvoiceDetails?.totalAmountTRY ||
+      '0'
+    );
+    
+    if (tryTotal > 0) {
+      // Kur = TL Tutar / Döviz Tutar
+      exchangeRate = tryTotal / totalAmount;
+      logger.debug('💱 Exchange rate calculated from amounts:', {
+        tryTotal,
+        foreignTotal: totalAmount,
+        calculatedRate: exchangeRate
+      });
+    }
+  }
+
+  // TL karşılıklarını çek (dövizli faturalar için)
+  // Farklı formatları destekle
+  let subtotalTRY = 0;
+  let taxTotalTRY = 0;
+  let totalAmountTRY = 0;
+
+  // 1. Direkt TRY alanlarından dene (çok fazla varyasyon var)
+  subtotalTRY = parseFloat(
+    apiInvoiceDetails?.lineExtensionAmountTRY ||
+    apiInvoiceDetails?.TaxExclusiveAmountTRY ||
+    apiInvoiceDetails?.subtotalTRY ||
+    apiInvoiceDetails?.subtotal_try ||
+    apiInvoiceDetails?.LineExtensionAmountTRY ||
+    apiInvoiceDetails?.line_extension_amount_try ||
+    apiInvoiceDetails?.taxExclusiveAmountTRY ||
+    '0'
+  );
+  taxTotalTRY = parseFloat(
+    apiInvoiceDetails?.taxTotalAmountTRY ||
+    apiInvoiceDetails?.TaxTotalAmountTRY ||
+    apiInvoiceDetails?.taxTotalTRY ||
+    apiInvoiceDetails?.tax_total_try ||
+    apiInvoiceDetails?.TaxAmountTRY ||
+    apiInvoiceDetails?.tax_amount_try ||
+    '0'
+  );
+  totalAmountTRY = parseFloat(
+    apiInvoiceDetails?.payableAmountTRY ||
+    apiInvoiceDetails?.PayableAmountTRY ||
+    apiInvoiceDetails?.totalAmountTRY ||
+    apiInvoiceDetails?.total_amount_try ||
+    apiInvoiceDetails?.payable_amount_try ||
+    apiInvoiceDetails?.TaxInclusiveAmountTRY ||
+    '0'
+  );
+  
+  logger.debug('💰 TRY amounts from direct fields:', { subtotalTRY, taxTotalTRY, totalAmountTRY });
+
+  // 2. LegalMonetaryTotal içinden dene (Veriban formatı)
+  if (apiInvoiceDetails?.LegalMonetaryTotal) {
+    const legalMonetary = apiInvoiceDetails.LegalMonetaryTotal;
+    
+    // LineExtensionAmount için
+    if (Array.isArray(legalMonetary?.LineExtensionAmount)) {
+      const tryAmount = legalMonetary.LineExtensionAmount.find((amt: any) => 
+        amt.$?.currencyID === 'TRY' || amt.currencyID === 'TRY'
+      );
+      if (tryAmount) {
+        const val = parseFloat(tryAmount._ || tryAmount.value || tryAmount);
+        if (!isNaN(val) && val > 0) subtotalTRY = val;
+      }
+    }
+    
+    // PayableAmount için
+    if (Array.isArray(legalMonetary?.PayableAmount)) {
+      const tryAmount = legalMonetary.PayableAmount.find((amt: any) => 
+        amt.$?.currencyID === 'TRY' || amt.currencyID === 'TRY'
+      );
+      if (tryAmount) {
+        const val = parseFloat(tryAmount._ || tryAmount.value || tryAmount);
+        if (!isNaN(val) && val > 0) totalAmountTRY = val;
+      }
+    }
+  }
+
+  // 3. TaxTotal içinden dene
+  if (apiInvoiceDetails?.TaxTotal) {
+    const taxTotal = apiInvoiceDetails.TaxTotal;
+    
+    if (Array.isArray(taxTotal?.TaxAmount)) {
+      const tryAmount = taxTotal.TaxAmount.find((amt: any) => 
+        amt.$?.currencyID === 'TRY' || amt.currencyID === 'TRY'
+      );
+      if (tryAmount) {
+        const val = parseFloat(tryAmount._ || tryAmount.value || tryAmount);
+        if (!isNaN(val) && val > 0) taxTotalTRY = val;
+      }
+    }
+  }
+
+  // 4. Eğer döviz kuru varsa ve TRY tutarı yoksa, hesapla
+  if (exchangeRate && exchangeRate > 0) {
+    if (subtotalTRY === 0 && subtotal > 0) {
+      subtotalTRY = subtotal * exchangeRate;
+      logger.debug('💱 TRY subtotal calculated from exchange rate:', subtotalTRY);
+    }
+    if (taxTotalTRY === 0 && taxTotal > 0) {
+      taxTotalTRY = taxTotal * exchangeRate;
+      logger.debug('💱 TRY tax calculated from exchange rate:', taxTotalTRY);
+    }
+    if (totalAmountTRY === 0 && totalAmount > 0) {
+      totalAmountTRY = totalAmount * exchangeRate;
+      logger.debug('💱 TRY total calculated from exchange rate:', totalAmountTRY);
+    }
+  } 
+  // 5. Eğer kur yoksa ama TRY tutarları varsa, kuru ters hesapla
+  else if (!exchangeRate && totalAmountTRY > 0 && totalAmount > 0) {
+    exchangeRate = totalAmountTRY / totalAmount;
+    logger.debug('💱 Exchange rate reverse-calculated:', {
+      tryTotal: totalAmountTRY,
+      foreignTotal: totalAmount,
+      rate: exchangeRate
+    });
+  }
+  
+  logger.debug('💰 TL karşılıkları (final):', { 
+    subtotalTRY: subtotalTRY > 0 ? subtotalTRY.toFixed(2) : 'yok',
+    taxTotalTRY: taxTotalTRY > 0 ? taxTotalTRY.toFixed(2) : 'yok',
+    totalAmountTRY: totalAmountTRY > 0 ? totalAmountTRY.toFixed(2) : 'yok',
+    exchangeRate: exchangeRate ? exchangeRate.toFixed(4) : 'yok'
+  });
+
   const invoiceDetails: EInvoiceDetails = {
     id: invoiceId,
     invoice_number: apiInvoiceDetails?.InvoiceNumber || apiInvoiceDetails?.invoiceNumber || apiInvoiceDetails?.ID || invoiceId,
@@ -247,9 +410,14 @@ export const loadInvoiceDetails = async (invoiceId: string): Promise<EInvoiceDet
     invoice_date: normalizedInvoiceDate,
     due_date: normalizedDueDate,
     currency: apiInvoiceDetails?.CurrencyCode || apiInvoiceDetails?.currency || 'TRY',
+    exchange_rate: exchangeRate ? parseFloat(exchangeRate) : undefined,
     subtotal: subtotal,
     tax_total: taxTotal,
     total_amount: totalAmount,
+    // TL karşılıkları (sadece 0'dan büyükse ekle)
+    subtotal_try: subtotalTRY > 0 ? subtotalTRY : undefined,
+    tax_total_try: taxTotalTRY > 0 ? taxTotalTRY : undefined,
+    total_amount_try: totalAmountTRY > 0 ? totalAmountTRY : undefined,
     items,
     supplier_details: {
       company_name: supplierName,

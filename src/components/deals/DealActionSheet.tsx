@@ -10,9 +10,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { Bell, Mail, MessageCircle } from "lucide-react";
 import { Deal } from "@/types/deal";
 
@@ -87,10 +85,10 @@ const DealActionSheet = ({
           {/* Hatırlatıcı Ekleme */}
           <div className="space-y-4">
             <h3 className="font-medium">Hatırlatıcı Ekle</h3>
-            <Calendar
-              mode="single"
-              selected={reminderDate}
+            <EnhancedDatePicker
+              date={reminderDate}
               onSelect={setReminderDate}
+              placeholder="Tarih seçin"
               locale={tr}
             />
             <Input

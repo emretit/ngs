@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
@@ -181,30 +181,13 @@ const ExchangeRateCard: React.FC = () => {
             {/* Date Picker */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Tarih Seçin</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !selectedDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "d MMMM yyyy", { locale: tr }) : "Tarih seçin"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
+              <EnhancedDatePicker
+                date={selectedDate}
+                onSelect={setSelectedDate}
+                placeholder="Tarih seçin"
+                disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
+                className="w-full"
+              />
             </div>
 
             {/* Currency Selector */}

@@ -22,9 +22,14 @@ export interface EInvoiceDetails {
   invoice_date: string;
   due_date?: string;
   currency: string;
+  exchange_rate?: number;
   subtotal: number;
   tax_total: number;
   total_amount: number;
+  // TL karşılıkları (dövizli faturalar için)
+  subtotal_try?: number;
+  tax_total_try?: number;
+  total_amount_try?: number;
   items: EInvoiceItem[];
   // Detaylı tedarikçi bilgileri
   supplier_details?: {

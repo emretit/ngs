@@ -9,13 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import type { FieldConfig } from "../EditableDetailSheet";
 
 interface FormFieldProps<T extends FieldValues> {
@@ -129,35 +123,13 @@ export function FormField<T extends FieldValues>({ form, config }: FormFieldProp
 
           {/* Date Picker */}
           {config.type === 'date' && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id={config.name}
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal h-10 text-sm",
-                    !field.value && "text-muted-foreground"
-                  )}
-                  disabled={config.disabled}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {field.value ? (
-                    format(new Date(field.value), "dd MMMM yyyy", { locale: tr })
-                  ) : (
-                    <span>{config.placeholder || 'Tarih seçiniz'}</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={field.value ? new Date(field.value) : undefined}
-                  onSelect={(date) => field.onChange(date?.toISOString())}
-                  locale={tr}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <EnhancedDatePicker
+              date={field.value ? new Date(field.value) : undefined}
+              onSelect={(date) => field.onChange(date?.toISOString())}
+              placeholder={config.placeholder || 'Tarih seçiniz'}
+              disabled={config.disabled}
+              className="w-full"
+            />
           )}
 
           {/* Custom Render */}

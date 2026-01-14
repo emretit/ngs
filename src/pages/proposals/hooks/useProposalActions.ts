@@ -116,12 +116,14 @@ export const useProposalActions = (
 
       await handleSave(proposalData);
       
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      // Tüm proposal query'lerini invalidate et ve refetch yap
+      queryClient.invalidateQueries({ queryKey: ['proposals'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-list'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'], exact: false });
       if (proposalId) {
         queryClient.invalidateQueries({ queryKey: ['proposal', proposalId] });
       }
-      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      await queryClient.refetchQueries({ queryKey: ['proposals-list'], exact: false });
       
       if (refetchProposal) {
         await refetchProposal();
@@ -274,9 +276,11 @@ export const useProposalActions = (
         throw error;
       }
 
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-list'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['proposal', proposal.id] });
+      await queryClient.refetchQueries({ queryKey: ['proposals-list'], exact: false });
 
       toast.success(`Revizyon R${nextRevisionNumber} oluşturuldu!`, { id: 'revision' });
 
@@ -330,9 +334,10 @@ export const useProposalActions = (
       
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
-      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-list'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'], exact: false });
+      await queryClient.refetchQueries({ queryKey: ['proposals-list'], exact: false });
       
       toast.success("Teklif aynı müşteri için kopyalandı!");
       
@@ -398,9 +403,10 @@ export const useProposalActions = (
       
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
-      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-list'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'], exact: false });
+      await queryClient.refetchQueries({ queryKey: ['proposals-list'], exact: false });
       
       toast.success("Teklif farklı müşteri için kopyalandı!");
       

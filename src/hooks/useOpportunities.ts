@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { Opportunity, OpportunityStatus, OpportunitiesState } from "@/types/crm"
 import { DropResult } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import { useCurrentUser } from "./useCurrentUser";
+import { useRealtimeSubscription } from "./useRealtimeSubscription";
 
 interface UseOpportunitiesFilters {
   search?: string;
@@ -143,32 +144,12 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
     gcTime: 10 * 60 * 1000, // 10 dakika
   });
 
-  // Real-time subscription - opportunities tablosundaki değişiklikleri dinle
-  useEffect(() => {
-    if (!userData?.company_id) return;
-
-    const channel = supabase
-      .channel('opportunities-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'opportunities',
-          filter: `company_id=eq.${userData.company_id}`,
-        },
-        () => {
-          // Opportunities tablosunda herhangi bir değişiklik olduğunda query'yi invalidate et
-          queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscription when component unmounts or company_id changes
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userData?.company_id, queryClient]);
+  // Real-time subscription using new hook - opportunities tablosundaki değişiklikleri dinle
+  useRealtimeSubscription({
+    table: 'opportunities',
+    companyId: userData?.company_id,
+    queryKeys: [["opportunities"]],
+  });
 
   // Group opportunities by status (dynamic grouping)
   const opportunities: { [key: string]: Opportunity[] } = {};
@@ -207,8 +188,9 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
       if (error) throw error;
       return { id, status };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ["opportunities"], exact: false });
+      await queryClient.refetchQueries({ queryKey: ["opportunities"], exact: false });
       toast.success("Fırsat durumu başarıyla güncellendi", { duration: 1000 });
     },
     onError: (error) => {
@@ -246,7 +228,8 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
         ; // Company_id kontrolü eklendi
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+      queryClient.invalidateQueries({ queryKey: ["opportunities"], exact: false });
+      await queryClient.refetchQueries({ queryKey: ["opportunities"], exact: false });
       
       toast.success("Fırsat durumu başarıyla güncellendi.", { duration: 1000 });
       
@@ -283,7 +266,8 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
         ; // Company_id kontrolü eklendi
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+      queryClient.invalidateQueries({ queryKey: ["opportunities"], exact: false });
+      await queryClient.refetchQueries({ queryKey: ["opportunities"], exact: false });
       toast.success("Fırsat başarıyla güncellendi", { duration: 1000 });
 
       return true;

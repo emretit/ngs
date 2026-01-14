@@ -103,7 +103,7 @@ export function useRealtimeSubscription(options: RealtimeSubscriptionOptions) {
           table: options.table,
           filter,
         },
-        (payload) => {
+        async (payload) => {
           // Only process events we're interested in
           if (events.includes(payload.eventType as any)) {
             // Invalidate all specified query keys
@@ -113,6 +113,16 @@ export function useRealtimeSubscription(options: RealtimeSubscriptionOptions) {
                 exact: false // Invalidate all related queries
               });
             });
+
+            // Refetch immediately to update the UI
+            await Promise.all(
+              options.queryKeys.map(queryKey =>
+                queryClient.refetchQueries({ 
+                  queryKey,
+                  exact: false 
+                })
+              )
+            );
 
             // Call custom callback if provided
             if (options.onChange) {

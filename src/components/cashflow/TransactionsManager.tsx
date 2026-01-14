@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Calendar } from "@/components/ui/calendar";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -292,23 +292,12 @@ const TransactionsManager = () => {
                 {/* Date */}
                 <div className="space-y-2">
                   <Label>Tarih</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {selectedDate ? format(selectedDate, "PPP", { locale: tr }) : "Tarih seçin"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => date && setValue('date', date)}
-                        initialFocus
-                        locale={tr}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <EnhancedDatePicker
+                    date={selectedDate}
+                    onSelect={(date) => date && setValue('date', date)}
+                    placeholder="Tarih seçin"
+                    className="w-full"
+                  />
                 </div>
               </div>
 
@@ -432,39 +421,19 @@ const TransactionsManager = () => {
             </Select>
 
             {/* Date Filters */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <CalendarIcon className="h-4 w-4" />
-                  {dateFrom ? format(dateFrom, "PP", { locale: tr }) : "Başlangıç"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={dateFrom}
-                  onSelect={setDateFrom}
-                  locale={tr}
-                />
-              </PopoverContent>
-            </Popover>
+            <EnhancedDatePicker
+              date={dateFrom}
+              onSelect={setDateFrom}
+              placeholder="Başlangıç"
+              className="w-auto"
+            />
 
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <CalendarIcon className="h-4 w-4" />
-                  {dateTo ? format(dateTo, "PP", { locale: tr }) : "Bitiş"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={dateTo}
-                  onSelect={setDateTo}
-                  locale={tr}
-                />
-              </PopoverContent>
-            </Popover>
+            <EnhancedDatePicker
+              date={dateTo}
+              onSelect={setDateTo}
+              placeholder="Bitiş"
+              className="w-auto"
+            />
 
             {/* Export Buttons */}
             <div className="flex gap-2">

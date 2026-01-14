@@ -1,7 +1,7 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Search, Calendar as CalendarIcon, X, Filter } from "lucide-react";
@@ -104,47 +104,19 @@ const PurchaseOrdersFilterBar = ({
 
         {/* Tarih Aralığı */}
         <div className="flex gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full sm:w-[140px] justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {startDate ? format(startDate, "dd MMM yyyy", { locale: tr }) : "Başlangıç"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={startDate}
-                onSelect={setStartDate}
-                initialFocus
-                locale={tr}
-              />
-            </PopoverContent>
-          </Popover>
+          <EnhancedDatePicker
+            date={startDate}
+            onSelect={setStartDate}
+            placeholder="Başlangıç"
+            className="w-full sm:w-[140px]"
+          />
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full sm:w-[140px] justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {endDate ? format(endDate, "dd MMM yyyy", { locale: tr }) : "Bitiş"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={endDate}
-                onSelect={setEndDate}
-                initialFocus
-                locale={tr}
-              />
-            </PopoverContent>
-          </Popover>
+          <EnhancedDatePicker
+            date={endDate}
+            onSelect={setEndDate}
+            placeholder="Bitiş"
+            className="w-full sm:w-[140px]"
+          />
         </div>
 
         {/* Filtreleri Temizle */}

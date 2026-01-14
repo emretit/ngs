@@ -109,11 +109,12 @@ const ProposalTable = ({
   const handleStatusUpdate = async (proposalId: string, newStatus: ProposalStatus) => {
     try {
       await changeProposalStatus(proposalId, newStatus);
-      // Hem normal proposals hem de infinite scroll query'lerini invalidate et
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      // Tüm proposal query'lerini invalidate et
+      queryClient.invalidateQueries({ queryKey: ['proposals'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-list'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'], exact: false });
       // Hemen refetch yap - tablo otomatik yenilensin
-      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      await queryClient.refetchQueries({ queryKey: ['proposals-list'], exact: false });
       // Sayfayı yenile
       onStatusChange?.();
       
@@ -143,11 +144,12 @@ const ProposalTable = ({
       }
       
       // Invalidate all proposal queries to refresh the table
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-list'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['proposal', proposalToDelete.id] });
       // Hemen refetch yap - tablo otomatik yenilensin
-      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      await queryClient.refetchQueries({ queryKey: ['proposals-list'], exact: false });
       
       toast.success("Teklif başarıyla silindi.");
     } catch (error) {
@@ -206,9 +208,10 @@ const ProposalTable = ({
       
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
-      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-list'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'], exact: false });
+      await queryClient.refetchQueries({ queryKey: ['proposals-list'], exact: false });
       
       toast.success("Teklif aynı müşteri için kopyalandı!");
       
@@ -276,9 +279,10 @@ const ProposalTable = ({
       
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
-      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-list'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'], exact: false });
+      await queryClient.refetchQueries({ queryKey: ['proposals-list'], exact: false });
       
       toast.success("Teklif farklı müşteri için kopyalandı!");
       
@@ -369,9 +373,10 @@ const ProposalTable = ({
       }
 
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
-      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-list'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'], exact: false });
+      await queryClient.refetchQueries({ queryKey: ['proposals-list'], exact: false });
 
       toast.success(`Revizyon R${nextRevisionNumber} oluşturuldu!`, { id: 'revision' });
 

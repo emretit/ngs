@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { History } from "lucide-react";
+import { History, Globe, Calendar } from "lucide-react";
 import { Product } from "@/types/product";
 import { formatCurrency, normalizeCurrency } from "@/utils/formatters";
 import { useCurrencyManagement } from "@/components/proposals/form/items/hooks/useCurrencyManagement";
@@ -65,6 +65,7 @@ const ProductDetailsModal = ({
   const [selectedDepo, setSelectedDepo] = useState("");
   const [manualExchangeRate, setManualExchangeRate] = useState<number | null>(null);
   const [priceHistoryOpen, setPriceHistoryOpen] = useState(false);
+  const [purchasePrice, setPurchasePrice] = useState<number>(0);
 
   // Determine initial currency: existingData currency > product currency > proposal currency
   const initialCurrency = React.useMemo(() => {
@@ -129,6 +130,7 @@ const ProductDetailsModal = ({
       setIsManualPriceEdit(false);
       setManualExchangeRate(null);
       setSelectedDepo("");
+      setPurchasePrice(0);
     }
     
     // Edit modu öncelikli - existingData varsa onu kullan
@@ -172,6 +174,7 @@ const ProductDetailsModal = ({
       logger.debug('ProductDetailsModal - New mode, product:', product);
       setQuantity(1);
       setUnitPrice(product.price || 0);
+      setPurchasePrice(product.purchase_price || 0);
       setVatRate(product.tax_rate || 20);
       setDiscountRate(0);
       setDescription(product.description || "");
@@ -396,33 +399,60 @@ const ProductDetailsModal = ({
             </div>
           </div>
 
-          {/* Birim Fiyat + Kur */}
+          {/* Birim Fiyat + Alış Fiyatı */}
           <div className="grid grid-cols-2 gap-1.5">
             <div className="space-y-0.5">
               <Label htmlFor="unit_price" className="text-xs font-medium text-gray-700">
-                Birim Fiyat
+                Birim Fiyat (Satış)
               </Label>
-              <div className="flex gap-1">
-                <Input
-                  id="unit_price"
-                  type="number"
-                  value={unitPrice || 0}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setUnitPrice(value === "" ? 0 : Number(value));
-                    setIsManualPriceEdit(true);
-                  }}
-                  step="0.0001"
-                  placeholder="0.0000"
-                  className="flex-1 h-7 text-sm"
-                  disabled={isLoadingRates}
-                />
+              <Input
+                id="unit_price"
+                type="number"
+                value={unitPrice || 0}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setUnitPrice(value === "" ? 0 : Number(value));
+                  setIsManualPriceEdit(true);
+                }}
+                step="0.0001"
+                placeholder="0.0000"
+                className="h-7 text-sm"
+                disabled={isLoadingRates}
+              />
+            </div>
+            
+            <div className="space-y-0.5">
+              <Label htmlFor="purchase_price" className="text-xs font-medium text-gray-700">
+                Alış Fiyatı
+              </Label>
+              <Input
+                id="purchase_price"
+                type="number"
+                value={purchasePrice || 0}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setPurchasePrice(value === "" ? 0 : Number(value));
+                }}
+                step="0.0001"
+                placeholder="0.0000"
+                className="h-7 text-sm bg-blue-50/50 border-blue-200"
+                disabled={isLoadingRates}
+              />
+            </div>
+          </div>
+
+          {/* Para Birimi ve Döviz Kuru - Modern Amber Kart */}
+          <div className="p-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+            <div className="flex flex-col gap-2">
+              {/* Para Birimi Seçimi */}
+              <div className="flex items-center gap-2">
+                <Label className="text-xs font-semibold text-amber-900 whitespace-nowrap">Para Birimi:</Label>
                 <Select
                   value={selectedCurrency}
                   onValueChange={handleCurrencyChange}
                   disabled={isLoadingRates}
                 >
-                  <SelectTrigger className="w-24 h-7 text-sm">
+                  <SelectTrigger className="h-7 w-24 text-xs bg-white border-amber-300">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" className="bg-background border z-[100]">
@@ -434,25 +464,39 @@ const ProductDetailsModal = ({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div className="space-y-0.5">
-              <Label htmlFor="exchange_rate" className="text-xs font-medium text-gray-700">
-                1 {selectedCurrency} = ₺
-              </Label>
-              <Input
-                id="exchange_rate"
-                type="number"
-                value={currentExchangeRate.toFixed(4)}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const rate = value === "" ? null : Number(value);
-                  setManualExchangeRate(rate);
-                }}
-                step="0.0001"
-                className="h-7 text-sm"
-                placeholder="0.0000"
-              />
+              {/* Döviz Kuru - Sadece TRY değilse */}
+              {normalizeCurrency(selectedCurrency) !== "TRY" && (
+                <div className="flex items-center justify-between gap-2 pt-1 border-t border-amber-200">
+                  {/* Sol: Kur Girişi */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold text-amber-900 whitespace-nowrap">
+                      1 {selectedCurrency} =
+                    </span>
+                    <Input
+                      id="exchange_rate"
+                      type="number"
+                      value={currentExchangeRate.toFixed(4)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const rate = value === "" ? null : Number(value);
+                        setManualExchangeRate(rate);
+                      }}
+                      step="0.0001"
+                      className="h-6 w-20 text-xs font-medium text-amber-900 bg-white border-amber-300 text-right"
+                      placeholder="0.0000"
+                    />
+                    <span className="text-xs font-semibold text-amber-900">TRY</span>
+                  </div>
+
+                  {/* Sağ: Güncel Kur */}
+                  {!manualExchangeRate && currentExchangeRate && (
+                    <div className="text-[10px] text-amber-600 whitespace-nowrap">
+                      Güncel: {currentExchangeRate.toFixed(4)} TRY
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -521,6 +565,23 @@ const ProductDetailsModal = ({
               className="resize-none text-sm py-1 min-h-[28px]"
             />
           </div>
+
+          {/* Kar Marjı Bilgisi - Sadece alış fiyatı varsa */}
+          {purchasePrice > 0 && unitPrice > 0 && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-1.5 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-blue-900">Kar Marjı:</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-blue-700">
+                    {formatCurrency(unitPrice - purchasePrice, selectedCurrency)}
+                  </span>
+                  <span className="text-blue-600">
+                    ({purchasePrice > 0 ? (((unitPrice - purchasePrice) / purchasePrice) * 100).toFixed(1) : '0.0'}%)
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Hesaplama Özeti */}
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-1.5 rounded-lg border border-gray-200 shadow-sm">

@@ -1419,6 +1419,7 @@ export default function EInvoiceProcessOutgoing() {
             invoiceQuantity={matchingItems[pendingProductIndex]?.invoice_item.quantity}
             invoicePrice={matchingItems[pendingProductIndex]?.invoice_item.unit_price}
             invoiceUnit={matchingItems[pendingProductIndex]?.invoice_item.unit}
+            invoiceCurrency={invoice?.currency}
             onConfirm={handleProductDetailsConfirm}
           />
         )}
@@ -1433,17 +1434,19 @@ export default function EInvoiceProcessOutgoing() {
           }}
           onProductCreated={handleProductCreated}
           initialData={
-            currentItemIndex >= 0 ? {
-              name: matchingItems[currentItemIndex]?.invoice_item.product_name || "",
-              unit: matchingItems[currentItemIndex]?.invoice_item.unit || "adet",
-              price: matchingItems[currentItemIndex]?.invoice_item.unit_price || 0,
-              tax_rate: matchingItems[currentItemIndex]?.invoice_item.tax_rate || 18,
+            currentItemIndex >= 0 && matchingItems[currentItemIndex] ? {
+              name: matchingItems[currentItemIndex].invoice_item.product_name || "",
+              unit: matchingItems[currentItemIndex].invoice_item.unit || "adet",
+              price: matchingItems[currentItemIndex].invoice_item.unit_price || 0,
+              tax_rate: matchingItems[currentItemIndex].invoice_item.tax_rate || 18,
               code: matchingItems[currentItemIndex]?.invoice_item.product_code || "",
             } : undefined
           }
+          isForSale={true}
         />
       </React.Suspense>
     </>
   );
 }
+
 

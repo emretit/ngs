@@ -44,6 +44,7 @@ interface EInvoiceProductDetailsDialogProps {
   invoiceQuantity?: number;
   invoicePrice?: number;
   invoiceUnit?: string;
+  invoiceCurrency?: string; // Faturadan gelen para birimi
   parsedProduct?: ParsedProduct; // ProductMapping için
   onConfirm: (data: { productId?: string | null; warehouseId: string; quantity?: number; price?: number; unit?: string; action?: 'create' | 'update' | 'skip'; discountRate?: number; taxRate?: number; description?: string }) => void;
   allowProductSelection?: boolean; // Ürün seçimi yapılabilir mi?
@@ -60,6 +61,7 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
   invoiceQuantity,
   invoicePrice,
   invoiceUnit,
+  invoiceCurrency,
   parsedProduct,
   onConfirm,
   allowProductSelection = false,
@@ -110,7 +112,9 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
   const [manualExchangeRate, setManualExchangeRate] = useState<number | null>(null);
 
   // Currency management
-  const defaultCurrency = selectedProduct?.currency || 'TRY';
+  // Öncelik: invoiceCurrency > selectedProduct?.currency > 'TRY'
+  const normalizedInvoiceCurrency = invoiceCurrency === 'TL' ? 'TRY' : (invoiceCurrency || null);
+  const defaultCurrency = normalizedInvoiceCurrency || selectedProduct?.currency || 'TRY';
   const {
     selectedCurrency,
     setSelectedCurrency,
@@ -188,9 +192,12 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
     setWarehouseStocks(stockMap);
   }, [stockData]);
 
-  // Dialog açıldığında varsayılan değerleri ayarla
+  // Dialog açıldığında varsayılan değerleri ayarla (sadece ilk açılışta)
+  const openRef = useRef(false);
   useEffect(() => {
-    if (open) {
+    if (open && !openRef.current) {
+      openRef.current = true;
+      
       // Mevcut değerleri yükle
       if (existingProductId) {
         setSelectedProductId(existingProductId);
@@ -231,8 +238,12 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
           setSelectedWarehouseId(mainWarehouse.id);
         }
       }
+    } else if (!open && openRef.current) {
+      // Dialog kapandığında ref'i sıfırla
+      openRef.current = false;
     }
-  }, [open, initialSelectedProduct, invoiceItem, invoiceQuantity, invoicePrice, invoiceUnit, parsedProduct, warehouses, selectedWarehouseId, existingProductId, existingWarehouseId, existingAction, selectedProduct, originalCurrency]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Dialog kapandığında state'i temizle
   useEffect(() => {
@@ -335,7 +346,8 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
     
     // Update previous currency reference
     prevCurrencyRef.current = selectedCurrency;
-  }, [selectedCurrency, exchangeRates, convertAmount, price]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCurrency, exchangeRates]);
 
   // Get current exchange rate (manual or from rates)
   const currentExchangeRate = exchangeRates

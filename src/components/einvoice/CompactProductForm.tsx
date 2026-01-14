@@ -127,6 +127,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    mode: "onChange",
     defaultValues: {
       name: initialData?.name || "",
       sku: shouldGenerateCode(initialData?.code, initialData?.name || "") 
@@ -163,7 +164,8 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
         description: "",
       });
     }
-  }, [isOpen, initialData, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialData]);
 
   // Auto-generate product code when product name changes
   React.useEffect(() => {
@@ -178,7 +180,8 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
       }
     });
     return () => subscription.unsubscribe();
-  }, [form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onSubmit = async (data: FormData) => {
     if (!userProfile?.company_id) {

@@ -436,14 +436,62 @@ export default function EInvoiceProcessOutgoing() {
   }, []);
 
   const handleProductDetailsConfirm = useCallback(async (data: { warehouseId: string; quantity?: number; price?: number; unit?: string; discountRate?: number; taxRate?: number; description?: string }) => {
-    if (selectedProductForWarehouse && pendingProductIndex >= 0) {
-      // Ürünü eşleştir (async olarak)
-      await handleManualMatch(pendingProductIndex, selectedProductForWarehouse.id);
+    if (selectedProductForWarehouse && pendingProductIndex >= 0 && invoiceId) {
+      const productId = selectedProductForWarehouse.id;
+      let itemToSave: ProductMatchingItem | null = null;
+
+      // State'i güncelle ve item'ı kaydet
+      setMatchingItems(prev => {
+        const updatedMatching = [...prev];
+        const item = updatedMatching[pendingProductIndex];
+        if (!item) return prev;
+
+        itemToSave = {
+          ...item,
+          matched_product_id: productId
+        };
+
+        updatedMatching[pendingProductIndex] = itemToSave;
+        return updatedMatching;
+      });
+
+      if (itemToSave) {
+        // Veritabanına kaydet
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { error } = await supabase
+              .from('einvoice_product_matching')
+              .upsert({
+                invoice_id: invoiceId,
+                invoice_line_number: itemToSave.invoice_item.line_number,
+                invoice_product_name: itemToSave.invoice_item.product_name,
+                invoice_product_code: itemToSave.invoice_item.product_code || null,
+                invoice_quantity: itemToSave.invoice_item.quantity,
+                invoice_unit: itemToSave.invoice_item.unit,
+                invoice_unit_price: itemToSave.invoice_item.unit_price,
+                matched_product_id: productId,
+                created_by: user.id,
+                updated_at: new Date().toISOString()
+              }, {
+                onConflict: 'invoice_id,invoice_line_number'
+              });
+
+            if (error) {
+              logger.error('Error saving manual match:', error);
+              toast.error('Eşleştirme kaydedilemedi');
+            }
+          }
+        } catch (error) {
+          logger.error('Error in manual match:', error);
+          toast.error('Bir hata oluştu');
+        }
+      }
     }
     setIsWarehouseDialogOpen(false);
     setSelectedProductForWarehouse(null);
     setPendingProductIndex(-1);
-  }, [selectedProductForWarehouse, pendingProductIndex, handleManualMatch]);
+  }, [selectedProductForWarehouse, pendingProductIndex, invoiceId]);
   
   const handleCreateNewProduct = useCallback((itemIndex: number) => {
     setCurrentItemIndex(itemIndex);

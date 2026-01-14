@@ -228,8 +228,12 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
       setTaxRate(parsedProduct?.tax_rate || selectedProduct?.tax_rate || 20);
       setDescription(parsedProduct?.name || selectedProduct?.description || "");
       setIsManualPriceEdit(false);
-      // Reset currency ref to original currency
-      prevCurrencyRef.current = originalCurrency;
+      
+      // Reset currency ref to invoice currency (faturadan gelen para birimi)
+      // Bu sayede ilk açılışta kur çarpımı yapılmaz
+      const normalizedInvCurrency = invoiceCurrency === 'TL' ? 'TRY' : (invoiceCurrency || null);
+      const initialCurrency = normalizedInvCurrency || selectedProduct?.currency || 'TRY';
+      prevCurrencyRef.current = initialCurrency;
       
       // Ana depoyu varsayılan olarak seç (sadece mevcut depo yoksa)
       if (warehouses.length > 0 && !selectedWarehouseId && !existingWarehouseId) {

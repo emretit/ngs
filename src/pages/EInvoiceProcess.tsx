@@ -127,7 +127,8 @@ export default function EInvoiceProcess() {
         navigate('/e-invoice');
       });
     }
-  }, [invoiceId, loadInvoiceDetails, navigate, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoiceId]);
   
   // Update tab title when invoice is loaded
   useEffect(() => {
@@ -176,7 +177,8 @@ export default function EInvoiceProcess() {
       logger.debug('⚠️ Tedarikçi listesi boş, not_found durumu');
       setSupplierMatchStatus('not_found');
     }
-  }, [invoice, suppliers, matchSupplier, isLoadingSuppliers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoice?.supplier_tax_number, suppliers.length, isLoadingSuppliers]);
   
   // Loading state'i hesapla
   const isLoading = !invoice || isLoadingProducts || isLoadingSuppliers;
@@ -196,22 +198,28 @@ export default function EInvoiceProcess() {
   
   const handleProductSelect = useCallback((itemIndex: number, product: Product) => {
     // Ürün seçildiğinde detay dialog'unu aç
-    const invoiceItem = matchingItems[itemIndex]?.invoice_item;
     setSelectedProductForWarehouse(product);
     setPendingProductIndex(itemIndex);
     setIsWarehouseDialogOpen(true);
-  }, [matchingItems]);
+  }, []);
 
   const handleProductDetailsConfirm = useCallback((data: { warehouseId: string; quantity?: number; price?: number; unit?: string; discountRate?: number; taxRate?: number; description?: string }) => {
     if (selectedProductForWarehouse && pendingProductIndex >= 0) {
       // Ürünü eşleştir
-      handleManualMatch(pendingProductIndex, selectedProductForWarehouse.id);
+      setMatchingItems(prev => {
+        const updatedMatching = [...prev];
+        updatedMatching[pendingProductIndex] = {
+          ...updatedMatching[pendingProductIndex],
+          matched_product_id: selectedProductForWarehouse.id
+        };
+        return updatedMatching;
+      });
       // TODO: Depo bilgisini ve miktar/fiyat/birim/indirim/KDV/açıklama bilgilerini kaydetmek için matchingItems'a eklenebilir
     }
     setIsWarehouseDialogOpen(false);
     setSelectedProductForWarehouse(null);
     setPendingProductIndex(-1);
-  }, [selectedProductForWarehouse, pendingProductIndex, handleManualMatch]);
+  }, [selectedProductForWarehouse, pendingProductIndex]);
   
   const handleCreateNewProduct = useCallback((itemIndex: number) => {
     setCurrentItemIndex(itemIndex);

@@ -93,7 +93,6 @@ const Employees = () => {
   });
 
   // Fetch departments
-  const { userData } = useCurrentUser();
   const { data: departments = [] } = useQuery({
     queryKey: ['departments', userData?.company_id],
     queryFn: async () => {

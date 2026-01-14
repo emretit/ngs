@@ -182,20 +182,20 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Today's Tasks */}
         <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-3 h-[350px]">
+          <CardContent className="p-2.5 h-[280px]">
             <Suspense fallback={
               <div className="space-y-2">
-                <Skeleton className="h-10 w-full" />
-                {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-14 w-full" />
+                <Skeleton className="h-8 w-full" />
+                {[1, 2].map(i => (
+                  <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
             }>
               {tasksLoading ? (
                 <div className="space-y-2">
-                  <Skeleton className="h-10 w-full" />
-                  {[1, 2, 3].map(i => (
-                    <Skeleton key={i} className="h-14 w-full" />
+                  <Skeleton className="h-8 w-full" />
+                  {[1, 2].map(i => (
+                    <Skeleton key={i} className="h-12 w-full" />
                   ))}
                 </div>
               ) : (
@@ -212,20 +212,20 @@ const Dashboard = () => {
 
         {/* Pending Approvals */}
         <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-3 h-[350px]">
+          <CardContent className="p-2.5 h-[280px]">
             <Suspense fallback={
               <div className="space-y-2">
-                <Skeleton className="h-10 w-full" />
-                {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-18 w-full" />
+                <Skeleton className="h-8 w-full" />
+                {[1, 2].map(i => (
+                  <Skeleton key={i} className="h-14 w-full" />
                 ))}
               </div>
             }>
               {approvalsLoading ? (
                 <div className="space-y-2">
-                  <Skeleton className="h-10 w-full" />
-                  {[1, 2, 3].map(i => (
-                    <Skeleton key={i} className="h-18 w-full" />
+                  <Skeleton className="h-8 w-full" />
+                  {[1, 2].map(i => (
+                    <Skeleton key={i} className="h-14 w-full" />
                   ))}
                 </div>
               ) : (
@@ -242,14 +242,14 @@ const Dashboard = () => {
 
         {/* Recent Activities */}
         <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2 px-3 pt-3">
+          <CardHeader className="pb-1.5 px-2.5 pt-2.5">
             <CardTitle className="text-sm font-semibold">Son Aktiviteler</CardTitle>
           </CardHeader>
-          <CardContent className="h-[310px] overflow-auto px-3">
+          <CardContent className="h-[240px] overflow-auto px-2.5">
             <Suspense fallback={
-              <div className="space-y-2">
-                {[1, 2, 3, 4, 5].map(i => (
-                  <Skeleton key={i} className="h-14 w-full" />
+              <div className="space-y-1.5">
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
             }>

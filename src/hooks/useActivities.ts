@@ -159,8 +159,10 @@ export const useActivities = (filters: UseActivitiesFilters = {}) => {
       return transformedData;
     },
     enabled: !!userData?.company_id && !userLoading,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // 30 seconds - shorter for more responsive updates
     gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false, // Realtime handles updates
+    refetchOnMount: true, // Always fetch fresh data on mount
   });
 
   return {

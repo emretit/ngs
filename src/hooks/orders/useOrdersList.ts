@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { logger } from '@/utils/logger';
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Order, OrderFilters, OrderStats } from "@/types/orders";
 import { toast } from "sonner";
 import { useCurrentUser } from "../useCurrentUser";
+import { useRealtimeSubscription } from "../useRealtimeSubscription";
 
 export const useOrdersList = () => {
-  const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
   const [filters, setFilters] = useState<OrderFilters>({
     status: 'all',
@@ -16,6 +16,13 @@ export const useOrdersList = () => {
     dateRange: { from: null, to: null },
     page: 1,
     pageSize: 10
+  });
+
+  // Real-time subscription using standardized hook
+  useRealtimeSubscription({
+    table: 'orders',
+    companyId: userData?.company_id,
+    queryKeys: [["orders"], ["orderStats"], ["orders-infinite"]],
   });
 
   const fetchOrders = async (): Promise<Order[]> => {
@@ -119,29 +126,6 @@ export const useOrdersList = () => {
     enabled: !!userData?.company_id,
     refetchOnMount: true,
   });
-
-  useEffect(() => {
-    if (!userData?.company_id) return;
-
-    const channel = supabase
-      .channel('orders-changes')
-      .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'orders',
-          filter: `company_id=eq.\${userData.company_id}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['orders'] });
-          queryClient.invalidateQueries({ queryKey: ['orderStats'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userData?.company_id, queryClient]);
 
   return {
     orders: orders || [],

@@ -1,17 +1,24 @@
-import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseInvoice, InvoiceStatus } from "@/types/purchase";
 import { toast } from "sonner";
 import { useCurrentUser } from "../useCurrentUser";
+import { useRealtimeSubscription } from "../useRealtimeSubscription";
 
 export const usePurchaseInvoicesList = () => {
-  const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
   const [filters, setFilters] = useState({
     status: "all",
     search: "",
     dateRange: { from: null, to: null } as { from: Date | null, to: Date | null }
+  });
+
+  // Real-time subscription using standardized hook
+  useRealtimeSubscription({
+    table: 'purchase_invoices',
+    companyId: userData?.company_id,
+    queryKeys: [["purchaseInvoices"], ["purchase-invoices-infinite"]],
   });
 
   const fetchInvoices = async (): Promise<PurchaseInvoice[]> => {
@@ -55,29 +62,6 @@ export const usePurchaseInvoicesList = () => {
     queryFn: fetchInvoices,
     staleTime: 30000,
   });
-
-  useEffect(() => {
-    if (!userData?.company_id) return;
-
-    const channel = supabase
-      .channel('purchase-invoices-changes')
-      .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'purchase_invoices',
-          filter: `company_id=eq.\${userData.company_id}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['purchaseInvoices'] });
-          queryClient.invalidateQueries({ queryKey: ['purchase-invoices-infinite'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userData?.company_id, queryClient]);
 
   return {
     invoices: invoices || [],

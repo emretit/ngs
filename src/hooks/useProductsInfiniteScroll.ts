@@ -2,9 +2,8 @@ import { useInfiniteScroll } from "./useInfiniteScroll";
 import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "./useCurrentUser";
+import { useRealtimeSubscription } from "./useRealtimeSubscription";
 
 interface UseProductsFilters {
   search?: string;
@@ -15,35 +14,14 @@ interface UseProductsFilters {
 }
 
 export const useProductsInfiniteScroll = (filters: UseProductsFilters = {}) => {
-  const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
 
-  // Real-time subscription - products tablosundaki değişiklikleri dinle
-  useEffect(() => {
-    if (!userData?.company_id) return;
-
-    const channel = supabase
-      .channel('products-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'products',
-          filter: `company_id=eq.${userData.company_id}`,
-        },
-        () => {
-          // Products tablosunda herhangi bir değişiklik olduğunda query'yi invalidate et
-          queryClient.invalidateQueries({ queryKey: ["products"] });
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscription when component unmounts or company_id changes
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userData?.company_id, queryClient]);
+  // Real-time subscription using standardized hook
+  useRealtimeSubscription({
+    table: 'products',
+    companyId: userData?.company_id,
+    queryKeys: [["products"], ["product_statistics"]],
+  });
 
   const fetchProducts = async (page: number, pageSize: number) => {
     // Önce kullanıcının company_id'sini al

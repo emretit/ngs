@@ -1,9 +1,11 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCurrentUser } from "./useCurrentUser";
+import { useRealtimeSubscription } from "./useRealtimeSubscription";
 
 export interface SalesInvoice {
   id: string;
@@ -82,10 +84,18 @@ export interface SalesInvoiceItem {
 
 export const useSalesInvoices = () => {
   const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
   const [filters, setFilters] = useState({
     status: "",
     search: "",
     dateRange: { from: null, to: null } as { from: Date | null, to: Date | null }
+  });
+
+  // Real-time subscription using standardized hook
+  useRealtimeSubscription({
+    table: 'sales_invoices',
+    companyId: userData?.company_id,
+    queryKeys: [["salesInvoices"]],
   });
 
   const fetchInvoices = async (): Promise<SalesInvoice[]> => {
@@ -323,51 +333,6 @@ export const useSalesInvoices = () => {
     staleTime: 30 * 1000, // 30 saniye boyunca fresh kabul et
   });
 
-  // Supabase Realtime subscription - veritabanı değişikliklerinde tabloyu otomatik yenile
-  useEffect(() => {
-    // Get current user's company_id for filtering
-    const setupRealtimeSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.company_id) return;
-
-      // Subscribe to sales_invoices table changes
-      const channel = supabase
-        .channel('sales_invoices_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*', // INSERT, UPDATE, DELETE
-            schema: 'public',
-            table: 'sales_invoices',
-            filter: `company_id=eq.${profile.company_id}`
-          },
-          (payload) => {
-            logger.debug('🔄 Sales invoice changed:', payload.eventType, payload.new || payload.old);
-            // Invalidate queries to refetch data
-            queryClient.invalidateQueries({ queryKey: ['salesInvoices'] });
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    };
-
-    const cleanup = setupRealtimeSubscription();
-
-    return () => {
-      cleanup.then(cleanupFn => cleanupFn?.());
-    };
-  }, [queryClient]);
 
   const createInvoiceMutation = useMutation({
     mutationFn: ({ invoice, items }: { invoice: Partial<SalesInvoice>, items: Partial<SalesInvoiceItem>[] }) => 

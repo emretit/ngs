@@ -18,10 +18,10 @@ export const useVeribanInvoiceBulk = () => {
       logger.debug('🔄 [BulkStatusRefresh] Başlatılıyor...');
       toast.loading('Fatura durumları güncelleniyor...', { id: 'bulk-refresh' });
 
-      // Tüm faturaları al (fatura_no olan)
+      // Tüm faturaları al (fatura_no olan) - invoice_profile ve fatura_tipi2 de gerekli
       const { data: invoices, error } = await supabase
         .from('sales_invoices')
-        .select('id, fatura_no, einvoice_status')
+        .select('id, fatura_no, einvoice_status, invoice_profile, fatura_tipi2')
         .not('fatura_no', 'is', null)
         .order('created_at', { ascending: false })
         .limit(50); // Son 50 fatura
@@ -43,7 +43,15 @@ export const useVeribanInvoiceBulk = () => {
       // Her fatura için durum sorgula (paralel olarak)
       const promises = invoices.map(async (invoice) => {
         try {
-          const { data, error: statusError } = await supabase.functions.invoke('veriban-invoice-status', {
+          // E-Arşiv fatura kontrolü
+          const isEArchive = invoice.invoice_profile === 'EARSIVFATURA' || invoice.fatura_tipi2 === 'e-arşiv';
+          
+          // Fatura tipine göre doğru edge function'ı seç
+          const functionName = isEArchive ? 'veriban-earchive-status' : 'veriban-invoice-status';
+          
+          logger.debug(`📋 [BulkStatusRefresh] ${invoice.fatura_no} sorgulanıyor (${isEArchive ? 'E-Arşiv' : 'E-Fatura'})...`);
+          
+          const { data, error: statusError } = await supabase.functions.invoke(functionName, {
             body: { 
               invoiceId: invoice.id,        // ← invoiceId ekledik (veritabanı güncellemesi için gerekli)
               invoiceNumber: invoice.fatura_no
@@ -54,7 +62,9 @@ export const useVeribanInvoiceBulk = () => {
             logger.error(`❌ [BulkStatusRefresh] ${invoice.fatura_no} hatası:`, statusError);
             errorCount++;
           } else if (data?.success) {
-            logger.debug(`✅ [BulkStatusRefresh] ${invoice.fatura_no} güncellendi:`, data.status?.userFriendlyStatus);
+            // Response formatı farklı olabilir (earchive-status: status, invoice-status: status)
+            const statusInfo = data.status?.userFriendlyStatus || data.status?.stateName || 'Güncellendi';
+            logger.debug(`✅ [BulkStatusRefresh] ${invoice.fatura_no} güncellendi:`, statusInfo);
             successCount++;
           } else {
             errorCount++;

@@ -4,9 +4,11 @@ import { logger } from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Task } from "@/types/task";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export const useTaskOperations = () => {
   const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
 
   const updateTaskStatus = useMutation({
     mutationFn: async (data: { taskId: string; status: Task['status'] }) => {
@@ -22,16 +24,16 @@ export const useTaskOperations = () => {
     },
     onMutate: async (data) => {
       // Optimistic update - hemen UI'ı güncelle
-      await queryClient.cancelQueries({ queryKey: ["activities"] });
+      await queryClient.cancelQueries({ queryKey: ["activities", userData?.company_id] });
       await queryClient.cancelQueries({ queryKey: ["activities-infinite"] });
 
       // Önceki state'i sakla (rollback için)
-      const previousActivities = queryClient.getQueriesData({ queryKey: ["activities"] });
+      const previousActivities = queryClient.getQueriesData({ queryKey: ["activities", userData?.company_id] });
       const previousInfinite = queryClient.getQueriesData({ queryKey: ["activities-infinite"] });
 
       // Tüm activity query'lerini güncelle (normal query)
       queryClient.setQueriesData<Task[]>(
-        { queryKey: ["activities"] },
+        { queryKey: ["activities", userData?.company_id] },
         (old) => {
           if (!old) return old;
           return old.map((task) =>
@@ -76,7 +78,10 @@ export const useTaskOperations = () => {
       return { previousActivities, previousInfinite };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ["activities", userData?.company_id],
+        exact: false 
+      });
       queryClient.invalidateQueries({ queryKey: ["activities-infinite"] });
       toast.success("Görev durumu güncellendi");
     },
@@ -108,7 +113,10 @@ export const useTaskOperations = () => {
       return taskId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ["activities", userData?.company_id],
+        exact: false 
+      });
       toast.success("Görev silindi");
     },
     onError: (error) => {
@@ -130,7 +138,10 @@ export const useTaskOperations = () => {
       return updatedTask;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ["activities", userData?.company_id],
+        exact: false 
+      });
       toast.success("Görev önemi güncellendi");
     },
     onError: (error) => {

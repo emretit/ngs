@@ -621,19 +621,50 @@ export function generateEArchiveUBLTRXML(invoice: SalesInvoiceData, ettn?: strin
   const invalidInvoiceNumbers = ['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR', 'STATE', 'ANSWER', 'NULL', 'UNDEFINED'];
   let invoiceNumber = invoice.fatura_no || '';
 
-  // Generate temporary invoice number if invalid
-  if (!invoiceNumber || invalidInvoiceNumbers.includes(invoiceNumber.toUpperCase()) || invoiceNumber.trim() === '') {
+  // E-Arşiv faturalar için fatura numarası "EAR" ile başlamalı
+  // Eğer farklı bir prefix ile başlıyorsa, düzelt
+  const isEArchiveInvoice = true; // Bu fonksiyon sadece E-Arşiv için çağrılıyor
+  const requiredPrefix = 'EAR';
+  
+  // Generate temporary invoice number if invalid or wrong prefix
+  const needsRegeneration = !invoiceNumber || 
+                           invalidInvoiceNumbers.includes(invoiceNumber.toUpperCase()) || 
+                           invoiceNumber.trim() === '' ||
+                           (isEArchiveInvoice && !invoiceNumber.toUpperCase().startsWith(requiredPrefix));
+  
+  if (needsRegeneration) {
     const date = new Date(invoice.fatura_tarihi);
     const year = date.getFullYear().toString();
-    const serie = 'EAR';
-    const sequence = invoice.id.substring(0, 9).replace(/-/g, '').padEnd(9, '0');
-    invoiceNumber = `${serie}${year}${sequence}`;
+    const serie = requiredPrefix;
+    
+    // Eğer mevcut numara varsa ama yanlış prefix ise, sadece prefix'i değiştir
+    if (invoiceNumber && invoiceNumber.length >= 7) {
+      // Mevcut numaradan yıl ve sıra numarasını al
+      const yearMatch = invoiceNumber.match(/\d{4}/);
+      const sequenceMatch = invoiceNumber.match(/\d{9,}/);
+      
+      if (yearMatch && sequenceMatch) {
+        const extractedYear = yearMatch[0];
+        const extractedSequence = sequenceMatch[0].substring(0, 9).padStart(9, '0');
+        invoiceNumber = `${requiredPrefix}${extractedYear}${extractedSequence}`;
+      } else {
+        // Fallback: invoice ID'den sıra numarası oluştur
+        const sequence = invoice.id.substring(0, 9).replace(/-/g, '').padEnd(9, '0');
+        invoiceNumber = `${serie}${year}${sequence}`;
+      }
+    } else {
+      // Tamamen yeni numara oluştur
+      const sequence = invoice.id.substring(0, 9).replace(/-/g, '').padEnd(9, '0');
+      invoiceNumber = `${serie}${year}${sequence}`;
+    }
     
     if (invoiceNumber.length !== 16) {
       invoiceNumber = invoiceNumber.length > 16 
         ? invoiceNumber.substring(0, 16) 
         : invoiceNumber.padEnd(16, '0');
     }
+    
+    console.log('⚠️ [E-Arşiv] Fatura numarası düzeltildi:', invoice.fatura_no, '->', invoiceNumber);
   }
 
   // Build XML with E-Archive specific structure

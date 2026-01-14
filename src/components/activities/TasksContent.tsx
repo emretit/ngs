@@ -58,6 +58,17 @@ const TasksContent = ({
     }
   }, [selectedTaskId, tasks, onSelectTask]);
 
+  // Seçili task güncellendiğinde (tasks değiştiğinde) selectedTask'ı güncelle
+  useEffect(() => {
+    if (selectedTask && tasks.length > 0) {
+      const updatedTask = tasks.find(t => t.id === selectedTask.id);
+      if (updatedTask) {
+        // Task bulundu ve güncellenmiş, state'i güncelle
+        setSelectedTask(updatedTask);
+      }
+    }
+  }, [tasks, selectedTask?.id]); // selectedTask?.id kullanarak sadece id değişirse re-run et
+
   const handleSelectTask = (task: Task) => {
     setSelectedTask(task);
     setIsDetailOpen(true);

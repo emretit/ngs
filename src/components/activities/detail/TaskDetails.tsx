@@ -23,6 +23,7 @@ import { SubtaskManager } from "./subtasks";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Save, X } from "lucide-react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface TaskDetailsProps {
   task: Task | null;
@@ -32,6 +33,7 @@ interface TaskDetailsProps {
 
 const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
   const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
   const [isUpdating, setIsUpdating] = useState(false);
   const [editingValues, setEditingValues] = useState<Partial<Task>>({});
   const [subtasks, setSubtasks] = useState<SubTask[]>([]);
@@ -117,9 +119,20 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
       if (error) throw error;
       return updatedTask;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["activities"] });
+    onSuccess: async (updatedTask) => {
+      logger.debug("✅ Task updated successfully:", updatedTask);
       toast.success("Görev başarıyla güncellendi");
+      
+      // Invalidate and refetch queries immediately
+      await queryClient.invalidateQueries({ 
+        queryKey: ["activities", userData?.company_id],
+        exact: false,
+        refetchType: 'active' // Force refetch of active queries
+      });
+      
+      logger.debug("🔄 Queries invalidated and refetched for company:", userData?.company_id);
+      
+      // Close modal after refetch completes
       onClose();
     },
     onError: (error) => {
@@ -151,8 +164,11 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
         if (error) throw error;
       }
 
-      // Cache'i güncelle
-      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      // Cache'i güncelle - company_id ile birlikte
+      queryClient.invalidateQueries({ 
+        queryKey: ["activities", userData?.company_id],
+        exact: false 
+      });
       toast.success("Alt görevler başarıyla güncellendi");
     } catch (error) {
       logger.error("Error updating subtasks:", error);
@@ -170,7 +186,9 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
       priority: isImportant ? 'high' as const : 'medium' as const,
       is_important: isImportant,
       due_date: dueDate ? new Date(dueDate + 'T00:00:00').toISOString() : null,
-      customer_id: selectedCustomerId || null,
+      related_item_id: selectedCustomerId || null,
+      related_item_type: selectedCustomerId ? 'customer' : null,
+      related_item_title: selectedCustomerId ? selectedCompanyName : null,
       assignee_id: selectedAssigneeId || null,
       opportunity_id: selectedOpportunityId || null,
     };

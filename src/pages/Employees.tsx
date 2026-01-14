@@ -1,4 +1,4 @@
-import { useState, memo, useCallback, useEffect } from "react";
+import { useState, memo, useCallback } from "react";
 import { logger } from '@/utils/logger';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,11 +14,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, TrendingUp, FileDown, Building2 } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { useTranslation } from "react-i18next";
 
 const Employees = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
@@ -28,51 +30,12 @@ const Employees = () => {
   const [bulkPayrollOpen, setBulkPayrollOpen] = useState(false);
   const [bulkPaymentOpen, setBulkPaymentOpen] = useState(false);
 
-  // Real-time subscription - employees tablosundaki değişiklikleri dinle
-  useEffect(() => {
-    const setupRealtimeSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.company_id) return;
-
-      // Subscribe to employees table changes
-      const channel = supabase
-        .channel('employees_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*', // INSERT, UPDATE, DELETE
-            schema: 'public',
-            table: 'employees',
-            filter: `company_id=eq.${profile.company_id}`
-          },
-          (payload) => {
-            logger.debug('🔄 Employee changed:', payload.eventType, payload.new || payload.old);
-            // Invalidate queries to refetch data
-            queryClient.invalidateQueries({ queryKey: ['employees'] });
-            queryClient.invalidateQueries({ queryKey: ['employee'] });
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    };
-
-    const cleanup = setupRealtimeSubscription();
-
-    return () => {
-      cleanup.then(cleanupFn => cleanupFn?.());
-    };
-  }, [queryClient]);
+  // Real-time subscription using standardized hook
+  useRealtimeSubscription({
+    table: 'employees',
+    companyId: userData?.company_id,
+    queryKeys: [["employees"], ["employee"]],
+  });
 
   // Fetch employees with stats
   const { data: employees = [], isLoading, error } = useQuery({

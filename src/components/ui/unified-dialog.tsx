@@ -68,6 +68,23 @@ const UnifiedDialogOverlay = React.forwardRef<
   if (!isOpen) return null;
 
   const handleClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    
+    // Radix UI portal'larını kontrol et (Select, Popover, DatePicker vb.)
+    const isInsideRadixPortal = target.closest('[data-radix-popper-content-wrapper]') ||
+                                 target.closest('[data-radix-select-content]') ||
+                                 target.closest('[data-radix-popover-content]') ||
+                                 target.closest('[data-radix-menu-content]') ||
+                                 target.closest('.rdp') || // React Day Picker
+                                 target.closest('[role="listbox"]') ||
+                                 target.closest('[role="menu"]') ||
+                                 target.closest('[role="dialog"]');
+    
+    if (isInsideRadixPortal) {
+      console.log('[UnifiedDialogOverlay] Click inside Radix portal, ignoring');
+      return;
+    }
+    
     console.log('[UnifiedDialogOverlay] Click event:', {
       target: e.target,
       currentTarget: e.currentTarget,

@@ -30,7 +30,7 @@ export function FormField<T extends FieldValues>({ form, config }: FormFieldProp
   return (
     <Controller
       control={control}
-      name={config.name}
+      name={config.name as any}
       render={({ field }) => (
         <div className="space-y-0.5">
           <Label htmlFor={config.name} className="text-xs font-medium text-gray-700">

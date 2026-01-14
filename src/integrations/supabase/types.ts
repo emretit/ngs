@@ -12053,6 +12053,7 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string | null
+          earchive_webservice_url: string | null
           id: string
           is_active: boolean | null
           last_login: string | null
@@ -12068,6 +12069,7 @@ export type Database = {
         Insert: {
           company_id?: string | null
           created_at?: string | null
+          earchive_webservice_url?: string | null
           id?: string
           is_active?: boolean | null
           last_login?: string | null
@@ -12083,6 +12085,7 @@ export type Database = {
         Update: {
           company_id?: string | null
           created_at?: string | null
+          earchive_webservice_url?: string | null
           id?: string
           is_active?: boolean | null
           last_login?: string | null

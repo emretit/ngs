@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Download, Calendar, FileText, CheckCircle2 } from 'lucide-react';
 import { useVeribanEArchiveCustomerInvoices, DateRangeHelpers } from '@/hooks/veriban/useVeribanEArchiveCustomerInvoices';
 import { toast } from 'sonner';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency } from '@/utils/formatters';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 

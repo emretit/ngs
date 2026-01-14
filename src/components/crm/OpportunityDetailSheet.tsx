@@ -75,7 +75,7 @@ export const OpportunityDetailSheet = ({
     mutationFn: async (values: OpportunityFormData) => {
       if (!opportunity?.id) throw new Error('Opportunity ID is required');
 
-      const { error } = await crmService.updateOpportunity(opportunity.id, values);
+      const { error } = await crmService.updateOpportunity(opportunity.id, values as any);
       if (error) throw error;
 
       return { id: opportunity.id };

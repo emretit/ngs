@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { DatePicker } from '@/components/ui/date-picker';
 // Lazy load heavy components
 const EInvoiceProductSelector = React.lazy(() => import('@/components/einvoice/EInvoiceProductSelector'));
 const CompactProductForm = React.lazy(() => import('@/components/einvoice/CompactProductForm'));
@@ -1108,11 +1109,23 @@ export default function EInvoiceProcess() {
                 <div className="space-y-2">
                   <div>
                     <Label htmlFor="invoice_date" className="text-xs font-medium mb-0.5 block">Fatura Tarihi</Label>
-                    <Input
-                      id="invoice_date"
-                      type="date"
-                      value={formData.invoice_date}
-                      onChange={(e) => setFormData(prev => ({ ...prev, invoice_date: e.target.value }))}
+                    <DatePicker
+                      date={formData.invoice_date ? new Date(formData.invoice_date) : undefined}
+                      onSelect={(date) => {
+                        const dateString = date ? format(date, 'yyyy-MM-dd') : '';
+                        setFormData(prev => ({ ...prev, invoice_date: dateString }));
+                      }}
+                      className="h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="due_date" className="text-xs font-medium mb-0.5 block">Vade Tarihi</Label>
+                    <DatePicker
+                      date={formData.due_date ? new Date(formData.due_date) : undefined}
+                      onSelect={(date) => {
+                        const dateString = date ? format(date, 'yyyy-MM-dd') : '';
+                        setFormData(prev => ({ ...prev, due_date: dateString }));
+                      }}
                       className="h-7 text-xs"
                     />
                   </div>

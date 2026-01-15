@@ -262,9 +262,9 @@ Deno.serve(async (req) => {
           ? `${employee.first_name} ${employee.last_name}` 
           : 'Teknisyen';
         
-        notificationTitle = 'Yeni Servis Talebi Atandı';
+        notificationTitle = 'Yeni Servis Ataması';
         const customerName = serviceRequest.customer_name || 'Müşteri';
-        notificationBody = `${customerName} için "${serviceRequest.service_title || 'Servis talebi'}" atandı`;
+        notificationBody = `${customerName} - ${serviceRequest.service_title || 'Servis talebi'}`;
         notificationData = {
           type: 'service_assignment',
           service_request_id: serviceRequest.id,

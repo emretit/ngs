@@ -383,54 +383,8 @@ export default function ServiceManagement() {
                         logger.error('Bildirim kaydı hatası:', notificationError);
                       }
 
-                      // Push notification gönder (mobil uygulamaya)
-                      try {
-                        logger.debug('📱 Push notification gönderiliyor...', {
-                          user_id: technician.user_id,
-                          title: notificationTitle,
-                          body: notificationBody
-                        });
-
-                        const { data: pushData, error: pushError } = await supabase.functions.invoke('send-push-notification', {
-                          body: {
-                            user_id: technician.user_id,
-                            title: notificationTitle,
-                            body: notificationBody,
-                            data: {
-                              type: 'service_assignment',
-                              service_request_id: serviceId,
-                              action: 'open_service_request',
-                            }
-                          }
-                        });
-
-                        if (pushError) {
-                          logger.error('❌ Push notification gönderme hatası:', pushError);
-                          // Hata detaylarını göster
-                          toast.error(`Push notification hatası: ${pushError.message || 'Bilinmeyen hata'}`);
-                        } else if (pushData?.success === false) {
-                          // FCM hatası ama bildirim kaydedildi
-                          logger.warn('⚠️ Push notification FCM hatası:', pushData);
-                          if (pushData.fcm_error) {
-                            logger.warn('FCM hata detayları:', pushData.fcm_error);
-                          }
-                          toast.warning('Bildirim kaydedildi ancak push notification gönderilemedi. FCM API hatası olabilir.');
-                        } else {
-                          logger.debug('✅ Push notification başarıyla gönderildi:', pushData);
-                          if (pushData?.fcm_message_id) {
-                            logger.debug('📨 FCM Message ID:', pushData.fcm_message_id);
-                          }
-                        }
-                      } catch (pushErr: any) {
-                        logger.error('❌ Push notification çağrı hatası:', pushErr);
-                        logger.error('Hata detayları:', {
-                          message: pushErr?.message,
-                          stack: pushErr?.stack,
-                          name: pushErr?.name
-                        });
-                        toast.error(`Push notification gönderilemedi: ${pushErr?.message || 'Bilinmeyen hata'}`);
-                        // Push notification hatası kritik değil, devam et
-                      }
+                      // Push notification artık database trigger üzerinden gönderiliyor
+                      logger.debug('📱 Push notification database trigger üzerinden gönderilecek');
                     }
 
                     queryClient.invalidateQueries({ queryKey: ['service-requests'] });

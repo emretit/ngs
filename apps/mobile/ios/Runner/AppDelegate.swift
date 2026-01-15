@@ -51,13 +51,19 @@ import UserNotifications
   
   // FCM token alındığında
   override func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-    print("APNS token alındı: \(deviceToken)")
+    let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+    print("✅ APNS token alındı: \(tokenString.prefix(20))... (uzunluk: \(deviceToken.count))")
+    print("📱 APNS token Firebase'e set ediliyor...")
     Messaging.messaging().apnsToken = deviceToken
+    print("✅ APNS token Firebase'e set edildi")
   }
   
   // APNS registration hatası
   override func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-    print("APNS registration hatası: \(error)")
+    print("❌ APNS registration hatası: \(error.localizedDescription)")
+    print("❌ APNS hata detayları: \(error)")
+    print("⚠️ Firebase Console'da APNs Authentication Key kontrol edin!")
+    print("⚠️ Bundle ID ve Team ID doğru mu kontrol edin!")
   }
   
   // Push notification alındığında (foreground)
@@ -89,12 +95,12 @@ import UserNotifications
 // MARK: - MessagingDelegate
 extension AppDelegate: MessagingDelegate {
   func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-    print("FCM registration token: \(fcmToken ?? "nil")")
-    
-    // Token'ı Flutter tarafına gönder
     if let token = fcmToken {
-      // Burada Flutter metodunu çağırabilirsiniz
-      print("FCM token güncellendi: \(token)")
+      print("✅ FCM registration token alındı: \(token.prefix(30))... (uzunluk: \(token.count))")
+      print("📱 FCM token Flutter tarafına gönderilecek")
+    } else {
+      print("❌ FCM token nil - APNs token sorunlu olabilir!")
+      print("⚠️ Firebase Console'da APNs Authentication Key kontrol edin!")
     }
   }
 }

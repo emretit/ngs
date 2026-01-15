@@ -1,14 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { useCriticalAlerts, CriticalAlert } from "@/hooks/useCriticalAlerts";
 import { Button } from "@/components/ui/button";
-import { 
-  AlertTriangle, 
-  Clock, 
-  FileText, 
-  CheckSquare,
+import {
+  AlertTriangle,
+  Clock,
+  FileText,
   ChevronRight,
   X,
-  BanknoteIcon
+  BanknoteIcon,
+  Wallet
 } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
@@ -19,32 +19,56 @@ import { tr } from "date-fns/locale";
 const alertIcons: Record<CriticalAlert["type"], React.ElementType> = {
   overdue_receivable: BanknoteIcon,
   due_check: FileText,
-  urgent_approval: CheckSquare,
-  overdue_task: Clock,
+  expired_proposal: Clock,
+  due_loan_installment: Wallet,
 };
 
 const alertLabels: Record<CriticalAlert["type"], string> = {
   overdue_receivable: "Vadesi Geçmiş",
   due_check: "Çek",
-  urgent_approval: "Onay",
-  overdue_task: "Görev",
+  expired_proposal: "Süresi Geçmiş Teklif",
+  due_loan_installment: "Kredi Taksiti",
 };
+
+const alertLinks: Record<CriticalAlert["type"], string> = {
+  overdue_receivable: "/customers",
+  due_check: "/finance/checks",
+  expired_proposal: "/proposals",
+  due_loan_installment: "/finance/loans",
+};
+
+// Tüm alert tiplerini tanımla
+const allAlertTypes: CriticalAlert["type"][] = [
+  "overdue_receivable",
+  "due_check",
+  "expired_proposal",
+  "due_loan_installment"
+];
 
 export const CriticalAlertsBanner = () => {
   const navigate = useNavigate();
   const { data: alerts = [], isLoading } = useCriticalAlerts();
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
-  const visibleAlerts = alerts.filter((a) => !dismissedIds.has(a.id)).slice(0, 5);
+  const visibleAlerts = alerts.filter((a) => !dismissedIds.has(a.id));
 
   const handleDismiss = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setDismissedIds((prev) => new Set([...prev, id]));
   };
 
-  if (isLoading || visibleAlerts.length === 0) {
+  if (isLoading) {
     return null;
   }
+
+  // Uyarıları tipe göre grupla
+  const groupedAlerts = visibleAlerts.reduce((acc, alert) => {
+    if (!acc[alert.type]) {
+      acc[alert.type] = [];
+    }
+    acc[alert.type].push(alert);
+    return acc;
+  }, {} as Record<CriticalAlert["type"], CriticalAlert[]>);
 
   const criticalCount = visibleAlerts.filter((a) => a.severity === "critical").length;
   const warningCount = visibleAlerts.filter((a) => a.severity === "warning").length;
@@ -73,14 +97,18 @@ export const CriticalAlertsBanner = () => {
         </div>
       </div>
 
-      {/* Alerts List */}
+      {/* Grouped Alerts */}
       <div className="flex gap-2 p-3 overflow-x-auto scrollbar-thin">
-        {visibleAlerts.map((alert) => {
-          const Icon = alertIcons[alert.type];
+        {allAlertTypes.map((type) => {
+          const typeAlerts = groupedAlerts[type] || [];
+          const Icon = alertIcons[type];
+          const mostSevere = typeAlerts.some(a => a.severity === "critical") ? "critical" :
+                             typeAlerts.some(a => a.severity === "warning") ? "warning" : "info";
+
           const severityStyles = {
-            critical: "bg-destructive/10 border-destructive/40 hover:bg-destructive/15",
-            warning: "bg-orange-500/10 border-orange-500/40 hover:bg-orange-500/15",
-            info: "bg-primary/10 border-primary/40 hover:bg-primary/15",
+            critical: "bg-destructive/10 border-destructive/40",
+            warning: "bg-orange-500/10 border-orange-500/40",
+            info: "bg-primary/10 border-primary/40",
           };
           const iconStyles = {
             critical: "text-destructive",
@@ -90,56 +118,100 @@ export const CriticalAlertsBanner = () => {
 
           return (
             <div
-              key={alert.id}
-              onClick={() => navigate(alert.link)}
+              key={type}
               className={cn(
-                "group relative flex-shrink-0 flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-all min-w-[280px] max-w-[320px]",
-                severityStyles[alert.severity]
+                "flex-shrink-0 rounded-lg border min-w-[160px] max-w-[200px]",
+                typeAlerts.length > 0 ? severityStyles[mostSevere] : "bg-muted/5 border-border/30"
               )}
             >
-              {/* Dismiss Button */}
-              <button
-                onClick={(e) => handleDismiss(alert.id, e)}
-                className="absolute top-1 right-1 p-0.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-muted transition-opacity"
-              >
-                <X className="h-3 w-3 text-muted-foreground" />
-              </button>
-
-              {/* Icon */}
-              <div className={cn("p-2 rounded-lg bg-background/80", iconStyles[alert.severity])}>
-                <Icon className="h-4 w-4" />
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className={cn("text-xs font-medium px-1.5 py-0.5 rounded", 
-                    alert.severity === "critical" ? "bg-destructive/20 text-destructive" : 
-                    alert.severity === "warning" ? "bg-orange-500/20 text-orange-600 dark:text-orange-400" : 
-                    "bg-primary/20 text-primary"
+              {/* Group Header */}
+              <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-border/30">
+                <div className={cn(
+                  "p-1 rounded bg-background/80",
+                  typeAlerts.length > 0 ? iconStyles[mostSevere] : "text-muted-foreground"
+                )}>
+                  <Icon className="h-3 w-3" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className={cn(
+                    "text-[10px] font-semibold truncate",
+                    typeAlerts.length > 0
+                      ? (mostSevere === "critical" ? "text-destructive" :
+                         mostSevere === "warning" ? "text-orange-600 dark:text-orange-400" :
+                         "text-primary")
+                      : "text-muted-foreground"
                   )}>
-                    {alertLabels[alert.type]}
+                    {alertLabels[type]}
                   </span>
                 </div>
-                <p className="text-sm font-medium text-foreground truncate mt-0.5">
-                  {alert.description}
-                </p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {alert.amount && (
-                    <span className="text-xs font-semibold text-foreground">
-                      {formatCurrency(alert.amount)}
-                    </span>
-                  )}
-                  {alert.dueDate && (
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(alert.dueDate), "d MMM", { locale: tr })}
-                    </span>
-                  )}
-                </div>
+                <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1 py-0.5 rounded shrink-0">
+                  {typeAlerts.length}
+                </span>
               </div>
 
-              {/* Arrow */}
-              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+              {/* Items List */}
+              <div className="p-1.5 space-y-1">
+                {typeAlerts.length > 0 ? (
+                  <>
+                    <div className="space-y-1 max-h-[140px] overflow-y-auto scrollbar-thin">
+                      {typeAlerts.slice(0, 5).map((alert) => (
+                        <div
+                          key={alert.id}
+                          onClick={() => navigate(alert.link)}
+                          className="group relative flex items-center gap-1.5 px-1.5 py-1 rounded hover:bg-background/80 cursor-pointer transition-all"
+                        >
+                          {/* Dismiss Button */}
+                          <button
+                            onClick={(e) => handleDismiss(alert.id, e)}
+                            className="absolute top-0.5 right-0.5 p-0.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-muted transition-opacity z-10"
+                          >
+                            <X className="h-2 w-2 text-muted-foreground" />
+                          </button>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0 pr-3">
+                            <p className="text-[10px] font-medium text-foreground truncate leading-tight">
+                              {alert.description}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              {alert.amount && (
+                                <span className="text-[9px] font-semibold text-foreground">
+                                  {formatCurrency(alert.amount)}
+                                </span>
+                              )}
+                              {alert.dueDate && (
+                                <span className="text-[9px] text-muted-foreground">
+                                  {format(new Date(alert.dueDate), "d MMM", { locale: tr })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Arrow */}
+                          <ChevronRight className="h-2.5 w-2.5 text-muted-foreground/50 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Show More Link */}
+                    {typeAlerts.length > 5 && (
+                      <div className="pt-0.5 border-t border-border/30">
+                        <button
+                          onClick={() => navigate(alertLinks[type])}
+                          className="w-full px-1.5 py-1 text-[10px] font-medium text-primary hover:text-primary/80 hover:bg-primary/5 rounded transition-all flex items-center justify-center gap-0.5"
+                        >
+                          <span>+{typeAlerts.length - 5} daha</span>
+                          <ChevronRight className="h-2.5 w-2.5" />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="px-1.5 py-2 text-center">
+                    <p className="text-[10px] text-muted-foreground">Henüz yok</p>
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}

@@ -816,6 +816,12 @@ const ServiceEdit = () => {
 
               if (pushError) {
                 logger.error('Push notification gönderme hatası:', pushError);
+              } else if (pushData?.success === false) {
+                // FCM hatası ama bildirim kaydedildi
+                logger.warn('⚠️ Push notification FCM hatası:', pushData);
+                if (pushData.fcm_error) {
+                  logger.warn('FCM hata detayları:', pushData.fcm_error);
+                }
               } else {
                 logger.debug('Push notification başarıyla gönderildi:', pushData);
               }

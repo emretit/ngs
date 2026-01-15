@@ -6,7 +6,7 @@ import { useOverdueBalances } from "./useOverdueBalances";
 
 export interface CriticalAlert {
   id: string;
-  type: "overdue_receivable" | "due_check" | "urgent_approval" | "overdue_task";
+  type: "overdue_receivable" | "due_check" | "expired_proposal" | "due_loan_installment";
   title: string;
   description: string;
   severity: "critical" | "warning" | "info";
@@ -73,53 +73,78 @@ export const useCriticalAlerts = () => {
         });
       });
 
-      // 3. Pending urgent approvals
-      const { data: pendingApprovals } = await supabase
-        .from("approvals")
-        .select("id, object_type, object_id, created_at")
-        
-        .eq("status", "pending")
-        .order("created_at", { ascending: true })
-        .limit(5);
+      // 3. Expired proposals
+      const { data: expiredProposals } = await supabase
+        .from("proposals")
+        .select(`
+          id,
+          number,
+          title,
+          valid_until,
+          total_amount,
+          customer_id,
+          customers (name)
+        `)
+        .in("status", ["pending", "sent"])
+        .lt("valid_until", today)
+        .order("valid_until", { ascending: true })
+        .limit(10);
 
-      pendingApprovals?.forEach((approval) => {
-        const createdDate = new Date(approval.created_at || "");
-        const daysPending = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
-        
-        if (daysPending >= 1) {
-          alerts.push({
-            id: `approval-${approval.id}`,
-            type: "urgent_approval",
-            title: "Bekleyen Onay",
-            description: `${approval.object_type} - ${daysPending} gündür bekliyor`,
-            severity: daysPending >= 3 ? "critical" : "warning",
-            link: `/approvals/${approval.id}`,
-          });
-        }
-      });
-
-      // 4. Overdue tasks
-      const { data: overdueTasks } = await supabase
-        .from("activities")
-        .select("id, title, due_date, priority")
-        
-        .eq("type", "task")
-        .neq("status", "completed")
-        .lt("due_date", today)
-        .order("due_date", { ascending: true })
-        .limit(3);
-
-      overdueTasks?.forEach((task) => {
+      expiredProposals?.forEach((proposal) => {
+        const customerName = (proposal.customers as any)?.name || "Bilinmeyen Müşteri";
         alerts.push({
-          id: `task-${task.id}`,
-          type: "overdue_task",
-          title: "Gecikmiş Görev",
-          description: task.title,
-          severity: task.priority === "high" ? "critical" : "warning",
-          dueDate: task.due_date || undefined,
-          link: `/activities?taskId=${task.id}`,
+          id: `proposal-${proposal.id}`,
+          type: "expired_proposal",
+          title: "Süresi Geçmiş Teklif",
+          description: `${customerName} - ${proposal.title || proposal.number}`,
+          severity: "warning",
+          amount: proposal.total_amount,
+          dueDate: proposal.valid_until || undefined,
+          link: `/proposals/${proposal.id}`,
         });
       });
+
+      // 4. Loan installments due this month
+      const { data: activeLoans } = await supabase
+        .from("loans")
+        .select("id, loan_name, bank, installment_amount, start_date, end_date, installment_count, remaining_debt")
+
+        .eq("status", "active")
+        .lte("start_date", nextWeek)
+        .gte("end_date", today);
+
+      if (activeLoans) {
+        for (const loan of activeLoans) {
+          // Bu ay için ödeme yapılmış mı kontrol et
+          const startOfMonth = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), "yyyy-MM-dd");
+          const endOfMonth = format(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0), "yyyy-MM-dd");
+
+          const { data: monthlyPayments } = await supabase
+            .from("loan_payments")
+            .select("payment_amount")
+            .eq("loan_id", loan.id)
+            .gte("payment_date", startOfMonth)
+            .lte("payment_date", endOfMonth);
+
+          const totalPaidThisMonth = monthlyPayments?.reduce((sum, p) => sum + p.payment_amount, 0) || 0;
+
+          // Eğer bu ay için tam ödeme yapılmamışsa uyarı ver
+          if (totalPaidThisMonth < loan.installment_amount) {
+            const remainingAmount = loan.installment_amount - totalPaidThisMonth;
+
+            alerts.push({
+              id: `loan-${loan.id}`,
+              type: "due_loan_installment",
+              title: "Kredi Taksiti",
+              description: `${loan.bank} - ${loan.loan_name}`,
+              severity: remainingAmount === loan.installment_amount ? "warning" : "info",
+              amount: remainingAmount,
+              dueDate: endOfMonth,
+              link: "/finance/loans",
+            });
+          }
+        }
+      }
 
       // Sort by severity (critical first) then by date
       return alerts.sort((a, b) => {

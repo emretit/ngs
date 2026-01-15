@@ -89,6 +89,13 @@ void main() async {
     if (!kIsWeb) {
       await FirebaseMessagingService.initialize();
       AppLogger.info('Firebase Messaging başarıyla başlatıldı');
+
+      // Eğer kullanıcı zaten login ise FCM token'ını kaydet
+      final currentSession = Supabase.instance.client.auth.currentSession;
+      if (currentSession != null) {
+        AppLogger.info('Mevcut kullanıcı için FCM token kaydediliyor...');
+        await FirebaseMessagingService.saveTokenForCurrentUser();
+      }
     }
   } catch (e) {
     AppLogger.error('Firebase Messaging başlatma hatası', e);

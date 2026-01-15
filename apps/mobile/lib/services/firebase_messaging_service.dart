@@ -45,46 +45,76 @@ class FirebaseMessagingService {
     if (defaultTargetPlatform != TargetPlatform.iOS) return;
     
     int attempts = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 20; // App Store build'inde daha uzun bekle
+    
+    print('📱 APNS token bekleniyor (App Store build için)...');
     
     while (attempts < maxAttempts) {
       try {
         final apnsToken = await _firebaseMessagingInstance.getAPNSToken();
         if (apnsToken != null) {
-          print('APNS token hazır: ${apnsToken.length} karakter');
+          print('✅ APNS token hazır: ${apnsToken.length} karakter');
+          print('📱 APNS token (ilk 20): ${apnsToken.substring(0, 20)}...');
           return;
+        } else {
+          print('⏳ APNS token henüz hazır değil (deneme ${attempts + 1}/$maxAttempts)...');
         }
       } catch (e) {
-        print('APNS token kontrolü: $e');
+        print('⚠️ APNS token kontrolü hatası: $e');
       }
       
       await Future.delayed(const Duration(seconds: 1));
       attempts++;
     }
     
-    print('APNS token hazır değil, FCM token alınmaya çalışılıyor...');
+    print('⚠️ APNS token hazır değil (${maxAttempts} deneme sonrası), FCM token alınmaya çalışılıyor...');
+    print('⚠️ Bu App Store build\'inde APNs yapılandırması sorunlu olabilir!');
   }
 
   // FCM token'ı Supabase'e kaydet
   static Future<void> saveTokenToSupabase(String userId) async {
     int retryCount = 0;
     const maxRetries = 3;
-    
+
+    print('🔐 FCM token kaydetme başlıyor - User ID: $userId');
+
     while (retryCount < maxRetries) {
       try {
+        print('📱 FCM token alınıyor...');
         final token = await getToken();
-        if (token == null) return;
+
+        if (token == null) {
+          print('❌ FCM token alınamadı (null döndü)');
+          return;
+        }
+
+        print('✅ FCM token alındı: ${token.substring(0, 30)}... (uzunluk: ${token.length})');
 
         final supabase = Supabase.instance.client;
-        
+
         // Platform detection
         String platform = 'android';
         if (defaultTargetPlatform == TargetPlatform.iOS) {
           platform = 'ios';
+          // iOS için APNS token kontrolü
+          try {
+            final apnsToken = await _firebaseMessagingInstance.getAPNSToken();
+            if (apnsToken != null) {
+              print('✅ APNS token mevcut: ${apnsToken.length} karakter');
+            } else {
+              print('⚠️ APNS token yok - App Store build\'inde sorun olabilir!');
+              print('⚠️ Firebase Console\'da APNs Authentication Key kontrol edin!');
+            }
+          } catch (e) {
+            print('⚠️ APNS token kontrolü hatası: $e');
+          }
         } else if (defaultTargetPlatform == TargetPlatform.macOS) {
           platform = 'web';
         }
-        
+
+        print('📲 Platform: $platform');
+        print('💾 Supabase profiles tablosuna kaydediliyor...');
+
         // Profiles tablosunda FCM token güncelle
         await supabase.from('profiles').update({
           'fcm_token': token,
@@ -93,18 +123,20 @@ class FirebaseMessagingService {
           'notification_enabled': true,
           'last_token_updated': DateTime.now().toIso8601String(),
         }).eq('id', userId);
-        
-        print('FCM token başarıyla kaydedildi/güncellendi: $platform');
+
+        print('✅ FCM token başarıyla kaydedildi/güncellendi: $platform');
+        print('🎯 User ID: $userId');
         return; // Başarılı olursa çık
       } catch (e) {
         retryCount++;
+        print('❌ FCM token kaydetme hatası (deneme $retryCount/$maxRetries): $e');
+
         if (retryCount >= maxRetries) {
-          print('FCM token kaydetme hatası (${maxRetries} deneme sonrası): $e');
+          print('💥 FCM token kaydetme başarısız (${maxRetries} deneme sonrası): $e');
           return;
         }
         // Exponential backoff: 1s, 2s, 4s
         await Future.delayed(Duration(seconds: retryCount));
-        print('FCM token kaydetme hatası (deneme $retryCount/$maxRetries): $e');
       }
     }
   }

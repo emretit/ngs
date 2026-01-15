@@ -408,6 +408,13 @@ export default function ServiceManagement() {
                           logger.error('❌ Push notification gönderme hatası:', pushError);
                           // Hata detaylarını göster
                           toast.error(`Push notification hatası: ${pushError.message || 'Bilinmeyen hata'}`);
+                        } else if (pushData?.success === false) {
+                          // FCM hatası ama bildirim kaydedildi
+                          logger.warn('⚠️ Push notification FCM hatası:', pushData);
+                          if (pushData.fcm_error) {
+                            logger.warn('FCM hata detayları:', pushData.fcm_error);
+                          }
+                          toast.warning('Bildirim kaydedildi ancak push notification gönderilemedi. FCM API hatası olabilir.');
                         } else {
                           logger.debug('✅ Push notification başarıyla gönderildi:', pushData);
                           if (pushData?.fcm_message_id) {

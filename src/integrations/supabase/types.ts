@@ -2920,6 +2920,7 @@ export type Database = {
           created_at: string | null
           currency: string | null
           due_date: string | null
+          exchange_rate: number | null
           fetched_at: string | null
           id: string
           invoice_date: string
@@ -2932,7 +2933,16 @@ export type Database = {
           response_sent: boolean | null
           response_xml: string | null
           subtotal: number | null
+          supplier_address_city: string | null
+          supplier_address_country: string | null
+          supplier_address_district: string | null
+          supplier_address_postal_code: string | null
+          supplier_address_street: string | null
+          supplier_contact_email: string | null
+          supplier_contact_phone: string | null
           supplier_name: string
+          supplier_tax_number_type: string | null
+          supplier_tax_office: string | null
           supplier_vkn: string
           tax_amount: number | null
           total_amount: number | null
@@ -2945,6 +2955,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           due_date?: string | null
+          exchange_rate?: number | null
           fetched_at?: string | null
           id?: string
           invoice_date: string
@@ -2957,7 +2968,16 @@ export type Database = {
           response_sent?: boolean | null
           response_xml?: string | null
           subtotal?: number | null
+          supplier_address_city?: string | null
+          supplier_address_country?: string | null
+          supplier_address_district?: string | null
+          supplier_address_postal_code?: string | null
+          supplier_address_street?: string | null
+          supplier_contact_email?: string | null
+          supplier_contact_phone?: string | null
           supplier_name: string
+          supplier_tax_number_type?: string | null
+          supplier_tax_office?: string | null
           supplier_vkn: string
           tax_amount?: number | null
           total_amount?: number | null
@@ -2970,6 +2990,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           due_date?: string | null
+          exchange_rate?: number | null
           fetched_at?: string | null
           id?: string
           invoice_date?: string
@@ -2982,7 +3003,16 @@ export type Database = {
           response_sent?: boolean | null
           response_xml?: string | null
           subtotal?: number | null
+          supplier_address_city?: string | null
+          supplier_address_country?: string | null
+          supplier_address_district?: string | null
+          supplier_address_postal_code?: string | null
+          supplier_address_street?: string | null
+          supplier_contact_email?: string | null
+          supplier_contact_phone?: string | null
           supplier_name?: string
+          supplier_tax_number_type?: string | null
+          supplier_tax_office?: string | null
           supplier_vkn?: string
           tax_amount?: number | null
           total_amount?: number | null
@@ -7686,6 +7716,7 @@ export type Database = {
           customer_id: string | null
           due_date: string
           einvoice_id: string | null
+          exchange_rate: number | null
           id: string
           invoice_date: string
           invoice_number: string
@@ -7707,6 +7738,7 @@ export type Database = {
           customer_id?: string | null
           due_date: string
           einvoice_id?: string | null
+          exchange_rate?: number | null
           id?: string
           invoice_date: string
           invoice_number: string
@@ -7728,6 +7760,7 @@ export type Database = {
           customer_id?: string | null
           due_date?: string
           einvoice_id?: string | null
+          exchange_rate?: number | null
           id?: string
           invoice_date?: string
           invoice_number?: string

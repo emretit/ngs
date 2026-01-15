@@ -225,7 +225,15 @@ serve(async (req) => {
       console.log(`✅ ${uuids.length} adet fatura UUID bulundu`);
 
       // Opsiyonel: UUID'leri veritabanındaki faturalarla eşleştir
-      let matchedInvoices = [];
+      interface MatchedInvoice {
+        id: string;
+        invoiceNumber: string;
+        invoiceDate: string;
+        totalAmount: number;
+        ettn: string;
+      }
+      
+      let matchedInvoices: MatchedInvoice[] = [];
       if (uuids.length > 0) {
         const { data: invoices } = await supabase
           .from('sales_invoices')

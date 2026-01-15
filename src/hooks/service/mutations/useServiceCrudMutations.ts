@@ -243,36 +243,8 @@ export const useServiceCrudMutations = () => {
                 is_read: false,
               });
 
-            // Push notification gönder (mobil uygulamaya)
-            try {
-              const { data: pushData, error: pushError } = await supabase.functions.invoke('send-push-notification', {
-                body: {
-                  user_id: technician.user_id,
-                  title: notificationTitle,
-                  body: notificationBody,
-                  data: {
-                    type: 'service_assignment',
-                    service_request_id: id,
-                    action: 'open_service_request',
-                  }
-                }
-              });
-
-              if (pushError) {
-                logger.error('Push notification gönderme hatası:', pushError);
-              } else if (pushData?.success === false) {
-                // FCM hatası ama bildirim kaydedildi
-                logger.warn('⚠️ Push notification FCM hatası:', pushData);
-                if (pushData.fcm_error) {
-                  logger.warn('FCM hata detayları:', pushData.fcm_error);
-                }
-              } else {
-                logger.debug('Push notification başarıyla gönderildi:', pushData);
-              }
-            } catch (pushErr) {
-              logger.error('Push notification çağrı hatası:', pushErr);
-              // Push notification hatası kritik değil, devam et
-            }
+            // Push notification artık database trigger üzerinden gönderiliyor
+            logger.debug('📱 Push notification database trigger üzerinden gönderilecek');
           }
         } catch (notifErr) {
           logger.error('Bildirim gönderme hatası:', notifErr);

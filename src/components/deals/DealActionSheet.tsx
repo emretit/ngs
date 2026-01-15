@@ -89,7 +89,6 @@ const DealActionSheet = ({
               date={reminderDate}
               onSelect={setReminderDate}
               placeholder="Tarih seçin"
-              locale={tr}
             />
             <Input
               placeholder="Hatırlatıcı notu"

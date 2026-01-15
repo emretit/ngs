@@ -68,26 +68,26 @@ const NotificationCenter = () => {
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[420px] p-0 shadow-lg border-2" 
+        className="w-[380px] p-0 shadow-lg border-2" 
         align="end"
         sideOffset={8}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-background to-muted/30">
+        <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-background to-muted/30">
           <div className="flex items-center gap-2">
             <div className="relative">
               {hasUnread ? (
-                <BellRing className="h-5 w-5 text-primary" />
+                <BellRing className="h-4 w-4 text-primary" />
               ) : (
-                <Bell className="h-5 w-5" />
+                <Bell className="h-4 w-4" />
               )}
             </div>
-            <h3 className="font-semibold text-base">Bildirimler</h3>
+            <h3 className="font-semibold text-sm">Bildirimler</h3>
           </div>
           {hasUnread && (
             <Badge 
               variant="destructive" 
-              className="animate-in fade-in-0 zoom-in-95 duration-200"
+              className="text-xs h-5 px-1.5 animate-in fade-in-0 zoom-in-95 duration-200"
             >
               {unreadCount} okunmamış
             </Badge>
@@ -95,7 +95,7 @@ const NotificationCenter = () => {
         </div>
         
         {/* Content */}
-        <ScrollArea className="h-[600px]">
+        <ScrollArea className="h-[500px]">
           <NotificationListWithFilters />
         </ScrollArea>
       </PopoverContent>

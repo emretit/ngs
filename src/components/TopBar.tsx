@@ -10,7 +10,6 @@ import { useCompany } from "@/hooks/useCompany";
 import { useTranslation } from 'react-i18next';
 import HeaderUserInfo from "@/components/HeaderUserInfo";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
-import { InsightNotificationCenter } from "@/components/ai/InsightNotificationCenter";
 import GlobalSearchDialog from "@/components/GlobalSearchDialog";
 import CompanySwitcher from "@/components/CompanySwitcher";
 import { Calendar, Search, Command, Building, User, Settings, LogOut, Globe, Menu } from "lucide-react";
@@ -139,9 +138,6 @@ export const TopBar = ({ onMenuClick }: TopBarProps) => {
           </Button>
           
           <NotificationCenter />
-
-          {/* AI Insights Notification Center */}
-          {companyId && <InsightNotificationCenter companyId={companyId} />}
 
           <Separator orientation="vertical" className="h-6 hidden sm:block" />
           <DropdownMenu>

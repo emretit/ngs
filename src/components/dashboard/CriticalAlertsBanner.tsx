@@ -6,13 +6,11 @@ import {
   Clock,
   FileText,
   ChevronRight,
-  X,
   BanknoteIcon,
   Wallet
 } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 
@@ -48,21 +46,13 @@ const allAlertTypes: CriticalAlert["type"][] = [
 export const CriticalAlertsBanner = () => {
   const navigate = useNavigate();
   const { data: alerts = [], isLoading } = useCriticalAlerts();
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
-
-  const visibleAlerts = alerts.filter((a) => !dismissedIds.has(a.id));
-
-  const handleDismiss = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDismissedIds((prev) => new Set([...prev, id]));
-  };
 
   if (isLoading) {
     return null;
   }
 
   // Uyarıları tipe göre grupla
-  const groupedAlerts = visibleAlerts.reduce((acc, alert) => {
+  const groupedAlerts = alerts.reduce((acc, alert) => {
     if (!acc[alert.type]) {
       acc[alert.type] = [];
     }
@@ -70,8 +60,8 @@ export const CriticalAlertsBanner = () => {
     return acc;
   }, {} as Record<CriticalAlert["type"], CriticalAlert[]>);
 
-  const criticalCount = visibleAlerts.filter((a) => a.severity === "critical").length;
-  const warningCount = visibleAlerts.filter((a) => a.severity === "warning").length;
+  const criticalCount = alerts.filter((a) => a.severity === "critical").length;
+  const warningCount = alerts.filter((a) => a.severity === "warning").length;
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-destructive/30 bg-gradient-to-r from-destructive/5 via-background to-orange-500/5">
@@ -98,7 +88,7 @@ export const CriticalAlertsBanner = () => {
       </div>
 
       {/* Grouped Alerts */}
-      <div className="flex gap-2 p-3 overflow-x-auto scrollbar-thin">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4">
         {allAlertTypes.map((type) => {
           const typeAlerts = groupedAlerts[type] || [];
           const Icon = alertIcons[type];
@@ -120,21 +110,21 @@ export const CriticalAlertsBanner = () => {
             <div
               key={type}
               className={cn(
-                "flex-shrink-0 rounded-lg border min-w-[160px] max-w-[200px]",
+                "rounded-xl border transition-all duration-300 hover:shadow-md",
                 typeAlerts.length > 0 ? severityStyles[mostSevere] : "bg-muted/5 border-border/30"
               )}
             >
               {/* Group Header */}
-              <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-border/30">
+              <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/30">
                 <div className={cn(
-                  "p-1 rounded bg-background/80",
+                  "p-1.5 rounded-lg bg-background/80",
                   typeAlerts.length > 0 ? iconStyles[mostSevere] : "text-muted-foreground"
                 )}>
-                  <Icon className="h-3 w-3" />
+                  <Icon className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className={cn(
-                    "text-[10px] font-semibold truncate",
+                    "text-xs font-semibold truncate",
                     typeAlerts.length > 0
                       ? (mostSevere === "critical" ? "text-destructive" :
                          mostSevere === "warning" ? "text-orange-600 dark:text-orange-400" :
@@ -144,43 +134,35 @@ export const CriticalAlertsBanner = () => {
                     {alertLabels[type]}
                   </span>
                 </div>
-                <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1 py-0.5 rounded shrink-0">
+                <span className="text-xs font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
                   {typeAlerts.length}
                 </span>
               </div>
 
               {/* Items List */}
-              <div className="p-1.5 space-y-1">
+              <div className="p-2 space-y-1">
                 {typeAlerts.length > 0 ? (
                   <>
-                    <div className="space-y-1 max-h-[140px] overflow-y-auto scrollbar-thin">
+                    <div className="space-y-1.5 max-h-[140px] overflow-y-auto scrollbar-thin">
                       {typeAlerts.slice(0, 5).map((alert) => (
                         <div
                           key={alert.id}
                           onClick={() => navigate(alert.link)}
-                          className="group relative flex items-center gap-1.5 px-1.5 py-1 rounded hover:bg-background/80 cursor-pointer transition-all"
+                          className="group relative flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-background/80 cursor-pointer transition-all"
                         >
-                          {/* Dismiss Button */}
-                          <button
-                            onClick={(e) => handleDismiss(alert.id, e)}
-                            className="absolute top-0.5 right-0.5 p-0.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-muted transition-opacity z-10"
-                          >
-                            <X className="h-2 w-2 text-muted-foreground" />
-                          </button>
-
                           {/* Content */}
-                          <div className="flex-1 min-w-0 pr-3">
-                            <p className="text-[10px] font-medium text-foreground truncate leading-tight">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-foreground truncate leading-tight">
                               {alert.description}
                             </p>
-                            <div className="flex items-center gap-1.5 mt-0.5">
+                            <div className="flex items-center gap-2 mt-1">
                               {alert.amount && (
-                                <span className="text-[9px] font-semibold text-foreground">
+                                <span className="text-[10px] font-semibold text-foreground">
                                   {formatCurrency(alert.amount)}
                                 </span>
                               )}
                               {alert.dueDate && (
-                                <span className="text-[9px] text-muted-foreground">
+                                <span className="text-[10px] text-muted-foreground">
                                   {format(new Date(alert.dueDate), "d MMM", { locale: tr })}
                                 </span>
                               )}
@@ -188,27 +170,27 @@ export const CriticalAlertsBanner = () => {
                           </div>
 
                           {/* Arrow */}
-                          <ChevronRight className="h-2.5 w-2.5 text-muted-foreground/50 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
+                          <ChevronRight className="h-3 w-3 text-muted-foreground/50 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
                         </div>
                       ))}
                     </div>
 
                     {/* Show More Link */}
                     {typeAlerts.length > 5 && (
-                      <div className="pt-0.5 border-t border-border/30">
+                      <div className="pt-1 border-t border-border/30">
                         <button
                           onClick={() => navigate(alertLinks[type])}
-                          className="w-full px-1.5 py-1 text-[10px] font-medium text-primary hover:text-primary/80 hover:bg-primary/5 rounded transition-all flex items-center justify-center gap-0.5"
+                          className="w-full px-2 py-1.5 text-xs font-medium text-primary hover:text-primary/80 hover:bg-primary/5 rounded transition-all flex items-center justify-center gap-1"
                         >
                           <span>+{typeAlerts.length - 5} daha</span>
-                          <ChevronRight className="h-2.5 w-2.5" />
+                          <ChevronRight className="h-3 w-3" />
                         </button>
                       </div>
                     )}
                   </>
                 ) : (
-                  <div className="px-1.5 py-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">Henüz yok</p>
+                  <div className="px-2 py-4 text-center">
+                    <p className="text-xs text-muted-foreground">Henüz yok</p>
                   </div>
                 )}
               </div>

@@ -82,6 +82,33 @@ Deno.serve(async (req) => {
       });
     }
     
+    // 🚫 Duplicate webhook guard
+    // Bazı projelerde service_requests için iki ayrı trigger aynı edge function'ı çağırabiliyor:
+    // - notify_service_assignment(): { record: {...} } (sadece atama değiştiğinde)
+    // - supabase_functions.http_request trigger'ı: { type, table, schema, record, old_record }
+    // Bu durumda aynı atama için 2 kez push gidiyor. Burada "verbose" payload'ı yok sayıyoruz.
+    const isVerboseDbTriggerPayload =
+      !!payload &&
+      typeof payload === 'object' &&
+      'type' in payload &&
+      'table' in payload &&
+      'record' in payload &&
+      ('old_record' in payload || 'schema' in payload);
+
+    if (isVerboseDbTriggerPayload) {
+      console.log('ℹ️ Verbose DB trigger payload alındı, duplicate engellemek için yok sayılıyor:', {
+        type: (payload as any).type,
+        table: (payload as any).table,
+        hasOldRecord: !!(payload as any).old_record,
+        recordId: (payload as any)?.record?.id,
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, ignored: true, reason: 'duplicate_guard_verbose_trigger' }),
+        { headers: corsHeaders, status: 200 }
+      );
+    }
+
     // Supabase client oluştur
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     

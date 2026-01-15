@@ -449,7 +449,7 @@ export async function getInsights(
     let query = supabase
       .from('ai_insights')
       .select('*')
-      
+      .eq('company_id', companyId)
       .order('created_at', { ascending: false });
 
     if (filters?.category) {

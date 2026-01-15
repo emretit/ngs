@@ -70,9 +70,8 @@ export function ProactiveInsightsWidget({ companyId, maxInsights = 3 }: Proactiv
   const handleInsightClick = (insight: Insight) => {
     if (insight.action_url) {
       navigate(insight.action_url);
-    } else {
-      navigate('/ai-insights');
     }
+    // action_url yoksa yönlendirme yapma, kartı expanded olarak göster veya sadece detayları göster
   };
 
   if (loading) {

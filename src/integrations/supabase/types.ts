@@ -352,37 +352,70 @@ export type Database = {
       }
       ai_insights: {
         Row: {
+          action_url: string | null
+          actionable: boolean | null
+          category: string | null
           company_id: string
           created_at: string | null
           data_summary: Json | null
+          description: string | null
+          expires_at: string | null
           id: string
+          impact_score: number | null
           insight_text: string
           insight_type: string
           is_dismissed: boolean | null
+          is_read: boolean | null
           period_end: string
           period_start: string
+          recommendations: Json | null
+          related_entities: Json | null
+          severity: string | null
+          title: string | null
         }
         Insert: {
+          action_url?: string | null
+          actionable?: boolean | null
+          category?: string | null
           company_id: string
           created_at?: string | null
           data_summary?: Json | null
+          description?: string | null
+          expires_at?: string | null
           id?: string
+          impact_score?: number | null
           insight_text: string
           insight_type: string
           is_dismissed?: boolean | null
+          is_read?: boolean | null
           period_end: string
           period_start: string
+          recommendations?: Json | null
+          related_entities?: Json | null
+          severity?: string | null
+          title?: string | null
         }
         Update: {
+          action_url?: string | null
+          actionable?: boolean | null
+          category?: string | null
           company_id?: string
           created_at?: string | null
           data_summary?: Json | null
+          description?: string | null
+          expires_at?: string | null
           id?: string
+          impact_score?: number | null
           insight_text?: string
           insight_type?: string
           is_dismissed?: boolean | null
+          is_read?: boolean | null
           period_end?: string
           period_start?: string
+          recommendations?: Json | null
+          related_entities?: Json | null
+          severity?: string | null
+          title?: string | null
         }
         Relationships: [
           {

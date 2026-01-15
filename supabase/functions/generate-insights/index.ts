@@ -59,9 +59,21 @@ serve(async (req) => {
       const insights = await generateInsightsForCompany(supabaseAdmin, compId);
 
       if (insights.length > 0) {
+        // period_start, period_end ve insight_text ekle
+        const now = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const insightsWithDates = insights.map(insight => ({
+          ...insight,
+          period_start: thirtyDaysAgo.toISOString().split('T')[0],
+          period_end: now.toISOString().split('T')[0],
+          insight_text: insight.description // Eski sütun için de veri ekle
+        }));
+
         const { error } = await supabaseAdmin
           .from('ai_insights')
-          .insert(insights);
+          .insert(insightsWithDates);
 
         if (!error) {
           totalInsights += insights.length;

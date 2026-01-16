@@ -73,11 +73,17 @@ export const useSuppliersCalculatedBalance = (suppliers: Supplier[]) => {
     const { payments, purchaseInvoices, salesInvoices } = allTransactionsData;
     const balanceMap: Record<string, SupplierBalances> = {};
 
+    const normalizeCurrency = (c: unknown) => {
+      const code = String(c ?? 'TRY').trim().toUpperCase();
+      return code === 'TL' ? 'TRY' : code;
+    };
+
     // Helper to convert to TRY
     const convertToTRY = (amount: number, currency: string, rate?: number | null) => {
-      if (currency === 'TRY' || currency === 'TL') return amount;
+      const curr = normalizeCurrency(currency);
+      if (curr === 'TRY') return amount;
       if (rate) return amount * rate;
-      return convertCurrency(amount, currency, 'TRY');
+      return convertCurrency(amount, curr, 'TRY');
     };
 
     suppliers.forEach((supplier) => {
@@ -89,11 +95,11 @@ export const useSuppliersCalculatedBalance = (suppliers: Supplier[]) => {
       purchaseInvoices
         .filter((inv: any) => inv.supplier_id === supplier.id)
         .forEach((invoice: any) => {
-          const currency = invoice.currency || 'TRY';
-          const isTRY = currency === 'TRY' || currency === 'TL';
-          
+          const currency = normalizeCurrency(invoice.currency);
+          const isTRY = currency === 'TRY';
+
           tryBalance += convertToTRY(invoice.total_amount, currency, invoice.exchange_rate);
-          
+
           if (!isTRY) {
             if (currency === 'USD') usdBalance += invoice.total_amount;
             if (currency === 'EUR') eurBalance += invoice.total_amount;
@@ -104,11 +110,11 @@ export const useSuppliersCalculatedBalance = (suppliers: Supplier[]) => {
       salesInvoices
         .filter((inv: any) => inv.supplier_id === supplier.id)
         .forEach((invoice: any) => {
-          const currency = invoice.currency || 'TRY';
-          const isTRY = currency === 'TRY' || currency === 'TL';
-          
+          const currency = normalizeCurrency(invoice.currency);
+          const isTRY = currency === 'TRY';
+
           tryBalance -= convertToTRY(invoice.total_amount, currency, invoice.exchange_rate);
-          
+
           if (!isTRY) {
             if (currency === 'USD') usdBalance -= invoice.total_amount;
             if (currency === 'EUR') eurBalance -= invoice.total_amount;
@@ -119,8 +125,8 @@ export const useSuppliersCalculatedBalance = (suppliers: Supplier[]) => {
       payments
         .filter((p: any) => p.supplier_id === supplier.id)
         .forEach((payment: any) => {
-          const currency = payment.currency || 'TRY';
-          const isTRY = currency === 'TRY' || currency === 'TL';
+          const currency = normalizeCurrency(payment.currency);
+          const isTRY = currency === 'TRY';
           const isFis = payment.payment_type === 'fis';
           
           if (isFis) {

@@ -1273,6 +1273,7 @@ export default function EInvoiceProcess() {
             invoicePrice={matchingItems[pendingProductIndex]?.invoice_item.unit_price}
             invoiceUnit={matchingItems[pendingProductIndex]?.invoice_item.unit}
             invoiceCurrency={invoice?.currency}
+            invoiceExchangeRate={invoice?.exchange_rate}
             onConfirm={handleProductDetailsConfirm}
           />
         )}

@@ -1,16 +1,22 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Pencil, Check, X, Building, User, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Supplier } from "@/types/supplier";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatPhoneNumber } from "@/utils/phoneFormatter";
-import BalanceDisplay from "@/components/shared/BalanceDisplay";
-import { useSupplierBalance } from "@/hooks/useSupplierBalance";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { createConvertToTRY, createConvertToUSD, createGetCreditDebit } from "./payments/utils/paymentUtils";
+import {
+  usePaymentsQuery,
+  usePurchaseInvoicesQuery,
+  useSalesInvoicesQuery,
+  useUnifiedTransactions,
+  usePaymentStats
+} from "./payments/hooks";
 
 interface ContactHeaderProps {
   supplier: Supplier;
@@ -25,32 +31,32 @@ export const ContactHeader = ({ supplier, id, onEdit, onUpdate }: ContactHeaderP
   const [statusValue, setStatusValue] = useState(supplier.status);
   const [typeValue, setTypeValue] = useState(supplier.type);
   const [isLoading, setIsLoading] = useState(false);
-  
-  const { tryBalance, usdBalance, eurBalance, isLoading: balanceLoading } = useSupplierBalance(supplier.id);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'aktif':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'pasif':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'potansiyel':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  // Payment stats calculation
+  const { exchangeRates, convertCurrency } = useExchangeRates();
+  const { userData, loading: userLoading } = useCurrentUser();
+  const isEnabled = !!userData?.company_id && !userLoading;
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'kurumsal':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'bireysel':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  const { data: payments = [] } = usePaymentsQuery(supplier, userData?.company_id, isEnabled);
+  const { data: purchaseInvoices = [] } = usePurchaseInvoicesQuery(supplier, userData?.company_id, isEnabled);
+  const { data: salesInvoices = [] } = useSalesInvoicesQuery(supplier, userData?.company_id, isEnabled);
+
+  const usdRate = useMemo(() => {
+    const rate = exchangeRates.find(r => r.currency_code === 'USD');
+    return rate?.forex_selling || 1;
+  }, [exchangeRates]);
+
+  const convertToTRY = useMemo(() => createConvertToTRY(usdRate, convertCurrency), [usdRate, convertCurrency]);
+  const convertToUSD = useMemo(() => createConvertToUSD(usdRate, convertCurrency), [usdRate, convertCurrency]);
+  const getCreditDebit = useMemo(() => createGetCreditDebit(convertToTRY, convertToUSD), [convertToTRY, convertToUSD]);
+
+  const allTransactions = useUnifiedTransactions({ payments, purchaseInvoices, salesInvoices });
+  const paymentStats = usePaymentStats({ 
+    allTransactions, 
+    getCreditDebit,
+    supplierId: supplier.id,
+    companyId: userData?.company_id
+  });
 
   const updateSupplierField = async (field: string, value: string) => {
     setIsLoading(true);
@@ -236,29 +242,14 @@ export const ContactHeader = ({ supplier, id, onEdit, onUpdate }: ContactHeaderP
         <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300">
           <TrendingUp className="h-3 w-3" />
           <span className="font-medium">Bakiye</span>
-          <div className="flex items-center gap-1">
-            {balanceLoading ? (
-              <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">...</span>
-            ) : (
-              <>
-                {usdBalance !== 0 && (
-                  <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-                    <BalanceDisplay amount={usdBalance} currency="USD" showTLEquivalent={false} size="sm" />
-                  </span>
-                )}
-                {eurBalance !== 0 && (
-                  <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-                    <BalanceDisplay amount={eurBalance} currency="EUR" showTLEquivalent={false} size="sm" />
-                  </span>
-                )}
-                {(usdBalance === 0 && eurBalance === 0) && (
-                  <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-                    <BalanceDisplay amount={tryBalance} currency="TRY" showTLEquivalent={false} size="sm" />
-                  </span>
-                )}
-              </>
-            )}
-          </div>
+          <span className={`bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold ${
+            paymentStats.currentBalance >= 0 ? 'text-green-700' : 'text-red-700'
+          }`}>
+            {paymentStats.currentBalance.toLocaleString('tr-TR', {
+              style: 'currency',
+              currency: 'TRY'
+            })}
+          </span>
         </div>
       </div>
       

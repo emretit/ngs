@@ -4,6 +4,7 @@ import { Payment } from "@/types/payment";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { Button } from "@/components/ui/button";
 
 import { TransactionType } from "./payments/types";
 import { createConvertToTRY, createConvertToUSD, createGetCreditDebit } from "./payments/utils/paymentUtils";
@@ -63,7 +64,12 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
   const allTransactionsWithBalance = useTransactionsWithBalance({ allTransactions, filteredTransactions, getCreditDebit });
 
   // İstatistikler
-  const paymentStats = usePaymentStats({ allTransactions, getCreditDebit });
+  const paymentStats = usePaymentStats({ 
+    allTransactions, 
+    getCreditDebit,
+    supplierId: supplier.id,
+    companyId: userData?.company_id
+  });
 
   // Silme işlemi
   const deletePaymentMutation = useDeletePayment(supplier, userData?.company_id);
@@ -108,15 +114,34 @@ export const PaymentsList = ({ supplier, onAddPayment }: PaymentsListProps) => {
         onAddPayment={onAddPayment}
       />
 
-      <PaymentsTable
-        transactions={transactionsWithBalance}
-        getCreditDebit={getCreditDebit}
-        isDeleting={deletePaymentMutation.isPending}
-        onDelete={handleDeletePayment}
-        hasMore={hasMore}
-        remainingCount={allTransactionsWithBalance.length - visibleCount}
-        onLoadMore={loadMore}
-      />
+      {/* Ekstre Tablosu */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="pb-6">
+          <div className="-mx-4">
+            <div className="px-4">
+              <PaymentsTable
+                transactions={transactionsWithBalance}
+                getCreditDebit={getCreditDebit}
+                isDeleting={deletePaymentMutation.isPending}
+                onDelete={handleDeletePayment}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Daha Fazla Yükle Butonu */}
+        {hasMore && (
+          <div className="flex justify-center py-4 border-t border-gray-200">
+            <Button
+              variant="outline"
+              onClick={loadMore}
+              className="text-sm"
+            >
+              Daha Fazla Yükle ({allTransactionsWithBalance.length - visibleCount} işlem kaldı)
+            </Button>
+          </div>
+        )}
+      </div>
 
       <ConfirmationDialogComponent
         open={isDeleteDialogOpen}

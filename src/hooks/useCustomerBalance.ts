@@ -61,7 +61,7 @@ export const useCustomerBalance = (customerId: string): CustomerBalance => {
 
     const transactions: Transaction[] = [];
 
-    // Sales invoices (satış faturaları): Müşteri bize borçlu → BORÇ → Eksi (-)
+    // Sales invoices (satış faturaları): Müşteri bize borçlu → BORÇ → Artı (+)
     salesInvoices?.forEach(invoice => {
       // fatura_tarihi date formatında, timestamp'e çevir
       let invoiceDate: string;
@@ -78,20 +78,20 @@ export const useCustomerBalance = (customerId: string): CustomerBalance => {
       } else {
         invoiceDate = new Date().toISOString();
       }
-      
+
       transactions.push({
         date: invoiceDate,
-        amount: -(invoice.toplam_tutar || 0), // Borç = Eksi
+        amount: invoice.toplam_tutar || 0, // Borç = Artı
         currency: normalizeCurrency(invoice.para_birimi),
         type: 'sales_invoice'
       });
     });
 
-    // Purchase invoices (alış faturaları): Biz müşteriye borçluyuz → ALACAK → Artı (+)
+    // Purchase invoices (alış faturaları): Biz müşteriye borçluyuz → ALACAK → Eksi (-)
     purchaseInvoices?.forEach(invoice => {
       transactions.push({
         date: invoice.invoice_date || new Date().toISOString(),
-        amount: invoice.total_amount, // Alacak = Artı
+        amount: -(invoice.total_amount), // Alacak = Eksi
         currency: normalizeCurrency(invoice.currency),
         type: 'purchase_invoice'
       });

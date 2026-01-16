@@ -1,15 +1,20 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Pencil, Check, X, Building, User, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Customer } from "@/types/customer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import BalanceDisplay from "@/components/shared/BalanceDisplay";
-import { useCustomerBalance } from "@/hooks/useCustomerBalance";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
+import {
+  usePaymentsQuery,
+  useSalesInvoicesQuery,
+  usePurchaseInvoicesQuery,
+  useUnifiedTransactions,
+  usePaymentStats
+} from "./payments/hooks";
 
 interface ContactHeaderProps {
   customer: Customer;
@@ -24,32 +29,20 @@ export const ContactHeader = ({ customer, id, onEdit, onUpdate }: ContactHeaderP
   const [statusValue, setStatusValue] = useState(customer.status);
   const [typeValue, setTypeValue] = useState(customer.type);
   const [isLoading, setIsLoading] = useState(false);
-  
-  const { tryBalance, usdBalance, eurBalance, isLoading: balanceLoading } = useCustomerBalance(customer.id);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'aktif':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'pasif':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'potansiyel':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  // Payment stats calculation
+  const { exchangeRates, convertCurrency } = useExchangeRates();
+  const { data: payments = [] } = usePaymentsQuery(customer);
+  const { data: salesInvoices = [] } = useSalesInvoicesQuery(customer);
+  const { data: purchaseInvoices = [] } = usePurchaseInvoicesQuery(customer);
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'kurumsal':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'bireysel':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  const allTransactions = useUnifiedTransactions({
+    payments,
+    salesInvoices,
+    purchaseInvoices,
+    customerId: customer.id,
+  });
+  const paymentStats = usePaymentStats({ allTransactions });
 
   const updateCustomerField = async (field: string, value: string) => {
     setIsLoading(true);
@@ -247,32 +240,17 @@ export const ContactHeader = ({ customer, id, onEdit, onUpdate }: ContactHeaderP
         <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300">
           <TrendingUp className="h-3 w-3" />
           <span className="font-medium">Bakiye</span>
-          <div className="flex items-center gap-1">
-            {balanceLoading ? (
-              <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">...</span>
-            ) : (
-              <>
-                {usdBalance !== 0 && (
-                  <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-                    <BalanceDisplay amount={usdBalance} currency="USD" showTLEquivalent={false} size="sm" />
-                  </span>
-                )}
-                {eurBalance !== 0 && (
-                  <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-                    <BalanceDisplay amount={eurBalance} currency="EUR" showTLEquivalent={false} size="sm" />
-                  </span>
-                )}
-                {(usdBalance === 0 && eurBalance === 0) && (
-                  <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-                    <BalanceDisplay amount={tryBalance} currency="TRY" showTLEquivalent={false} size="sm" />
-                  </span>
-                )}
-              </>
-            )}
-          </div>
+          <span className={`bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold ${
+            paymentStats.currentBalance >= 0 ? 'text-green-700' : 'text-red-700'
+          }`}>
+            {paymentStats.currentBalance.toLocaleString('tr-TR', {
+              style: 'currency',
+              currency: 'TRY'
+            })}
+          </span>
         </div>
       </div>
-      
+
       {/* Sağ taraf - Butonlar */}
       <div className="flex items-center gap-2">
         <Button 

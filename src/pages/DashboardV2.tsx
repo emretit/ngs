@@ -1,33 +1,20 @@
 import { memo, useState, useMemo, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   TrendingUp,
-  TrendingDown,
-  Target,
-  Calendar,
   ArrowUpRight,
   ArrowDownRight,
-  Activity,
-  Zap,
   Clock,
   CheckCircle2,
-  Sparkles,
   DollarSign,
   Package,
-  ShoppingCart,
-  FileText,
   Wallet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
-import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { QuickStatsBar } from "@/components/dashboard/v2/QuickStatsBar";
 import { TimePeriodCard } from "@/components/dashboard/v2/TimePeriodCard";
 import { AIAgentAccordion } from "@/components/dashboard/v2/AIAgentAccordion";
@@ -160,7 +147,6 @@ KPICard.displayName = "KPICard";
 // ═══════════════════════════════════════════════════════════════════════════
 const DashboardV2 = () => {
   const navigate = useNavigate();
-  const { displayName } = useCurrentUser();
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<'today' | 'week' | 'month' | 'quarter'>('month');
 
   const {
@@ -170,38 +156,6 @@ const DashboardV2 = () => {
     totalReceivables = 0,
     isLoading: widgetsLoading
   } = useDashboardWidgets();
-
-  const { exchangeRates, loading: ratesLoading } = useExchangeRates();
-
-  // Memoized helper functions
-  const getGreeting = useCallback(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Günaydın";
-    if (hour < 18) return "İyi günler";
-    return "İyi akşamlar";
-  }, []);
-
-  // Döviz kuru format helper - memoized
-  const formatRate = useCallback((rate: number | null) => {
-    if (rate === null) return "-";
-    return rate.toFixed(4);
-  }, []);
-
-  // Ana dövizleri filtrele - memoized
-  const mainCurrencies = useMemo(() => 
-    exchangeRates.filter((rate) =>
-      ["USD", "EUR", "GBP"].includes(rate.currency_code)
-    ),
-    [exchangeRates]
-  );
-
-  // Quick actions - memoized
-  const quickActions = useMemo(() => [
-    { label: "Fırsat", icon: Target, gradient: THEME.gradients.accent, route: "/opportunities" },
-    { label: "Teklif", icon: FileText, gradient: THEME.gradients.purple, route: "/proposals" },
-    { label: "Sipariş", icon: ShoppingCart, gradient: THEME.gradients.warning, route: "/orders/list" },
-    { label: "Aktivite", icon: Activity, gradient: THEME.gradients.success, route: "/activities?action=new" },
-  ], []);
 
   // KPI Cards - memoized
   const kpiCards: KPICardProps[] = useMemo(() => [
@@ -277,104 +231,7 @@ const DashboardV2 = () => {
   return (
     <div className="space-y-5 animate-in fade-in duration-500">
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* KOMPAKT HEADER */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 shadow-sm">
-        {/* Subtle Background Effect */}
-        <div className="absolute inset-0 opacity-[0.03]">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-500 rounded-full blur-3xl" />
-        </div>
-        
-        <div className="relative px-5 py-4">
-          <div className="flex flex-col lg:flex-row justify-between gap-4">
-            {/* Sol Taraf - Karşılama ve Hızlı Erişim Butonları */}
-            <div className="flex-1 space-y-4">
-              {/* Karşılama */}
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
-                  <Sparkles className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold tracking-tight text-foreground">
-                    {getGreeting()}, <span className="bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">{displayName}</span>
-                  </h1>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>{format(new Date(), "d MMMM yyyy, EEEE", { locale: tr })}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Hızlı Erişim Butonları */}
-              <div className="flex items-center gap-3 pt-3 border-t border-border/30">
-                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-                  <Zap className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Hızlı Erişim:</span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {quickActions.map((action, index) => {
-                    const Icon = action.icon;
-                    return (
-                      <Button
-                        key={index}
-                        onClick={() => navigate(action.route)}
-                        size="default"
-                        className={cn(
-                          "h-9 gap-2 text-sm font-medium shadow-sm hover:shadow-md transition-all hover:scale-[1.02]",
-                          "bg-gradient-to-r text-white border-0",
-                          action.gradient
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                        <span>{action.label}</span>
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Sağ Taraf - Döviz Kurları */}
-            <div className="flex flex-col gap-2 items-end lg:items-start lg:min-w-[200px]">
-              {ratesLoading ? (
-                <>
-                  <Skeleton className="h-7 w-full" />
-                  <Skeleton className="h-7 w-full" />
-                  <Skeleton className="h-7 w-full" />
-                </>
-              ) : (
-                mainCurrencies.map((rate) => {
-                  return (
-                    <div
-                      key={rate.currency_code}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/50 bg-card/50 backdrop-blur-sm hover:shadow-sm transition-all w-full"
-                    >
-                      <span className="text-[11px] font-semibold text-foreground w-9">{rate.currency_code}</span>
-                      <div className="flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3 text-emerald-500" />
-                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                          {formatRate(rate.forex_buying)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <TrendingDown className="h-3 w-3 text-red-500" />
-                        <span className="text-[11px] font-bold text-red-600 dark:text-red-400 tabular-nums">
-                          {formatRate(rate.forex_selling)}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* AI AGENT ACCORDION - Header Altında */}
+      {/* AI AGENT ACCORDION */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <AIAgentAccordion />
 

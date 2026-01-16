@@ -6,13 +6,11 @@ import { useExchangeRates } from "@/hooks/useExchangeRates";
 interface UseTransactionsWithBalanceProps {
   allTransactions: UnifiedTransaction[];
   filteredTransactions: UnifiedTransaction[];
-  currentBalance: number;
 }
 
 export const useTransactionsWithBalance = ({
   allTransactions,
   filteredTransactions,
-  currentBalance,
 }: UseTransactionsWithBalanceProps) => {
   const { exchangeRates, convertCurrency } = useExchangeRates();
 
@@ -116,6 +114,6 @@ export const useTransactionsWithBalance = ({
 
     // ADIM 5: En yeni en üstte olacak şekilde ters çevir
     return result.reverse();
-  }, [filteredTransactions, allTransactions, currentBalance, exchangeRates, convertCurrency]);
+  }, [filteredTransactions, allTransactions, exchangeRates, convertCurrency]);
 };
 

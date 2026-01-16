@@ -43,6 +43,8 @@ const Dashboard = () => {
     assets,
     liabilities,
     previousMonthSales,
+    overdueReceivables,
+    activeCustomers,
     isLoading: widgetsLoading,
     isAssetsLoading,
     isLiabilitiesLoading
@@ -114,13 +116,117 @@ const Dashboard = () => {
         monthlyExpenses={monthlyExpenses}
         stockValue={stockValue}
         turnoverTrend={turnoverTrend}
+        liabilities={liabilities}
+        netProfit={monthlyTurnover - monthlyExpenses}
+        overdueReceivablesTotal={overdueReceivables?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0}
+        activeCustomers={activeCustomers}
         isLoading={widgetsLoading}
       />
 
-      {/* AI Proactive Insights Widget */}
-      {companyId && (
-        <ProactiveInsightsWidget companyId={companyId} maxInsights={3} />
-      )}
+      {/* AI Insights & Workflow Cards - 4 Column Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* AI İç Görüleri */}
+        {companyId && (
+          <div className="h-[280px]">
+            <Suspense fallback={
+              <Card className="bg-card border-border/50 shadow-sm h-full">
+                <CardContent className="p-2.5">
+                  <div className="space-y-2">
+                    <Skeleton className="h-8 w-full" />
+                    {[1, 2].map(i => (
+                      <Skeleton key={i} className="h-16 w-full" />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            }>
+              <ProactiveInsightsWidget 
+                companyId={companyId} 
+                maxInsights={3} 
+                className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow"
+              />
+            </Suspense>
+          </div>
+        )}
+
+        {/* Today's Tasks */}
+        <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-2.5 h-[280px]">
+            <Suspense fallback={
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-full" />
+                {[1, 2].map(i => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            }>
+              {tasksLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-full" />
+                  {[1, 2].map(i => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <TodaysTasks 
+                  tasks={tasks}
+                  onTaskComplete={completeTask}
+                  onTaskClick={handleTaskClick}
+                  onAddTask={handleAddTask}
+                />
+              )}
+            </Suspense>
+          </CardContent>
+        </Card>
+
+        {/* Pending Approvals */}
+        <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-2.5 h-[280px]">
+            <Suspense fallback={
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-full" />
+                {[1, 2].map(i => (
+                  <Skeleton key={i} className="h-14 w-full" />
+                ))}
+              </div>
+            }>
+              {approvalsLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-full" />
+                  {[1, 2].map(i => (
+                    <Skeleton key={i} className="h-14 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <PendingApprovals 
+                  approvals={approvals || []}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                  onViewDetails={handleViewDetails}
+                />
+              )}
+            </Suspense>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activities */}
+        <Card className="bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-1.5 px-2.5 pt-2.5">
+            <CardTitle className="text-sm font-semibold">Son Aktiviteler</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[240px] overflow-auto px-2.5">
+            <Suspense fallback={
+              <div className="space-y-1.5">
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            }>
+              <RecentActivitiesTimeline />
+            </Suspense>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Finansal Analiz Chart - Bağımsız Kart */}
       <Suspense fallback={<Skeleton className="h-[500px] w-full rounded-lg" />}>
@@ -173,87 +279,6 @@ const Dashboard = () => {
           <CardContent className="p-3">
             <Suspense fallback={<Skeleton className="h-32 w-full" />}>
               <CashflowPipeline />
-            </Suspense>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tasks & Approvals Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        {/* Today's Tasks */}
-        <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-2.5 h-[280px]">
-            <Suspense fallback={
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-full" />
-                {[1, 2].map(i => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            }>
-              {tasksLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-8 w-full" />
-                  {[1, 2].map(i => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : (
-                <TodaysTasks 
-                  tasks={tasks}
-                  onTaskComplete={completeTask}
-                  onTaskClick={handleTaskClick}
-                  onAddTask={handleAddTask}
-                />
-              )}
-            </Suspense>
-          </CardContent>
-        </Card>
-
-        {/* Pending Approvals */}
-        <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-2.5 h-[280px]">
-            <Suspense fallback={
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-full" />
-                {[1, 2].map(i => (
-                  <Skeleton key={i} className="h-14 w-full" />
-                ))}
-              </div>
-            }>
-              {approvalsLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-8 w-full" />
-                  {[1, 2].map(i => (
-                    <Skeleton key={i} className="h-14 w-full" />
-                  ))}
-                </div>
-              ) : (
-                <PendingApprovals 
-                  approvals={approvals || []}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                  onViewDetails={handleViewDetails}
-                />
-              )}
-            </Suspense>
-          </CardContent>
-        </Card>
-
-        {/* Recent Activities */}
-        <Card className="lg:col-span-1 bg-card border-border/50 shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-1.5 px-2.5 pt-2.5">
-            <CardTitle className="text-sm font-semibold">Son Aktiviteler</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[240px] overflow-auto px-2.5">
-            <Suspense fallback={
-              <div className="space-y-1.5">
-                {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            }>
-              <RecentActivitiesTimeline />
             </Suspense>
           </CardContent>
         </Card>

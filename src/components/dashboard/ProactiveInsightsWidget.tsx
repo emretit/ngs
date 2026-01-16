@@ -18,6 +18,7 @@ import { getInsights, type Insight } from '@/services/insightGenerationService';
 interface ProactiveInsightsWidgetProps {
   companyId: string;
   maxInsights?: number;
+  className?: string;
 }
 
 const severityIcons = {
@@ -34,7 +35,7 @@ const severityColors = {
   opportunity: 'bg-green-100 text-green-700'
 };
 
-export function ProactiveInsightsWidget({ companyId, maxInsights = 3 }: ProactiveInsightsWidgetProps) {
+export function ProactiveInsightsWidget({ companyId, maxInsights = 3, className }: ProactiveInsightsWidgetProps) {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -114,8 +115,8 @@ export function ProactiveInsightsWidget({ companyId, maxInsights = 3 }: Proactiv
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className={cn("h-full flex flex-col", className)}>
+      <CardHeader className="flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -137,7 +138,7 @@ export function ProactiveInsightsWidget({ companyId, maxInsights = 3 }: Proactiv
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 flex-1 overflow-auto">
         {insights.map((insight) => {
           const Icon = severityIcons[insight.severity] || Info;
           const colorClass = severityColors[insight.severity] || 'bg-blue-100 text-blue-700';

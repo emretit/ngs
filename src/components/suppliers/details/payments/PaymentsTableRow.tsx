@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { UnifiedTransaction, CreditDebitResult } from "./types";
 import { getTransactionTypeLabel, getAccountName } from "./utils/paymentUtils";
 import { Payment } from "@/types/payment";
+import { InvoicePaymentStatusBadge } from "@/components/invoices/InvoicePaymentStatusBadge";
 
 interface PaymentsTableRowProps {
   transaction: UnifiedTransaction;
@@ -41,18 +42,19 @@ export const PaymentsTableRow = ({
         <TableCell className="py-2 px-3 text-xs whitespace-nowrap" colSpan={3}>
           <span className="font-bold text-blue-800">{transaction.description}</span>
         </TableCell>
+        <TableCell className="py-2 px-3 text-xs whitespace-nowrap">-</TableCell>
         <TableCell className="py-2 px-3 text-xs whitespace-nowrap text-center">-</TableCell>
         <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
         <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
         <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
         <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
-        <TableCell className={`py-2 px-3 text-right text-xs font-bold whitespace-nowrap ${balanceTRY >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-          {balanceTRY.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {balanceIndicator}
-        </TableCell>
         <TableCell className={`py-2 px-3 text-right text-xs font-bold whitespace-nowrap ${balanceUSD >= 0 ? 'text-green-600' : 'text-red-600'}`}>
           {balanceUSD.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {usdBalanceIndicator}
         </TableCell>
-        <TableCell className="py-2 px-3 text-center text-xs whitespace-nowrap">-</TableCell>
+        <TableCell className={`py-2 px-3 text-right text-xs font-bold whitespace-nowrap ${balanceTRY >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          {balanceTRY.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {balanceIndicator}
+        </TableCell>
+        <TableCell className="py-2 px-3 text-right text-xs whitespace-nowrap">-</TableCell>
         <TableCell className="py-2 px-3 text-center">-</TableCell>
       </TableRow>
     );
@@ -82,6 +84,26 @@ export const PaymentsTableRow = ({
           ) : (
             transaction.reference
           )
+        ) : (
+          '-'
+        )}
+      </TableCell>
+      <TableCell className="py-2 px-3 text-xs whitespace-nowrap">
+        {transaction.dueDate ? (
+          <span className={(() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const dueDate = new Date(transaction.dueDate);
+            dueDate.setHours(0, 0, 0, 0);
+            if (dueDate < today) {
+              return "text-red-600 font-semibold";
+            } else if (dueDate.getTime() === today.getTime()) {
+              return "text-orange-600 font-semibold";
+            }
+            return "text-gray-600";
+          })()}>
+            {format(new Date(transaction.dueDate), "dd.MM.yyyy")}
+          </span>
         ) : (
           '-'
         )}
@@ -117,33 +139,38 @@ export const PaymentsTableRow = ({
               Çek: {transaction.check.check_number} - {transaction.check.bank}
             </div>
           )}
+          {/* Fatura ödeme durumu badge'i */}
+          {(transaction.type === 'sales_invoice' || transaction.type === 'purchase_invoice') && (
+            <div className="mt-1">
+              <InvoicePaymentStatusBadge
+                invoiceId={transaction.id}
+                invoiceType={transaction.type === 'sales_invoice' ? 'sales' : 'purchase'}
+                showAmount={false}
+              />
+            </div>
+          )}
         </div>
       </TableCell>
-      <TableCell className="py-2 px-3 text-right text-xs font-medium text-green-600 whitespace-nowrap">
+      <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-900 whitespace-nowrap">
         {credit > 0 ? credit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
       </TableCell>
-      <TableCell className="py-2 px-3 text-right text-xs font-medium text-red-600 whitespace-nowrap">
+      <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-900 whitespace-nowrap">
         {debit > 0 ? debit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
       </TableCell>
-      <TableCell className="py-2 px-3 text-right text-xs font-medium text-green-600 whitespace-nowrap">
-        {usdCredit > 0 ? usdCredit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
-      </TableCell>
-      <TableCell className="py-2 px-3 text-right text-xs font-medium text-red-600 whitespace-nowrap">
+      <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-900 whitespace-nowrap">
         {usdDebit > 0 ? usdDebit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
       </TableCell>
-      <TableCell className={`py-2 px-3 text-right text-xs font-medium whitespace-nowrap ${balanceTRY >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-        {balanceTRY.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {balanceIndicator}
+      <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-900 whitespace-nowrap">
+        {usdCredit > 0 ? usdCredit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
       </TableCell>
       <TableCell className={`py-2 px-3 text-right text-xs font-medium whitespace-nowrap ${balanceUSD >= 0 ? 'text-green-600' : 'text-red-600'}`}>
         {balanceUSD.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {usdBalanceIndicator}
       </TableCell>
-      <TableCell className="py-2 px-3 text-center text-xs whitespace-nowrap">
-        {displayExchangeRate !== '-' ? (
-          <div>
-            <div className="font-medium">{displayExchangeRate}</div>
-            <div className="text-[10px] text-gray-500 mt-0.5">{currency} → TRY</div>
-          </div>
-        ) : '-'}
+      <TableCell className={`py-2 px-3 text-right text-xs font-medium whitespace-nowrap ${balanceTRY >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+        {balanceTRY.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {balanceIndicator}
+      </TableCell>
+      <TableCell className="py-2 px-3 text-right text-xs text-muted-foreground whitespace-nowrap">
+        {exchangeRate ? exchangeRate.toFixed(6) : '-'}
       </TableCell>
       <TableCell className="py-2 px-3 text-center">
         {transaction.type === 'payment' && transaction.payment && (

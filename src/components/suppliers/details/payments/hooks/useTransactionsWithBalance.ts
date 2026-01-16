@@ -30,6 +30,9 @@ export const useTransactionsWithBalance = ({
 
     allSortedTransactions.forEach((transaction) => {
       const { credit, debit, usdCredit, usdDebit } = getCreditDebit(transaction);
+      // Tedarikçi bakış açısından: Borç (debit) bakiye artırır, Alacak (credit) bakiye azaltır
+      // Alacak = Tedarikçiye borcumuz var → Bakiye azalır (daha negatif olur)
+      // Borç = Tedarikçiden alacağımız var veya ödeme yaptık → Bakiye artar
       runningBalanceTRY = runningBalanceTRY + debit - credit;
       runningBalanceUSD = runningBalanceUSD + usdDebit - usdCredit;
       balanceMap.set(transaction.id, {

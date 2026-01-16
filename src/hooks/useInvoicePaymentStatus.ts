@@ -34,12 +34,14 @@ export const useInvoicePaymentStatus = (invoiceId: string, invoiceType: "sales" 
       const tableName = invoiceType === "sales" ? "sales_invoices" : "purchase_invoices";
       const amountField = invoiceType === "sales" ? "toplam_tutar" : "total_amount";
       const dueDateField = invoiceType === "sales" ? "vade_tarihi" : "due_date";
+      // sales_invoices'ta odeme_durumu var, purchase_invoices'ta status var (ama kullanmıyoruz, hesaplıyoruz)
+      const statusField = invoiceType === "sales" ? "odeme_durumu" : "status";
 
       const { data: invoice, error: invoiceError } = await supabase
         .from(tableName)
-        .select(`${amountField}, odeme_durumu, ${dueDateField}`)
+        .select(`${amountField}, ${statusField}, ${dueDateField}`)
         .eq("id", invoiceId)
-        
+        .eq("company_id", companyId)
         .single();
 
       if (invoiceError || !invoice) return null;
@@ -50,7 +52,7 @@ export const useInvoicePaymentStatus = (invoiceId: string, invoiceType: "sales" 
       const { data: allocations, error: allocError } = await supabase
         .from("invoice_payment_allocations")
         .select("id, payment_id, allocated_amount, allocation_type, allocation_date, notes")
-        
+        .eq("company_id", companyId)
         .eq("invoice_id", invoiceId)
         .eq("invoice_type", invoiceType)
         .order("allocation_date", { ascending: false });
@@ -108,7 +110,7 @@ export const useMultipleInvoicePaymentStatus = (invoiceIds: string[], invoiceTyp
       const { data: invoices, error: invoiceError } = await supabase
         .from(tableName)
         .select(`id, ${amountField}`)
-        
+        .eq("company_id", companyId)
         .in("id", invoiceIds);
 
       if (invoiceError) throw invoiceError;
@@ -117,7 +119,7 @@ export const useMultipleInvoicePaymentStatus = (invoiceIds: string[], invoiceTyp
       const { data: allocations, error: allocError } = await supabase
         .from("invoice_payment_allocations")
         .select("id, invoice_id, payment_id, allocated_amount, allocation_type, allocation_date, notes")
-        
+        .eq("company_id", companyId)
         .eq("invoice_type", invoiceType)
         .in("invoice_id", invoiceIds);
 

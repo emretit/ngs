@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { Customer } from "@/types/customer";
 import { Payment } from "@/types/payment";
-import { TransactionType, getCreditDebit } from "./payments/utils/paymentUtils";
+import { TransactionType } from "./payments/utils/paymentUtils";
 import { PaymentsHeader } from "./payments/PaymentsHeader";
 import { PaymentsTable } from "./payments/PaymentsTable";
 import { usePaymentsQuery } from "./payments/hooks/usePaymentsQuery";
@@ -10,13 +10,12 @@ import { usePurchaseInvoicesQuery } from "./payments/hooks/usePurchaseInvoicesQu
 import { useUnifiedTransactions } from "./payments/hooks/useUnifiedTransactions";
 import { useFilteredTransactions } from "./payments/hooks/useFilteredTransactions";
 import { useTransactionsWithBalance } from "./payments/hooks/useTransactionsWithBalance";
-import { useCustomerBalance } from "./payments/hooks/useCustomerBalance";
 import { usePaymentStats } from "./payments/hooks/usePaymentStats";
 import { useDeletePayment } from "./payments/hooks/useDeletePayment";
 import { usePaymentsRealtime } from "./payments/hooks/usePaymentsRealtime";
-import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { Button } from "@/components/ui/button";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface PaymentsListProps {
   customer: Customer;
@@ -31,12 +30,7 @@ export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
   const [visibleCount, setVisibleCount] = useState(20); // Infinite scroll için
-
-  // Customer balance
-  const currentBalance = useCustomerBalance(customer);
-
-  // Exchange rates
-  const { exchangeRates, convertCurrency } = useExchangeRates();
+  const { userData } = useCurrentUser();
 
   // Data queries - çekler artık payments tablosunda payment_type='cek' olarak tutuluyor
   const { data: payments = [] } = usePaymentsQuery(customer);
@@ -66,7 +60,6 @@ export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
   const allTransactionsWithBalance = useTransactionsWithBalance({
     allTransactions,
     filteredTransactions,
-    currentBalance,
   });
 
   // Görüntülenen işlemler (infinite scroll için)
@@ -82,29 +75,12 @@ export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
     setVisibleCount(prev => prev + 20);
   }, []);
 
-  // Gerçek bakiye: Tüm işlemlerdeki en son (en yeni) işlemin bakiyesi
-  const calculatedBalance = useMemo(() => {
-    const usdRate = exchangeRates.find(r => r.currency_code === 'USD')?.forex_selling || 1;
-
-    // Tüm işlemleri tarihe göre sırala (en eski en önce)
-    const sorted = [...allTransactions].sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      return dateA === dateB ? a.id.localeCompare(b.id) : dateA - dateB;
-    });
-
-    // Bakiye hesapla
-    let balance = 0;
-    sorted.forEach((transaction) => {
-      const { credit, debit } = getCreditDebit(transaction, usdRate, convertCurrency);
-      balance = balance + debit - credit;
-    });
-
-    return balance;
-  }, [allTransactions, exchangeRates, convertCurrency]);
-
-  // Payment stats - hesaplanan bakiyeyi kullan
-  const paymentStats = usePaymentStats(payments, calculatedBalance);
+  // Payment stats - tüm işlemleri kullan
+  const paymentStats = usePaymentStats({ 
+    allTransactions,
+    customerId: customer.id,
+    companyId: userData?.company_id
+  });
 
   // Delete payment mutation
   const deletePaymentMutation = useDeletePayment(customer);

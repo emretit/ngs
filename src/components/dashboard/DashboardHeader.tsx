@@ -9,7 +9,13 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Target,
+  Activity,
+  FileText,
+  ShoppingCart,
+  Zap
 } from "lucide-react";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -17,6 +23,8 @@ import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { useTodaysTasks } from "@/hooks/useTodaysTasks";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
+import { useNavigate } from "react-router-dom";
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { HeaderAIButton } from "./HeaderAIButton";
 
@@ -25,6 +33,7 @@ interface DashboardHeaderProps {
 }
 
 const DashboardHeader = ({ onRefresh }: DashboardHeaderProps) => {
+  const navigate = useNavigate();
   const { exchangeRates, loading: exchangeLoading, refreshExchangeRates } = useExchangeRates();
   const { displayName } = useCurrentUser();
   const { tasks } = useTodaysTasks();
@@ -55,6 +64,14 @@ const DashboardHeader = ({ onRefresh }: DashboardHeaderProps) => {
   const importantTasks = tasks.filter(t => t.isImportant && !t.isCompleted).length;
   const pendingApprovals = approvals?.length || 0;
 
+  // Quick actions - memoized
+  const quickActions = useMemo(() => [
+    { label: "Fırsat", icon: Target, gradient: "from-cyan-500 via-blue-500 to-indigo-600", route: "/opportunities" },
+    { label: "Teklif", icon: FileText, gradient: "from-violet-500 to-purple-600", route: "/proposals" },
+    { label: "Sipariş", icon: ShoppingCart, gradient: "from-amber-500 to-orange-600", route: "/orders/list" },
+    { label: "Aktivite", icon: Activity, gradient: "from-emerald-500 to-teal-600", route: "/activities?action=new" },
+  ], []);
+
   return (
     <div className="relative overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-background via-background to-primary/5 shadow-sm">
       {/* Background Pattern */}
@@ -62,113 +79,110 @@ const DashboardHeader = ({ onRefresh }: DashboardHeaderProps) => {
       
       <div className="relative p-4 sm:p-6">
         {/* Main Header Row */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
+        <div className="flex flex-col lg:flex-row justify-between gap-4">
           {/* Left - Welcome Message */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                {getGreeting()}, <span className="text-primary">{displayName}</span>
-              </h1>
+          <div className="flex-1 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-foreground">
+                  {getGreeting()}, <span className="text-primary">{displayName}</span>
+                </h1>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>{format(new Date(), "d MMMM yyyy, EEEE", { locale: tr })}</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>{format(new Date(), "d MMMM yyyy, EEEE", { locale: tr })}</span>
-            </div>
-          </div>
 
-          {/* Right - AI Button + Stats */}
-          <div className="flex items-center gap-3">
-            {/* AI Assistant Button - Prominent */}
-            <HeaderAIButton />
-
-            {/* Quick Stats - More Compact */}
-            <div className="hidden sm:flex flex-wrap gap-2">
-              {/* Pending Tasks */}
-              <div className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors",
-                pendingTasks > 0 
-                  ? "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800/50" 
-                  : "bg-muted/50 border-border/50"
-              )}>
-                <Clock className={cn("h-3.5 w-3.5", pendingTasks > 0 ? "text-orange-500" : "text-muted-foreground")} />
-                <span className={cn("text-xs font-semibold", pendingTasks > 0 ? "text-orange-600 dark:text-orange-400" : "text-foreground")}>
-                  {pendingTasks} Görev
-                </span>
+            {/* Hızlı Erişim Butonları */}
+            <div className="flex items-center gap-3 pt-3 border-t border-border/30">
+              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                <Zap className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Hızlı Erişim:</span>
               </div>
 
-              {/* Important Tasks */}
-              {importantTasks > 0 && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-destructive/10 border-destructive/30">
-                  <AlertCircle className="h-3.5 w-3.5 text-destructive" />
-                  <span className="text-xs font-semibold text-destructive">{importantTasks} Önemli</span>
-                </div>
-              )}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* AI Assistant Button */}
+                <HeaderAIButton />
 
-              {/* Completed Today */}
-              {completedTasks > 0 && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                    {completedTasks} Tamamlandı
-                  </span>
-                </div>
-              )}
-
-              {/* Pending Approvals */}
-              {pendingApprovals > 0 && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-primary/10 border-primary/30">
-                  <Bell className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-semibold text-primary">{pendingApprovals} Onay</span>
-                </div>
-              )}
+                {quickActions.map((action, index) => {
+                  const Icon = action.icon;
+                  return (
+                    <Button
+                      key={index}
+                      onClick={() => navigate(action.route)}
+                      size="default"
+                      className={cn(
+                        "h-8 px-3 gap-1.5 text-sm font-medium shadow-sm hover:shadow-md transition-all hover:scale-[1.02]",
+                        "bg-gradient-to-r text-white border-0",
+                        action.gradient
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span>{action.label}</span>
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Currency Rates Row */}
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 items-center pt-3 border-t border-border/50">
-          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <DollarSign className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Döviz:</span>
-          </div>
-          
-          {exchangeLoading ? (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-muted text-muted-foreground">
-              <RefreshCw className="h-3 w-3 animate-spin" />
-              <span>Yükleniyor...</span>
-            </div>
-          ) : (
-            filteredRates.map((rate) => (
-              <div
-                key={rate.currency_code}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-background border-border/50"
+          {/* Right - Currency Rates */}
+          <div className="flex flex-col gap-1 items-end lg:items-start lg:min-w-[200px]">
+            {/* Yenileme Butonu */}
+            <div className="flex items-center justify-between w-full mb-0.5">
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                Döviz Kurları
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={refreshExchangeRates}
+                disabled={exchangeLoading}
+                className={cn(
+                  "h-6 w-6 hover:bg-muted/50",
+                  exchangeLoading && "cursor-not-allowed"
+                )}
+                title="Döviz kurlarını yenile"
               >
-                <span className="font-semibold text-foreground">{rate.currency_code}</span>
-                <div className="flex items-center gap-0.5">
-                  <TrendingUp className="h-3 w-3 text-emerald-500" />
-                  <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                    {formatRate(rate.forex_buying)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-0.5">
-                  <TrendingDown className="h-3 w-3 text-red-500" />
-                  <span className="text-[11px] font-bold text-red-600 dark:text-red-400">
-                    {formatRate(rate.forex_selling)}
-                  </span>
-                </div>
-              </div>
-            ))
-          )}
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={refreshExchangeRates}
-            disabled={exchangeLoading}
-            className="h-7 w-7 hover:bg-muted"
-          >
-            <RefreshCw className={cn("h-3 w-3", exchangeLoading && "animate-spin")} />
-          </Button>
+                <RefreshCw className={cn("h-3 w-3 text-muted-foreground", exchangeLoading && "animate-spin")} />
+              </Button>
+            </div>
+            
+            {exchangeLoading ? (
+              <>
+                <div className="h-7 w-full rounded-lg border border-border/50 bg-muted/50 animate-pulse" />
+                <div className="h-7 w-full rounded-lg border border-border/50 bg-muted/50 animate-pulse" />
+                <div className="h-7 w-full rounded-lg border border-border/50 bg-muted/50 animate-pulse" />
+              </>
+            ) : (
+              filteredRates.map((rate) => {
+                return (
+                  <div
+                    key={rate.currency_code}
+                    className="flex items-center gap-2 px-3 py-1 rounded-lg border border-border/50 bg-card/50 backdrop-blur-sm hover:shadow-sm transition-all w-full"
+                  >
+                    <span className="text-[11px] font-semibold text-foreground w-9">{rate.currency_code}</span>
+                    <div className="flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3 text-emerald-500" />
+                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                        {formatRate(rate.forex_buying)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <TrendingDown className="h-3 w-3 text-red-500" />
+                      <span className="text-[11px] font-bold text-red-600 dark:text-red-400 tabular-nums">
+                        {formatRate(rate.forex_selling)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
     </div>

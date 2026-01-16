@@ -29,34 +29,44 @@ export const PaymentsHeader = ({
   onAddPayment,
 }: PaymentsHeaderProps) => {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center justify-between gap-4 flex-wrap">
-      <div className="flex items-center gap-6">
-        <div className="text-center">
-          <div className="text-xs text-muted-foreground">Toplam Alacak</div>
-          <span className="text-lg font-bold text-green-600">
-            {paymentStats.totalIncoming.toLocaleString("tr-TR", { 
-              style: 'currency', 
-              currency: 'TRY' 
-            })}
-          </span>
+    <div className="flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="flex items-center gap-4 flex-1 min-w-0">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">İşlem Geçmişi</h3>
         </div>
-        <div className="text-center">
-          <div className="text-xs text-muted-foreground">Toplam Borç</div>
-          <span className="text-lg font-bold text-red-600">
-            {paymentStats.totalOutgoing.toLocaleString("tr-TR", { 
-              style: 'currency', 
-              currency: 'TRY' 
-            })}
-          </span>
-        </div>
-        <div className="text-center">
-          <div className="text-xs text-muted-foreground">Güncel Bakiye</div>
-          <span className={`text-lg font-bold ${paymentStats.currentBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {paymentStats.currentBalance.toLocaleString("tr-TR", { 
-              style: 'currency', 
-              currency: 'TRY' 
-            })}
-          </span>
+        <div className="h-8 w-px bg-gray-300" />
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500">Mevcut Bakiye</span>
+            <span className={`text-sm font-semibold ${
+              paymentStats.currentBalance >= 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {paymentStats.currentBalance.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+              })}
+            </span>
+          </div>
+          <div className="h-8 w-px bg-gray-300" />
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500">Toplam Alacak</span>
+            <span className="text-sm font-semibold text-red-600">
+              {paymentStats.totalIncoming.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+              })}
+            </span>
+          </div>
+          <div className="h-8 w-px bg-gray-300" />
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500">Toplam Borç</span>
+            <span className="text-sm font-semibold text-green-600">
+              {paymentStats.totalOutgoing.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+              })}
+            </span>
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">

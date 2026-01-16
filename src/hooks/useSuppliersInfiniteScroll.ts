@@ -24,6 +24,15 @@ export const useSuppliersInfiniteScroll = (filters: UseSuppliersFilters = {}) =>
   });
 
   const fetchSuppliers = async (page: number, pageSize: number) => {
+    if (!userData?.company_id) {
+      // Eğer company_id yoksa boş sonuç döndür (güvenlik için)
+      return {
+        data: [] as Supplier[],
+        totalCount: 0,
+        hasNextPage: false
+      };
+    }
+
     let query = supabase
       .from("suppliers")
       .select(`
@@ -34,7 +43,8 @@ export const useSuppliersInfiniteScroll = (filters: UseSuppliersFilters = {}) =>
           last_name,
           position
         )
-      `, { count: 'exact' });
+      `, { count: 'exact' })
+      .eq('company_id', userData.company_id);
 
     // Apply filters
     if (filters.search) {
@@ -79,7 +89,7 @@ export const useSuppliersInfiniteScroll = (filters: UseSuppliersFilters = {}) =>
     fetchSuppliers,
     {
       pageSize: 20,
-      enabled: true,
+      enabled: !!userData?.company_id, // company_id yoksa sorgu yapma
       refetchOnWindowFocus: false,
       refetchOnMount: true, // Her mount'ta veriyi kontrol et ve gerekirse yenile
       staleTime: 3 * 60 * 1000, // 3 dakika - veri bu süre içinde fresh sayılır

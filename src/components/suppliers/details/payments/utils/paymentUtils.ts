@@ -77,42 +77,38 @@ export const createGetCreditDebit = (
     const currency = transaction.currency || 'TRY';
     const isTRY = currency === 'TRY' || currency === 'TL';
     
-    // Alış faturası: Tedarikçiden mal aldık → Ona borçluyuz → BORÇ
+    // Alış faturası: Tedarikçiden mal aldık → ALACAK
     if (transaction.type === 'purchase_invoice') {
-      const tryDebit = convertToTRY(transaction.amount, currency, exchangeRate);
-      const usdDebit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
-      return { credit: 0, debit: tryDebit, usdCredit: 0, usdDebit };
-    }
-
-    // Satış faturası: Ona mal sattık → Bize borçlu → ALACAK
-    if (transaction.type === 'sales_invoice') {
       const tryCredit = convertToTRY(transaction.amount, currency, exchangeRate);
       const usdCredit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
       return { credit: tryCredit, debit: 0, usdCredit, usdDebit: 0 };
     }
 
+    // Satış faturası: Ona mal sattık → BORÇ
+    if (transaction.type === 'sales_invoice') {
+      const tryDebit = convertToTRY(transaction.amount, currency, exchangeRate);
+      const usdDebit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
+      return { credit: 0, debit: tryDebit, usdCredit: 0, usdDebit };
+    }
+
     // Fiş işlemleri
     if (transaction.type === 'payment' && transaction.paymentType === 'fis') {
       if (transaction.direction === 'outgoing') {
+        // Borç Fişi: Tedarikçiye borç yazıyoruz → BORÇ
         const tryDebit = convertToTRY(transaction.amount, currency, exchangeRate);
         const usdDebit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
         return { credit: 0, debit: tryDebit, usdCredit: 0, usdDebit };
       } else {
+        // Alacak Fişi: Tedarikçiden alacak yazıyoruz → ALACAK
         const tryCredit = convertToTRY(transaction.amount, currency, exchangeRate);
         const usdCredit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
         return { credit: tryCredit, debit: 0, usdCredit, usdDebit: 0 };
       }
     }
 
-    // Diğer ödemeler
-    if (transaction.direction === 'incoming') {
-      const tryDebit = convertToTRY(transaction.amount, currency, exchangeRate);
-      const usdDebit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
-      return { credit: 0, debit: tryDebit, usdCredit: 0, usdDebit };
-    } else {
-      const tryCredit = convertToTRY(transaction.amount, currency, exchangeRate);
-      const usdCredit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
-      return { credit: tryCredit, debit: 0, usdCredit, usdDebit: 0 };
-    }
+    // Diğer ödemeler: Tüm ödemeler BORÇ olarak yazılmalı
+    const tryDebit = convertToTRY(transaction.amount, currency, exchangeRate);
+    const usdDebit = isTRY ? 0 : convertToUSD(transaction.amount, currency, exchangeRate);
+    return { credit: 0, debit: tryDebit, usdCredit: 0, usdDebit };
   };
 };

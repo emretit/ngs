@@ -157,16 +157,16 @@ export const PaymentsTableRow = ({
           )}
         </div>
       </TableCell>
-      <TableCell className="py-2 px-3 text-right text-xs font-medium text-green-600 whitespace-nowrap">
+      <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-900 whitespace-nowrap">
         {credit > 0 ? credit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
       </TableCell>
-      <TableCell className="py-2 px-3 text-right text-xs font-medium text-red-600 whitespace-nowrap">
+      <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-900 whitespace-nowrap">
         {debit > 0 ? debit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
       </TableCell>
-      <TableCell className="py-2 px-3 text-right text-xs font-medium text-red-600 whitespace-nowrap">
+      <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-900 whitespace-nowrap">
         {usdDebit > 0 ? usdDebit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
       </TableCell>
-      <TableCell className="py-2 px-3 text-right text-xs font-medium text-green-600 whitespace-nowrap">
+      <TableCell className="py-2 px-3 text-right text-xs font-medium text-gray-900 whitespace-nowrap">
         {usdCredit > 0 ? usdCredit.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
       </TableCell>
       <TableCell className={`py-2 px-3 text-right text-xs font-medium whitespace-nowrap ${usdBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>

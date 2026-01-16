@@ -1,16 +1,24 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { UnifiedTransaction, PaymentStats, CreditDebitResult } from "../types";
+import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 
 interface UsePaymentStatsProps {
   allTransactions: UnifiedTransaction[];
   getCreditDebit: (transaction: UnifiedTransaction) => CreditDebitResult;
+  supplierId?: string;
+  companyId?: string;
 }
 
 export const usePaymentStats = ({ 
   allTransactions, 
-  getCreditDebit 
+  getCreditDebit,
+  supplierId,
+  companyId
 }: UsePaymentStatsProps): PaymentStats => {
-  return useMemo(() => {
+  const lastBalanceRef = useRef<number | null>(null);
+
+  const stats = useMemo(() => {
     // Tüm işlemleri tarihe göre sırala
     const sorted = [...allTransactions].sort((a, b) => {
       const dateA = new Date(a.date).getTime();
@@ -26,6 +34,9 @@ export const usePaymentStats = ({
       const { credit, debit } = getCreditDebit(transaction);
       totalIncoming += credit;
       totalOutgoing += debit;
+      // Tedarikçi bakış açısından: Borç (debit) bakiye artırır, Alacak (credit) bakiye azaltır
+      // Alacak = Tedarikçiye borcumuz var → Bakiye azalır (daha negatif olur)
+      // Borç = Tedarikçiden alacağımız var veya ödeme yaptık → Bakiye artar
       balance = balance + debit - credit;
     });
 
@@ -35,4 +46,38 @@ export const usePaymentStats = ({
       currentBalance: balance,
     };
   }, [allTransactions, getCreditDebit]);
+
+  // Bakiye değiştiğinde veritabanına kaydet
+  useEffect(() => {
+    if (!supplierId || !companyId) return;
+    
+    // Bakiye değişmemişse kaydetme
+    if (lastBalanceRef.current === stats.currentBalance) return;
+    
+    // İlk render'da lastBalanceRef null olabilir, bu durumda kaydet
+    const shouldUpdate = lastBalanceRef.current === null || lastBalanceRef.current !== stats.currentBalance;
+    
+    if (shouldUpdate) {
+      // Önce ref'i güncelle ki tekrar kaydetmesin
+      lastBalanceRef.current = stats.currentBalance;
+      
+      // Veritabanına kaydet
+      supabase
+        .from('suppliers')
+        .update({ balance: stats.currentBalance })
+        .eq('id', supplierId)
+        .eq('company_id', companyId)
+        .then(({ error }) => {
+          if (error) {
+            logger.error('Error updating supplier balance:', error);
+            // Hata durumunda ref'i geri al
+            lastBalanceRef.current = null;
+          } else {
+            logger.debug(`✅ Supplier balance updated for ${supplierId}: ${stats.currentBalance}`);
+          }
+        });
+    }
+  }, [stats.currentBalance, supplierId, companyId]);
+
+  return stats;
 };

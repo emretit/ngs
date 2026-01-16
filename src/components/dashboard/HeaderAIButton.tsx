@@ -17,18 +17,18 @@ export const HeaderAIButton = memo(({ className }: HeaderAIButtonProps) => {
       <Button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "relative group h-10 px-4 gap-2",
+          "relative group h-8 px-3 gap-1.5 text-sm",
           "bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_100%]",
           "hover:bg-[position:100%_0] transition-all duration-500",
-          "text-white font-medium shadow-lg shadow-indigo-500/25",
-          "hover:shadow-xl hover:shadow-indigo-500/40",
+          "text-white font-medium shadow-sm shadow-indigo-500/25",
+          "hover:shadow-md hover:shadow-indigo-500/40",
           "border-0",
           className
         )}
       >
         <div className="relative">
-          <Bot className="h-4 w-4" />
-          <Sparkles className="h-2 w-2 absolute -top-1 -right-1 text-yellow-300 animate-pulse" />
+          <Bot className="h-3.5 w-3.5" />
+          <Sparkles className="h-1.5 w-1.5 absolute -top-0.5 -right-0.5 text-yellow-300 animate-pulse" />
         </div>
         <span className="hidden sm:inline">AI Asistan</span>
         <div className="absolute inset-0 rounded-md bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />

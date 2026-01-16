@@ -61,7 +61,7 @@ export function buildCompanyQuery<T = any>(
     .select(options.select || '*', options.count ? { count: options.count } : undefined);
 
   // Always add company_id filter first for security
-  query = query;
+  query = query.eq('company_id', companyId);
 
   // Apply filters
   if (options.filters) {
@@ -140,7 +140,7 @@ export function buildCompanyQueryWithOr<T = any>(
     .select(options.select || '*', options.count ? { count: options.count } : undefined);
 
   // Always add company_id filter first
-  query = query;
+  query = query.eq('company_id', companyId);
 
   // Apply OR conditions only if provided
   if (orConditions && orConditions.trim()) {

@@ -24,7 +24,8 @@ import {
   AlertCircle,
   MoreHorizontal,
   Copy,
-  Trash2
+  Trash2,
+  ExternalLink
 } from "lucide-react";
 import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices";
 import { supabase } from "@/integrations/supabase/client";
@@ -400,6 +401,20 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                   <Copy className="h-4 w-4 text-green-500" />
                   <span>Kopyala</span>
                 </DropdownMenuItem>
+                
+                {invoice.supplier?.id && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel>Navigasyon</DropdownMenuLabel>
+                    <DropdownMenuItem 
+                      onClick={() => navigate(`/suppliers/${invoice.supplier.id}`)}
+                      className="gap-2 cursor-pointer"
+                    >
+                      <ExternalLink className="h-4 w-4 text-blue-500" />
+                      <span>Tedarikçiye Git</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -527,6 +542,17 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                     </div>
                   )}
                 </div>
+                {invoice.supplier?.id && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/suppliers/${invoice.supplier.id}`)}
+                    className="w-full mt-2 h-7 text-xs bg-white hover:bg-green-100 border-green-300"
+                  >
+                    <ExternalLink className="h-3 w-3 mr-1.5" />
+                    Tedarikçiye Git
+                  </Button>
+                )}
               </div>
 
               {invoice.description && (

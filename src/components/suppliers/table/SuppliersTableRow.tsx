@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Phone, Mail, Edit2, Trash2, MoreHorizontal, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BalanceDisplay from "@/components/shared/BalanceDisplay";
-import { useSupplierBalance } from "@/hooks/useSupplierBalance";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { createConvertToTRY, createConvertToUSD, createGetCreditDebit } from "../details/payments/utils/paymentUtils";
+import {
+  usePaymentsQuery,
+  usePurchaseInvoicesQuery,
+  useSalesInvoicesQuery,
+  useUnifiedTransactions,
+  usePaymentStats
+} from "../details/payments/hooks";
 
 interface SuppliersTableRowProps {
   supplier: Supplier;
@@ -20,18 +29,48 @@ interface SuppliersTableRowProps {
   isSelected?: boolean;
 }
 
-const SuppliersTableRow = ({ 
-  supplier, 
-  index, 
-  formatMoney, 
-  onSelect, 
+const SuppliersTableRow = ({
+  supplier,
+  index,
+  formatMoney,
+  onSelect,
   onSelectToggle,
-  onStatusChange, 
+  onStatusChange,
   onDelete,
   isSelected = false
 }: SuppliersTableRowProps) => {
   const navigate = useNavigate();
-  const { tryBalance, usdBalance, eurBalance, isLoading: isLoadingBalance } = useSupplierBalance(supplier.id);
+
+  // Payment stats calculation using new method
+  const { exchangeRates, convertCurrency } = useExchangeRates();
+  const { userData, loading: userLoading } = useCurrentUser();
+  const isEnabled = !!userData?.company_id && !userLoading;
+
+  const { data: payments = [] } = usePaymentsQuery(supplier, userData?.company_id, isEnabled);
+  const { data: purchaseInvoices = [] } = usePurchaseInvoicesQuery(supplier, userData?.company_id, isEnabled);
+  const { data: salesInvoices = [] } = useSalesInvoicesQuery(supplier, userData?.company_id, isEnabled);
+
+  const usdRate = useMemo(() => {
+    const rate = exchangeRates.find(r => r.currency_code === 'USD');
+    return rate?.forex_selling || 1;
+  }, [exchangeRates]);
+
+  const convertToTRY = useMemo(() => createConvertToTRY(usdRate, convertCurrency), [usdRate, convertCurrency]);
+  const convertToUSD = useMemo(() => createConvertToUSD(usdRate, convertCurrency), [usdRate, convertCurrency]);
+  const getCreditDebit = useMemo(() => createGetCreditDebit(convertToTRY, convertToUSD), [convertToTRY, convertToUSD]);
+
+  const allTransactions = useUnifiedTransactions({ payments, purchaseInvoices, salesInvoices });
+  const paymentStats = usePaymentStats({ 
+    allTransactions, 
+    getCreditDebit,
+    supplierId: supplier.id,
+    companyId: userData?.company_id
+  });
+
+  const tryBalance = paymentStats.currentBalance;
+  const usdBalance = 0; // USD ve EUR bakiyeler şu an TRY olarak hesaplanıyor
+  const eurBalance = 0;
+  const isLoadingBalance = false;
 
   const getStatusIcon = (status: string) => {
     switch (status) {

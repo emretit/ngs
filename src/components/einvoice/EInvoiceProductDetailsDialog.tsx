@@ -45,6 +45,7 @@ interface EInvoiceProductDetailsDialogProps {
   invoicePrice?: number;
   invoiceUnit?: string;
   invoiceCurrency?: string; // Faturadan gelen para birimi
+  invoiceExchangeRate?: number | null; // Faturadan gelen döviz kuru
   parsedProduct?: ParsedProduct; // ProductMapping için
   onConfirm: (data: { productId?: string | null; warehouseId: string; quantity?: number; price?: number; unit?: string; action?: 'create' | 'update' | 'skip'; discountRate?: number; taxRate?: number; description?: string }) => void;
   allowProductSelection?: boolean; // Ürün seçimi yapılabilir mi?
@@ -62,6 +63,7 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
   invoicePrice,
   invoiceUnit,
   invoiceCurrency,
+  invoiceExchangeRate,
   parsedProduct,
   onConfirm,
   allowProductSelection = false,
@@ -234,6 +236,11 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
       const normalizedInvCurrency = invoiceCurrency === 'TL' ? 'TRY' : (invoiceCurrency || null);
       const initialCurrency = normalizedInvCurrency || selectedProduct?.currency || 'TRY';
       prevCurrencyRef.current = initialCurrency;
+      
+      // Faturadan gelen döviz kurunu set et (sadece dövizli faturalar için)
+      if (invoiceExchangeRate && invoiceExchangeRate > 0 && normalizedInvCurrency && normalizedInvCurrency !== 'TRY') {
+        setManualExchangeRate(invoiceExchangeRate);
+      }
       
       // Ana depoyu varsayılan olarak seç (sadece mevcut depo yoksa)
       if (warehouses.length > 0 && !selectedWarehouseId && !existingWarehouseId) {

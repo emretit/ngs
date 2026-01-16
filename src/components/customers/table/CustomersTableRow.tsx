@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BalanceDisplay from "@/components/shared/BalanceDisplay";
-import { useCustomerBalance } from "@/hooks/useCustomerBalance";
+import {
+  usePaymentsQuery,
+  useSalesInvoicesQuery,
+  usePurchaseInvoicesQuery,
+  useUnifiedTransactions,
+  usePaymentStats
+} from "../details/payments/hooks";
 
 interface CustomersTableRowProps {
   customer: Customer;
@@ -20,18 +26,35 @@ interface CustomersTableRowProps {
   isSelected?: boolean;
 }
 
-const CustomersTableRow = ({ 
-  customer, 
-  index, 
-  formatMoney, 
-  onSelect, 
+const CustomersTableRow = ({
+  customer,
+  index,
+  formatMoney,
+  onSelect,
   onSelectToggle,
-  onStatusChange, 
+  onStatusChange,
   onDelete,
   isSelected = false
 }: CustomersTableRowProps) => {
   const navigate = useNavigate();
-  const { tryBalance, usdBalance, eurBalance, isLoading: isLoadingBalance } = useCustomerBalance(customer.id);
+
+  // Payment stats calculation using new method
+  const { data: payments = [] } = usePaymentsQuery(customer);
+  const { data: salesInvoices = [] } = useSalesInvoicesQuery(customer);
+  const { data: purchaseInvoices = [] } = usePurchaseInvoicesQuery(customer);
+
+  const allTransactions = useUnifiedTransactions({
+    payments,
+    salesInvoices,
+    purchaseInvoices,
+    customerId: customer.id,
+  });
+  const paymentStats = usePaymentStats({ allTransactions });
+
+  const tryBalance = paymentStats.currentBalance;
+  const usdBalance = 0; // USD ve EUR bakiyeler şu an TRY olarak hesaplanıyor
+  const eurBalance = 0;
+  const isLoadingBalance = false;
 
   const getStatusIcon = (status: string) => {
     switch (status) {

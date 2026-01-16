@@ -1918,6 +1918,9 @@ export type Database = {
           address: string | null
           apartment_number: string | null
           balance: number
+          balance_eur: number | null
+          balance_try: number | null
+          balance_usd: number | null
           bank_name: string | null
           city: string | null
           city_id: number | null
@@ -1984,6 +1987,9 @@ export type Database = {
           address?: string | null
           apartment_number?: string | null
           balance?: number
+          balance_eur?: number | null
+          balance_try?: number | null
+          balance_usd?: number | null
           bank_name?: string | null
           city?: string | null
           city_id?: number | null
@@ -2050,6 +2056,9 @@ export type Database = {
           address?: string | null
           apartment_number?: string | null
           balance?: number
+          balance_eur?: number | null
+          balance_try?: number | null
+          balance_usd?: number | null
           bank_name?: string | null
           city?: string | null
           city_id?: number | null
@@ -10757,6 +10766,9 @@ export type Database = {
           aliases: Json | null
           apartment_number: string | null
           balance: number
+          balance_eur: number | null
+          balance_try: number | null
+          balance_usd: number | null
           bank_name: string | null
           city: string | null
           city_id: number | null
@@ -10829,6 +10841,9 @@ export type Database = {
           aliases?: Json | null
           apartment_number?: string | null
           balance?: number
+          balance_eur?: number | null
+          balance_try?: number | null
+          balance_usd?: number | null
           bank_name?: string | null
           city?: string | null
           city_id?: number | null
@@ -10901,6 +10916,9 @@ export type Database = {
           aliases?: Json | null
           apartment_number?: string | null
           balance?: number
+          balance_eur?: number | null
+          balance_try?: number | null
+          balance_usd?: number | null
           bank_name?: string | null
           city?: string | null
           city_id?: number | null

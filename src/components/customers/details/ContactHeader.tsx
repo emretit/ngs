@@ -9,6 +9,7 @@ import { Customer } from "@/types/customer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BalanceDisplay from "@/components/shared/BalanceDisplay";
+import { useCustomerBalance } from "@/hooks/useCustomerBalance";
 
 interface ContactHeaderProps {
   customer: Customer;
@@ -23,6 +24,8 @@ export const ContactHeader = ({ customer, id, onEdit, onUpdate }: ContactHeaderP
   const [statusValue, setStatusValue] = useState(customer.status);
   const [typeValue, setTypeValue] = useState(customer.type);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const { tryBalance, usdBalance, eurBalance, isLoading: balanceLoading } = useCustomerBalance(customer.id);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -244,9 +247,29 @@ export const ContactHeader = ({ customer, id, onEdit, onUpdate }: ContactHeaderP
         <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300">
           <TrendingUp className="h-3 w-3" />
           <span className="font-medium">Bakiye</span>
-          <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-            <BalanceDisplay amount={customer.balance} currency={customer.currency} size="sm" />
-          </span>
+          <div className="flex items-center gap-1">
+            {balanceLoading ? (
+              <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">...</span>
+            ) : (
+              <>
+                {usdBalance !== 0 && (
+                  <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                    <BalanceDisplay amount={usdBalance} currency="USD" size="sm" />
+                  </span>
+                )}
+                {eurBalance !== 0 && (
+                  <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                    <BalanceDisplay amount={eurBalance} currency="EUR" size="sm" />
+                  </span>
+                )}
+                {(usdBalance === 0 && eurBalance === 0) && (
+                  <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                    <BalanceDisplay amount={tryBalance} currency="TRY" showTLEquivalent={false} size="sm" />
+                  </span>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
       

@@ -16,6 +16,7 @@ export interface Customer {
     position: string;
   } | null;
   balance: number;
+  currency?: string;
   address: string | null;
   city: string | null;
   city_id: number | null;

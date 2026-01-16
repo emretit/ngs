@@ -16,6 +16,7 @@ export interface Supplier {
     position: string;
   } | null;
   balance: number;
+  currency?: string;
   address: string | null;
   tax_number: string | null;
   tax_office: string | null;

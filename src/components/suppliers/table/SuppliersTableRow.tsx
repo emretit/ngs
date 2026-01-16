@@ -6,6 +6,7 @@ import { Supplier } from "@/types/supplier";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import BalanceDisplay from "@/components/shared/BalanceDisplay";
 
 interface SuppliersTableRowProps {
   supplier: Supplier;
@@ -147,9 +148,12 @@ const SuppliersTableRow = ({
 
       {/* Bakiye */}
       <TableCell className="py-2 px-2 text-center text-xs font-medium">
-        <span className={`${supplier.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-          {formatMoney(supplier.balance)}
-        </span>
+        <BalanceDisplay 
+          amount={supplier.balance} 
+          currency={supplier.currency || 'TRY'} 
+          showTLEquivalent={true}
+          size="sm"
+        />
       </TableCell>
 
       {/* Oluşturma Tarihi */}

@@ -6,6 +6,7 @@ import { Customer } from "@/types/customer";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import BalanceDisplay from "@/components/shared/BalanceDisplay";
 
 interface CustomersTableRowProps {
   customer: Customer;
@@ -154,9 +155,12 @@ const CustomersTableRow = ({
         {isLoadingBalance ? (
           <span className="text-gray-400">...</span>
         ) : (
-          <span className={`${(calculatedBalance ?? customer.balance) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {formatMoney(calculatedBalance ?? customer.balance)}
-          </span>
+          <BalanceDisplay 
+            amount={calculatedBalance ?? customer.balance} 
+            currency={customer.currency || 'TRY'} 
+            showTLEquivalent={true}
+            size="sm"
+          />
         )}
       </TableCell>
 

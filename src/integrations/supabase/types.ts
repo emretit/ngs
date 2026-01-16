@@ -1925,6 +1925,7 @@ export type Database = {
           company_id: string | null
           country: string | null
           created_at: string | null
+          currency: string | null
           customer_segment: string | null
           customer_source: string | null
           district: string | null
@@ -1990,6 +1991,7 @@ export type Database = {
           company_id?: string | null
           country?: string | null
           created_at?: string | null
+          currency?: string | null
           customer_segment?: string | null
           customer_source?: string | null
           district?: string | null
@@ -2055,6 +2057,7 @@ export type Database = {
           company_id?: string | null
           country?: string | null
           created_at?: string | null
+          currency?: string | null
           customer_segment?: string | null
           customer_source?: string | null
           district?: string | null
@@ -10761,6 +10764,7 @@ export type Database = {
           company_id: string | null
           country: string | null
           created_at: string | null
+          currency: string | null
           district: string | null
           district_id: number | null
           einvoice_address: string | null
@@ -10832,6 +10836,7 @@ export type Database = {
           company_id?: string | null
           country?: string | null
           created_at?: string | null
+          currency?: string | null
           district?: string | null
           district_id?: number | null
           einvoice_address?: string | null
@@ -10903,6 +10908,7 @@ export type Database = {
           company_id?: string | null
           country?: string | null
           created_at?: string | null
+          currency?: string | null
           district?: string | null
           district_id?: number | null
           einvoice_address?: string | null

@@ -8,6 +8,8 @@ import ReportsKPIRow from "@/components/reports/ReportsKPIRow";
 import ReportsHRSection from "@/components/reports/ReportsHRSection";
 import AIReportChat from "@/components/reports/AIReportChat";
 import ReportCard from "@/components/reports/ReportCard";
+import SavedViewsManager from "@/components/reports/SavedViewsManager";
+import DrillDownModal, { DrillDownData } from "@/components/reports/DrillDownModal";
 import { useModuleReport, ModuleType } from "@/hooks/useModuleReport";
 import { Briefcase } from "lucide-react";
 
@@ -15,6 +17,7 @@ export default function HRReports() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [expandedSections, setExpandedSections] = useState<string[]>(['hr']);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null);
   const queryClient = useQueryClient();
   const { exportToExcel, exportToPDF, moduleConfig } = useModuleReport();
 
@@ -49,7 +52,7 @@ export default function HRReports() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <ReportsHeader 
         onRefresh={handleRefresh}
         lastUpdated={lastUpdated}
@@ -63,8 +66,8 @@ export default function HRReports() {
 
       {/* Quick Export Cards */}
       <div>
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Briefcase className="h-5 w-5 text-primary" />
+        <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+          <Briefcase className="h-4 w-4 text-primary" />
           Hızlı Raporlar
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -83,8 +86,8 @@ export default function HRReports() {
 
       {/* Detailed Analysis */}
       <div>
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Briefcase className="h-5 w-5 text-primary" />
+        <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+          <Briefcase className="h-4 w-4 text-primary" />
           Detaylı Analizler & Grafikler
         </h2>
         <ReportsHRSection
@@ -93,6 +96,12 @@ export default function HRReports() {
           searchParams={searchParams}
         />
       </div>
+
+      <DrillDownModal
+        open={!!drillDownData}
+        onClose={() => setDrillDownData(null)}
+        data={drillDownData}
+      />
     </div>
   );
 }

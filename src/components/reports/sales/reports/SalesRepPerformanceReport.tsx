@@ -25,9 +25,13 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, Award } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, TrendingDown } from "lucide-react";
 import { fetchSalesRepPerformanceData } from "@/services/salesReportsService";
 import type { GlobalFilters } from "@/types/salesReports";
+import { subDays, differenceInDays } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface SalesRepPerformanceReportProps {
   filters: GlobalFilters;
@@ -44,6 +48,37 @@ export default function SalesRepPerformanceReport({
     queryKey: ['sales-rep-performance', filters],
     queryFn: () => fetchSalesRepPerformanceData(filters),
   });
+
+  // Calculate previous period for comparison
+  const getPreviousPeriod = () => {
+    if (!filters.startDate || !filters.endDate) return null;
+    const start = new Date(filters.startDate);
+    const end = new Date(filters.endDate);
+    const daysDiff = differenceInDays(end, start);
+    const prevEnd = subDays(start, 1);
+    const prevStart = subDays(prevEnd, daysDiff);
+    return { start: prevStart.toISOString().split('T')[0], end: prevEnd.toISOString().split('T')[0] };
+  };
+
+  const prevPeriod = getPreviousPeriod();
+  
+  // Fetch previous period data for comparison
+  const { data: prevData } = useQuery({
+    queryKey: ['sales-rep-performance', { ...filters, startDate: prevPeriod?.start, endDate: prevPeriod?.end }],
+    queryFn: () => fetchSalesRepPerformanceData({
+      ...filters,
+      startDate: prevPeriod?.start,
+      endDate: prevPeriod?.end,
+    }),
+    enabled: !!prevPeriod,
+  });
+
+  const getComparison = (repId: string, currentValue: number) => {
+    if (!prevData) return undefined;
+    const prevRep = prevData.reps.find((r: any) => r.employeeId === repId);
+    if (!prevRep || prevRep.totalSales === 0) return undefined;
+    return ((currentValue - prevRep.totalSales) / prevRep.totalSales) * 100;
+  };
 
   if (isLoading) {
     return <div className="h-64 flex items-center justify-center">Yükleniyor...</div>;
@@ -140,10 +175,15 @@ export default function SalesRepPerformanceReport({
                 <TableHead className="text-right py-3 px-4 font-bold text-foreground/80 text-xs tracking-wide">Kaybedilen</TableHead>
                 <TableHead className="text-right py-3 px-4 font-bold text-foreground/80 text-xs tracking-wide">Kazanma Oranı</TableHead>
                 <TableHead className="text-right py-3 px-4 font-bold text-foreground/80 text-xs tracking-wide">Ort. İşlem</TableHead>
+                {prevData && (
+                  <TableHead className="text-right py-3 px-4 font-bold text-foreground/80 text-xs tracking-wide">Değişim</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.reps.map((rep: any, index: number) => (
+              {data.reps.map((rep: any, index: number) => {
+                const change = getComparison(rep.employeeId, rep.totalSales);
+                return (
                 <TableRow key={rep.employeeId} className="hover:bg-muted/50 transition-colors">
                   <TableCell className="py-3 px-4">
                     <div className="flex items-center gap-2">
@@ -171,8 +211,30 @@ export default function SalesRepPerformanceReport({
                   <TableCell className="text-right py-3 px-4 font-medium text-foreground">
                     ₺{rep.avgDealSize.toLocaleString('tr-TR', { minimumFractionDigits: 0 })}
                   </TableCell>
+                  {prevData && (
+                    <TableCell className="text-right py-3 px-4">
+                      {change !== undefined ? (
+                        <div className={cn(
+                          "flex items-center justify-end gap-1",
+                          change > 0 ? "text-emerald-600" : change < 0 ? "text-red-600" : "text-muted-foreground"
+                        )}>
+                          {change > 0 ? (
+                            <TrendingUp className="h-3.5 w-3.5" />
+                          ) : change < 0 ? (
+                            <TrendingDown className="h-3.5 w-3.5" />
+                          ) : null}
+                          <span className="text-xs font-medium">
+                            {change > 0 ? "+" : ""}{change.toFixed(1)}%
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
-              ))}
+              );
+              })}
             </TableBody>
           </Table>
         </div>

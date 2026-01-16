@@ -5,6 +5,7 @@
 export type ReportCategory = 
   | 'sales' 
   | 'finance' 
+  | 'financial'
   | 'hr' 
   | 'inventory' 
   | 'purchasing' 

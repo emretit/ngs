@@ -8,6 +8,8 @@ import ReportsKPIRow from "@/components/reports/ReportsKPIRow";
 import ReportsPurchasingSection from "@/components/reports/ReportsPurchasingSection";
 import AIReportChat from "@/components/reports/AIReportChat";
 import ReportCard from "@/components/reports/ReportCard";
+import SavedViewsManager from "@/components/reports/SavedViewsManager";
+import DrillDownModal, { DrillDownData } from "@/components/reports/DrillDownModal";
 import { useModuleReport, ModuleType } from "@/hooks/useModuleReport";
 import { ShoppingCart, Building2, FileText } from "lucide-react";
 
@@ -49,7 +51,7 @@ export default function PurchasingReports() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <ReportsHeader 
         onRefresh={handleRefresh}
         lastUpdated={lastUpdated}
@@ -57,14 +59,31 @@ export default function PurchasingReports() {
 
       <ReportsFilters searchParams={searchParams} setSearchParams={setSearchParams} />
 
+      <div className="flex items-center justify-end">
+        <SavedViewsManager
+          reportCategory="purchasing"
+          currentFilters={Object.fromEntries(searchParams)}
+          onLoadView={(filters) => {
+            const newParams = new URLSearchParams();
+            Object.entries(filters).forEach(([key, value]) => {
+              if (value) newParams.set(key, String(value));
+            });
+            setSearchParams(newParams);
+          }}
+          onSaveView={() => ({
+            filters: Object.fromEntries(searchParams),
+          })}
+        />
+      </div>
+
       <ReportsKPIRow searchParams={searchParams} />
 
       <AIReportChat searchParams={searchParams} />
 
       {/* Quick Export Cards */}
       <div>
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <ShoppingCart className="h-5 w-5 text-primary" />
+        <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+          <ShoppingCart className="h-4 w-4 text-primary" />
           Hızlı Raporlar
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -93,8 +112,8 @@ export default function PurchasingReports() {
 
       {/* Detailed Analysis */}
       <div>
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <ShoppingCart className="h-5 w-5 text-primary" />
+        <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+          <ShoppingCart className="h-4 w-4 text-primary" />
           Detaylı Analizler & Grafikler
         </h2>
         <ReportsPurchasingSection
@@ -103,6 +122,12 @@ export default function PurchasingReports() {
           searchParams={searchParams}
         />
       </div>
+
+      <DrillDownModal
+        open={!!drillDownData}
+        onClose={() => setDrillDownData(null)}
+        data={drillDownData}
+      />
     </div>
   );
 }

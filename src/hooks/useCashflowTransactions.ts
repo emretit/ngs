@@ -40,6 +40,18 @@ export const useCashflowTransactions = () => {
       setLoading(true);
       setError(null);
       
+      // Kullanıcının şirket bilgisini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Kullanıcı bulunamadı');
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (!profile?.company_id) throw new Error('Şirket bilgisi bulunamadı');
+      
       const { data, error } = await supabase
         .from('cashflow_transactions')
         .select(`
@@ -50,6 +62,7 @@ export const useCashflowTransactions = () => {
             type
           )
         `)
+        .eq('company_id', profile.company_id)
         .order('date', { ascending: false });
 
       if (error) throw error;
@@ -69,12 +82,22 @@ export const useCashflowTransactions = () => {
 
   const createTransaction = async (data: CreateTransactionData) => {
     try {
-      // Auth disabled - no user check needed
-      const user_id = '00000000-0000-0000-0000-000000000001'; // Default user ID
+      // Kullanıcının şirket bilgisini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Kullanıcı bulunamadı');
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (!profile?.company_id) throw new Error('Şirket bilgisi bulunamadı');
 
       const insertData = {
         ...data,
-        user_id: user_id,
+        user_id: user.id,
+        company_id: profile.company_id,
       };
 
       const { data: newTransaction, error } = await supabase

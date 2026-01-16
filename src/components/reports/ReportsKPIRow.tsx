@@ -10,11 +10,16 @@ import {
   Wrench,
   Car,
   DollarSign,
-  Users
+  Users,
+  Banknote,
+  Briefcase,
+  FileText
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useLocation } from "react-router-dom";
+import { subMonths, subDays, differenceInDays } from "date-fns";
 
 interface ReportsKPIRowProps {
   searchParams: URLSearchParams;
@@ -90,8 +95,10 @@ function KPICard({ title, value, change, changeLabel, icon: Icon, color, bgColor
 }
 
 export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
+  const location = useLocation();
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
+  const compareMode = searchParams.get('compare') || '';
   const currency = searchParams.get('currency') || 'TRY';
 
   const currencySymbols: Record<string, string> = {
@@ -101,6 +108,50 @@ export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
   };
 
   const currencySymbol = currencySymbols[currency] || '₺';
+
+  // Calculate previous period dates
+  const getPreviousPeriodDates = () => {
+    if (!startDate || !endDate) return { prevStart: null, prevEnd: null };
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (compareMode === 'previousYear') {
+      // Same period last year
+      const prevStart = new Date(start);
+      prevStart.setFullYear(prevStart.getFullYear() - 1);
+      const prevEnd = new Date(end);
+      prevEnd.setFullYear(prevEnd.getFullYear() - 1);
+      return { prevStart: prevStart.toISOString().split('T')[0], prevEnd: prevEnd.toISOString().split('T')[0] };
+    } else if (compareMode === 'previous') {
+      // Previous period (same length)
+      const daysDiff = differenceInDays(end, start);
+      const prevEnd = subDays(start, 1);
+      const prevStart = subDays(prevEnd, daysDiff);
+      return { prevStart: prevStart.toISOString().split('T')[0], prevEnd: prevEnd.toISOString().split('T')[0] };
+    }
+    
+    return { prevStart: null, prevEnd: null };
+  };
+
+  const { prevStart, prevEnd } = getPreviousPeriodDates();
+  const shouldCompare = compareMode && prevStart && prevEnd;
+
+  // Detect report category from pathname
+  const getReportCategory = () => {
+    const path = location.pathname;
+    if (path.includes('/reports/sales')) return 'sales';
+    if (path.includes('/reports/financial')) return 'financial';
+    if (path.includes('/reports/service')) return 'service';
+    if (path.includes('/reports/inventory')) return 'inventory';
+    if (path.includes('/reports/purchasing')) return 'purchasing';
+    if (path.includes('/reports/hr')) return 'hr';
+    if (path.includes('/reports/vehicles')) return 'vehicles';
+    if (path.includes('/reports/vat-analysis')) return 'vat';
+    return 'general';
+  };
+
+  const reportCategory = getReportCategory();
 
   // Total Revenue from proposals and orders
   const { data: revenueData, isLoading: revenueLoading } = useQuery({
@@ -118,6 +169,31 @@ export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
       return data?.reduce((sum, item) => sum + (item.total_amount || 0), 0) || 0;
     }
   });
+
+  // Previous period revenue for comparison
+  const { data: prevRevenueData } = useQuery({
+    queryKey: ['revenue', prevStart, prevEnd],
+    queryFn: async () => {
+      if (!prevStart || !prevEnd) return 0;
+      let query = supabase
+        .from('proposals')
+        .select('total_amount')
+        .eq('status', 'accepted');
+        
+      query = query.gte('created_at', prevStart);
+      query = query.lte('created_at', prevEnd);
+      
+      const { data } = await query;
+      return data?.reduce((sum, item) => sum + (item.total_amount || 0), 0) || 0;
+    },
+    enabled: shouldCompare
+  });
+
+  // Calculate percentage change
+  const calculateChange = (current: number, previous: number): number | undefined => {
+    if (!shouldCompare || previous === 0) return undefined;
+    return ((current - previous) / previous) * 100;
+  };
 
   // Total Purchasing from einvoices
   const { data: purchasingData, isLoading: purchasingLoading } = useQuery({
@@ -214,8 +290,8 @@ export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
     {
       title: "Toplam Gelir",
       value: `${currencySymbol}${formatNumber(revenueData || 0)}`,
-      change: 12.5,
-      changeLabel: "geçen aya göre",
+      change: calculateChange(revenueData || 0, prevRevenueData || 0),
+      changeLabel: shouldCompare ? (compareMode === 'previousYear' ? "geçen yıl aynı dönem" : "önceki dönem") : undefined,
       icon: DollarSign,
       color: "text-emerald-600",
       bgColor: "bg-emerald-500/10",
@@ -284,8 +360,15 @@ export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
     }
   ];
 
+  // Determine grid columns based on KPI count
+  const getGridCols = () => {
+    if (kpis.length <= 2) return "grid-cols-2";
+    if (kpis.length <= 4) return "grid-cols-2 sm:grid-cols-4";
+    return "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6";
+  };
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+    <div className={`grid ${getGridCols()} gap-3`}>
       {kpis.map((kpi, index) => (
         <KPICard key={index} {...kpi} />
       ))}

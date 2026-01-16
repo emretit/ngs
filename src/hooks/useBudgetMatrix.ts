@@ -123,8 +123,8 @@ export const useBudgetMatrix = (config: MatrixConfig) => {
             is_default
           )
         `)
+        .eq("company_id", companyId)
         .in("type", ["expense", "income"])
-        
         .order("name");
 
       if (cashflowCategoryError) throw cashflowCategoryError;

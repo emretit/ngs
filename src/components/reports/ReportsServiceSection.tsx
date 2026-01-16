@@ -142,6 +142,77 @@ export default function ReportsServiceSection({ isExpanded, onToggle, searchPara
     enabled: isExpanded
   });
 
+  // SLA Compliance Chart (Target vs Actual)
+  const { data: slaCompliance } = useQuery({
+    queryKey: ['slaCompliance', startDate, endDate],
+    queryFn: async () => {
+      let query = supabase.from('service_requests')
+        .select('created_at, completed_at, service_priority, service_status')
+        .eq('service_status', 'completed');
+      if (startDate) query = query.gte('created_at', startDate);
+      if (endDate) query = query.lte('created_at', endDate);
+      const { data } = await query;
+      
+      const monthly = (data || []).reduce((acc: Record<string, { target: number; actual: number }>, r) => {
+        if (!r.completed_at) return acc;
+        const month = new Date(r.completed_at).toLocaleDateString('tr-TR', { month: 'short' });
+        if (!acc[month]) acc[month] = { target: 0, actual: 0 };
+        
+        const hours = (new Date(r.completed_at).getTime() - new Date(r.created_at).getTime()) / (1000 * 60 * 60);
+        const target = r.service_priority === 'high' ? 24 : r.service_priority === 'medium' ? 48 : 72;
+        acc[month].target += target;
+        acc[month].actual += hours <= target ? hours : target;
+        
+        return acc;
+      }, {});
+      
+      return Object.entries(monthly).map(([month, d]) => ({
+        month,
+        target: (d as { target: number; actual: number }).target,
+        actual: (d as { target: number; actual: number }).actual,
+        compliance: (d as { target: number; actual: number }).target > 0 
+          ? ((d as { target: number; actual: number }).actual / (d as { target: number; actual: number }).target) * 100 
+          : 0,
+      }));
+    },
+    enabled: isExpanded && !!startDate && !!endDate,
+  });
+
+  // Recurring Issues Analysis
+  const { data: recurringIssues } = useQuery({
+    queryKey: ['recurringIssues', startDate, endDate],
+    queryFn: async () => {
+      let query = supabase.from('service_requests')
+        .select('customer_id, service_title, service_status, created_at, customers(name)');
+      if (startDate) query = query.gte('created_at', startDate);
+      if (endDate) query = query.lte('created_at', endDate);
+      const { data } = await query;
+      
+      // Group by customer and service title to find recurring issues
+      const issueMap = new Map<string, { customer: string; title: string; count: number }>();
+      
+      (data || []).forEach((r) => {
+        const key = `${r.customer_id}_${r.service_title}`;
+        const existing = issueMap.get(key);
+        if (existing) {
+          existing.count++;
+        } else {
+          issueMap.set(key, {
+            customer: (r.customers as any)?.name || 'Bilinmiyor',
+            title: r.service_title || 'Başlıksız',
+            count: 1,
+          });
+        }
+      });
+      
+      return Array.from(issueMap.values())
+        .filter(i => i.count > 1)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+    },
+    enabled: isExpanded && !!startDate && !!endDate,
+  });
+
   return (
     <Card className="border-border/50">
       <CardHeader className="pb-3">
@@ -269,6 +340,61 @@ export default function ReportsServiceSection({ isExpanded, onToggle, searchPara
               </div>
             </div>
           </div>
+
+          {/* SLA Compliance & Recurring Issues */}
+          {slaCompliance && slaCompliance.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              {/* SLA Compliance Chart */}
+              <Card className="p-4 border-border/50">
+                <h4 className="font-medium text-sm mb-4 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  SLA Uyumluluk (Hedef vs Gerçekleşen)
+                </h4>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={slaCompliance}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                        formatter={(value: number) => [`%${value.toFixed(1)}`, '']}
+                      />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="compliance" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Uyumluluk %" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+
+              {/* Recurring Issues */}
+              <Card className="p-4 border-border/50">
+                <h4 className="font-medium text-sm mb-4 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Tekrarlayan Arızalar
+                </h4>
+                {recurringIssues && recurringIssues.length > 0 ? (
+                  <div className="space-y-2">
+                    {recurringIssues.map((issue, i) => (
+                      <div key={i} className="p-3 bg-muted/30 rounded-lg">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium">{issue.customer}</span>
+                          <Badge variant="outline" className="bg-rose-500/10 text-rose-600">
+                            {issue.count}x
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">{issue.title}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground text-center py-8">
+                    Tekrarlayan arıza bulunamadı
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
         </CardContent>
       )}
     </Card>

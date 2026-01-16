@@ -116,7 +116,9 @@ export default function ReportsFilters({ searchParams, setSearchParams }: Report
   const currency = searchParams.get('currency') || 'TRY';
   const department = searchParams.get('department') || '';
   const employee = searchParams.get('employee') || '';
-  const compareMode = searchParams.get('compare') === 'true';
+  const compareMode = searchParams.get('compare') || '';
+  const comparePreviousPeriod = compareMode === 'previous';
+  const comparePreviousYear = compareMode === 'previousYear';
 
   const updateParams = (key: string, value: string | null) => {
     const newParams = new URLSearchParams(searchParams);
@@ -324,19 +326,29 @@ export default function ReportsFilters({ searchParams, setSearchParams }: Report
             </Select>
           </div>
 
-          {/* Compare Toggle */}
+          {/* Compare Mode */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
               Karşılaştırma Modu
             </label>
-            <Button
-              variant={compareMode ? "default" : "outline"}
-              size="sm"
-              className="w-full h-9 text-xs"
-              onClick={() => updateParams('compare', compareMode ? null : 'true')}
-            >
-              {compareMode ? "✓ Önceki Dönem ile Karşılaştır" : "Önceki Dönem ile Karşılaştır"}
-            </Button>
+            <div className="flex flex-col gap-1.5">
+              <Button
+                variant={comparePreviousPeriod ? "default" : "outline"}
+                size="sm"
+                className="w-full h-8 text-xs"
+                onClick={() => updateParams('compare', comparePreviousPeriod ? null : 'previous')}
+              >
+                {comparePreviousPeriod ? "✓ Önceki Dönem" : "Önceki Dönem"}
+              </Button>
+              <Button
+                variant={comparePreviousYear ? "default" : "outline"}
+                size="sm"
+                className="w-full h-8 text-xs"
+                onClick={() => updateParams('compare', comparePreviousYear ? null : 'previousYear')}
+              >
+                {comparePreviousYear ? "✓ Geçen Yıl Aynı Dönem" : "Geçen Yıl Aynı Dönem"}
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -381,7 +393,7 @@ export default function ReportsFilters({ searchParams, setSearchParams }: Report
           
           {compareMode && (
             <Badge variant="secondary" className="text-xs gap-1 pr-1">
-              Karşılaştırma Aktif
+              {comparePreviousPeriod ? "Önceki Dönem" : comparePreviousYear ? "Geçen Yıl Aynı Dönem" : "Karşılaştırma"}
               <Button
                 variant="ghost"
                 size="icon"

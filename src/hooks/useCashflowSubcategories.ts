@@ -41,7 +41,7 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       let query = supabase
         .from('cashflow_subcategories')
         .select('*')
-        
+        .eq('company_id', profile.company_id)
         .order('name');
 
       if (catId) {
@@ -150,6 +150,8 @@ export const useCashflowSubcategories = (categoryId?: string) => {
   }, [categoryId]);
 
   // Realtime güncellemeler: alt kategori ekleme/güncelleme/silme olduğunda otomatik yenile
+  // Not: fetchSubcategories zaten company_id filtresi ile çalıştığı için, 
+  // realtime subscription sadece tetikleyici görevi görüyor
   useEffect(() => {
     const channel = supabase
       .channel(`cashflow_subcategories_${categoryId || 'all'}`)

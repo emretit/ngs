@@ -28,7 +28,7 @@ export const useCashflowSummary = () => {
       const { data, error } = await supabase
         .from("cashflow_main")
         .select("*")
-        
+        .eq("company_id", companyId)
         .eq("year", currentYear)
         .order("month", { ascending: true });
 

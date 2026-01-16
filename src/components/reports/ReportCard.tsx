@@ -38,21 +38,21 @@ export default function ReportCard({
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
-      <div className="relative p-6">
+      <div className="relative p-4">
         {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2.5">
             <div className={cn(
-              "p-3 rounded-xl bg-gradient-to-br from-background to-muted/50 border border-border/50 group-hover:scale-110 transition-transform duration-300",
+              "p-2.5 rounded-xl bg-gradient-to-br from-background to-muted/50 border border-border/50 group-hover:scale-110 transition-transform duration-300",
               "shadow-sm"
             )}>
-              <Icon className={cn("h-6 w-6", iconColor)} />
+              <Icon className={cn("h-5 w-5", iconColor)} />
             </div>
             <div>
-              <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
+              <h3 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors">
                 {title}
               </h3>
-              <p className="text-sm text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {description}
               </p>
             </div>
@@ -60,7 +60,7 @@ export default function ReportCard({
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-3 mb-3">
           {recordCount !== undefined && (
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="font-mono">
@@ -96,7 +96,7 @@ export default function ReportCard({
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-4" />
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-3" />
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">

@@ -63,35 +63,35 @@ export const useCashflowPipeline = () => {
         supabase
           .from("sales_invoices")
           .select("id, toplam_tutar, vade_tarihi, odeme_durumu")
-          
+          .eq("company_id", companyId)
           .in("odeme_durumu", ["odenmedi", "kismi_odendi"]),
         
         // Payables - unpaid purchase invoices
         supabase
           .from("purchase_invoices")
           .select("id, total_amount, due_date, status")
-          
+          .eq("company_id", companyId)
           .neq("status", "paid"),
         
         // Checks
         supabase
           .from("checks")
           .select("id, amount, due_date, check_type, status")
-          
+          .eq("company_id", companyId)
           .in("status", ["odenecek", "portfoyde"]),
         
         // Bank accounts
         supabase
           .from("bank_accounts")
           .select("id, current_balance, currency, is_active")
-          
+          .eq("company_id", companyId)
           .eq("is_active", true),
         
         // Cash accounts
         supabase
           .from("cash_accounts")
           .select("id, current_balance, is_active")
-          
+          .eq("company_id", companyId)
           .eq("is_active", true)
       ]);
 

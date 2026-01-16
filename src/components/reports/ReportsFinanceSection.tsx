@@ -136,6 +136,59 @@ export default function ReportsFinanceSection({ isExpanded, onToggle, searchPara
     enabled: isExpanded
   });
 
+  // Cash Flow Statement
+  const { data: cashFlowStatement } = useQuery({
+    queryKey: ['cashFlowStatement', startDate, endDate],
+    queryFn: async () => {
+      // Operating activities
+      let salesQuery = supabase.from('proposals').select('total_amount').eq('status', 'accepted');
+      if (startDate) salesQuery = salesQuery.gte('created_at', startDate);
+      if (endDate) salesQuery = salesQuery.lte('created_at', endDate);
+      const { data: sales } = await salesQuery;
+      const operatingInflow = (sales || []).reduce((sum, s) => sum + (s.total_amount || 0), 0);
+
+      let purchaseQuery = supabase.from('einvoices').select('total_amount');
+      if (startDate) purchaseQuery = purchaseQuery.gte('created_at', startDate);
+      if (endDate) purchaseQuery = purchaseQuery.lte('created_at', endDate);
+      const { data: purchases } = await purchaseQuery;
+      const operatingOutflow = (purchases || []).reduce((sum, p) => sum + (p.total_amount || 0), 0);
+
+      return {
+        operating: { inflow: operatingInflow, outflow: operatingOutflow, net: operatingInflow - operatingOutflow },
+        investing: { inflow: 0, outflow: 0, net: 0 },
+        financing: { inflow: 0, outflow: 0, net: 0 },
+        netChange: operatingInflow - operatingOutflow,
+      };
+    },
+    enabled: isExpanded && !!startDate && !!endDate,
+  });
+
+  // Profit & Loss Summary
+  const { data: profitLoss } = useQuery({
+    queryKey: ['profitLoss', startDate, endDate],
+    queryFn: async () => {
+      let revenueQuery = supabase.from('proposals').select('total_amount').eq('status', 'accepted');
+      if (startDate) revenueQuery = revenueQuery.gte('created_at', startDate);
+      if (endDate) revenueQuery = revenueQuery.lte('created_at', endDate);
+      const { data: revenues } = await revenueQuery;
+      const totalRevenue = (revenues || []).reduce((sum, r) => sum + (r.total_amount || 0), 0);
+
+      let expenseQuery = supabase.from('einvoices').select('total_amount');
+      if (startDate) expenseQuery = expenseQuery.gte('created_at', startDate);
+      if (endDate) expenseQuery = expenseQuery.lte('created_at', endDate);
+      const { data: expenses } = await expenseQuery;
+      const totalExpenses = (expenses || []).reduce((sum, e) => sum + (e.total_amount || 0), 0);
+
+      return {
+        revenue: totalRevenue,
+        expenses: totalExpenses,
+        grossProfit: totalRevenue - totalExpenses,
+        margin: totalRevenue > 0 ? ((totalRevenue - totalExpenses) / totalRevenue) * 100 : 0,
+      };
+    },
+    enabled: isExpanded && !!startDate && !!endDate,
+  });
+
   return (
     <Card className="border-border/50">
       <CardHeader className="pb-3">
@@ -268,6 +321,92 @@ export default function ReportsFinanceSection({ isExpanded, onToggle, searchPara
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Cash Flow Statement & P&L */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            {/* Cash Flow Statement Table */}
+            <Card className="p-4 border-border/50">
+              <h4 className="font-medium text-sm mb-4 flex items-center gap-2">
+                <Wallet className="h-4 w-4" />
+                Nakit Akış Tablosu
+              </h4>
+              {cashFlowStatement ? (
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <div className="text-xs font-semibold text-muted-foreground">Faaliyetlerden Gelen Nakit</div>
+                    <div className="flex justify-between items-center p-2 bg-emerald-50 rounded">
+                      <span className="text-sm">Tahsilatlar</span>
+                      <span className="font-medium text-emerald-700">
+                        ₺{cashFlowStatement.operating.inflow.toLocaleString('tr-TR')}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-rose-50 rounded">
+                      <span className="text-sm">Ödemeler</span>
+                      <span className="font-medium text-rose-700">
+                        -₺{cashFlowStatement.operating.outflow.toLocaleString('tr-TR')}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-primary/10 rounded border-t border-primary/20">
+                      <span className="text-sm font-semibold">Net Faaliyet Nakit Akışı</span>
+                      <span className={cn(
+                        "font-bold",
+                        cashFlowStatement.operating.net >= 0 ? "text-emerald-700" : "text-rose-700"
+                      )}>
+                        ₺{cashFlowStatement.operating.net.toLocaleString('tr-TR')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  Tarih aralığı seçin
+                </div>
+              )}
+            </Card>
+
+            {/* Profit & Loss Summary */}
+            <Card className="p-4 border-border/50">
+              <h4 className="font-medium text-sm mb-4 flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Kar/Zarar Özeti
+              </h4>
+              {profitLoss ? (
+                <div className="space-y-3">
+                  <div className="p-3 bg-emerald-50 rounded-lg">
+                    <div className="text-xs text-muted-foreground mb-1">Toplam Gelir</div>
+                    <div className="text-xl font-bold text-emerald-700">
+                      ₺{profitLoss.revenue.toLocaleString('tr-TR')}
+                    </div>
+                  </div>
+                  <div className="p-3 bg-rose-50 rounded-lg">
+                    <div className="text-xs text-muted-foreground mb-1">Toplam Gider</div>
+                    <div className="text-xl font-bold text-rose-700">
+                      ₺{profitLoss.expenses.toLocaleString('tr-TR')}
+                    </div>
+                  </div>
+                  <div className={cn(
+                    "p-3 rounded-lg border-2",
+                    profitLoss.grossProfit >= 0 ? "bg-emerald-50 border-emerald-200" : "bg-rose-50 border-rose-200"
+                  )}>
+                    <div className="text-xs text-muted-foreground mb-1">Net Kar/Zarar</div>
+                    <div className={cn(
+                      "text-2xl font-bold",
+                      profitLoss.grossProfit >= 0 ? "text-emerald-700" : "text-rose-700"
+                    )}>
+                      ₺{profitLoss.grossProfit.toLocaleString('tr-TR')}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Kar Marjı: %{profitLoss.margin.toFixed(1)}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  Tarih aralığı seçin
+                </div>
+              )}
+            </Card>
           </div>
         </CardContent>
       )}

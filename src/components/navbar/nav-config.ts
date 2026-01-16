@@ -92,6 +92,46 @@ export const navItems = [
     label: "Tedarikçiler",
     translationKey: "nav.suppliers",
   },
+  // 3.5. Stok Yönetimi
+  {
+    path: "/inventory",
+    icon: Package,
+    label: "Stok Yönetimi",
+    translationKey: "nav.inventory",
+    hasDropdown: true,
+    items: [
+      {
+        path: "/products",
+        icon: Package,
+        label: "Ürünler",
+        translationKey: "nav.products",
+      },
+      {
+        path: "/inventory/transactions",
+        icon: ArrowRightLeft,
+        label: "Stok Hareketleri",
+        translationKey: "nav.inventoryTransactions",
+      },
+      {
+        path: "/inventory/counts",
+        icon: ClipboardList,
+        label: "Stok Sayımları",
+        translationKey: "nav.inventoryCounts",
+      },
+      {
+        path: "/inventory/warehouses",
+        icon: Warehouse,
+        label: "Depolar",
+        translationKey: "nav.warehouses",
+      },
+      {
+        path: "/production",
+        icon: Factory,
+        label: "Üretim",
+        translationKey: "nav.production",
+      },
+    ],
+  },
   // 4. Satış Yönetimi
   {
     path: "/crm",
@@ -356,46 +396,6 @@ export const navItems = [
         icon: Tag,
         label: "Gelir-Gider Kategorileri",
         translationKey: "nav.incomeExpenseCategories",
-      },
-    ],
-  },
-  // 9.5. Stok Yönetimi
-  {
-    path: "/inventory",
-    icon: Package,
-    label: "Stok Yönetimi",
-    translationKey: "nav.inventory",
-    hasDropdown: true,
-    items: [
-      {
-        path: "/products",
-        icon: Package,
-        label: "Ürünler",
-        translationKey: "nav.products",
-      },
-      {
-        path: "/inventory/transactions",
-        icon: ArrowRightLeft,
-        label: "Stok Hareketleri",
-        translationKey: "nav.inventoryTransactions",
-      },
-      {
-        path: "/inventory/counts",
-        icon: ClipboardList,
-        label: "Stok Sayımları",
-        translationKey: "nav.inventoryCounts",
-      },
-      {
-        path: "/inventory/warehouses",
-        icon: Warehouse,
-        label: "Depolar",
-        translationKey: "nav.warehouses",
-      },
-      {
-        path: "/production",
-        icon: Factory,
-        label: "Üretim",
-        translationKey: "nav.production",
       },
     ],
   },

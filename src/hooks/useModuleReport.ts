@@ -1,6 +1,7 @@
 import { useModuleReportData } from './module-report/useModuleReportData';
 import { useModuleReportExcel } from './module-report/useModuleReportExcel';
 import { useModuleReportPDF } from './module-report/useModuleReportPDF';
+import { moduleConfig as config } from './module-report/config';
 
 // Re-export types and config
 export type { ModuleType, ModuleReportOptions, ModuleConfig } from './module-report/config';
@@ -30,9 +31,6 @@ export function useModuleReport() {
   const data = useModuleReportData();
   const excel = useModuleReportExcel();
   const pdf = useModuleReportPDF();
-
-  // Import moduleConfig for external usage
-  const { moduleConfig: config } = require('./module-report/config');
 
   return {
     // Data operations

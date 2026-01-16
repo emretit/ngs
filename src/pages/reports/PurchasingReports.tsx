@@ -17,6 +17,7 @@ export default function PurchasingReports() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [expandedSections, setExpandedSections] = useState<string[]>(['purchasing']);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null);
   const queryClient = useQueryClient();
   const { exportToExcel, exportToPDF, moduleConfig } = useModuleReport();
 

@@ -29,8 +29,6 @@ import { Trophy, Medal, Award, TrendingUp, TrendingDown } from "lucide-react";
 import { fetchSalesRepPerformanceData } from "@/services/salesReportsService";
 import type { GlobalFilters } from "@/types/salesReports";
 import { subDays, differenceInDays } from "date-fns";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 interface SalesRepPerformanceReportProps {

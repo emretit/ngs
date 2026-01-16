@@ -9,7 +9,7 @@ import { Supplier } from "@/types/supplier";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatPhoneNumber } from "@/utils/phoneFormatter";
-import { formatCurrency } from "@/utils/formatters";
+import BalanceDisplay from "@/components/shared/BalanceDisplay";
 
 interface ContactHeaderProps {
   supplier: Supplier;
@@ -234,7 +234,7 @@ export const ContactHeader = ({ supplier, id, onEdit, onUpdate }: ContactHeaderP
           <TrendingUp className="h-3 w-3" />
           <span className="font-medium">Bakiye</span>
           <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-            {formatCurrency(supplier.balance)}
+            <BalanceDisplay amount={supplier.balance} currency={supplier.currency} size="sm" />
           </span>
         </div>
       </div>

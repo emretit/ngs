@@ -8,6 +8,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BalanceDisplay from "@/components/shared/BalanceDisplay";
 
+interface SupplierBalances {
+  tryBalance: number;
+  usdBalance: number;
+  eurBalance: number;
+}
+
 interface SuppliersTableRowProps {
   supplier: Supplier;
   index: number;
@@ -17,6 +23,8 @@ interface SuppliersTableRowProps {
   onStatusChange: (supplierId: string, newStatus: 'aktif' | 'pasif' | 'potansiyel') => void;
   onDelete: (supplier: Supplier) => void;
   isSelected?: boolean;
+  calculatedBalances?: SupplierBalances;
+  isLoadingBalance?: boolean;
 }
 
 const SuppliersTableRow = ({ 
@@ -27,7 +35,9 @@ const SuppliersTableRow = ({
   onSelectToggle,
   onStatusChange, 
   onDelete,
-  isSelected = false
+  isSelected = false,
+  calculatedBalances,
+  isLoadingBalance = false
 }: SuppliersTableRowProps) => {
   const navigate = useNavigate();
 
@@ -148,12 +158,43 @@ const SuppliersTableRow = ({
 
       {/* Bakiye */}
       <TableCell className="py-2 px-2 text-center text-xs font-medium">
-        <BalanceDisplay 
-          amount={supplier.balance} 
-          currency={supplier.currency || 'TRY'} 
-          showTLEquivalent={true}
-          size="sm"
-        />
+        {isLoadingBalance ? (
+          <span className="text-gray-400">...</span>
+        ) : calculatedBalances ? (
+          <div className="flex flex-col items-center gap-0.5">
+            {calculatedBalances.usdBalance !== 0 && (
+              <BalanceDisplay 
+                amount={calculatedBalances.usdBalance} 
+                currency="USD" 
+                showTLEquivalent={true}
+                size="sm"
+              />
+            )}
+            {calculatedBalances.eurBalance !== 0 && (
+              <BalanceDisplay 
+                amount={calculatedBalances.eurBalance} 
+                currency="EUR" 
+                showTLEquivalent={true}
+                size="sm"
+              />
+            )}
+            {(calculatedBalances.usdBalance === 0 && calculatedBalances.eurBalance === 0) && (
+              <BalanceDisplay 
+                amount={calculatedBalances.tryBalance} 
+                currency="TRY" 
+                showTLEquivalent={false}
+                size="sm"
+              />
+            )}
+          </div>
+        ) : (
+          <BalanceDisplay 
+            amount={supplier.balance} 
+            currency={supplier.currency || 'TRY'} 
+            showTLEquivalent={true}
+            size="sm"
+          />
+        )}
       </TableCell>
 
       {/* Oluşturma Tarihi */}
@@ -234,7 +275,9 @@ export default React.memo(SuppliersTableRow, (prevProps, nextProps) => {
   return (
     prevProps.supplier.id === nextProps.supplier.id &&
     prevProps.supplier.updated_at === nextProps.supplier.updated_at &&
-    prevProps.isSelected === nextProps.isSelected
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.calculatedBalances === nextProps.calculatedBalances &&
+    prevProps.isLoadingBalance === nextProps.isLoadingBalance
   );
 });
 

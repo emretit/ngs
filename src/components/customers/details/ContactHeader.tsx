@@ -254,12 +254,12 @@ export const ContactHeader = ({ customer, id, onEdit, onUpdate }: ContactHeaderP
               <>
                 {usdBalance !== 0 && (
                   <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-                    <BalanceDisplay amount={usdBalance} currency="USD" size="sm" />
+                    <BalanceDisplay amount={usdBalance} currency="USD" showTLEquivalent={false} size="sm" />
                   </span>
                 )}
                 {eurBalance !== 0 && (
                   <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-                    <BalanceDisplay amount={eurBalance} currency="EUR" size="sm" />
+                    <BalanceDisplay amount={eurBalance} currency="EUR" showTLEquivalent={false} size="sm" />
                   </span>
                 )}
                 {(usdBalance === 0 && eurBalance === 0) && (

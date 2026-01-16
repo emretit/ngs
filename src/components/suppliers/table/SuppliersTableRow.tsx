@@ -7,12 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BalanceDisplay from "@/components/shared/BalanceDisplay";
-
-interface SupplierBalances {
-  tryBalance: number;
-  usdBalance: number;
-  eurBalance: number;
-}
+import { useSupplierBalance } from "@/hooks/useSupplierBalance";
 
 interface SuppliersTableRowProps {
   supplier: Supplier;
@@ -23,8 +18,6 @@ interface SuppliersTableRowProps {
   onStatusChange: (supplierId: string, newStatus: 'aktif' | 'pasif' | 'potansiyel') => void;
   onDelete: (supplier: Supplier) => void;
   isSelected?: boolean;
-  calculatedBalances?: SupplierBalances;
-  isLoadingBalance?: boolean;
 }
 
 const SuppliersTableRow = ({ 
@@ -35,11 +28,10 @@ const SuppliersTableRow = ({
   onSelectToggle,
   onStatusChange, 
   onDelete,
-  isSelected = false,
-  calculatedBalances,
-  isLoadingBalance = false
+  isSelected = false
 }: SuppliersTableRowProps) => {
   const navigate = useNavigate();
+  const { tryBalance, usdBalance, eurBalance, isLoading: isLoadingBalance } = useSupplierBalance(supplier.id);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -160,40 +152,36 @@ const SuppliersTableRow = ({
       <TableCell className="py-2 px-2 text-center text-xs font-medium">
         {isLoadingBalance ? (
           <span className="text-gray-400">...</span>
-        ) : calculatedBalances ? (
+        ) : (
           <div className="flex flex-col items-center gap-0.5">
-            {calculatedBalances.usdBalance !== 0 && (
+            {usdBalance !== 0 && (
               <BalanceDisplay 
-                amount={calculatedBalances.usdBalance} 
+                amount={usdBalance} 
                 currency="USD" 
-                showTLEquivalent={true}
+                showTLEquivalent={false}
                 size="sm"
               />
             )}
-            {calculatedBalances.eurBalance !== 0 && (
+            {eurBalance !== 0 && (
               <BalanceDisplay 
-                amount={calculatedBalances.eurBalance} 
+                amount={eurBalance} 
                 currency="EUR" 
-                showTLEquivalent={true}
+                showTLEquivalent={false}
                 size="sm"
               />
             )}
-            {(calculatedBalances.usdBalance === 0 && calculatedBalances.eurBalance === 0) && (
+            {tryBalance !== 0 && (
               <BalanceDisplay 
-                amount={calculatedBalances.tryBalance} 
+                amount={tryBalance} 
                 currency="TRY" 
                 showTLEquivalent={false}
                 size="sm"
               />
             )}
+            {(usdBalance === 0 && eurBalance === 0 && tryBalance === 0) && (
+              <span className="text-gray-400 text-xs">₺0,00</span>
+            )}
           </div>
-        ) : (
-          <BalanceDisplay 
-            amount={supplier.balance} 
-            currency={supplier.currency || 'TRY'} 
-            showTLEquivalent={true}
-            size="sm"
-          />
         )}
       </TableCell>
 
@@ -275,9 +263,7 @@ export default React.memo(SuppliersTableRow, (prevProps, nextProps) => {
   return (
     prevProps.supplier.id === nextProps.supplier.id &&
     prevProps.supplier.updated_at === nextProps.supplier.updated_at &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.calculatedBalances === nextProps.calculatedBalances &&
-    prevProps.isLoadingBalance === nextProps.isLoadingBalance
+    prevProps.isSelected === nextProps.isSelected
   );
 });
 

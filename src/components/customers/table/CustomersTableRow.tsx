@@ -7,12 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BalanceDisplay from "@/components/shared/BalanceDisplay";
-
-interface CustomerBalances {
-  tryBalance: number;
-  usdBalance: number;
-  eurBalance: number;
-}
+import { useCustomerBalance } from "@/hooks/useCustomerBalance";
 
 interface CustomersTableRowProps {
   customer: Customer;
@@ -23,8 +18,6 @@ interface CustomersTableRowProps {
   onStatusChange: (customerId: string, newStatus: 'aktif' | 'pasif' | 'potansiyel') => void;
   onDelete: (customer: Customer) => void;
   isSelected?: boolean;
-  calculatedBalances?: CustomerBalances;
-  isLoadingBalance?: boolean;
 }
 
 const CustomersTableRow = ({ 
@@ -35,11 +28,10 @@ const CustomersTableRow = ({
   onSelectToggle,
   onStatusChange, 
   onDelete,
-  isSelected = false,
-  calculatedBalances,
-  isLoadingBalance = false
+  isSelected = false
 }: CustomersTableRowProps) => {
   const navigate = useNavigate();
+  const { tryBalance, usdBalance, eurBalance, isLoading: isLoadingBalance } = useCustomerBalance(customer.id);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -160,40 +152,36 @@ const CustomersTableRow = ({
       <TableCell className="py-2 px-2 text-center text-xs font-medium">
         {isLoadingBalance ? (
           <span className="text-gray-400">...</span>
-        ) : calculatedBalances ? (
+        ) : (
           <div className="flex flex-col items-center gap-0.5">
-            {calculatedBalances.usdBalance !== 0 && (
+            {usdBalance !== 0 && (
               <BalanceDisplay 
-                amount={calculatedBalances.usdBalance} 
+                amount={usdBalance} 
                 currency="USD" 
-                showTLEquivalent={true}
+                showTLEquivalent={false}
                 size="sm"
               />
             )}
-            {calculatedBalances.eurBalance !== 0 && (
+            {eurBalance !== 0 && (
               <BalanceDisplay 
-                amount={calculatedBalances.eurBalance} 
+                amount={eurBalance} 
                 currency="EUR" 
-                showTLEquivalent={true}
+                showTLEquivalent={false}
                 size="sm"
               />
             )}
-            {(calculatedBalances.usdBalance === 0 && calculatedBalances.eurBalance === 0) && (
+            {tryBalance !== 0 && (
               <BalanceDisplay 
-                amount={calculatedBalances.tryBalance} 
+                amount={tryBalance} 
                 currency="TRY" 
                 showTLEquivalent={false}
                 size="sm"
               />
             )}
+            {(usdBalance === 0 && eurBalance === 0 && tryBalance === 0) && (
+              <span className="text-gray-400 text-xs">₺0,00</span>
+            )}
           </div>
-        ) : (
-          <BalanceDisplay 
-            amount={customer.balance} 
-            currency={customer.currency || 'TRY'} 
-            showTLEquivalent={true}
-            size="sm"
-          />
         )}
       </TableCell>
 
@@ -275,9 +263,7 @@ export default React.memo(CustomersTableRow, (prevProps, nextProps) => {
   return (
     prevProps.customer.id === nextProps.customer.id &&
     prevProps.customer.updated_at === nextProps.customer.updated_at &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.calculatedBalances === nextProps.calculatedBalances &&
-    prevProps.isLoadingBalance === nextProps.isLoadingBalance
+    prevProps.isSelected === nextProps.isSelected
   );
 });
 

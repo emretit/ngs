@@ -11,7 +11,7 @@ interface SupplierBalance {
 }
 
 export const useSupplierBalance = (supplierId: string): SupplierBalance => {
-  const { exchangeRates, convertCurrency } = useExchangeRates();
+  const { exchangeRates } = useExchangeRates();
 
   const { data, isLoading } = useQuery({
     queryKey: ['supplier-balance-calculated', supplierId],
@@ -31,7 +31,7 @@ export const useSupplierBalance = (supplierId: string): SupplierBalance => {
       // Fetch sales invoices (if supplier is also a customer)
       const { data: salesInvoices } = await supabase
         .from('sales_invoices')
-        .select('id, total_amount, currency, exchange_rate, invoice_date')
+        .select('id, toplam_tutar, para_birimi, exchange_rate, fatura_tarihi, issue_time')
         .eq('supplier_id', supplierId);
 
       return { payments, purchaseInvoices, salesInvoices };
@@ -44,94 +44,121 @@ export const useSupplierBalance = (supplierId: string): SupplierBalance => {
 
     const { payments, purchaseInvoices, salesInvoices } = data;
 
-    let tryBalance = 0;
-    let usdBalance = 0;
-    let eurBalance = 0;
-
     const normalizeCurrency = (c: unknown) => {
       const code = String(c ?? 'TRY').trim().toUpperCase();
       return code === 'TL' ? 'TRY' : code;
     };
 
-    // Helper to convert to TRY
-    const convertToTRY = (amount: number, currency: string, rate?: number | null) => {
-      const curr = normalizeCurrency(currency);
-      if (curr === 'TRY') return amount;
-      if (rate) return amount * rate;
-      return convertCurrency(amount, curr, 'TRY');
-    };
+    // Tüm işlemleri birleştir ve tarih sırasına göre sırala
+    interface Transaction {
+      date: string;
+      amount: number;
+      currency: string;
+      type: 'purchase_invoice' | 'sales_invoice' | 'payment';
+      payment_direction?: string;
+      payment_type?: string;
+    }
 
-    // Process purchase invoices (we owe supplier - DEBIT)
+    const transactions: Transaction[] = [];
+
+    // Purchase invoices (alış faturaları): Biz tedarikçiye borçluyuz → BORÇ → Eksi (-)
     purchaseInvoices?.forEach(invoice => {
-      const currency = normalizeCurrency(invoice.currency);
-      const isTRY = currency === 'TRY';
-
-      tryBalance += convertToTRY(invoice.total_amount, currency, invoice.exchange_rate);
-
-      if (!isTRY) {
-        if (currency === 'USD') usdBalance += invoice.total_amount;
-        if (currency === 'EUR') eurBalance += invoice.total_amount;
-      }
+      transactions.push({
+        date: invoice.invoice_date || new Date().toISOString(),
+        amount: -invoice.total_amount, // Borç = Eksi
+        currency: normalizeCurrency(invoice.currency),
+        type: 'purchase_invoice'
+      });
     });
 
-    // Process sales invoices (supplier owes us - CREDIT)
+    // Sales invoices (satış faturaları): Tedarikçi bize borçlu → ALACAK → Artı (+)
     salesInvoices?.forEach(invoice => {
-      const currency = normalizeCurrency(invoice.currency);
-      const isTRY = currency === 'TRY';
-
-      tryBalance -= convertToTRY(invoice.total_amount, currency, invoice.exchange_rate);
-
-      if (!isTRY) {
-        if (currency === 'USD') usdBalance -= invoice.total_amount;
-        if (currency === 'EUR') eurBalance -= invoice.total_amount;
+      // fatura_tarihi date formatında, timestamp'e çevir
+      let invoiceDate: string;
+      if (invoice.fatura_tarihi) {
+        const date = new Date(invoice.fatura_tarihi);
+        // issue_time varsa ekle, yoksa 00:00:00 kullan
+        if (invoice.issue_time) {
+          const [hours, minutes, seconds] = invoice.issue_time.split(':');
+          date.setHours(parseInt(hours || '0'), parseInt(minutes || '0'), parseInt(seconds || '0'));
+        } else {
+          date.setHours(0, 0, 0);
+        }
+        invoiceDate = date.toISOString();
+      } else {
+        invoiceDate = new Date().toISOString();
       }
+      
+      transactions.push({
+        date: invoiceDate,
+        amount: invoice.toplam_tutar || 0, // Alacak = Artı
+        currency: normalizeCurrency(invoice.para_birimi),
+        type: 'sales_invoice'
+      });
     });
 
-    // Process payments
+    // Payments
     payments?.forEach(payment => {
       const currency = normalizeCurrency(payment.currency);
-      const isTRY = currency === 'TRY';
       const isFis = payment.payment_type === 'fis';
+      let amount = 0;
       
       if (isFis) {
         // Fiş işlemleri
         if (payment.payment_direction === 'outgoing') {
-          // Borç fişi - DEBIT
-          tryBalance += convertToTRY(payment.amount, currency, payment.exchange_rate);
-          if (!isTRY) {
-            if (currency === 'USD') usdBalance += payment.amount;
-            if (currency === 'EUR') eurBalance += payment.amount;
-          }
+          // Borç fişi → BORÇ → Eksi (-)
+          amount = -payment.amount;
         } else {
-          // Alacak fişi - CREDIT
-          tryBalance -= convertToTRY(payment.amount, currency, payment.exchange_rate);
-          if (!isTRY) {
-            if (currency === 'USD') usdBalance -= payment.amount;
-            if (currency === 'EUR') eurBalance -= payment.amount;
-          }
+          // Alacak fişi → ALACAK → Artı (+)
+          amount = payment.amount;
         }
       } else {
         // Normal ödemeler
         if (payment.payment_direction === 'incoming') {
-          // Gelen ödeme (tedarikçiden) - DEBIT
-          tryBalance += convertToTRY(payment.amount, currency, payment.exchange_rate);
-          if (!isTRY) {
-            if (currency === 'USD') usdBalance += payment.amount;
-            if (currency === 'EUR') eurBalance += payment.amount;
-          }
+          // Gelen ödeme (tedarikçiden iade gibi) → BORÇ artar → Eksi (-)
+          amount = -payment.amount;
         } else {
-          // Giden ödeme (tedarikçiye) - CREDIT
-          tryBalance -= convertToTRY(payment.amount, currency, payment.exchange_rate);
-          if (!isTRY) {
-            if (currency === 'USD') usdBalance -= payment.amount;
-            if (currency === 'EUR') eurBalance -= payment.amount;
-          }
+          // Giden ödeme (tedarikçiye ödeme) → BORÇ azalır → ALACAK → Artı (+)
+          amount = payment.amount;
         }
+      }
+      
+      transactions.push({
+        date: payment.payment_date || new Date().toISOString(),
+        amount,
+        currency,
+        type: 'payment',
+        payment_direction: payment.payment_direction,
+        payment_type: payment.payment_type
+      });
+    });
+
+    // Tarih sırasına göre sırala (en eski en önce)
+    transactions.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (dateA !== dateB) return dateA - dateB;
+      // Aynı tarihte ise ID'ye göre sırala (tutarlılık için)
+      return 0;
+    });
+
+    // İlk işlemden başlayarak topla (banka ekstresi mantığı)
+    let tryBalance = 0;
+    let usdBalance = 0;
+    let eurBalance = 0;
+
+    transactions.forEach(transaction => {
+      if (transaction.currency === 'TRY') {
+        tryBalance += transaction.amount;
+      } else if (transaction.currency === 'USD') {
+        usdBalance += transaction.amount;
+      } else if (transaction.currency === 'EUR') {
+        eurBalance += transaction.amount;
       }
     });
 
     return { tryBalance, usdBalance, eurBalance };
-  }, [data, convertCurrency]);
+  }, [data]);
 
   return {
     ...balances,

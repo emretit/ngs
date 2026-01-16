@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Download, FileText, MoreHorizontal } from "lucide-react";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
-import { useCustomersCalculatedBalance } from "@/hooks/useCustomersCalculatedBalance";
 
 interface CustomersTableProps {
   customers: Customer[];
@@ -45,9 +44,6 @@ const CustomersTable = ({
 }: CustomersTableProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  
-  // Hesaplanan bakiyeleri al (ödemeler tabındaki mantıkla)
-  const { balances, isLoading: isLoadingBalances } = useCustomersCalculatedBalance(customers);
   
   // Fallback için internal state (eğer dışarıdan prop geçilmezse)
   const [internalSortField, setInternalSortField] = useState<string>("company");
@@ -247,8 +243,6 @@ const CustomersTable = ({
                 onStatusChange={handleStatusUpdate}
                 onDelete={handleDeleteCustomerClick}
                 isSelected={selectedCustomers.some(c => c.id === customer.id)}
-                calculatedBalances={balances[customer.id]}
-                isLoadingBalance={isLoadingBalances}
               />
             ))
           ) : null}

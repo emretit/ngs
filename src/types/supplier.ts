@@ -15,8 +15,11 @@ export interface Supplier {
     last_name: string;
     position: string;
   } | null;
-  balance: number;
-  currency?: string;
+  balance: number; // Deprecated: Use balance_try, balance_usd, balance_eur instead
+  currency?: string; // Deprecated: Use balance_try, balance_usd, balance_eur instead
+  balance_try?: number;
+  balance_usd?: number;
+  balance_eur?: number;
   address: string | null;
   tax_number: string | null;
   tax_office: string | null;

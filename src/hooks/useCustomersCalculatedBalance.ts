@@ -6,6 +6,12 @@ import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useMemo } from "react";
 import { getCreditDebit, UnifiedTransaction } from "@/components/customers/details/payments/utils/paymentUtils";
 
+export interface CustomerBalances {
+  tryBalance: number;
+  usdBalance: number;
+  eurBalance: number;
+}
+
 /**
  * Müşteriler listesinde gösterilen müşteriler için hesaplanan bakiye hook'u
  * Ödemeler tabındaki bakiye hesaplama mantığını kullanır
@@ -139,7 +145,7 @@ export const useCustomersCalculatedBalance = (customers: Customer[]) => {
     }
 
     const usdRate = exchangeRates.find(r => r.currency_code === 'USD')?.forex_selling || 1;
-    const balanceMap: Record<string, number> = {};
+    const balanceMap: Record<string, CustomerBalances> = {};
 
     customers.forEach((customer) => {
       const transactions = allTransactionsData[customer.id] || [];
@@ -151,14 +157,66 @@ export const useCustomersCalculatedBalance = (customers: Customer[]) => {
         return dateA === dateB ? a.id.localeCompare(b.id) : dateA - dateB;
       });
 
-      // Bakiye hesapla
-      let balance = 0;
+      // Bakiye hesapla - hem TRY hem de ayrı döviz bakiyeleri
+      let tryBalance = 0;
+      let usdBalance = 0;
+      let eurBalance = 0;
+      
       sorted.forEach((transaction) => {
-        const { credit, debit } = getCreditDebit(transaction, usdRate, convertCurrency);
-        balance = balance + debit - credit;
+        const { credit, debit, usdCredit, usdDebit } = getCreditDebit(transaction, usdRate, convertCurrency);
+        tryBalance = tryBalance + debit - credit;
+        
+        // USD ve EUR bakiyelerini ayrı hesapla
+        const currency = transaction.currency || 'TRY';
+        const isTRY = currency === 'TRY' || currency === 'TL';
+        
+        if (!isTRY) {
+          if (currency === 'USD') {
+            if (transaction.type === 'sales_invoice') {
+              usdBalance += transaction.amount;
+            } else if (transaction.type === 'purchase_invoice') {
+              usdBalance -= transaction.amount;
+            } else if (transaction.type === 'payment') {
+              if (transaction.paymentType === 'fis') {
+                if (transaction.direction === 'outgoing') {
+                  usdBalance += transaction.amount;
+                } else {
+                  usdBalance -= transaction.amount;
+                }
+              } else {
+                if (transaction.direction === 'incoming') {
+                  usdBalance -= transaction.amount;
+                } else {
+                  usdBalance += transaction.amount;
+                }
+              }
+            }
+          }
+          if (currency === 'EUR') {
+            if (transaction.type === 'sales_invoice') {
+              eurBalance += transaction.amount;
+            } else if (transaction.type === 'purchase_invoice') {
+              eurBalance -= transaction.amount;
+            } else if (transaction.type === 'payment') {
+              if (transaction.paymentType === 'fis') {
+                if (transaction.direction === 'outgoing') {
+                  eurBalance += transaction.amount;
+                } else {
+                  eurBalance -= transaction.amount;
+                }
+              } else {
+                if (transaction.direction === 'incoming') {
+                  eurBalance -= transaction.amount;
+                } else {
+                  eurBalance += transaction.amount;
+                }
+              }
+            }
+          }
+        }
       });
 
-      balanceMap[customer.id] = balance;
+      balanceMap[customer.id] = { tryBalance, usdBalance, eurBalance };
     });
 
     return balanceMap;
@@ -169,4 +227,3 @@ export const useCustomersCalculatedBalance = (customers: Customer[]) => {
     isLoading: isLoading || userLoading,
   };
 };
-

@@ -8,6 +8,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BalanceDisplay from "@/components/shared/BalanceDisplay";
 
+interface CustomerBalances {
+  tryBalance: number;
+  usdBalance: number;
+  eurBalance: number;
+}
+
 interface CustomersTableRowProps {
   customer: Customer;
   index: number;
@@ -17,7 +23,7 @@ interface CustomersTableRowProps {
   onStatusChange: (customerId: string, newStatus: 'aktif' | 'pasif' | 'potansiyel') => void;
   onDelete: (customer: Customer) => void;
   isSelected?: boolean;
-  calculatedBalance?: number;
+  calculatedBalances?: CustomerBalances;
   isLoadingBalance?: boolean;
 }
 
@@ -30,7 +36,7 @@ const CustomersTableRow = ({
   onStatusChange, 
   onDelete,
   isSelected = false,
-  calculatedBalance,
+  calculatedBalances,
   isLoadingBalance = false
 }: CustomersTableRowProps) => {
   const navigate = useNavigate();
@@ -154,9 +160,36 @@ const CustomersTableRow = ({
       <TableCell className="py-2 px-2 text-center text-xs font-medium">
         {isLoadingBalance ? (
           <span className="text-gray-400">...</span>
+        ) : calculatedBalances ? (
+          <div className="flex flex-col items-center gap-0.5">
+            {calculatedBalances.usdBalance !== 0 && (
+              <BalanceDisplay 
+                amount={calculatedBalances.usdBalance} 
+                currency="USD" 
+                showTLEquivalent={true}
+                size="sm"
+              />
+            )}
+            {calculatedBalances.eurBalance !== 0 && (
+              <BalanceDisplay 
+                amount={calculatedBalances.eurBalance} 
+                currency="EUR" 
+                showTLEquivalent={true}
+                size="sm"
+              />
+            )}
+            {(calculatedBalances.usdBalance === 0 && calculatedBalances.eurBalance === 0) && (
+              <BalanceDisplay 
+                amount={calculatedBalances.tryBalance} 
+                currency="TRY" 
+                showTLEquivalent={false}
+                size="sm"
+              />
+            )}
+          </div>
         ) : (
           <BalanceDisplay 
-            amount={calculatedBalance ?? customer.balance} 
+            amount={customer.balance} 
             currency={customer.currency || 'TRY'} 
             showTLEquivalent={true}
             size="sm"
@@ -243,7 +276,7 @@ export default React.memo(CustomersTableRow, (prevProps, nextProps) => {
     prevProps.customer.id === nextProps.customer.id &&
     prevProps.customer.updated_at === nextProps.customer.updated_at &&
     prevProps.isSelected === nextProps.isSelected &&
-    prevProps.calculatedBalance === nextProps.calculatedBalance &&
+    prevProps.calculatedBalances === nextProps.calculatedBalances &&
     prevProps.isLoadingBalance === nextProps.isLoadingBalance
   );
 });

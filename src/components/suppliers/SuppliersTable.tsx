@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Download, FileText, MoreHorizontal } from "lucide-react";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { useSuppliersCalculatedBalance } from "@/hooks/useSuppliersCalculatedBalance";
 
 interface SuppliersTableProps {
   suppliers: Supplier[];
@@ -48,6 +49,9 @@ const SuppliersTable = ({
   onSort: externalOnSort
 }: SuppliersTableProps) => {
   const queryClient = useQueryClient();
+  
+  // Hesaplanan bakiyeleri al (ödemeler tabındaki mantıkla)
+  const { balances, isLoading: isLoadingBalances } = useSuppliersCalculatedBalance(suppliers);
   
   // Fallback için internal state (eğer dışarıdan prop geçilmezse)
   const [internalSortField, setInternalSortField] = useState<string>("company");
@@ -359,6 +363,8 @@ const SuppliersTable = ({
               onStatusChange={handleStatusUpdate}
               onDelete={handleDeleteSupplierClick}
               isSelected={selectedSuppliers.some(s => s.id === supplier.id)}
+              calculatedBalances={balances[supplier.id]}
+              isLoadingBalance={isLoadingBalances}
             />
           ))
         )}

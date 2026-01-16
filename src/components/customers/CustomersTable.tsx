@@ -247,7 +247,7 @@ const CustomersTable = ({
                 onStatusChange={handleStatusUpdate}
                 onDelete={handleDeleteCustomerClick}
                 isSelected={selectedCustomers.some(c => c.id === customer.id)}
-                calculatedBalance={balances[customer.id] !== undefined ? balances[customer.id] : customer.balance}
+                calculatedBalances={balances[customer.id]}
                 isLoadingBalance={isLoadingBalances}
               />
             ))

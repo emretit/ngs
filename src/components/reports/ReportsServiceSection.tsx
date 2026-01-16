@@ -17,7 +17,8 @@ import {
   Pie,
   Cell,
   RadialBarChart,
-  RadialBar
+  RadialBar,
+  Legend
 } from "recharts";
 
 interface ReportsServiceSectionProps {

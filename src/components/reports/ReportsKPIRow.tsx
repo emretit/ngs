@@ -186,7 +186,7 @@ export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
       const { data } = await query;
       return data?.reduce((sum, item) => sum + (item.total_amount || 0), 0) || 0;
     },
-    enabled: shouldCompare
+    enabled: !!shouldCompare
   });
 
   // Calculate percentage change

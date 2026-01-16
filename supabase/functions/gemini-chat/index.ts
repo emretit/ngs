@@ -144,8 +144,28 @@ GÖREVLER:
   return rolePrompts[role] || rolePrompts['general'];
 };
 
-// Database schema for SQL generation
-const getDatabaseSchema = (companyId?: string) => `
+// Cache for database schema (7 days TTL)
+const schemaCache: Map<string, { schema: string; timestamp: number }> = new Map();
+const SCHEMA_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// Get cached database schema
+const getCachedDatabaseSchema = (companyId?: string): string => {
+  const cacheKey = `schema_${companyId || 'default'}`;
+  const cached = schemaCache.get(cacheKey);
+
+  if (cached && (Date.now() - cached.timestamp) < SCHEMA_CACHE_TTL) {
+    return cached.schema;
+  }
+
+  // Generate fresh schema
+  const schema = getDatabaseSchemaInternal(companyId);
+  schemaCache.set(cacheKey, { schema, timestamp: Date.now() });
+
+  return schema;
+};
+
+// Database schema for SQL generation (internal function)
+const getDatabaseSchemaInternal = (companyId?: string) => `
 TABLOLAR VE İLİŞKİLER:
 
 ÖNEMLİ: Tüm tablolarda company_id kolonu vardır ve her sorguda MUTLAKA company_id filtresi kullanılmalıdır.
@@ -237,7 +257,18 @@ serve(async (req) => {
   try {
     const body: GeminiRequest = await req.json();
     console.log('Request body type:', body.type);
-    const { type, model = 'gemini-2.5-flash', stream = false } = body;
+
+    // Smart model selection based on request type
+    let defaultModel = 'gemini-2.5-flash';
+    if (body.type === 'sql' || body.type === 'map-columns') {
+      // SQL and column mapping don't need complex reasoning - use lite model
+      defaultModel = 'gemini-2.5-flash-lite';
+    } else if (body.type === 'report') {
+      // Reports might need more complex analysis
+      defaultModel = 'gemini-2.5-flash';
+    }
+
+    const { type, model = defaultModel, stream = false } = body;
 
     // Status check - no JWT required
     if (type === 'status') {
@@ -446,7 +477,7 @@ ${systemMsg?.content || ''}`;
 2. Sonuçların nasıl görselleştirileceğini öner
 3. Kısa bir açıklama yaz
 
-${getDatabaseSchema(body.companyId)}
+${getCachedDatabaseSchema(body.companyId)}
 
 KURALLAR:
 - SADECE SELECT sorguları oluştur, veri değiştiren sorgular YASAK
@@ -473,7 +504,7 @@ YANIT FORMATI (JSON):
       case 'sql':
         systemInstruction = `Sen bir SQL uzmanısın. Kullanıcının doğal dil sorgularını PostgreSQL SELECT sorgularına çeviriyorsun.
 
-${getDatabaseSchema(body.companyId)}
+${getCachedDatabaseSchema(body.companyId)}
             
 KURALLAR:
 - SADECE SELECT sorguları oluştur

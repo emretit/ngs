@@ -20,13 +20,21 @@ export interface UsageStats {
     perMinute: number;
     current: number;
   };
+  tokens: {
+    input: number;
+    output: number;
+    total: number;
+    estimatedCost: number; // in USD
+  };
 }
 
 // Local storage keys for tracking
 const STORAGE_KEYS = {
   dailyCount: 'gemini_daily_requests',
   lastReset: 'gemini_last_reset',
-  requestLog: 'gemini_request_log'
+  requestLog: 'gemini_request_log',
+  tokenInput: 'gemini_token_input',
+  tokenOutput: 'gemini_token_output'
 };
 
 // Gemini Free Tier Limits (more generous than Groq)
@@ -34,6 +42,15 @@ const LIMITS = {
   dailyRequests: 1500, // Generous daily limit
   monthlyRequests: 45000, // 1500 * 30
   ratePerMinute: 15 // 15 RPM for free tier
+};
+
+// Gemini API Pricing (per 1M tokens) - 2026
+const PRICING = {
+  'gemini-2.5-flash-lite': { input: 0.10, output: 0.40 },
+  'gemini-2.5-flash': { input: 0.10, output: 0.40 },
+  'gemini-2.5-pro': { input: 1.25, output: 6.00 },
+  'gemini-3-flash-preview': { input: 0.10, output: 0.40 },
+  'gemini-3-pro-preview': { input: 2.00, output: 12.00 }
 };
 
 export class GeminiUsageTracker {
@@ -66,6 +83,15 @@ export class GeminiUsageTracker {
     const dayOfMonth = new Date().getDate();
     const monthlyEstimate = Math.round((dailyCount / dayOfMonth) * 30);
 
+    // Get token usage
+    const tokenInput = this.getTokenCount('input');
+    const tokenOutput = this.getTokenCount('output');
+    const totalTokens = tokenInput + tokenOutput;
+
+    // Calculate estimated cost (assuming gemini-2.5-flash as default)
+    const estimatedCost = (tokenInput / 1000000) * PRICING['gemini-2.5-flash'].input +
+                          (tokenOutput / 1000000) * PRICING['gemini-2.5-flash'].output;
+
     return {
       daily: {
         used: dailyCount,
@@ -80,12 +106,18 @@ export class GeminiUsageTracker {
       rateLimit: {
         perMinute: LIMITS.ratePerMinute,
         current: recentRequests.length
+      },
+      tokens: {
+        input: tokenInput,
+        output: tokenOutput,
+        total: totalTokens,
+        estimatedCost: Math.round(estimatedCost * 100) / 100 // Round to 2 decimals
       }
     };
   }
 
   // Track a new request
-  trackRequest(): void {
+  trackRequest(inputTokens?: number, outputTokens?: number): void {
     // Update daily count
     const dailyCount = this.getDailyCount() + 1;
     localStorage.setItem(STORAGE_KEYS.dailyCount, dailyCount.toString());
@@ -98,8 +130,23 @@ export class GeminiUsageTracker {
     const recentLog = requestLog.slice(-100);
     localStorage.setItem(STORAGE_KEYS.requestLog, JSON.stringify(recentLog));
 
+    // Track tokens if provided
+    if (inputTokens) {
+      this.trackTokens('input', inputTokens);
+    }
+    if (outputTokens) {
+      this.trackTokens('output', outputTokens);
+    }
+
     // Update last reset date
     localStorage.setItem(STORAGE_KEYS.lastReset, new Date().toDateString());
+  }
+
+  // Track token usage
+  trackTokens(type: 'input' | 'output', count: number): void {
+    const key = type === 'input' ? STORAGE_KEYS.tokenInput : STORAGE_KEYS.tokenOutput;
+    const current = this.getTokenCount(type);
+    localStorage.setItem(key, (current + count).toString());
   }
 
   // Check if we can make a request (rate limiting)
@@ -142,6 +189,12 @@ export class GeminiUsageTracker {
     return count ? parseInt(count, 10) : 0;
   }
 
+  private getTokenCount(type: 'input' | 'output'): number {
+    const key = type === 'input' ? STORAGE_KEYS.tokenInput : STORAGE_KEYS.tokenOutput;
+    const count = localStorage.getItem(key);
+    return count ? parseInt(count, 10) : 0;
+  }
+
   private getRequestLog(): number[] {
     const log = localStorage.getItem(STORAGE_KEYS.requestLog);
     return log ? JSON.parse(log) : [];
@@ -149,6 +202,8 @@ export class GeminiUsageTracker {
 
   private resetDailyCount(): void {
     localStorage.setItem(STORAGE_KEYS.dailyCount, '0');
+    localStorage.setItem(STORAGE_KEYS.tokenInput, '0');
+    localStorage.setItem(STORAGE_KEYS.tokenOutput, '0');
     localStorage.setItem(STORAGE_KEYS.lastReset, new Date().toDateString());
   }
 

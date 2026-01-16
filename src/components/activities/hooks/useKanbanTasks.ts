@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Task, TaskStatus } from "@/types/task";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useAuth } from "@/hooks/useAuth";
+import { getStartOfDay, getEndOfDay } from "@/utils/dateUtils";
 
 interface UseKanbanTasksProps {
   searchQuery?: string;
@@ -64,12 +65,13 @@ export const useKanbanTasks = ({
 
       // Tarih filtresi
       if (startDate) {
-        query = query.gte("created_at", startDate.toISOString());
+        // Start date için günün başlangıcını ayarla (00:00:00)
+        const startDateTime = getStartOfDay(startDate);
+        query = query.gte("created_at", startDateTime.toISOString());
       }
       if (endDate) {
-        // End date için günün sonunu ekle (23:59:59)
-        const endDateTime = new Date(endDate);
-        endDateTime.setHours(23, 59, 59, 999);
+        // End date için günün sonunu ekle (23:59:59.999)
+        const endDateTime = getEndOfDay(endDate);
         query = query.lte("created_at", endDateTime.toISOString());
       }
 

@@ -1,4 +1,4 @@
-import { format, startOfWeek as dateFnsStartOfWeek, isSameDay as dateFnsIsSameDay, addDays, formatDistanceToNow, isValid, parseISO } from 'date-fns';
+import { format, startOfWeek as dateFnsStartOfWeek, isSameDay as dateFnsIsSameDay, addDays, formatDistanceToNow, isValid, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { tr, enUS } from 'date-fns/locale';
 
 /**
@@ -139,4 +139,22 @@ export const getShortMonthName = (month: number): string => {
   const locale = getLocale();
   const date = new Date(2000, month - 1, 1);
   return format(date, 'MMM', { locale });
+};
+
+/**
+ * Get start of day (00:00:00.000) for date filtering
+ * @param date - Date to get start of day from
+ * @returns Date at the start of the day (00:00:00.000)
+ */
+export const getStartOfDay = (date: Date): Date => {
+  return startOfDay(date);
+};
+
+/**
+ * Get end of day (23:59:59.999) for date filtering
+ * @param date - Date to get end of day from
+ * @returns Date at the end of the day (23:59:59.999)
+ */
+export const getEndOfDay = (date: Date): Date => {
+  return endOfDay(date);
 };

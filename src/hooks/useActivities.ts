@@ -3,6 +3,7 @@ import { logger } from '@/utils/logger';
 import { useCurrentUser } from "./useCurrentUser";
 import { useAuth } from "@/hooks/useAuth";
 import { Task } from "@/types/task";
+import { getStartOfDay, getEndOfDay } from "@/utils/dateUtils";
 
 interface UseActivitiesFilters {
   searchQuery?: string;
@@ -77,12 +78,13 @@ export const useActivities = (filters: UseActivitiesFilters = {}) => {
 
       // Tarih filtresi
       if (filters.startDate) {
-        query = query.gte("created_at", filters.startDate.toISOString());
+        // Start date için günün başlangıcını ayarla (00:00:00)
+        const startDateTime = getStartOfDay(filters.startDate);
+        query = query.gte("created_at", startDateTime.toISOString());
       }
       if (filters.endDate) {
-        // End date için günün sonunu ekle (23:59:59)
-        const endDateTime = new Date(filters.endDate);
-        endDateTime.setHours(23, 59, 59, 999);
+        // End date için günün sonunu ekle (23:59:59.999)
+        const endDateTime = getEndOfDay(filters.endDate);
         query = query.lte("created_at", endDateTime.toISOString());
       }
 

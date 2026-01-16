@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { IntegratorService } from '@/services/integratorService';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ArrowDownCircle, ArrowUpCircle, FileText, Archive } from 'lucide-react';
+import { getStartOfDay, getEndOfDay, formatDateToLocalString } from '@/utils/dateUtils';
 
 interface EInvoicesProps {
   isCollapsed?: boolean;
@@ -34,8 +35,8 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
     const sevenDaysAgo = new Date(now);
     sevenDaysAgo.setDate(now.getDate() - 7);
     return {
-      start: sevenDaysAgo,
-      end: now
+      start: getStartOfDay(sevenDaysAgo), // Günün başlangıcı
+      end: getEndOfDay(now) // Günün sonu
     };
   };
   const defaultRange = getDefaultDateRange();
@@ -45,9 +46,10 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   // Müşteri VKN filtresi (sadece giden faturalar için)
   const [customerTaxNumber, setCustomerTaxNumber] = useState<string>('');
   
-  // Convert Date to string for API
-  const startDateString = startDate ? startDate.toISOString().split('T')[0] : undefined;
-  const endDateString = endDate ? endDate.toISOString().split('T')[0] : undefined;
+  // Convert Date to string for API - günün başı/sonu olarak ayarla
+  // toISOString() UTC'ye çeviriyor, bu yüzden yerel tarih formatını kullanıyoruz
+  const startDateString = startDate ? formatDateToLocalString(startDate) || undefined : undefined;
+  const endDateString = endDate ? formatDateToLocalString(endDate) || undefined : undefined;
   
   const { incomingInvoices, isLoading: isLoadingIncoming, isSyncing: isSyncingIncoming, refetch: refetchIncoming, forceRefresh: forceRefreshIncoming } = useIncomingInvoices({ 
     startDate: startDateString, 

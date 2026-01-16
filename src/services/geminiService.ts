@@ -1,5 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
+import { geminiCache } from '@/services/geminiCacheService';
+import { tryGenerateSQLFromTemplate } from '@/services/sqlTemplateService';
 
 export interface GeminiChatResponse {
   content?: string;
@@ -145,22 +147,49 @@ export const generateSQLQuery = async (
 ): Promise<GeminiChatResponse> => {
   try {
     const companyId = await getCurrentCompanyId();
-    
+
+    // Step 1: Try template-based SQL first (no API call, instant response)
+    const templateResult = tryGenerateSQLFromTemplate(query, tableName);
+    if (templateResult) {
+      logger.info('SQL generated from template (no API call):', query);
+      return {
+        sql: templateResult.sql,
+        raw: templateResult.explanation
+      };
+    }
+
+    // Step 2: Check cache
+    const cacheKey = { query, tableName, model };
+    const cached = geminiCache.get<GeminiChatResponse>('sql', cacheKey, companyId || undefined);
+
+    if (cached) {
+      logger.debug('SQL query cache hit:', query);
+      return cached;
+    }
+
+    // Step 3: Cache miss - call Gemini API
+    logger.debug('SQL query requires Gemini API:', query);
     const { data, error } = await supabase.functions.invoke('gemini-chat', {
-      body: { 
-        type: 'sql', 
+      body: {
+        type: 'sql',
         query,
         tableName,
         model,
         companyId // Add company_id to request
       }
     });
-    
+
     if (error) {
       logger.error('SQL generation error:', error);
       return { error: error.message };
     }
-    
+
+    // Cache successful response
+    if (data && !data.error && companyId) {
+      geminiCache.set('sql', cacheKey, data, companyId);
+      logger.debug('SQL query cached:', query);
+    }
+
     return data;
   } catch (err: any) {
     logger.error('SQL generation exception:', err);
@@ -274,6 +303,16 @@ export const generateReport = async (
   try {
     const companyId = await getCurrentCompanyId();
 
+    // Check cache first
+    const cacheKey = { query, context, model };
+    const cached = geminiCache.get<GeminiReportResponse>('report', cacheKey, companyId || undefined);
+
+    if (cached) {
+      logger.debug('Report cache hit:', query);
+      return cached;
+    }
+
+    // Cache miss - call API
     const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: {
         type: 'report',
@@ -287,6 +326,12 @@ export const generateReport = async (
     if (error) {
       logger.error('Report generation error:', error);
       return { error: error.message };
+    }
+
+    // Cache successful response
+    if (data && !data.error && companyId) {
+      geminiCache.set('report', cacheKey, data, companyId);
+      logger.debug('Report cached:', query);
     }
 
     return data;
@@ -307,10 +352,20 @@ export const analyzeDataWithAI = async (
 ): Promise<GeminiAnalyzeResponse> => {
   try {
     const companyId = await getCurrentCompanyId();
-    
+
+    // Check cache first (use summary for cache key, not full data)
+    const cacheKey = { tableName, summary, model, dataLength: data.length };
+    const cached = geminiCache.get<GeminiAnalyzeResponse>('analyze', cacheKey, companyId || undefined);
+
+    if (cached) {
+      logger.debug('Analyze cache hit:', tableName);
+      return cached;
+    }
+
+    // Cache miss - call API
     const { data: result, error } = await supabase.functions.invoke('gemini-chat', {
-      body: { 
-        type: 'analyze', 
+      body: {
+        type: 'analyze',
         tableName,
         data,
         summary,
@@ -318,12 +373,18 @@ export const analyzeDataWithAI = async (
         companyId // Add company_id to request
       }
     });
-    
+
     if (error) {
       logger.error('Analyze error:', error);
       return { error: error.message };
     }
-    
+
+    // Cache successful response
+    if (result && !result.error && companyId) {
+      geminiCache.set('analyze', cacheKey, result, companyId);
+      logger.debug('Analyze cached:', tableName);
+    }
+
     return result;
   } catch (err: any) {
     logger.error('Analyze exception:', err);
@@ -341,22 +402,38 @@ export const mapColumnsWithAI = async (
 ): Promise<GeminiMappingResponse> => {
   try {
     const companyId = await getCurrentCompanyId();
-    
+
+    // Check cache first
+    const cacheKey = { sourceColumns, targetFields, model };
+    const cached = geminiCache.get<GeminiMappingResponse>('mapping', cacheKey, companyId || undefined);
+
+    if (cached) {
+      logger.debug('Column mapping cache hit:', sourceColumns.join(', '));
+      return cached;
+    }
+
+    // Cache miss - call API
     const { data, error } = await supabase.functions.invoke('gemini-chat', {
-      body: { 
-        type: 'map-columns', 
+      body: {
+        type: 'map-columns',
         sourceColumns,
         targetFields,
         model,
         companyId // Add company_id to request
       }
     });
-    
+
     if (error) {
       logger.error('Column mapping error:', error);
       return { error: error.message };
     }
-    
+
+    // Cache successful response (24 hour TTL for mappings)
+    if (data && !data.error && companyId) {
+      geminiCache.set('mapping', cacheKey, data, companyId);
+      logger.debug('Column mapping cached:', sourceColumns.join(', '));
+    }
+
     return data;
   } catch (err: any) {
     logger.error('Column mapping exception:', err);
@@ -620,12 +697,18 @@ export const chatWithAIStreaming = async (
   try {
     const companyId = await getCurrentCompanyId();
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session?.access_token) {
       throw new Error('Oturum bulunamadı');
     }
 
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    // Get Supabase URL from client config (more reliable than env var)
+    const SUPABASE_URL = (supabase as any).supabaseUrl || import.meta.env.VITE_SUPABASE_URL;
+
+    if (!SUPABASE_URL) {
+      throw new Error('Supabase URL yapılandırılmamış');
+    }
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/gemini-chat`, {
       method: 'POST',
       headers: {

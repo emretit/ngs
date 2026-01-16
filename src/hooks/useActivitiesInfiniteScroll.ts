@@ -4,6 +4,7 @@ import { useInfiniteScroll } from "./useInfiniteScroll";
 import { useCurrentUser } from "./useCurrentUser";
 import { useAuth } from "@/hooks/useAuth";
 import { Task } from "@/types/task";
+import { getStartOfDay, getEndOfDay } from "@/utils/dateUtils";
 
 interface UseActivitiesFilters {
   searchQuery?: string;
@@ -61,12 +62,13 @@ export const useActivitiesInfiniteScroll = (
 
       // Tarih filtresi
       if (filters.startDate) {
-        query = query.gte("created_at", filters.startDate.toISOString());
+        // Start date için günün başlangıcını ayarla (00:00:00)
+        const startDateTime = getStartOfDay(filters.startDate);
+        query = query.gte("created_at", startDateTime.toISOString());
       }
       if (filters.endDate) {
-        // End date için günün sonunu ekle (23:59:59)
-        const endDateTime = new Date(filters.endDate);
-        endDateTime.setHours(23, 59, 59, 999);
+        // End date için günün sonunu ekle (23:59:59.999)
+        const endDateTime = getEndOfDay(filters.endDate);
         query = query.lte("created_at", endDateTime.toISOString());
       }
 
@@ -148,11 +150,13 @@ export const useActivitiesInfiniteScroll = (
 
             // Apply same filters
             if (filters.startDate) {
-              statusQuery = statusQuery.gte("created_at", filters.startDate.toISOString());
+              // Start date için günün başlangıcını ayarla (00:00:00)
+              const startDateTime = getStartOfDay(filters.startDate);
+              statusQuery = statusQuery.gte("created_at", startDateTime.toISOString());
             }
             if (filters.endDate) {
-              const endDateTime = new Date(filters.endDate);
-              endDateTime.setHours(23, 59, 59, 999);
+              // End date için günün sonunu ekle (23:59:59.999)
+              const endDateTime = getEndOfDay(filters.endDate);
               statusQuery = statusQuery.lte("created_at", endDateTime.toISOString());
             }
             if (filters.selectedEmployee) {

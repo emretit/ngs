@@ -1,10 +1,8 @@
 import React from "react";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, FileText, Calendar, RefreshCw } from "lucide-react";
-import { DatePicker } from "@/components/ui/date-picker";
+import { FileText, RefreshCw } from "lucide-react";
 import { CustomerSelect } from "./CustomerSelect";
+import { BaseFilterBar } from "@/components/shared/BaseFilterBar";
 
 interface EInvoiceFilterBarProps {
   searchTerm: string;
@@ -56,81 +54,75 @@ const EInvoiceFilterBar = ({
     ? `${formatDate(startDate)} - ...`
     : '';
 
+  // Fatura türü select options
+  const typeFilterSelect = {
+    value: typeFilter,
+    onValueChange: setTypeFilter,
+    placeholder: "Fatura Türü",
+    icon: <FileText className="h-4 w-4" />,
+    options: [
+      { value: "all", label: "Tüm Türler" },
+      { value: "TEMELFATURA", label: "Temel Fatura" },
+      { value: "TICARIFATURA", label: "Ticari Fatura" },
+      { value: "IHRACAT", label: "İhracat" },
+      { value: "YOLCUBERABERFATURA", label: "Yolcu Beraber" },
+      { value: "EARSIVFATURA", label: "E-Arşiv" },
+      { value: "KAMU", label: "Kamu" },
+      { value: "HKS", label: "HKS" },
+    ],
+  };
+
+  // Custom components (Müşteri Seçici)
+  const customComponents = [];
+  if (invoiceType === 'outgoing' && setCustomerTaxNumber) {
+    customComponents.push(
+      <CustomerSelect
+        key="customer-select"
+        value={customerTaxNumber}
+        onChange={setCustomerTaxNumber}
+        placeholder="Müşteri Seç (VKN)"
+      />
+    );
+  }
+
+  // Action buttons (E-Fatura Çek)
+  const actionButtons = [];
+  if (onRefresh) {
+    actionButtons.push(
+      <Button 
+        key="refresh-button"
+        className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300" 
+        onClick={onRefresh}
+        disabled={isRefreshing || isRefreshDisabled}
+        title={
+          isRefreshDisabled 
+            ? (!startDate || !endDate 
+                ? 'Lütfen tarih aralığı seçin' 
+                : 'Lütfen önce bir müşteri seçin (VKN)') 
+            : dateRangeText 
+              ? `Tarih aralığı: ${dateRangeText}` 
+              : 'E-Fatura çek'
+        }
+      >
+        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+        <span>E-Fatura Çek</span>
+      </Button>
+    );
+  }
+
   return (
-    <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
-      <div className="relative min-w-[250px] flex-1">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-        <Input
-          placeholder="Fatura no, firma adı veya vergi no ile ara..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 w-full"
-        />
-      </div>
-
-      {/* Müşteri Seçici - Sadece Giden Faturalar için */}
-      {invoiceType === 'outgoing' && setCustomerTaxNumber && (
-        <CustomerSelect
-          value={customerTaxNumber}
-          onChange={setCustomerTaxNumber}
-          placeholder="Müşteri Seç (VKN)"
-        />
-      )}
-      
-      <Select value={typeFilter} onValueChange={setTypeFilter}>
-        <SelectTrigger className="w-[180px]">
-          <FileText className="mr-2 h-4 w-4" />
-          <SelectValue placeholder="Fatura Türü" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Tüm Türler</SelectItem>
-          <SelectItem value="TEMELFATURA">Temel Fatura</SelectItem>
-          <SelectItem value="TICARIFATURA">Ticari Fatura</SelectItem>
-          <SelectItem value="IHRACAT">İhracat</SelectItem>
-          <SelectItem value="YOLCUBERABERFATURA">Yolcu Beraber</SelectItem>
-          <SelectItem value="EARSIVFATURA">E-Arşiv</SelectItem>
-          <SelectItem value="KAMU">Kamu</SelectItem>
-          <SelectItem value="HKS">HKS</SelectItem>
-        </SelectContent>
-      </Select>
-
-      {/* Tarih Filtreleri */}
-      <div className="flex items-center gap-2">
-        <Calendar className="h-4 w-4 text-muted-foreground" />
-        <DatePicker
-          date={startDate}
-          onSelect={setStartDate}
-          placeholder="Başlangıç"
-        />
-        <span className="text-muted-foreground text-sm">-</span>
-        <DatePicker
-          date={endDate}
-          onSelect={setEndDate}
-          placeholder="Bitiş"
-        />
-      </div>
-
-      {/* E-Fatura Çek Butonu */}
-      {onRefresh && (
-        <Button 
-          className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300" 
-          onClick={onRefresh}
-          disabled={isRefreshing || isRefreshDisabled}
-          title={
-            isRefreshDisabled 
-              ? (!startDate || !endDate 
-                  ? 'Lütfen tarih aralığı seçin' 
-                  : 'Lütfen önce bir müşteri seçin (VKN)') 
-              : dateRangeText 
-                ? `Tarih aralığı: ${dateRangeText}` 
-                : 'E-Fatura çek'
-          }
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          <span>E-Fatura Çek</span>
-        </Button>
-      )}
-    </div>
+    <BaseFilterBar
+      searchQuery={searchTerm}
+      setSearchQuery={setSearchTerm}
+      searchPlaceholder="Fatura no, firma adı veya vergi no ile ara..."
+      startDate={startDate}
+      setStartDate={setStartDate}
+      endDate={endDate}
+      setEndDate={setEndDate}
+      selects={[typeFilterSelect]}
+      customComponents={customComponents}
+      actionButtons={actionButtons}
+    />
   );
 };
 

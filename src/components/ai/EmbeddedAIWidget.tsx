@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { chatWithAIStreaming, checkGeminiStatus } from '@/services/geminiService';
+import { chatWithAI, chatWithAIStreaming, checkGeminiStatus } from '@/services/geminiService';
 import { getQuickPromptsForModule, buildContextAwarePrompt } from '@/services/contextDetectionService';
 import { RoleSelector, RoleBadge } from '@/components/ai/RoleSelector';
 import { RoleBasedPrompts } from '@/components/ai/RoleBasedPrompts';
@@ -148,7 +148,7 @@ export function EmbeddedAIWidget() {
         }
       });
 
-      // Get AI response with streaming
+      // Get AI response (non-streaming for now - faster and more reliable)
       const contextPrompt = pageContext && companyId
         ? buildContextAwarePrompt(pageContext, companyId)
         : undefined;
@@ -163,44 +163,33 @@ export function EmbeddedAIWidget() {
         fullMessages.push({ role: 'system', content: contextPrompt });
       }
       fullMessages.push(...(geminiMessages as any));
-      fullMessages.push({ role: 'user', content: text });
 
-      // Create placeholder for streaming response
-      let streamingContent = '';
-      addMessage({
-        role: 'assistant',
-        content: '',
-        timestamp: new Date()
-      });
-
-      // Stream the response
-      await chatWithAIStreaming(
+      // Get AI response
+      const response = await chatWithAI(
         fullMessages,
         'gemini-2.5-flash',
         pageContext || undefined,
-        currentRole,
-        (chunk: string) => {
-          streamingContent += chunk;
-          // Update the last message (assistant) with streaming content
-          setMessages((prev) => {
-            const newMessages = [...prev];
-            const lastIndex = newMessages.length - 1;
-            if (newMessages[lastIndex]?.role === 'assistant') {
-              newMessages[lastIndex] = {
-                ...newMessages[lastIndex],
-                content: streamingContent
-              };
-            }
-            return newMessages;
-          });
-        }
+        currentRole
       );
 
-      // Save AI message to DB after streaming completes
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      const aiContent = response.content || 'Üzgünüm, bir yanıt oluşturamadım.';
+
+      // Add AI message to UI
+      addMessage({
+        role: 'assistant',
+        content: aiContent,
+        timestamp: new Date()
+      });
+
+      // Save AI message to DB
       await saveMessage.mutateAsync({
         conversationId,
         role: 'assistant',
-        content: streamingContent || 'Üzgünüm, bir yanıt oluşturamadım.'
+        content: aiContent
       });
 
       // Auto-generate title if first message

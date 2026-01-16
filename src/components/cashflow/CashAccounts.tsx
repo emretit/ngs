@@ -1,10 +1,9 @@
-import { useMemo, memo, useCallback } from "react";
+import { memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { DollarSign, Wallet } from "lucide-react";
 import { useCashAccounts, useDeleteCashAccount } from "@/hooks/useAccountsData";
 import CashAccountModal from "./modals/CashAccountModal";
 import { AccountListBase } from "./base/AccountListBase";
-import { AccountListHeaderBase } from "./base/AccountListHeaderBase";
 import { formatCurrency } from "@/utils/formatters";
 import type { CardStatBadge, CardField } from "./base/types";
 
@@ -38,22 +37,6 @@ const CashAccounts = memo(({ showBalances }: CashAccountsProps) => {
   const navigate = useNavigate();
   const { data: cashAccounts = [] } = useCashAccounts();
 
-  // Calculate totals by currency
-  const totals = useMemo(() => {
-    return cashAccounts.reduce((acc, account) => {
-      const currency = account.currency || 'TRY';
-      if (!acc[currency]) {
-        acc[currency] = {
-          balance: 0,
-          count: 0
-        };
-      }
-      acc[currency].balance += account.current_balance || 0;
-      acc[currency].count += 1;
-      return acc;
-    }, {} as Record<string, { balance: number; count: number }>);
-  }, [cashAccounts]);
-
   // Memoized navigation handler
   const handleAccountClick = useCallback((accountId: string) => {
     navigate(`/cashflow/cash-accounts/${accountId}`);
@@ -82,39 +65,6 @@ const CashAccounts = memo(({ showBalances }: CashAccountsProps) => {
 
   const getCardFields = useCallback((): CardField[] => [], []);
 
-  // Render custom header with totals - memoized
-  const renderHeader = useCallback((_accounts: CashAccount[], _showBalances: boolean, onAddNew: () => void) => {
-    const headerBadges = Object.entries(totals).flatMap(([currency, data]) => [
-      {
-        key: `${currency}-balance`,
-        label: 'Bakiye',
-        value: formatCurrency(data.balance, currency),
-        icon: DollarSign,
-        variant: 'primary' as const,
-        showBalanceToggle: true,
-      },
-      {
-        key: `${currency}-count`,
-        label: 'Hesap',
-        value: data.count.toString(),
-        icon: Wallet,
-        variant: 'info' as const,
-        showBalanceToggle: false,
-      },
-    ]);
-
-    return (
-      <AccountListHeaderBase
-        accountType="cash"
-        badges={headerBadges}
-        showBalances={_showBalances}
-        onAddNew={onAddNew}
-        addButtonLabel="Yeni"
-        totals={[]}
-      />
-    );
-  }, [totals]);
-
   return (
     <AccountListBase
       accountType="cash"
@@ -141,9 +91,6 @@ const CashAccounts = memo(({ showBalances }: CashAccountsProps) => {
       // Optional
       addButtonLabel="Yeni Kasa"
       emptyStateMessage="Henüz kasa hesabı yok"
-
-      // Custom header
-      renderHeader={renderHeader}
     />
   );
 });

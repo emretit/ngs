@@ -4,11 +4,13 @@ import { Customer } from "@/types/customer";
 import { useCurrentUser } from "./useCurrentUser";
 import { buildCompanyQuery, buildCompanyQueryWithOr, QueryFilter } from "@/utils/supabaseQueryBuilder";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseCustomersFilters {
   search?: string;
   status?: string;
   type?: string;
+  balanceStatus?: string;
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
 }
@@ -35,13 +37,45 @@ export const useCustomersInfiniteScroll = (filters: UseCustomersFilters = {}) =>
 
     // Build query filters
     const queryFilters: QueryFilter[] = [];
-    
+
     if (filters.status && filters.status !== "all") {
       queryFilters.push({ field: 'status', operator: 'eq', value: filters.status });
     }
 
     if (filters.type && filters.type !== "all") {
       queryFilters.push({ field: 'type', operator: 'eq', value: filters.type });
+    }
+
+    // Vadesi gelmemiş faturası olan müşterileri bul
+    if (filters.balanceStatus === "upcoming") {
+      const today = new Date().toISOString().split('T')[0];
+
+      // Vadesi gelmemiş (vade_tarihi > bugün) ve ödenmemiş faturası olan müşterileri bul
+      const { data: upcomingInvoices } = await supabase
+        .from('sales_invoices')
+        .select('customer_id')
+        .gt('vade_tarihi', today)
+        .in('odeme_durumu', ['odenmedi', 'kismi_odendi']);
+
+      if (upcomingInvoices && upcomingInvoices.length > 0) {
+        const customerIds = [...new Set(upcomingInvoices.map((inv: any) => inv.customer_id))];
+        queryFilters.push({ field: 'id', operator: 'in', value: customerIds });
+      } else {
+        // Eğer vadesi gelmemiş fatura yoksa, boş sonuç döndür
+        return {
+          data: [] as Customer[],
+          totalCount: 0,
+          hasNextPage: false
+        };
+      }
+    } else if (filters.balanceStatus && filters.balanceStatus !== "all") {
+      if (filters.balanceStatus === "overdue") {
+        // Vadesi geçenler - negatif bakiye
+        queryFilters.push({ field: 'balance', operator: 'lt', value: 0 });
+      } else if (filters.balanceStatus === "positive") {
+        // Alacaklı - pozitif bakiye
+        queryFilters.push({ field: 'balance', operator: 'gt', value: 0 });
+      }
     }
 
     // Pagination

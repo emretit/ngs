@@ -18,10 +18,11 @@ const Contacts = memo(() => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedBalanceStatus, setSelectedBalanceStatus] = useState<string>('all');
   const [selectedCustomers, setSelectedCustomers] = useState<Customer[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Sıralama state'leri - veritabanı seviyesinde sıralama için
   const [sortField, setSortField] = useState<string>("balance");
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -48,6 +49,7 @@ const Contacts = memo(() => {
     search: searchQuery,
     status: selectedStatus,
     type: selectedType,
+    balanceStatus: selectedBalanceStatus,
     sortField,
     sortDirection
   });
@@ -290,6 +292,8 @@ const Contacts = memo(() => {
           setSelectedStatus={setSelectedStatus}
           selectedType={selectedType}
           setSelectedType={setSelectedType}
+          selectedBalanceStatus={selectedBalanceStatus}
+          setSelectedBalanceStatus={setSelectedBalanceStatus}
         />
         <CustomersBulkActions 
           selectedCustomers={selectedCustomers}

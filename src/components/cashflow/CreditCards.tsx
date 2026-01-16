@@ -1,10 +1,9 @@
-import { useMemo, memo, useCallback } from "react";
+import { memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Target, DollarSign, TrendingUp } from "lucide-react";
+import { Target, TrendingUp } from "lucide-react";
 import { useCreditCards, useDeleteCreditCard, CreditCard } from "@/hooks/useAccountsData";
 import CreditCardModal from "./modals/CreditCardModal";
 import { AccountListBase } from "./base/AccountListBase";
-import { AccountListHeaderBase } from "./base/AccountListHeaderBase";
 import { formatCurrency } from "@/utils/formatters";
 import type { CardStatBadge, CardField } from "./base/types";
 
@@ -38,26 +37,6 @@ const formatCardNumber = (number: string | null | undefined): string => {
 const CreditCards = memo(({ showBalances }: CreditCardsProps) => {
   const navigate = useNavigate();
   const { data: creditCards = [] } = useCreditCards();
-
-  // Calculate totals by currency
-  const totals = useMemo(() => {
-    return creditCards.reduce((acc, card) => {
-      const currency = card.currency || 'TRY';
-      if (!acc[currency]) {
-        acc[currency] = {
-          creditLimit: 0,
-          currentBalance: 0,
-          availableLimit: 0,
-          count: 0
-        };
-      }
-      acc[currency].creditLimit += card.credit_limit || 0;
-      acc[currency].currentBalance += card.current_balance || 0;
-      acc[currency].availableLimit += card.available_limit || 0;
-      acc[currency].count += 1;
-      return acc;
-    }, {} as Record<string, { creditLimit: number; currentBalance: number; availableLimit: number; count: number }>);
-  }, [creditCards]);
 
   // Memoized navigation handler
   const handleAccountClick = useCallback((cardId: string) => {
@@ -110,47 +89,6 @@ const CreditCards = memo(({ showBalances }: CreditCardsProps) => {
     },
   ], []);
 
-  // Render custom header with totals - memoized
-  const renderHeader = useCallback((_accounts: CreditCard[], _showBalances: boolean, onAddNew: () => void) => {
-    const headerBadges = Object.entries(totals).flatMap(([currency, data]) => [
-      {
-        key: `${currency}-limit`,
-        label: 'Limit',
-        value: formatCurrency(data.creditLimit, currency),
-        icon: Target,
-        variant: 'primary' as const,
-        showBalanceToggle: true,
-      },
-      {
-        key: `${currency}-balance`,
-        label: 'Bakiye',
-        value: formatCurrency(data.currentBalance, currency),
-        icon: DollarSign,
-        variant: 'secondary' as const,
-        showBalanceToggle: true,
-      },
-      {
-        key: `${currency}-available`,
-        label: 'Kullanılabilir',
-        value: formatCurrency(data.availableLimit, currency),
-        icon: TrendingUp,
-        variant: 'success' as const,
-        showBalanceToggle: true,
-      },
-    ]);
-
-    return (
-      <AccountListHeaderBase
-        accountType="credit_card"
-        badges={headerBadges}
-        showBalances={_showBalances}
-        onAddNew={onAddNew}
-        addButtonLabel="Yeni"
-        totals={[]}
-      />
-    );
-  }, [totals]);
-
   return (
     <AccountListBase
       accountType="credit_card"
@@ -177,9 +115,6 @@ const CreditCards = memo(({ showBalances }: CreditCardsProps) => {
       // Optional
       addButtonLabel="Yeni Kart"
       emptyStateMessage="Henüz kredi kartı yok"
-
-      // Custom header
-      renderHeader={renderHeader}
     />
   );
 });

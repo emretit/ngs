@@ -1,11 +1,10 @@
-import { useMemo, memo, useCallback } from "react";
+import { memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { DollarSign, Building2, Target } from "lucide-react";
+import { DollarSign, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useBankAccounts, useDeleteBankAccount } from "@/hooks/useAccountsData";
 import BankAccountModal from "./modals/BankAccountModal";
 import { AccountListBase } from "./base/AccountListBase";
-import { AccountListHeaderBase } from "./base/AccountListHeaderBase";
 import { formatCurrency } from "@/utils/formatters";
 import { formatIBAN } from "./base/utils";
 import type { CardStatBadge, CardField } from "./base/types";
@@ -72,24 +71,6 @@ const BankAccounts = memo(({ showBalances }: BankAccountsProps) => {
   const navigate = useNavigate();
   const { data: bankAccounts = [] } = useBankAccounts();
 
-  // Calculate totals by currency - memoized for performance
-  const totals = useMemo(() => {
-    return bankAccounts.reduce((acc, account) => {
-      const currency = account.currency || 'TRY';
-      if (!acc[currency]) {
-        acc[currency] = {
-          currentBalance: 0,
-          availableBalance: 0,
-          count: 0
-        };
-      }
-      acc[currency].currentBalance += account.current_balance || 0;
-      acc[currency].availableBalance += account.available_balance || account.current_balance || 0;
-      acc[currency].count += 1;
-      return acc;
-    }, {} as Record<string, { currentBalance: number; availableBalance: number; count: number }>);
-  }, [bankAccounts]);
-
   // Memoized navigation handler
   const handleAccountClick = useCallback((accountId: string) => {
     navigate(`/cashflow/bank-accounts/${accountId}`);
@@ -147,47 +128,6 @@ const BankAccounts = memo(({ showBalances }: BankAccountsProps) => {
     }] : []),
   ], []);
 
-  // Render custom header with totals - memoized
-  const renderHeader = useCallback((_accounts: BankAccount[], _showBalances: boolean, onAddNew: () => void) => {
-    const headerBadges = Object.entries(totals).flatMap(([currency, data]) => [
-      {
-        key: `${currency}-balance`,
-        label: 'Bakiye',
-        value: formatCurrency(data.currentBalance, currency),
-        icon: DollarSign,
-        variant: 'primary' as const,
-        showBalanceToggle: true,
-      },
-      {
-        key: `${currency}-available`,
-        label: 'Kullanılabilir',
-        value: formatCurrency(data.availableBalance, currency),
-        icon: Target,
-        variant: 'success' as const,
-        showBalanceToggle: true,
-      },
-      {
-        key: `${currency}-count`,
-        label: 'Hesap',
-        value: data.count.toString(),
-        icon: Building2,
-        variant: 'info' as const,
-        showBalanceToggle: false,
-      },
-    ]);
-
-    return (
-      <AccountListHeaderBase
-        accountType="bank"
-        badges={headerBadges}
-        showBalances={_showBalances}
-        onAddNew={onAddNew}
-        addButtonLabel="Yeni"
-        totals={[]}
-      />
-    );
-  }, [totals]);
-
   return (
     <AccountListBase
       accountType="bank"
@@ -214,9 +154,6 @@ const BankAccounts = memo(({ showBalances }: BankAccountsProps) => {
       // Optional
       addButtonLabel="Yeni Hesap"
       emptyStateMessage="Henüz banka hesabı yok"
-
-      // Custom header
-      renderHeader={renderHeader}
     />
   );
 });

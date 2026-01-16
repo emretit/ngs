@@ -1,7 +1,6 @@
-import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Building2, User } from "lucide-react";
+import { Search, Filter, Building2, AlertCircle } from "lucide-react";
 
 interface CustomersFilterBarProps {
   searchQuery: string;
@@ -10,6 +9,8 @@ interface CustomersFilterBarProps {
   setSelectedStatus: (value: string) => void;
   selectedType: string;
   setSelectedType: (value: string) => void;
+  selectedBalanceStatus?: string;
+  setSelectedBalanceStatus?: (value: string) => void;
 }
 
 const CustomersFilterBar = ({
@@ -18,7 +19,9 @@ const CustomersFilterBar = ({
   selectedStatus,
   setSelectedStatus,
   selectedType,
-  setSelectedType
+  setSelectedType,
+  selectedBalanceStatus = 'all',
+  setSelectedBalanceStatus
 }: CustomersFilterBarProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
@@ -31,7 +34,7 @@ const CustomersFilterBar = ({
           className="pl-10 w-full"
         />
       </div>
-      
+
       <Select value={selectedStatus} onValueChange={setSelectedStatus}>
         <SelectTrigger className="w-[180px]">
           <Filter className="mr-2 h-4 w-4" />
@@ -54,6 +57,19 @@ const CustomersFilterBar = ({
           <SelectItem value="all">Tipler</SelectItem>
           <SelectItem value="kurumsal">🏢 Kurumsal</SelectItem>
           <SelectItem value="bireysel">👤 Bireysel</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={selectedBalanceStatus} onValueChange={setSelectedBalanceStatus}>
+        <SelectTrigger className="w-[200px]">
+          <AlertCircle className="mr-2 h-4 w-4" />
+          <SelectValue placeholder="Bakiye Durumu" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Tüm Bakiyeler</SelectItem>
+          <SelectItem value="overdue">🔴 Vadesi Geçenler</SelectItem>
+          <SelectItem value="positive">🟢 Alacaklı</SelectItem>
+          <SelectItem value="upcoming">🟡 Vadesi Gelmemiş</SelectItem>
         </SelectContent>
       </Select>
 

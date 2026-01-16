@@ -1,10 +1,9 @@
-import { useMemo, memo, useCallback } from "react";
+import { memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { DollarSign, Percent } from "lucide-react";
 import { usePartnerAccounts, useDeletePartnerAccount } from "@/hooks/useAccountsData";
 import PartnerAccountModal from "./modals/PartnerAccountModal";
 import { AccountListBase } from "./base/AccountListBase";
-import { AccountListHeaderBase } from "./base/AccountListHeaderBase";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/utils/formatters";
 import type { CardStatBadge, CardField } from "./base/types";
@@ -70,24 +69,6 @@ const PartnerAccounts = memo(({ showBalances }: PartnerAccountsProps) => {
   const navigate = useNavigate();
   const { data: partnerAccounts = [] } = usePartnerAccounts();
 
-  // Calculate totals by currency
-  const totals = useMemo(() => {
-    return partnerAccounts.reduce((acc, account) => {
-      const currency = account.currency || 'TRY';
-      if (!acc[currency]) {
-        acc[currency] = {
-          balance: 0,
-          count: 0,
-          totalOwnership: 0
-        };
-      }
-      acc[currency].balance += account.current_balance || 0;
-      acc[currency].count += 1;
-      acc[currency].totalOwnership += account.ownership_percentage || 0;
-      return acc;
-    }, {} as Record<string, { balance: number; count: number; totalOwnership: number }>);
-  }, [partnerAccounts]);
-
   // Memoized navigation handler
   const handleAccountClick = useCallback((accountId: string) => {
     navigate(`/cashflow/partner-accounts/${accountId}`);
@@ -135,39 +116,6 @@ const PartnerAccounts = memo(({ showBalances }: PartnerAccountsProps) => {
     },
   ], []);
 
-  // Render custom header with totals - memoized
-  const renderHeader = useCallback((_accounts: PartnerAccount[], _showBalances: boolean, onAddNew: () => void) => {
-    const headerBadges = Object.entries(totals).flatMap(([currency, data]) => [
-      {
-        key: `${currency}-balance`,
-        label: 'Bakiye',
-        value: formatCurrency(data.balance, currency),
-        icon: DollarSign,
-        variant: 'primary' as const,
-        showBalanceToggle: true,
-      },
-      {
-        key: `${currency}-ownership`,
-        label: 'Toplam Hisse',
-        value: `${data.totalOwnership.toFixed(2)}%`,
-        icon: Percent,
-        variant: 'secondary' as const,
-        showBalanceToggle: false,
-      },
-    ]);
-
-    return (
-      <AccountListHeaderBase
-        accountType="partner"
-        badges={headerBadges}
-        showBalances={_showBalances}
-        onAddNew={onAddNew}
-        addButtonLabel="Yeni"
-        totals={[]}
-      />
-    );
-  }, [totals]);
-
   return (
     <AccountListBase
       accountType="partner"
@@ -194,9 +142,6 @@ const PartnerAccounts = memo(({ showBalances }: PartnerAccountsProps) => {
       // Optional
       addButtonLabel="Yeni Ortak"
       emptyStateMessage="Henüz ortak hesabı yok"
-
-      // Custom header
-      renderHeader={renderHeader}
     />
   );
 });

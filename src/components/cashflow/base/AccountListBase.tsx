@@ -27,10 +27,7 @@ export function AccountListBase<TAccount extends BaseAccount>({
   modals,
   addButtonLabel = "Yeni",
   emptyStateMessage = "Henüz hesap yok",
-  renderHeader,
-}: AccountListBaseProps<TAccount> & {
-  renderHeader: (accounts: TAccount[], showBalances: boolean, onAddNew: () => void) => React.ReactNode;
-}) {
+}: AccountListBaseProps<TAccount>) {
   const theme = getAccountTheme(accountType);
   const Icon = theme.icon;
 
@@ -99,9 +96,6 @@ export function AccountListBase<TAccount extends BaseAccount>({
   // Render
   return (
     <div className="space-y-4">
-      {/* Header - Custom render function for totals */}
-      {renderHeader(accounts, showBalances, () => setIsModalOpen(true))}
-
       {/* Accounts List */}
       <div className="space-y-2">
         {accounts.length === 0 ? (

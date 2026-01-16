@@ -8,7 +8,6 @@ import CreditCardModal from "@/components/cashflow/modals/CreditCardModal";
 import PartnerAccountModal from "@/components/cashflow/modals/PartnerAccountModal";
 import { Building, Eye, EyeOff, Wallet, CreditCard, Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/utils/formatters";
 import { useState, memo } from "react";
 import { useAllAccounts } from "@/hooks/useAccountsData";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -231,20 +230,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                         </Button>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 text-xs">
-                      <div>
-                        <span className="text-gray-500">Toplam Bakiye: </span>
-                        <span className="font-bold text-green-700">
-                          {showBalances ? formatCurrency((allAccounts?.cashAccounts || []).reduce((s, a:any) => s + (a.current_balance || 0), 0), "TRY") : "••••••"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Hesap: </span>
-                        <span className="font-bold text-gray-900">
-                          {allAccounts?.cashAccounts?.length || 0}
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -279,20 +264,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                           Yeni
                         </Button>
                       )}
-                    </div>
-                    <div className="flex items-center gap-4 text-xs">
-                      <div>
-                        <span className="text-gray-500">Toplam Bakiye: </span>
-                        <span className="font-bold text-blue-700">
-                          {showBalances ? formatCurrency((allAccounts?.bankAccounts || []).reduce((s, a:any) => s + ((a.currency === 'TRY' ? (a.current_balance || 0) : 0)), 0), "TRY") : "••••••"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Hesap: </span>
-                        <span className="font-bold text-gray-900">
-                          {allAccounts?.bankAccounts?.length || 0}
-                        </span>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -329,26 +300,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                         </Button>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 text-xs">
-                      <div>
-                        <span className="text-gray-500">Toplam Limit: </span>
-                        <span className="font-bold text-purple-700">
-                          {showBalances ? formatCurrency((allAccounts?.creditCards || []).reduce((s, a:any) => s + (a.credit_limit || 0), 0), "TRY") : "••••••"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Kullanılabilir: </span>
-                        <span className="font-bold text-green-600">
-                          {showBalances ? formatCurrency((allAccounts?.creditCards || []).reduce((s, a:any) => s + (a.available_limit || 0), 0), "TRY") : "••••••"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Kart: </span>
-                        <span className="font-bold text-gray-900">
-                          {allAccounts?.creditCards?.length || 0}
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -383,26 +334,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                           Yeni
                         </Button>
                       )}
-                    </div>
-                    <div className="flex items-center gap-4 text-xs">
-                      <div>
-                        <span className="text-gray-500">Toplam Bakiye: </span>
-                        <span className="font-bold text-orange-700">
-                          {showBalances ? formatCurrency((allAccounts?.partnerAccounts || []).reduce((s, a:any) => s + (a.current_balance || 0), 0), "TRY") : "••••••"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Sermaye: </span>
-                        <span className="font-bold text-orange-600">
-                          {showBalances ? formatCurrency((allAccounts?.partnerAccounts || []).reduce((s, a:any) => s + (a.initial_capital || 0), 0), "TRY") : "••••••"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Ortak: </span>
-                        <span className="font-bold text-gray-900">
-                          {allAccounts?.partnerAccounts?.length || 0}
-                        </span>
-                      </div>
                     </div>
                   </div>
                 </div>

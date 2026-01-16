@@ -48,20 +48,26 @@ export const useCustomerBalance = (customerId: string): CustomerBalance => {
     let usdBalance = 0;
     let eurBalance = 0;
 
+    const normalizeCurrency = (c: unknown) => {
+      const code = String(c ?? 'TRY').trim().toUpperCase();
+      return code === 'TL' ? 'TRY' : code;
+    };
+
     // Helper to convert to TRY
     const convertToTRY = (amount: number, currency: string, rate?: number | null) => {
-      if (currency === 'TRY' || currency === 'TL') return amount;
+      const curr = normalizeCurrency(currency);
+      if (curr === 'TRY') return amount;
       if (rate) return amount * rate;
-      return convertCurrency(amount, currency, 'TRY');
+      return convertCurrency(amount, curr, 'TRY');
     };
 
     // Process sales invoices (customer owes us - DEBIT)
     salesInvoices?.forEach(invoice => {
-      const currency = invoice.currency || 'TRY';
-      const isTRY = currency === 'TRY' || currency === 'TL';
-      
+      const currency = normalizeCurrency(invoice.currency);
+      const isTRY = currency === 'TRY';
+
       tryBalance += convertToTRY(invoice.total_amount, currency, invoice.exchange_rate);
-      
+
       if (!isTRY) {
         if (currency === 'USD') usdBalance += invoice.total_amount;
         if (currency === 'EUR') eurBalance += invoice.total_amount;
@@ -70,11 +76,11 @@ export const useCustomerBalance = (customerId: string): CustomerBalance => {
 
     // Process purchase invoices (we owe customer - CREDIT)
     purchaseInvoices?.forEach(invoice => {
-      const currency = invoice.currency || 'TRY';
-      const isTRY = currency === 'TRY' || currency === 'TL';
-      
+      const currency = normalizeCurrency(invoice.currency);
+      const isTRY = currency === 'TRY';
+
       tryBalance -= convertToTRY(invoice.total_amount, currency, invoice.exchange_rate);
-      
+
       if (!isTRY) {
         if (currency === 'USD') usdBalance -= invoice.total_amount;
         if (currency === 'EUR') eurBalance -= invoice.total_amount;
@@ -83,8 +89,8 @@ export const useCustomerBalance = (customerId: string): CustomerBalance => {
 
     // Process payments
     payments?.forEach(payment => {
-      const currency = payment.currency || 'TRY';
-      const isTRY = currency === 'TRY' || currency === 'TL';
+      const currency = normalizeCurrency(payment.currency);
+      const isTRY = currency === 'TRY';
       const isFis = payment.payment_type === 'fis';
       
       if (isFis) {

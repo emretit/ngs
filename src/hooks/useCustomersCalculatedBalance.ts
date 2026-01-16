@@ -162,16 +162,17 @@ export const useCustomersCalculatedBalance = (customers: Customer[]) => {
       let usdBalance = 0;
       let eurBalance = 0;
       
-      sorted.forEach((transaction) => {
-        const { credit, debit, usdCredit, usdDebit } = getCreditDebit(transaction, usdRate, convertCurrency);
-        tryBalance = tryBalance + debit - credit;
-        
-        // USD ve EUR bakiyelerini ayrı hesapla
-        const currency = transaction.currency || 'TRY';
-        const isTRY = currency === 'TRY' || currency === 'TL';
-        
-        if (!isTRY) {
-          if (currency === 'USD') {
+        sorted.forEach((transaction) => {
+          const { credit, debit } = getCreditDebit(transaction, usdRate, convertCurrency);
+          tryBalance = tryBalance + debit - credit;
+
+          // USD ve EUR bakiyelerini ayrı hesapla
+          const currency = String(transaction.currency ?? 'TRY').trim().toUpperCase();
+          const normalizedCurrency = currency === 'TL' ? 'TRY' : currency;
+          const isTRY = normalizedCurrency === 'TRY';
+
+          if (!isTRY) {
+            if (normalizedCurrency === 'USD') {
             if (transaction.type === 'sales_invoice') {
               usdBalance += transaction.amount;
             } else if (transaction.type === 'purchase_invoice') {

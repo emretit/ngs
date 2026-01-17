@@ -116,7 +116,7 @@ const Dashboard = () => {
         monthlyExpenses={monthlyExpenses}
         stockValue={stockValue}
         turnoverTrend={turnoverTrend}
-        liabilities={liabilities}
+        liabilities={typeof liabilities === 'number' ? liabilities : liabilities?.total ?? 0}
         netProfit={monthlyTurnover - monthlyExpenses}
         overdueReceivablesTotal={overdueReceivables?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0}
         activeCustomers={activeCustomers}
